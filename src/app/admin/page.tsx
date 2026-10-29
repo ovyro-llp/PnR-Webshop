@@ -22,7 +22,7 @@ import {
 } from 'lucide-react';
 
 export default function AdminPage() {
-  const [activeTab, setActiveTab] = useState<'pixels' | 'orders' | 'dispatch'>('pixels');
+  const [activeTab, setActiveTab] = useState<'orders' | 'dispatch' | 'pixels'>('orders');
   const [outlets, setOutlets] = useState<Outlet[]>(OUTLETS);
   const [campaigns, setCampaigns] = useState<Campaign[]>(CAMPAIGNS);
   const [orders, setOrders] = useState<Order[]>([]);

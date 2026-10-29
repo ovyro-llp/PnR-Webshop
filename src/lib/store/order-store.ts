@@ -1,4 +1,13 @@
-import { Order, Outlet, Campaign, MenuItem } from '@/types';
+import {
+  Order,
+  Outlet,
+  Campaign,
+  MenuItem,
+  Employee,
+  OutletStockItem,
+  CampaignAnalytics,
+  OutletAnalytics,
+} from '@/types';
 import { OUTLETS, CAMPAIGNS, MENU_ITEMS, INITIAL_ORDERS } from '@/lib/data/mock-data';
 import { dispatchToMangwale } from '@/lib/logistics/mangwale';
 import { sendMetaCAPI } from '@/lib/tracking/pixel-tracker';
@@ -11,6 +20,12 @@ declare global {
   var __PNR_CAMPAIGNS__: Campaign[] | undefined;
   // eslint-disable-next-line no-var
   var __PNR_OUTLETS__: Outlet[] | undefined;
+  // eslint-disable-next-line no-var
+  var __PNR_EMPLOYEES__: Employee[] | undefined;
+  // eslint-disable-next-line no-var
+  var __PNR_OUTLET_STOCK__: OutletStockItem[] | undefined;
+  // eslint-disable-next-line no-var
+  var __PNR_MARKETING_TAGS__: Record<string, unknown> | undefined;
 }
 
 if (!globalThis.__PNR_ORDERS__) {
@@ -23,7 +38,119 @@ if (!globalThis.__PNR_OUTLETS__) {
   globalThis.__PNR_OUTLETS__ = [...OUTLETS];
 }
 
+// Initial Employees Hierarchical Seed
+if (!globalThis.__PNR_EMPLOYEES__) {
+  globalThis.__PNR_EMPLOYEES__ = [
+    {
+      id: 'emp-1',
+      name: 'Aditi Sharma',
+      email: 'admin@puffsnrolls.com',
+      phone: '+91 94236 39911',
+      role: 'SUPER_ADMIN',
+      outletSlug: 'all',
+      designation: 'HQ Brand Director & Operations Head',
+      status: 'ACTIVE',
+      lastLogin: '2026-10-29T16:00:00Z',
+      createdAt: '2026-01-15T10:00:00Z',
+    },
+    {
+      id: 'emp-2',
+      name: 'Vikram Joshi',
+      email: 'marketing@puffsnrolls.com',
+      phone: '+91 98220 77881',
+      role: 'SUPER_ADMIN', // Performance Marketer with full campaign/tag access
+      outletSlug: 'all',
+      designation: 'Lead Performance Marketer (Meta & Google Ads)',
+      status: 'ACTIVE',
+      lastLogin: '2026-10-29T15:45:00Z',
+      createdAt: '2026-02-01T10:00:00Z',
+    },
+    {
+      id: 'emp-3',
+      name: 'Suhas Deshmukh',
+      email: 'collegeroad@puffsnrolls.com',
+      phone: '+91 98220 11234',
+      role: 'OUTLET_MANAGER',
+      outletSlug: 'college-road',
+      designation: 'Outlet Store Manager (College Road)',
+      status: 'ACTIVE',
+      lastLogin: '2026-10-29T16:15:00Z',
+      createdAt: '2026-01-20T10:00:00Z',
+    },
+    {
+      id: 'emp-4',
+      name: 'Nikhil Kulkarni',
+      email: 'nashikroad@puffsnrolls.com',
+      phone: '+91 98220 55678',
+      role: 'OUTLET_MANAGER',
+      outletSlug: 'nashik-road',
+      designation: 'Outlet Store Manager (Nashik Road)',
+      status: 'ACTIVE',
+      lastLogin: '2026-10-29T14:30:00Z',
+      createdAt: '2026-01-20T10:00:00Z',
+    },
+    {
+      id: 'emp-5',
+      name: 'Pooja Shinde',
+      email: 'indiranagar@puffsnrolls.com',
+      phone: '+91 98220 99012',
+      role: 'OUTLET_MANAGER',
+      outletSlug: 'indira-nagar',
+      designation: 'Outlet Store Manager (Indira Nagar)',
+      status: 'ACTIVE',
+      lastLogin: '2026-10-29T13:10:00Z',
+      createdAt: '2026-01-22T10:00:00Z',
+    },
+    {
+      id: 'emp-6',
+      name: 'Ramesh Pawar',
+      email: 'kitchen.cr@puffsnrolls.com',
+      phone: '+91 98221 33445',
+      role: 'KITCHEN_STAFF',
+      outletSlug: 'college-road',
+      designation: 'Head Baker & Kitchen Lead',
+      status: 'ACTIVE',
+      createdAt: '2026-02-10T10:00:00Z',
+    },
+  ];
+}
+
+// Initial Outlet Stock Inventory Matrix (Per-outlet availability & quantities)
+if (!globalThis.__PNR_OUTLET_STOCK__) {
+  const stockSeed: OutletStockItem[] = [];
+  OUTLETS.forEach((outlet) => {
+    MENU_ITEMS.forEach((item) => {
+      stockSeed.push({
+        itemId: item.id,
+        name: item.name,
+        category: item.category,
+        basePrice: item.price,
+        outletSlug: outlet.slug,
+        isAvailable: true,
+        stockQuantity: item.category === 'Cakes & Pastries' ? 8 : 35,
+        lowStockThreshold: 5,
+        lastUpdated: new Date().toISOString(),
+        updatedBy: 'System Auto-Seed',
+      });
+    });
+  });
+  globalThis.__PNR_OUTLET_STOCK__ = stockSeed;
+}
+
+if (!globalThis.__PNR_MARKETING_TAGS__) {
+  globalThis.__PNR_MARKETING_TAGS__ = {
+    globalMetaPixelId: '999888777666555',
+    globalGoogleAdsId: 'AW-987654300',
+    globalGtmId: 'GTM-PNR2026',
+    tiktokPixelId: '',
+    snapchatPixelId: '',
+    metaCapiEnabled: true,
+    customHeaderScript: '<!-- P&R Analytics Tracking Engine Active -->',
+  };
+}
+
 export const orderStore = {
+  // Orders
   getAllOrders: (): Order[] => {
     return globalThis.__PNR_ORDERS__ || [];
   },
@@ -55,11 +182,16 @@ export const orderStore = {
       paymentStatus: orderData.paymentMethod === 'COD' ? 'COD_CONFIRMED' : 'COMPLETED',
       mangwale: {
         status: 'PENDING',
-        notes: 'Dispatch initiated to Mangwale Logistics Nashik',
+        notes: 'Dispatch initiated to logistics fleet',
       },
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     };
+
+    // Decrement stock in this outlet's inventory
+    orderData.items.forEach((item) => {
+      orderStore.decrementStock(orderData.outletSlug, item.itemId, item.quantity);
+    });
 
     // 1. Dispatch automatically to Mangwale Logistics
     try {
@@ -79,7 +211,7 @@ export const orderStore = {
         newOrder.orderStatus = 'PREPARING';
       }
     } catch (err) {
-      console.error('Mangwale auto-dispatch failure:', err);
+      console.error('Logistics auto-dispatch failure:', err);
     }
 
     // 2. Server-side Meta Conversions API (CAPI)
@@ -152,6 +284,16 @@ export const orderStore = {
     return (globalThis.__PNR_OUTLETS__ || []).find((o) => o.slug === slug);
   },
 
+  toggleOutletOpenStatus: (slug: string, isOpen: boolean): Outlet | undefined => {
+    const outlets = globalThis.__PNR_OUTLETS__ || [];
+    const idx = outlets.findIndex((o) => o.slug === slug);
+    if (idx !== -1) {
+      outlets[idx] = { ...outlets[idx], isOpen };
+      return outlets[idx];
+    }
+    return undefined;
+  },
+
   getCampaigns: (): Campaign[] => {
     return globalThis.__PNR_CAMPAIGNS__ || [];
   },
@@ -161,6 +303,15 @@ export const orderStore = {
     return (globalThis.__PNR_CAMPAIGNS__ || []).find(
       (c) => c.slug === campaignSlug && (c.outletSlug === outletSlug || c.outletSlug === 'all')
     );
+  },
+
+  createCampaign: (campaign: Omit<Campaign, 'id'>): Campaign => {
+    const newCamp: Campaign = {
+      ...campaign,
+      id: `camp-${Date.now()}`,
+    };
+    globalThis.__PNR_CAMPAIGNS__?.push(newCamp);
+    return newCamp;
   },
 
   updateCampaignTracking: (
@@ -195,8 +346,202 @@ export const orderStore = {
     return undefined;
   },
 
+  // Marketing Tags Manager
+  getMarketingTags: () => {
+    return globalThis.__PNR_MARKETING_TAGS__ || {};
+  },
+
+  updateMarketingTags: (tags: Record<string, unknown>) => {
+    globalThis.__PNR_MARKETING_TAGS__ = {
+      ...globalThis.__PNR_MARKETING_TAGS__,
+      ...tags,
+    };
+    return globalThis.__PNR_MARKETING_TAGS__;
+  },
+
+  // Menu items filtered by outlet and stock availability
   getMenuItems: (outletSlug?: string): MenuItem[] => {
     if (!outletSlug) return MENU_ITEMS;
-    return MENU_ITEMS.filter((item) => item.availableOutlets.includes(outletSlug));
+    
+    // Look up this outlet's stock items
+    const stockMap = new Map<string, OutletStockItem>();
+    (globalThis.__PNR_OUTLET_STOCK__ || [])
+      .filter((s) => s.outletSlug === outletSlug)
+      .forEach((s) => stockMap.set(s.itemId, s));
+
+    return MENU_ITEMS.filter((item) => {
+      return item.availableOutlets.includes(outletSlug);
+    }).map((item) => {
+      const stock = stockMap.get(item.id);
+      return {
+        ...item,
+        isAvailable: stock !== undefined ? stock.isAvailable : true,
+        stockQuantity: stock !== undefined ? stock.stockQuantity : 15,
+      };
+    });
+  },
+
+  // Outlet Stock Management (For Store Managers)
+  getOutletStock: (outletSlug: string): OutletStockItem[] => {
+    return (globalThis.__PNR_OUTLET_STOCK__ || []).filter(
+      (s) => s.outletSlug === outletSlug
+    );
+  },
+
+  updateOutletStockItem: (
+    outletSlug: string,
+    itemId: string,
+    updates: { isAvailable?: boolean; stockQuantity?: number; customPrice?: number; updatedBy?: string }
+  ): OutletStockItem | undefined => {
+    const list = globalThis.__PNR_OUTLET_STOCK__ || [];
+    const idx = list.findIndex(
+      (s) => s.outletSlug === outletSlug && s.itemId === itemId
+    );
+    if (idx !== -1) {
+      list[idx] = {
+        ...list[idx],
+        ...updates,
+        lastUpdated: new Date().toISOString(),
+        updatedBy: updates.updatedBy || 'Outlet Manager',
+      };
+      return list[idx];
+    }
+    return undefined;
+  },
+
+  decrementStock: (outletSlug: string, itemId: string, quantity: number) => {
+    const list = globalThis.__PNR_OUTLET_STOCK__ || [];
+    const idx = list.findIndex(
+      (s) => s.outletSlug === outletSlug && s.itemId === itemId
+    );
+    if (idx !== -1) {
+      const newQty = Math.max(0, list[idx].stockQuantity - quantity);
+      list[idx].stockQuantity = newQty;
+      if (newQty === 0) {
+        list[idx].isAvailable = false;
+      }
+    }
+  },
+
+  // Employee & Hierarchical Role Management
+  getEmployees: (outletSlug?: string): Employee[] => {
+    const employees = globalThis.__PNR_EMPLOYEES__ || [];
+    if (!outletSlug || outletSlug === 'all') return employees;
+    return employees.filter(
+      (e) => e.outletSlug === outletSlug || e.outletSlug === 'all'
+    );
+  },
+
+  createEmployee: (data: Omit<Employee, 'id' | 'createdAt'>): Employee => {
+    const newEmp: Employee = {
+      ...data,
+      id: `emp-${Date.now()}`,
+      createdAt: new Date().toISOString(),
+    };
+    globalThis.__PNR_EMPLOYEES__?.push(newEmp);
+    return newEmp;
+  },
+
+  updateEmployee: (id: string, updates: Partial<Employee>): Employee | undefined => {
+    const list = globalThis.__PNR_EMPLOYEES__ || [];
+    const idx = list.findIndex((e) => e.id === id);
+    if (idx !== -1) {
+      list[idx] = { ...list[idx], ...updates };
+      return list[idx];
+    }
+    return undefined;
+  },
+
+  deleteEmployee: (id: string): boolean => {
+    const list = globalThis.__PNR_EMPLOYEES__ || [];
+    const initialLen = list.length;
+    globalThis.__PNR_EMPLOYEES__ = list.filter((e) => e.id !== id);
+    return globalThis.__PNR_EMPLOYEES__.length < initialLen;
+  },
+
+  // Analytics Engine
+  getCampaignAnalytics: (): CampaignAnalytics[] => {
+    const campaigns = globalThis.__PNR_CAMPAIGNS__ || [];
+    const orders = globalThis.__PNR_ORDERS__ || [];
+
+    return campaigns.map((camp) => {
+      const campOrders = orders.filter((o) => o.campaignSlug === camp.slug);
+      const ordersPlaced = campOrders.length;
+      const grossRevenue = campOrders.reduce((acc, o) => acc + o.total, 0);
+
+      // Simulated marketing funnel metrics based on real orders
+      const clicks = ordersPlaced > 0 ? ordersPlaced * 18 : 120;
+      const impressions = clicks * 14;
+      const ctr = parseFloat(((clicks / impressions) * 100).toFixed(2));
+      const conversionRate = parseFloat(
+        ((ordersPlaced / clicks) * 100).toFixed(1)
+      );
+
+      return {
+        campaignSlug: camp.slug,
+        title: camp.title,
+        outletSlug: camp.outletSlug,
+        impressions,
+        clicks,
+        ctr,
+        ordersPlaced,
+        conversionRate,
+        grossRevenue,
+        metaPixelId: camp.metaPixelId,
+      };
+    });
+  },
+
+  getOutletAnalytics: (outletSlug?: string): OutletAnalytics[] => {
+    const outlets = outletSlug
+      ? (globalThis.__PNR_OUTLETS__ || []).filter((o) => o.slug === outletSlug)
+      : globalThis.__PNR_OUTLETS__ || [];
+    const allOrders = globalThis.__PNR_ORDERS__ || [];
+
+    return outlets.map((outlet) => {
+      const outletOrders = allOrders.filter((o) => o.outletSlug === outlet.slug);
+      const totalRevenue = outletOrders.reduce((sum, o) => sum + o.total, 0);
+      const totalOrders = outletOrders.length;
+      const averageOrderValue = totalOrders > 0 ? Math.round(totalRevenue / totalOrders) : 0;
+      const activeDeliveryCount = outletOrders.filter(
+        (o) => o.orderStatus === 'OUT_FOR_DELIVERY' || o.orderStatus === 'PREPARING'
+      ).length;
+
+      // Item sales breakdown
+      const itemCounts = new Map<string, { quantity: number; revenue: number }>();
+      outletOrders.forEach((o) => {
+        o.items.forEach((it) => {
+          const current = itemCounts.get(it.name) || { quantity: 0, revenue: 0 };
+          itemCounts.set(it.name, {
+            quantity: current.quantity + it.quantity,
+            revenue: current.revenue + it.total,
+          });
+        });
+      });
+
+      const topSellingItems = Array.from(itemCounts.entries())
+        .map(([name, data]) => ({ name, ...data }))
+        .sort((a, b) => b.quantity - a.quantity)
+        .slice(0, 5);
+
+      const hourlyTrend = [
+        { hour: '11:00 AM', orders: 2, revenue: 380 },
+        { hour: '1:00 PM', orders: 5, revenue: 1150 },
+        { hour: '4:00 PM', orders: 4, revenue: 840 },
+        { hour: '6:00 PM', orders: 8, revenue: 1890 },
+        { hour: '8:00 PM', orders: 6, revenue: 1420 },
+      ];
+
+      return {
+        outletSlug: outlet.slug,
+        outletName: outlet.name,
+        totalRevenue,
+        totalOrders,
+        averageOrderValue,
+        activeDeliveryCount,
+        topSellingItems,
+        hourlyTrend,
+      };
+    });
   },
 };
