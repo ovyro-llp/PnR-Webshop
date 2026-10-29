@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
@@ -14,6 +14,52 @@ export default function AdminLoginPage() {
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
+  // Auto-login if query parameter is provided (e.g. ?auto=manager or ?auto=admin)
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      const auto = params.get('auto');
+      if (
+        auto === 'manager' ||
+        auto === 'cafe' ||
+        auto === 'collegeroad' ||
+        auto === 'college-road'
+      ) {
+        setIsLoading(true);
+        loginAdmin('collegeroad@puffsnrolls.com', 'college2026').then((res) => {
+          setIsLoading(false);
+          if (res.success) {
+            router.push('/admin/inventory');
+          }
+        });
+      } else if (auto === 'nashikroad' || auto === 'nashik-road') {
+        setIsLoading(true);
+        loginAdmin('nashikroad@puffsnrolls.com', 'nashik2026').then((res) => {
+          setIsLoading(false);
+          if (res.success) {
+            router.push('/admin/inventory');
+          }
+        });
+      } else if (auto === 'indiranagar' || auto === 'indira-nagar') {
+        setIsLoading(true);
+        loginAdmin('indiranagar@puffsnrolls.com', 'indira2026').then((res) => {
+          setIsLoading(false);
+          if (res.success) {
+            router.push('/admin/inventory');
+          }
+        });
+      } else if (auto === 'admin' || auto === 'super') {
+        setIsLoading(true);
+        loginAdmin('admin@puffsnrolls.com', 'pnr@admin2026').then((res) => {
+          setIsLoading(false);
+          if (res.success) {
+            router.push('/admin/inventory');
+          }
+        });
+      }
+    }
+  }, [loginAdmin, router]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
@@ -23,7 +69,23 @@ export default function AdminLoginPage() {
     setIsLoading(false);
 
     if (res.success) {
-      router.push('/admin');
+      router.push('/admin/inventory');
+    } else {
+      setError(res.error || 'Authentication failed');
+    }
+  };
+
+  const handleQuickLogin = async (loginEmail: string, loginPass: string) => {
+    setEmail(loginEmail);
+    setPassword(loginPass);
+    setError('');
+    setIsLoading(true);
+
+    const res = await loginAdmin(loginEmail, loginPass);
+    setIsLoading(false);
+
+    if (res.success) {
+      router.push('/admin/inventory');
     } else {
       setError(res.error || 'Authentication failed');
     }
@@ -116,10 +178,8 @@ export default function AdminLoginPage() {
           <div className="grid grid-cols-2 gap-2">
             <button
               type="button"
-              onClick={() => {
-                setEmail('admin@puffsnrolls.com');
-                setPassword('pnr@admin2026');
-              }}
+              disabled={isLoading}
+              onClick={() => handleQuickLogin('admin@puffsnrolls.com', 'pnr@admin2026')}
               className="p-2 text-left bg-stone-50 hover:bg-stone-100 rounded-xl border border-stone-200 transition cursor-pointer"
             >
               <span className="text-[11px] font-bold text-stone-900 block">HQ Super Admin</span>
@@ -128,10 +188,8 @@ export default function AdminLoginPage() {
 
             <button
               type="button"
-              onClick={() => {
-                setEmail('collegeroad@puffsnrolls.com');
-                setPassword('college2026');
-              }}
+              disabled={isLoading}
+              onClick={() => handleQuickLogin('collegeroad@puffsnrolls.com', 'college2026')}
               className="p-2 text-left bg-stone-50 hover:bg-stone-100 rounded-xl border border-stone-200 transition cursor-pointer"
             >
               <span className="text-[11px] font-bold text-stone-900 block">College Road Manager</span>
@@ -140,10 +198,8 @@ export default function AdminLoginPage() {
 
             <button
               type="button"
-              onClick={() => {
-                setEmail('nashikroad@puffsnrolls.com');
-                setPassword('nashik2026');
-              }}
+              disabled={isLoading}
+              onClick={() => handleQuickLogin('nashikroad@puffsnrolls.com', 'nashik2026')}
               className="p-2 text-left bg-stone-50 hover:bg-stone-100 rounded-xl border border-stone-200 transition cursor-pointer"
             >
               <span className="text-[11px] font-bold text-stone-900 block">Nashik Road Manager</span>
@@ -152,10 +208,8 @@ export default function AdminLoginPage() {
 
             <button
               type="button"
-              onClick={() => {
-                setEmail('indiranagar@puffsnrolls.com');
-                setPassword('indira2026');
-              }}
+              disabled={isLoading}
+              onClick={() => handleQuickLogin('indiranagar@puffsnrolls.com', 'indira2026')}
               className="p-2 text-left bg-stone-50 hover:bg-stone-100 rounded-xl border border-stone-200 transition cursor-pointer"
             >
               <span className="text-[11px] font-bold text-stone-900 block">Indira Nagar Manager</span>
