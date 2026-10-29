@@ -8,9 +8,10 @@ import { Plus, Minus } from 'lucide-react';
 
 interface MenuItemCardProps {
   item: MenuItem;
+  outletSlug?: string;
 }
 
-export function MenuItemCard({ item }: MenuItemCardProps) {
+export function MenuItemCard({ item, outletSlug }: MenuItemCardProps) {
   const { addItem, items, updateQuantity } = useCart();
   const cartEntry = items.find((ci) => ci.item.id === item.id);
   const isSoldOut = item.isAvailable === false || (typeof item.stockQuantity === 'number' && item.stockQuantity <= 0);
@@ -114,8 +115,8 @@ export function MenuItemCard({ item }: MenuItemCardProps) {
             </div>
           ) : (
             <button
-              onClick={() => addItem(item, 1)}
-              className="px-4 py-1.5 bg-[#1C1917] hover:bg-stone-800 text-white rounded-full text-xs font-medium tracking-wide transition flex items-center gap-1 shadow-xs"
+              onClick={() => addItem(item, 1, outletSlug)}
+              className="px-4 py-1.5 bg-[#1C1917] hover:bg-stone-800 text-white rounded-full text-xs font-medium tracking-wide transition flex items-center gap-1 shadow-xs cursor-pointer active:scale-95"
             >
               <Plus className="w-3 h-3" />
               <span>Add</span>

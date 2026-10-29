@@ -115,7 +115,7 @@ export default async function CampaignLandingPage({
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
               {featuredItems.map((item) => (
-                <MenuItemCard key={item.id} item={item} />
+                <MenuItemCard key={item.id} item={item} outletSlug={outlet.slug} />
               ))}
             </div>
           </section>
@@ -128,7 +128,7 @@ export default async function CampaignLandingPage({
               </h3>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
                 {remainingItems.map((item) => (
-                  <MenuItemCard key={item.id} item={item} />
+                  <MenuItemCard key={item.id} item={item} outletSlug={outlet.slug} />
                 ))}
               </div>
             </section>

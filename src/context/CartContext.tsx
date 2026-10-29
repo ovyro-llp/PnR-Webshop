@@ -6,7 +6,9 @@ import { useTracking } from '@/components/tracking/TrackingProvider';
 
 interface CartContextType {
   items: CartItem[];
-  addItem: (item: MenuItem, quantity?: number) => void;
+  cartOutletSlug: string | null;
+  setCartOutletSlug: (slug: string | null) => void;
+  addItem: (item: MenuItem, quantity?: number, outletSlug?: string) => void;
   removeItem: (itemId: string) => void;
   updateQuantity: (itemId: string, quantity: number) => void;
   clearCart: () => void;
@@ -39,6 +41,7 @@ const CartContext = createContext<CartContextType | undefined>(undefined);
 
 export function CartProvider({ children }: { children: React.ReactNode }) {
   const [items, setItems] = useState<CartItem[]>([]);
+  const [cartOutletSlug, setCartOutletSlug] = useState<string | null>(null);
   const [appliedCoupon, setAppliedCoupon] = useState<string | null>(null);
   const [discountPercent, setDiscountPercent] = useState<number>(0);
   const [isCartOpen, setIsCartOpen] = useState(false);
@@ -51,6 +54,10 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       if (saved) {
         setItems(JSON.parse(saved));
       }
+      const savedOutlet = localStorage.getItem('pnr_cart_outlet');
+      if (savedOutlet) {
+        setCartOutletSlug(savedOutlet);
+      }
     } catch (e) {
       console.warn('Failed to parse cart storage', e);
     }
@@ -60,12 +67,17 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     try {
       localStorage.setItem('pnr_cart', JSON.stringify(items));
+      if (cartOutletSlug) {
+        localStorage.setItem('pnr_cart_outlet', cartOutletSlug);
+      } else {
+        localStorage.removeItem('pnr_cart_outlet');
+      }
     } catch (e) {
       console.warn('Failed to save cart storage', e);
     }
-  }, [items]);
+  }, [items, cartOutletSlug]);
 
-  const addItem = (item: MenuItem, quantity = 1) => {
+  const addItem = (item: MenuItem, quantity = 1, outletSlug?: string) => {
     // Validate live availability and stock quantity before adding
     if (
       item.isAvailable === false ||
@@ -73,6 +85,22 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     ) {
       console.warn(`Cannot add sold-out item "${item.name}" to basket`);
       return;
+    }
+
+    if (outletSlug) {
+      // Cross-outlet protection: if user has items from another outlet, switch kitchen
+      if (cartOutletSlug && cartOutletSlug !== outletSlug && items.length > 0) {
+        setItems([{ item, quantity }]);
+        setCartOutletSlug(outletSlug);
+        tracking.trackAddToCart({
+          id: item.id,
+          name: item.name,
+          price: item.price,
+          quantity,
+        });
+        return;
+      }
+      setCartOutletSlug(outletSlug);
     }
 
     setItems((prev) => {
@@ -94,7 +122,13 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   };
 
   const removeItem = (itemId: string) => {
-    setItems((prev) => prev.filter((i) => i.item.id !== itemId));
+    setItems((prev) => {
+      const remaining = prev.filter((i) => i.item.id !== itemId);
+      if (remaining.length === 0) {
+        setCartOutletSlug(null);
+      }
+      return remaining;
+    });
   };
 
   const updateQuantity = (itemId: string, quantity: number) => {
@@ -111,6 +145,10 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     setItems([]);
     setAppliedCoupon(null);
     setDiscountPercent(0);
+    setCartOutletSlug(null);
+    try {
+      localStorage.removeItem('pnr_cart_outlet');
+    } catch {}
   };
 
   const applyCoupon = (code: string, discountPercentage: number) => {
@@ -235,6 +273,8 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     <CartContext.Provider
       value={{
         items,
+        cartOutletSlug,
+        setCartOutletSlug,
         addItem,
         removeItem,
         updateQuantity,

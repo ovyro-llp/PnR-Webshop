@@ -12,17 +12,33 @@ export default function AccountPage() {
   const router = useRouter();
   const { user, isCustomer, logout } = useAuth();
   const [orders, setOrders] = useState<Order[]>([]);
+  const [loadingOrders, setLoadingOrders] = useState<boolean>(true);
 
   useEffect(() => {
-    fetch('/api/orders/list')
+    if (!user || !isCustomer) {
+      setOrders([]);
+      setLoadingOrders(false);
+      return;
+    }
+
+    const phone = (user as { phone?: string }).phone;
+    if (!phone) {
+      setOrders([]);
+      setLoadingOrders(false);
+      return;
+    }
+
+    setLoadingOrders(true);
+    fetch(`/api/orders/list?phone=${encodeURIComponent(phone)}`)
       .then((res) => res.json())
       .then((data) => {
         if (data.success) {
           setOrders(data.orders);
         }
       })
-      .catch(console.error);
-  }, []);
+      .catch(console.error)
+      .finally(() => setLoadingOrders(false));
+  }, [user, isCustomer]);
 
   if (!user || !isCustomer) {
     return (
@@ -112,7 +128,9 @@ export default function AccountPage() {
               Recent Bakery Orders
             </h3>
 
-            {orders.length === 0 ? (
+            {loadingOrders ? (
+              <p className="text-xs text-stone-400 py-6 text-center animate-pulse">Loading your orders...</p>
+            ) : orders.length === 0 ? (
               <p className="text-xs text-stone-400 py-6 text-center">No orders placed yet.</p>
             ) : (
               <div className="divide-y divide-stone-100">

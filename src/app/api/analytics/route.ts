@@ -6,15 +6,20 @@ export async function GET(req: NextRequest) {
     const { searchParams } = new URL(req.url);
     const outletSlug = searchParams.get('outlet') || undefined;
 
-    const outletAnalytics = orderStore.getOutletAnalytics(outletSlug === 'all' ? undefined : outletSlug);
+    const isScoped = Boolean(outletSlug && outletSlug !== 'all');
+    const outletAnalytics = orderStore.getOutletAnalytics(isScoped ? outletSlug : undefined);
     const campaignAnalytics = orderStore.getCampaignAnalytics();
-    const allOrders = orderStore.getAllOrders();
+    
+    // Scoped orders if filtering by an outlet, or all orders across HQ
+    const ordersForMetrics = isScoped
+      ? orderStore.getOrdersByOutlet(outletSlug!)
+      : orderStore.getAllOrders();
 
     // High-level aggregate metrics
-    const totalGMV = allOrders.reduce((acc, o) => acc + o.total, 0);
-    const totalOrders = allOrders.length;
+    const totalGMV = ordersForMetrics.reduce((acc, o) => acc + o.total, 0);
+    const totalOrders = ordersForMetrics.length;
     const avgOrderValue = totalOrders > 0 ? Math.round(totalGMV / totalOrders) : 0;
-    const completedOrders = allOrders.filter((o) => o.orderStatus === 'DELIVERED').length;
+    const completedOrders = ordersForMetrics.filter((o) => o.orderStatus === 'DELIVERED').length;
 
     return NextResponse.json({
       success: true,

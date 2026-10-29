@@ -386,13 +386,15 @@ export const orderStore = {
     update: Partial<Order['mangwale']> & { orderStatus?: Order['orderStatus'] }
   ): Order | undefined => {
     const orders = globalThis.__PNR_ORDERS__ || [];
-    const index = orders.findIndex((o) => o.mangwale.taskId === taskId);
+    const index = orders.findIndex(
+      (o) => o.mangwale?.taskId === taskId || o.id === taskId || o.orderNumber === taskId
+    );
     if (index !== -1) {
       const current = orders[index];
       orders[index] = {
         ...current,
         mangwale: {
-          ...current.mangwale,
+          ...(current.mangwale || { status: 'PENDING' }),
           ...update,
         },
         orderStatus: update.orderStatus || current.orderStatus,

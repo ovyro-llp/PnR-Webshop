@@ -100,6 +100,27 @@ export default function AdminPage() {
     }
   };
 
+  const handleUpdateOrderStatus = async (
+    orderId: string,
+    newStatus: Order['orderStatus']
+  ) => {
+    try {
+      const res = await fetch(`/api/orders/${orderId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ orderStatus: newStatus }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setStatusMessage(`✓ Order status updated: ${newStatus.replace(/_/g, ' ')}`);
+        fetchOrders();
+        setTimeout(() => setStatusMessage(''), 3500);
+      }
+    } catch (err) {
+      console.error('Failed to update order status', err);
+    }
+  };
+
   const filteredOrders =
     selectedOutletFilter === 'all'
       ? orders
@@ -341,6 +362,79 @@ export default function AdminPage() {
                           </div>
                         )}
                       </div>
+                    </div>
+                  </div>
+
+                  {/* Kitchen & Dispatch Quick Action Bar */}
+                  <div className="pt-3 border-t border-stone-100 flex flex-wrap items-center justify-between gap-2">
+                    <div className="text-[11px] text-stone-500 font-medium">
+                      Status: <strong className="text-stone-800">{order.orderStatus.replace(/_/g, ' ')}</strong>
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                      {order.orderStatus === 'RECEIVED' && (
+                        <>
+                          <button
+                            onClick={() => handleUpdateOrderStatus(order.id, 'PREPARING')}
+                            className="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold rounded-full shadow-2xs transition cursor-pointer"
+                          >
+                            Start Baking
+                          </button>
+                          <button
+                            onClick={() => handleUpdateOrderStatus(order.id, 'CANCELLED')}
+                            className="px-3 py-1.5 bg-stone-100 hover:bg-red-50 text-stone-600 hover:text-red-700 text-xs font-medium rounded-full transition cursor-pointer"
+                          >
+                            Cancel
+                          </button>
+                        </>
+                      )}
+
+                      {order.orderStatus === 'PREPARING' && (
+                        <>
+                          <button
+                            onClick={() => handleUpdateOrderStatus(order.id, 'DISPATCHED')}
+                            className="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold rounded-full shadow-2xs transition cursor-pointer"
+                          >
+                            Ready for Dispatch
+                          </button>
+                          <button
+                            onClick={() => handleUpdateOrderStatus(order.id, 'CANCELLED')}
+                            className="px-3 py-1.5 bg-stone-100 hover:bg-red-50 text-stone-600 hover:text-red-700 text-xs font-medium rounded-full transition cursor-pointer"
+                          >
+                            Cancel
+                          </button>
+                        </>
+                      )}
+
+                      {order.orderStatus === 'DISPATCHED' && (
+                        <button
+                          onClick={() => handleUpdateOrderStatus(order.id, 'OUT_FOR_DELIVERY')}
+                          className="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold rounded-full shadow-2xs transition cursor-pointer"
+                        >
+                          Out for Delivery
+                        </button>
+                      )}
+
+                      {order.orderStatus === 'OUT_FOR_DELIVERY' && (
+                        <button
+                          onClick={() => handleUpdateOrderStatus(order.id, 'DELIVERED')}
+                          className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold rounded-full shadow-2xs transition cursor-pointer"
+                        >
+                          Mark Delivered
+                        </button>
+                      )}
+
+                      {order.orderStatus === 'DELIVERED' && (
+                        <span className="text-xs font-semibold text-emerald-700 bg-emerald-50 px-3 py-1 rounded-full border border-emerald-200">
+                          ✓ Delivery Completed
+                        </span>
+                      )}
+
+                      {order.orderStatus === 'CANCELLED' && (
+                        <span className="text-xs font-semibold text-rose-700 bg-rose-50 px-3 py-1 rounded-full border border-rose-200">
+                          Order Cancelled
+                        </span>
+                      )}
                     </div>
                   </div>
                 </div>

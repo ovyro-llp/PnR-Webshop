@@ -31,6 +31,7 @@ export function CartDrawer({ outletSlug, campaignSlug }: CartDrawerProps) {
   const { user } = useAuth();
   const {
     items,
+    cartOutletSlug,
     itemCount,
     subtotal,
     discount,
@@ -46,6 +47,8 @@ export function CartDrawer({ outletSlug, campaignSlug }: CartDrawerProps) {
     verifyRazorpayPayment,
   } = useCart();
 
+  const effectiveOutletSlug = cartOutletSlug || outletSlug;
+
   const [couponInput, setCouponInput] = useState('');
   const [couponError, setCouponError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -60,6 +63,21 @@ export function CartDrawer({ outletSlug, campaignSlug }: CartDrawerProps) {
     pincode: '422005',
     specialInstructions: '',
   });
+
+  // Sync logged-in customer info automatically
+  React.useEffect(() => {
+    if (user && user.role === 'CUSTOMER') {
+      const defaultAddr = user.savedAddresses?.[0];
+      setCustomer((prev) => ({
+        ...prev,
+        name: user.name || prev.name,
+        phone: user.phone || prev.phone,
+        address: defaultAddr?.address || prev.address,
+        area: defaultAddr?.area || prev.area,
+        pincode: defaultAddr?.pincode || prev.pincode,
+      }));
+    }
+  }, [user]);
 
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('UPI');
 
@@ -117,25 +135,25 @@ export function CartDrawer({ outletSlug, campaignSlug }: CartDrawerProps) {
 
     // Flow 1: Cash on Delivery
     if (paymentMethod === 'COD') {
-      const res = await submitOrder(outletSlug, campaignSlug, customer, 'COD');
+      const res = await submitOrder(effectiveOutletSlug, campaignSlug, customer, 'COD');
       setIsSubmitting(false);
 
       if (res.success && res.order) {
-        router.push(`/${outletSlug}/order/${res.order.id}`);
+        router.push(`/${effectiveOutletSlug}/order/${res.order.id}`);
       } else {
         setSubmitError(res.error || 'Failed to place order. Please try again.');
       }
       return;
     }
 
-    // Flow 2: Razorpay Online Payment Gateway (UPI, Cards, NetBanking)
+    // Flow 2: Online Payment Gateway (UPI, Cards, NetBanking)
     try {
       const createRes = await fetch('/api/payments/razorpay/create-order', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           amount: total,
-          outletSlug,
+          outletSlug: effectiveOutletSlug,
           campaignSlug,
           customer,
           items: items.map((i) => ({
@@ -167,20 +185,20 @@ export function CartDrawer({ outletSlug, campaignSlug }: CartDrawerProps) {
           orderData.orderId,
           `pay_sandbox_${Date.now()}`,
           'mock_signature',
-          outletSlug,
+          effectiveOutletSlug,
           campaignSlug,
           customer
         );
         setIsSubmitting(false);
         if (verifyRes.success && verifyRes.order) {
-          router.push(`/${outletSlug}/order/${verifyRes.order.id}`);
+          router.push(`/${effectiveOutletSlug}/order/${verifyRes.order.id}`);
         } else {
           setSubmitError(verifyRes.error || 'Payment verification failed');
         }
         return;
       }
 
-      // Initialize Razorpay Standard Modal
+      // Initialize Payment Standard Modal
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const RazorpayConstructor = (window as unknown as { Razorpay: any }).Razorpay;
       const options = {
@@ -196,7 +214,7 @@ export function CartDrawer({ outletSlug, campaignSlug }: CartDrawerProps) {
           contact: customer.phone,
         },
         notes: {
-          outletSlug,
+          outletSlug: effectiveOutletSlug,
           area: customer.area,
         },
         theme: {
@@ -217,13 +235,13 @@ export function CartDrawer({ outletSlug, campaignSlug }: CartDrawerProps) {
               response.razorpay_order_id,
               response.razorpay_payment_id,
               response.razorpay_signature,
-              outletSlug,
+              effectiveOutletSlug,
               campaignSlug,
               customer
             );
             setIsSubmitting(false);
             if (verifyRes.success && verifyRes.order) {
-              router.push(`/${outletSlug}/order/${verifyRes.order.id}`);
+              router.push(`/${effectiveOutletSlug}/order/${verifyRes.order.id}`);
             } else {
               setSubmitError(verifyRes.error || 'Payment verification failed');
             }
