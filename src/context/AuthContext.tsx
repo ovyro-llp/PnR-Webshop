@@ -36,6 +36,7 @@ interface AuthContextType {
   isAuthenticated: boolean;
   isAdmin: boolean;
   isCustomer: boolean;
+  isHydrated: boolean;
   loginCustomer: (phone: string, name?: string) => Promise<boolean>;
   loginAdmin: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
   logout: () => void;
@@ -48,6 +49,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<AuthUser | null>(null);
+  const [isHydrated, setIsHydrated] = useState(false);
   const [isCustomerLoginModalOpen, setIsCustomerLoginModalOpen] = useState(false);
 
   // Restore auth from storage
@@ -59,6 +61,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
     } catch (e) {
       console.warn('Failed to parse auth user', e);
+    } finally {
+      setIsHydrated(true);
     }
   }, []);
 
@@ -141,6 +145,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         isAuthenticated: !!user,
         isAdmin: user?.role === 'ADMIN',
         isCustomer: user?.role === 'CUSTOMER',
+        isHydrated,
         loginCustomer,
         loginAdmin,
         logout,

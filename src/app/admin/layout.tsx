@@ -21,11 +21,13 @@ import {
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const pathname = usePathname();
-  const { user, logout } = useAuth();
+  const { user, isHydrated, logout } = useAuth();
   const [isChecking, setIsChecking] = useState(true);
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
 
   useEffect(() => {
+    if (!isHydrated) return;
+
     if (pathname === '/admin/login') {
       setIsChecking(false);
       return;
@@ -36,7 +38,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     } else {
       setIsChecking(false);
     }
-  }, [user, pathname, router]);
+  }, [user, isHydrated, pathname, router]);
 
   // Close sidebar automatically when route changes
   useEffect(() => {

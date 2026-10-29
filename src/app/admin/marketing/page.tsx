@@ -16,10 +16,13 @@ import {
   RefreshCw,
   Eye,
   Check,
+  CreditCard,
+  Lock,
+  ShieldCheck,
 } from 'lucide-react';
 
 export default function MarketingViewPage() {
-  const [activeTab, setActiveTab] = useState<'tags' | 'generator' | 'analytics'>('tags');
+  const [activeTab, setActiveTab] = useState<'tags' | 'generator' | 'analytics' | 'payments'>('tags');
   const [outlets, setOutlets] = useState<Outlet[]>(OUTLETS);
   const [tags, setTags] = useState({
     globalMetaPixelId: '999888777666555',
@@ -31,6 +34,17 @@ export default function MarketingViewPage() {
     metaCapiAccessToken: 'EAABw...[ENCRYPTED_SERVER_TOKEN]',
     customHeaderScript: '<!-- P&R Universal Analytics Engine Active -->',
   });
+
+  const [paymentConfig, setPaymentConfig] = useState({
+    razorpayKeyId: 'rzp_test_pnr_demo',
+    razorpayKeySecret: '',
+    razorpayWebhookSecret: '',
+    isEnabled: true,
+    testMode: true,
+    businessName: "Puffs 'n' Rolls Nashik",
+  });
+  const [isSavingPayment, setIsSavingPayment] = useState(false);
+  const [copiedWebhookUrl, setCopiedWebhookUrl] = useState(false);
 
   const [campaigns, setCampaigns] = useState<Campaign[]>(CAMPAIGNS);
   const [analytics, setAnalytics] = useState<CampaignAnalytics[]>([]);
@@ -69,6 +83,24 @@ export default function MarketingViewPage() {
     }
   };
 
+  const fetchPaymentConfig = async () => {
+    try {
+      const res = await fetch('/api/payments/config');
+      const data = await res.json();
+      if (data.success && data.config) {
+        setPaymentConfig((prev) => ({
+          ...prev,
+          razorpayKeyId: data.config.razorpayKeyId || '',
+          isEnabled: data.config.isEnabled ?? true,
+          testMode: data.config.testMode ?? true,
+          businessName: data.config.businessName || "Puffs 'n' Rolls Nashik",
+        }));
+      }
+    } catch (e) {
+      console.error('Failed to fetch payment config', e);
+    }
+  };
+
   const fetchOutlets = async () => {
     try {
       const res = await fetch('/api/outlets');
@@ -84,6 +116,7 @@ export default function MarketingViewPage() {
   useEffect(() => {
     fetchMarketingData();
     fetchOutlets();
+    fetchPaymentConfig();
   }, []);
 
   const handleSaveTags = async (e: React.FormEvent) => {
@@ -150,6 +183,31 @@ export default function MarketingViewPage() {
     }
   };
 
+  const handleSavePaymentConfig = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSavingPayment(true);
+    setStatusMessage('');
+    try {
+      const res = await fetch('/api/payments/config', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(paymentConfig),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setStatusMessage('✓ Razorpay API payment gateway configuration saved!');
+        fetchPaymentConfig();
+        setTimeout(() => setStatusMessage(''), 4000);
+      } else {
+        setStatusMessage(data.error || 'Failed to update payment settings');
+      }
+    } catch (err) {
+      console.error('Failed to save payment config', err);
+    } finally {
+      setIsSavingPayment(false);
+    }
+  };
+
   const fullGeneratedUrl = `https://puffsnrolls.com/${genOutlet}/${genSlug}?utm_source=${genUtmSource}&utm_medium=${genUtmMedium}&utm_campaign=${genUtmCampaign}&offer=${genDiscountCode}`;
 
   const copyToClipboard = () => {
@@ -210,6 +268,17 @@ export default function MarketingViewPage() {
           >
             <TrendingUp className="w-3.5 h-3.5" />
             <span>Attribution &amp; ROAS</span>
+          </button>
+          <button
+            onClick={() => setActiveTab('payments')}
+            className={`px-3.5 py-1.5 rounded-full text-xs font-medium transition flex items-center gap-1.5 ${
+              activeTab === 'payments'
+                ? 'bg-[#1C1917] text-white font-semibold'
+                : 'text-stone-600 hover:text-stone-900 hover:bg-stone-50'
+            }`}
+          >
+            <CreditCard className="w-3.5 h-3.5" />
+            <span>Razorpay Gateway</span>
           </button>
         </div>
       </div>
@@ -687,6 +756,270 @@ export default function MarketingViewPage() {
               </table>
             </div>
           </div>
+        </div>
+      )}
+
+      {/* TAB 4: RAZORPAY PAYMENT GATEWAY */}
+      {activeTab === 'payments' && (
+        <div className="space-y-6">
+          {/* Gateway Status Banner */}
+          <div className="p-6 bg-white rounded-2xl border border-stone-200/80 shadow-2xs">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div className="flex items-start gap-4">
+                <div className="w-12 h-12 rounded-2xl bg-[#1C1917] text-white flex items-center justify-center shrink-0 shadow-xs">
+                  <CreditCard className="w-6 h-6 text-stone-200" />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <h2 className="text-base sm:text-lg font-serif font-bold text-stone-900">
+                      Razorpay Enterprise Gateway Integration
+                    </h2>
+                    <span
+                      className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${
+                        paymentConfig.isEnabled
+                          ? 'bg-emerald-50 text-emerald-800 border border-emerald-200'
+                          : 'bg-stone-100 text-stone-600 border border-stone-200'
+                      }`}
+                    >
+                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-600" />
+                      {paymentConfig.testMode ? 'Sandbox / Test Mode' : 'Live Production'}
+                    </span>
+                  </div>
+                  <p className="text-xs text-stone-500 mt-1 max-w-2xl leading-relaxed">
+                    Processes Indian digital payments including UPI (Google Pay, PhonePe, Paytm, BHIM),
+                    Mastercard, Visa, RuPay, NetBanking, and mobile wallets with HMAC SHA256 cryptographic verification.
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <a
+                  href="https://dashboard.razorpay.com"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="px-3.5 py-2 bg-stone-100 hover:bg-stone-200 text-stone-800 text-xs font-medium rounded-xl transition flex items-center gap-1.5"
+                >
+                  <span>Razorpay Dashboard</span>
+                  <ExternalLink className="w-3.5 h-3.5 text-stone-500" />
+                </a>
+              </div>
+            </div>
+          </div>
+
+          {/* Configuration Form */}
+          <form onSubmit={handleSavePaymentConfig} className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div className="lg:col-span-2 space-y-6">
+              {/* API Credentials */}
+              <div className="p-6 bg-white rounded-2xl border border-stone-200/80 shadow-2xs space-y-4">
+                <div className="flex items-center gap-2 pb-3 border-b border-stone-100">
+                  <Lock className="w-4 h-4 text-stone-800" />
+                  <h3 className="text-sm font-serif font-bold text-stone-900">
+                    API Authentication Keys
+                  </h3>
+                </div>
+
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-xs font-semibold text-stone-800 mb-1">
+                      Razorpay Key ID
+                    </label>
+                    <input
+                      type="text"
+                      value={paymentConfig.razorpayKeyId}
+                      onChange={(e) =>
+                        setPaymentConfig({ ...paymentConfig, razorpayKeyId: e.target.value })
+                      }
+                      placeholder="rzp_test_... or rzp_live_..."
+                      className="w-full px-3.5 py-2.5 bg-stone-50/50 border border-stone-200 rounded-xl text-xs font-mono text-stone-900 focus:bg-white focus:outline-none focus:ring-1 focus:ring-stone-900"
+                    />
+                    <p className="text-[11px] text-stone-400 mt-1">
+                      Available in your Razorpay Dashboard &gt; Settings &gt; API Keys.
+                    </p>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-semibold text-stone-800 mb-1">
+                      Razorpay Key Secret
+                    </label>
+                    <input
+                      type="password"
+                      value={paymentConfig.razorpayKeySecret}
+                      onChange={(e) =>
+                        setPaymentConfig({ ...paymentConfig, razorpayKeySecret: e.target.value })
+                      }
+                      placeholder="Enter new secret or leave blank to keep existing"
+                      className="w-full px-3.5 py-2.5 bg-stone-50/50 border border-stone-200 rounded-xl text-xs font-mono text-stone-900 focus:bg-white focus:outline-none focus:ring-1 focus:ring-stone-900"
+                    />
+                    <p className="text-[11px] text-stone-400 mt-1">
+                      Used by the backend server for cryptographic HMAC SHA-256 payment signature verification.
+                    </p>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-semibold text-stone-800 mb-1">
+                      Business Brand Name
+                    </label>
+                    <input
+                      type="text"
+                      value={paymentConfig.businessName}
+                      onChange={(e) =>
+                        setPaymentConfig({ ...paymentConfig, businessName: e.target.value })
+                      }
+                      placeholder="Puffs 'n' Rolls Nashik"
+                      className="w-full px-3.5 py-2.5 bg-stone-50/50 border border-stone-200 rounded-xl text-xs text-stone-900 focus:bg-white focus:outline-none focus:ring-1 focus:ring-stone-900"
+                    />
+                    <p className="text-[11px] text-stone-400 mt-1">
+                      Displayed on the customer checkout popup window.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Webhooks Config */}
+              <div className="p-6 bg-white rounded-2xl border border-stone-200/80 shadow-2xs space-y-4">
+                <div className="flex items-center gap-2 pb-3 border-b border-stone-100">
+                  <ShieldCheck className="w-4 h-4 text-stone-800" />
+                  <h3 className="text-sm font-serif font-bold text-stone-900">
+                    Webhook Auto-Reconciliation
+                  </h3>
+                </div>
+
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-xs font-semibold text-stone-800 mb-1">
+                      Endpoint URL (Paste into Razorpay Dashboard)
+                    </label>
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="text"
+                        readOnly
+                        value="https://puffsnrolls.com/api/payments/razorpay/webhook"
+                        className="flex-1 px-3.5 py-2.5 bg-stone-100/70 border border-stone-200 rounded-xl text-xs font-mono text-stone-700"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => {
+                          navigator.clipboard.writeText(
+                            'https://puffsnrolls.com/api/payments/razorpay/webhook'
+                          );
+                          setCopiedWebhookUrl(true);
+                          setTimeout(() => setCopiedWebhookUrl(false), 2000);
+                        }}
+                        className="px-3.5 py-2.5 bg-stone-100 hover:bg-stone-200 text-stone-800 text-xs font-medium rounded-xl transition flex items-center gap-1.5"
+                      >
+                        {copiedWebhookUrl ? (
+                          <>
+                            <Check className="w-3.5 h-3.5 text-emerald-600" />
+                            <span>Copied</span>
+                          </>
+                        ) : (
+                          <>
+                            <Copy className="w-3.5 h-3.5 text-stone-500" />
+                            <span>Copy URL</span>
+                          </>
+                        )}
+                      </button>
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-semibold text-stone-800 mb-1">
+                      Razorpay Webhook Secret
+                    </label>
+                    <input
+                      type="password"
+                      value={paymentConfig.razorpayWebhookSecret}
+                      onChange={(e) =>
+                        setPaymentConfig({
+                          ...paymentConfig,
+                          razorpayWebhookSecret: e.target.value,
+                        })
+                      }
+                      placeholder="Webhook secret string configured in Razorpay"
+                      className="w-full px-3.5 py-2.5 bg-stone-50/50 border border-stone-200 rounded-xl text-xs font-mono text-stone-900 focus:bg-white focus:outline-none focus:ring-1 focus:ring-stone-900"
+                    />
+                    <p className="text-[11px] text-stone-400 mt-1">
+                      Verifies incoming webhook requests with x-razorpay-signature header.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Side Column: Controls & Actions */}
+            <div className="space-y-6">
+              <div className="p-6 bg-white rounded-2xl border border-stone-200/80 shadow-2xs space-y-4">
+                <h3 className="text-sm font-serif font-bold text-stone-900 pb-2 border-b border-stone-100">
+                  Gateway Controls
+                </h3>
+
+                <div className="space-y-3">
+                  <label className="flex items-center justify-between p-3 rounded-xl bg-stone-50 border border-stone-200 cursor-pointer">
+                    <div>
+                      <p className="text-xs font-bold text-stone-900">Enable Razorpay</p>
+                      <p className="text-[11px] text-stone-500">
+                        Allow customers to pay online at checkout
+                      </p>
+                    </div>
+                    <input
+                      type="checkbox"
+                      checked={paymentConfig.isEnabled}
+                      onChange={(e) =>
+                        setPaymentConfig({ ...paymentConfig, isEnabled: e.target.checked })
+                      }
+                      className="w-4 h-4 rounded text-stone-900 focus:ring-stone-900"
+                    />
+                  </label>
+
+                  <label className="flex items-center justify-between p-3 rounded-xl bg-stone-50 border border-stone-200 cursor-pointer">
+                    <div>
+                      <p className="text-xs font-bold text-stone-900">Test / Sandbox Mode</p>
+                      <p className="text-[11px] text-stone-500">
+                        Simulate transactions with test cards &amp; UPI
+                      </p>
+                    </div>
+                    <input
+                      type="checkbox"
+                      checked={paymentConfig.testMode}
+                      onChange={(e) =>
+                        setPaymentConfig({ ...paymentConfig, testMode: e.target.checked })
+                      }
+                      className="w-4 h-4 rounded text-stone-900 focus:ring-stone-900"
+                    />
+                  </label>
+                </div>
+
+                <div className="pt-3 border-t border-stone-100">
+                  <button
+                    type="submit"
+                    disabled={isSavingPayment}
+                    className="w-full py-3 bg-[#1C1917] hover:bg-stone-800 text-white rounded-xl text-xs font-bold uppercase tracking-wider transition shadow-sm flex items-center justify-center gap-2 disabled:opacity-60 cursor-pointer"
+                  >
+                    {isSavingPayment ? (
+                      <span>Saving Gateway Settings...</span>
+                    ) : (
+                      <>
+                        <CheckCircle2 className="w-4 h-4" />
+                        <span>Save Payment Settings</span>
+                      </>
+                    )}
+                  </button>
+                </div>
+              </div>
+
+              {/* Security Guarantee Box */}
+              <div className="p-4 bg-stone-50 rounded-2xl border border-stone-200/80 space-y-2">
+                <div className="flex items-center gap-1.5 text-stone-800 font-bold text-xs">
+                  <Lock className="w-3.5 h-3.5 text-emerald-600" />
+                  <span>Compliance &amp; PCI-DSS</span>
+                </div>
+                <p className="text-[11px] text-stone-500 leading-relaxed">
+                  All payment transactions occur through Razorpay's PCI-DSS Level 1 compliant infrastructure.
+                  No card details or CVVs are ever stored on Puffs 'n' Rolls bakery servers.
+                </p>
+              </div>
+            </div>
+          </form>
         </div>
       )}
     </div>

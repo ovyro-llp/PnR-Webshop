@@ -155,8 +155,53 @@ export interface Order {
   paymentStatus: PaymentStatus;
   orderStatus: OrderStatus;
   mangwale: MangwaleLogisticsInfo;
+  razorpayOrderId?: string;
+  razorpayPaymentId?: string;
+  razorpaySignature?: string;
   createdAt: string;
   updatedAt: string;
+}
+
+export interface RazorpayOrderResponse {
+  id: string;
+  amount: number;
+  currency: string;
+  receipt: string;
+  status: string;
+  keyId: string;
+  mock?: boolean;
+}
+
+export interface RazorpayVerificationPayload {
+  razorpay_order_id: string;
+  razorpay_payment_id: string;
+  razorpay_signature: string;
+  orderPayload: {
+    outletSlug: string;
+    campaignSlug?: string;
+    customer: CustomerDetails;
+    items: {
+      itemId: string;
+      name: string;
+      price: number;
+      quantity: number;
+      total: number;
+    }[];
+    subtotal: number;
+    discount: number;
+    deliveryFee: number;
+    total: number;
+    paymentMethod: PaymentMethod;
+  };
+}
+
+export interface PaymentGatewayConfig {
+  razorpayKeyId: string;
+  razorpayKeySecret?: string;
+  razorpayWebhookSecret?: string;
+  isEnabled: boolean;
+  testMode: boolean;
+  businessName: string;
 }
 
 export interface TrackingEventPayload {

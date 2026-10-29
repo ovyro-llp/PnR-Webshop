@@ -25,6 +25,14 @@ interface CartContextType {
     customer: CustomerDetails,
     paymentMethod: PaymentMethod
   ) => Promise<{ success: boolean; order?: Order; error?: string }>;
+  verifyRazorpayPayment: (
+    razorpay_order_id: string,
+    razorpay_payment_id: string,
+    razorpay_signature: string,
+    outletSlug: string,
+    campaignSlug: string | undefined,
+    customer: CustomerDetails
+  ) => Promise<{ success: boolean; order?: Order; error?: string }>;
 }
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
@@ -158,6 +166,62 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  const verifyRazorpayPayment = async (
+    razorpay_order_id: string,
+    razorpay_payment_id: string,
+    razorpay_signature: string,
+    outletSlug: string,
+    campaignSlug: string | undefined,
+    customer: CustomerDetails
+  ) => {
+    try {
+      const orderPayload = {
+        outletSlug,
+        campaignSlug,
+        customer,
+        items: items.map((i) => ({
+          itemId: i.item.id,
+          name: i.item.name,
+          price: i.item.price,
+          quantity: i.quantity,
+          total: i.item.price * i.quantity,
+        })),
+        subtotal,
+        discount,
+        deliveryFee,
+        total,
+        paymentMethod: 'UPI' as PaymentMethod,
+      };
+
+      const res = await fetch('/api/payments/razorpay/verify', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          razorpay_order_id,
+          razorpay_payment_id,
+          razorpay_signature,
+          orderPayload,
+        }),
+      });
+
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        return { success: false, error: data.message || 'Payment verification failed' };
+      }
+
+      // Track conversion
+      tracking.trackPurchase(data.order.orderNumber, total, items);
+
+      clearCart();
+      setIsCartOpen(false);
+
+      return { success: true, order: data.order };
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Network error verifying payment';
+      return { success: false, error: msg };
+    }
+  };
+
   return (
     <CartContext.Provider
       value={{
@@ -176,6 +240,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         isCartOpen,
         setIsCartOpen,
         submitOrder,
+        verifyRazorpayPayment,
       }}
     >
       {children}

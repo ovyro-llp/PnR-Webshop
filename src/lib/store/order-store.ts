@@ -7,6 +7,7 @@ import {
   OutletStockItem,
   CampaignAnalytics,
   OutletAnalytics,
+  PaymentGatewayConfig,
 } from '@/types';
 import { OUTLETS, CAMPAIGNS, MENU_ITEMS, INITIAL_ORDERS } from '@/lib/data/mock-data';
 import { dispatchToMangwale } from '@/lib/logistics/mangwale';
@@ -26,6 +27,8 @@ declare global {
   var __PNR_OUTLET_STOCK__: OutletStockItem[] | undefined;
   // eslint-disable-next-line no-var
   var __PNR_MARKETING_TAGS__: Record<string, unknown> | undefined;
+  // eslint-disable-next-line no-var
+  var __PNR_PAYMENT_CONFIG__: PaymentGatewayConfig | undefined;
 }
 
 if (!globalThis.__PNR_ORDERS__) {
@@ -149,6 +152,17 @@ if (!globalThis.__PNR_MARKETING_TAGS__) {
   };
 }
 
+if (!globalThis.__PNR_PAYMENT_CONFIG__) {
+  globalThis.__PNR_PAYMENT_CONFIG__ = {
+    razorpayKeyId: process.env.RAZORPAY_KEY_ID || process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || 'rzp_test_pnr_demo',
+    razorpayKeySecret: process.env.RAZORPAY_KEY_SECRET || 'rzp_sec_demo_secret_key',
+    razorpayWebhookSecret: process.env.RAZORPAY_WEBHOOK_SECRET || 'rzp_whsec_demo',
+    isEnabled: true,
+    testMode: true,
+    businessName: "Puffs 'n' Rolls Nashik",
+  };
+}
+
 export const orderStore = {
   // Orders
   getAllOrders: (): Order[] => {
@@ -167,7 +181,17 @@ export const orderStore = {
     );
   },
 
-  createOrder: async (orderData: Omit<Order, 'id' | 'orderNumber' | 'createdAt' | 'updatedAt' | 'mangwale' | 'orderStatus' | 'paymentStatus'>): Promise<Order> => {
+  createOrder: async (
+    orderData: Omit<
+      Order,
+      'id' | 'orderNumber' | 'createdAt' | 'updatedAt' | 'mangwale' | 'orderStatus' | 'paymentStatus'
+    > & {
+      paymentStatus?: Order['paymentStatus'];
+      razorpayOrderId?: string;
+      razorpayPaymentId?: string;
+      razorpaySignature?: string;
+    }
+  ): Promise<Order> => {
     const outlet = orderStore.getOutletBySlug(orderData.outletSlug);
     if (!outlet) {
       throw new Error(`Outlet not found: ${orderData.outletSlug}`);
@@ -179,11 +203,16 @@ export const orderStore = {
       id: `ord-${Date.now()}`,
       orderNumber,
       orderStatus: 'RECEIVED',
-      paymentStatus: orderData.paymentMethod === 'COD' ? 'COD_CONFIRMED' : 'COMPLETED',
+      paymentStatus:
+        orderData.paymentStatus ||
+        (orderData.paymentMethod === 'COD' ? 'COD_CONFIRMED' : 'COMPLETED'),
       mangwale: {
         status: 'PENDING',
         notes: 'Dispatch initiated to logistics fleet',
       },
+      razorpayOrderId: orderData.razorpayOrderId,
+      razorpayPaymentId: orderData.razorpayPaymentId,
+      razorpaySignature: orderData.razorpaySignature,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     };
@@ -408,6 +437,49 @@ export const orderStore = {
       ...tags,
     };
     return globalThis.__PNR_MARKETING_TAGS__;
+  },
+
+  // Payment Gateway (Razorpay) Configuration & Status
+  getPaymentConfig: (): PaymentGatewayConfig => {
+    return (
+      globalThis.__PNR_PAYMENT_CONFIG__ || {
+        razorpayKeyId: process.env.RAZORPAY_KEY_ID || process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || 'rzp_test_pnr_demo',
+        razorpayKeySecret: process.env.RAZORPAY_KEY_SECRET || 'rzp_sec_demo_secret_key',
+        razorpayWebhookSecret: process.env.RAZORPAY_WEBHOOK_SECRET || 'rzp_whsec_demo',
+        isEnabled: true,
+        testMode: true,
+        businessName: "Puffs 'n' Rolls Nashik",
+      }
+    );
+  },
+
+  updatePaymentConfig: (config: Partial<PaymentGatewayConfig>): PaymentGatewayConfig => {
+    globalThis.__PNR_PAYMENT_CONFIG__ = {
+      ...orderStore.getPaymentConfig(),
+      ...config,
+    };
+    return globalThis.__PNR_PAYMENT_CONFIG__;
+  },
+
+  updatePaymentStatus: (
+    orderId: string,
+    status: Order['paymentStatus'],
+    paymentId?: string
+  ): Order | undefined => {
+    const orders = globalThis.__PNR_ORDERS__ || [];
+    const index = orders.findIndex(
+      (o) => o.id === orderId || o.orderNumber === orderId || o.razorpayOrderId === orderId
+    );
+    if (index !== -1) {
+      orders[index] = {
+        ...orders[index],
+        paymentStatus: status,
+        razorpayPaymentId: paymentId || orders[index].razorpayPaymentId,
+        updatedAt: new Date().toISOString(),
+      };
+      return orders[index];
+    }
+    return undefined;
   },
 
   // Menu items filtered by outlet and stock availability
