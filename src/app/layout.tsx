@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
-import { Geist, Geist_Mono } from 'next/font/google';
+import { Geist, Geist_Mono, Playfair_Display } from 'next/font/google';
 import './globals.css';
+import { AuthProvider } from '@/context/AuthContext';
 import { CartProvider } from '@/context/CartContext';
 
 const geistSans = Geist({
@@ -13,10 +14,16 @@ const geistMono = Geist_Mono({
   subsets: ['latin'],
 });
 
+const playfair = Playfair_Display({
+  variable: '--font-serif',
+  subsets: ['latin'],
+  display: 'swap',
+});
+
 export const metadata: Metadata = {
-  title: 'Puffs and Rolls (P&R) | Nashik Artisanal Bakery & Fast Delivery',
+  title: "Puffs 'n' Rolls | Where Every Bite Unrolls Happiness | Nashik",
   description:
-    'Fresh oven-baked puffs, loaded rolls, celebration cakes & artisanal pastries across College Road, Nashik Road, and Indira Nagar. Fast 25-min delivery via Mangwale Logistics.',
+    "Artisanal bakery in Nashik since 2001. Fresh oven-baked puffs, loaded savory rolls, celebration cakes & handcrafted pastries across College Road, Nashik Road, and Indira Nagar.",
 };
 
 export default function RootLayout({
@@ -27,10 +34,12 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+      className={`${geistSans.variable} ${geistMono.variable} ${playfair.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col bg-stone-50 text-stone-900 font-sans">
-        <CartProvider>{children}</CartProvider>
+      <body className="min-h-full flex flex-col bg-[#FDFCFB] text-stone-900 font-sans selection:bg-stone-200">
+        <AuthProvider>
+          <CartProvider>{children}</CartProvider>
+        </AuthProvider>
       </body>
     </html>
   );

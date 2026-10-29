@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { Campaign, Outlet } from '@/types';
-import { Sparkles, Clock, Check, Bike, Copy } from 'lucide-react';
+import { Clock, Check, Copy, Sparkles, ArrowRight } from 'lucide-react';
 import { useCart } from '@/context/CartContext';
 
 interface CampaignHeroProps {
@@ -18,7 +18,6 @@ export function CampaignHero({ campaign, outlet }: CampaignHeroProps) {
     seconds: 0,
   });
 
-  // Countdown timer simulation for ads conversion urgency
   useEffect(() => {
     const timer = setInterval(() => {
       setTimeLeft((prev) => {
@@ -41,98 +40,94 @@ export function CampaignHero({ campaign, outlet }: CampaignHeroProps) {
   };
 
   return (
-    <div className="relative overflow-hidden bg-gradient-to-br from-amber-950 via-stone-900 to-amber-900 text-white rounded-3xl p-6 sm:p-10 shadow-2xl border border-amber-800/40">
-      {/* Background Decorative Pattern */}
-      <div className="absolute -right-20 -bottom-20 w-80 h-80 rounded-full bg-amber-500/10 blur-3xl pointer-events-none" />
-      <div className="absolute -left-20 -top-20 w-80 h-80 rounded-full bg-rose-500/10 blur-3xl pointer-events-none" />
-
-      <div className="relative z-10 max-w-3xl space-y-5">
+    <div className="relative overflow-hidden bg-[#FAF8F5] border border-stone-200/90 rounded-3xl p-6 sm:p-10 shadow-[0_4px_20px_rgba(0,0,0,0.02)]">
+      <div className="max-w-3xl space-y-5">
         {/* Badges Bar */}
-        <div className="flex flex-wrap items-center gap-2.5">
-          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-amber-500/20 text-amber-300 border border-amber-400/30 backdrop-blur-sm">
-            <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-semibold uppercase tracking-wider bg-white border border-stone-200 text-stone-800 shadow-xs">
+            <Sparkles className="w-3 h-3 text-stone-600" />
             {campaign.badge}
           </span>
 
-          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-white/10 text-stone-200 backdrop-blur-sm">
-            📍 {outlet.name}
+          <span className="inline-flex items-center px-3 py-1 rounded-full text-[11px] font-medium text-stone-600 bg-white border border-stone-200">
+            📍 {outlet.name.replace("Puffs 'n' Rolls - ", '')}
           </span>
 
-          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-emerald-500/20 text-emerald-300 border border-emerald-400/30">
-            <Bike className="w-3.5 h-3.5" />
-            Mangwale 25-Min Delivery
+          <span className="inline-flex items-center px-3 py-1 rounded-full text-[11px] font-medium text-stone-600 bg-white border border-stone-200">
+            Express 25-Min Doorstep Delivery
           </span>
         </div>
 
-        {/* Main Headline */}
+        {/* Headline */}
         <div className="space-y-2">
-          <h1 className="text-2xl sm:text-4xl lg:text-5xl font-black tracking-tight leading-tight text-white">
+          <h1 className="text-2xl sm:text-4xl lg:text-5xl font-serif font-bold text-stone-900 tracking-tight leading-tight">
             {campaign.headline}
           </h1>
-          <p className="text-sm sm:text-base text-amber-100/90 max-w-2xl leading-relaxed">
+          <p className="text-sm sm:text-base text-stone-600 max-w-2xl leading-relaxed">
             {campaign.subheadline}
           </p>
         </div>
 
-        {/* Dynamic Offer & Urgency Box */}
-        <div className="flex flex-wrap items-center gap-4 pt-2">
-          {/* Coupon Code Pill */}
-          <div className="flex items-center gap-2 bg-black/40 border border-amber-500/40 rounded-xl px-3.5 py-2 backdrop-blur-md">
+        {/* Offer Code & Timer */}
+        <div className="flex flex-wrap items-center gap-3 pt-1">
+          <div className="flex items-center gap-3 bg-white border border-stone-300 rounded-2xl px-3.5 py-2 shadow-xs">
             <div>
-              <p className="text-[10px] text-amber-300 uppercase font-semibold">
-                Use Coupon Code
+              <p className="text-[10px] text-stone-400 uppercase tracking-widest font-semibold">
+                Promo Code
               </p>
-              <p className="font-mono text-base font-extrabold text-white tracking-widest">
+              <p className="font-mono text-sm font-bold text-stone-900 tracking-wider">
                 {campaign.offerCode}
               </p>
             </div>
             <button
               onClick={handleCopyCode}
-              className="ml-2 px-2.5 py-1.5 bg-amber-600 hover:bg-amber-700 rounded-lg text-xs font-bold flex items-center gap-1 transition"
+              className="ml-2 px-3 py-1.5 bg-[#1C1917] hover:bg-stone-800 text-white rounded-xl text-xs font-medium transition flex items-center gap-1"
             >
               {copied ? (
                 <>
-                  <Check className="w-3.5 h-3.5 text-white" />
-                  <span>Applied!</span>
+                  <Check className="w-3 h-3 text-white" />
+                  <span>Applied</span>
                 </>
               ) : (
                 <>
-                  <Copy className="w-3.5 h-3.5 text-white" />
+                  <Copy className="w-3 h-3 text-white" />
                   <span>Apply</span>
                 </>
               )}
             </button>
           </div>
 
-          {/* Flash Timer */}
-          <div className="flex items-center gap-2 bg-rose-950/60 border border-rose-700/50 rounded-xl px-3.5 py-2">
-            <Clock className="w-4 h-4 text-rose-400 animate-pulse" />
+          <div className="flex items-center gap-2 bg-white border border-stone-200 rounded-2xl px-3.5 py-2">
+            <Clock className="w-4 h-4 text-stone-400" />
             <div>
-              <p className="text-[10px] text-rose-300 uppercase font-semibold">Offer Closes In</p>
-              <p className="font-mono text-sm font-bold text-white">
+              <p className="text-[10px] text-stone-400 uppercase tracking-widest font-semibold">
+                Offer Active For
+              </p>
+              <p className="font-mono text-xs font-bold text-stone-800">
                 {String(timeLeft.minutes).padStart(2, '0')}:{String(timeLeft.seconds).padStart(2, '0')}
               </p>
             </div>
           </div>
         </div>
 
-        {/* CTA Button */}
+        {/* CTA */}
         <div className="pt-2 flex flex-wrap items-center gap-3">
           <button
             onClick={() => {
               applyCoupon(campaign.offerCode, campaign.discountPercentage);
               setIsCartOpen(true);
             }}
-            className="px-6 py-3.5 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-stone-950 font-black text-sm rounded-xl shadow-lg shadow-amber-500/20 hover:scale-102 transition flex items-center gap-2"
+            className="px-6 py-3 bg-[#1C1917] hover:bg-stone-800 text-white font-medium text-xs tracking-wider uppercase rounded-full shadow-sm hover:scale-[1.01] transition flex items-center gap-2"
           >
             <span>{campaign.ctaText}</span>
-            <span className="bg-stone-950/20 px-2 py-0.5 rounded text-xs font-bold">
+            <span className="bg-white/20 px-2 py-0.5 rounded-full text-[10px] font-bold">
               {campaign.discountPercentage}% OFF
             </span>
+            <ArrowRight className="w-3.5 h-3.5" />
           </button>
 
-          <span className="text-xs text-amber-200/80">
-            Min. order ₹{campaign.minOrderValue} • Freshly prepared on order
+          <span className="text-xs text-stone-500">
+            Min. order ₹{campaign.minOrderValue} • Freshly baked upon order
           </span>
         </div>
       </div>

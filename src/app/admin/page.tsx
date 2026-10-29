@@ -9,20 +9,20 @@ import {
   Store,
   Tag,
   ShoppingBag,
-  Bike,
   Activity,
   Save,
   CheckCircle2,
   ExternalLink,
   RefreshCw,
-  Search,
   Filter,
   DollarSign,
   Send,
+  Truck,
+  Plus,
 } from 'lucide-react';
 
 export default function AdminPage() {
-  const [activeTab, setActiveTab] = useState<'pixels' | 'orders' | 'mangwale'>('pixels');
+  const [activeTab, setActiveTab] = useState<'pixels' | 'orders' | 'dispatch'>('pixels');
   const [outlets, setOutlets] = useState<Outlet[]>(OUTLETS);
   const [campaigns, setCampaigns] = useState<Campaign[]>(CAMPAIGNS);
   const [orders, setOrders] = useState<Order[]>([]);
@@ -91,8 +91,8 @@ export default function AdminPage() {
     }
   };
 
-  // Mangwale Webhook Simulator
-  const handleSimulateMangwaleStatus = async (
+  // Dispatch Webhook Simulator
+  const handleSimulateStatus = async (
     taskId: string,
     eventStatus: 'RIDER_ASSIGNED' | 'PICKED' | 'OUT_FOR_DELIVERY' | 'DELIVERED'
   ) => {
@@ -114,7 +114,7 @@ export default function AdminPage() {
 
       const data = await res.json();
       if (data.success) {
-        setStatusMessage(`✓ Mangwale delivery updated: ${eventStatus}`);
+        setStatusMessage(`✓ Logistics status updated: ${eventStatus}`);
         fetchOrders();
       }
     } catch (e) {
@@ -130,445 +130,410 @@ export default function AdminPage() {
   const totalRevenue = filteredOrders.reduce((sum, o) => sum + o.total, 0);
 
   return (
-    <div className="min-h-screen bg-stone-100 flex flex-col font-sans">
-      {/* Top Admin Header */}
-      <header className="bg-stone-900 text-white border-b border-stone-800">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl bg-amber-600 flex items-center justify-center font-black text-sm">
-              P&amp;R
-            </div>
-            <div>
-              <h1 className="text-base font-bold text-white flex items-center gap-2">
-                <span>Multi-Outlet &amp; Marketing Operations Hub</span>
-                <span className="text-[10px] bg-amber-500/20 text-amber-300 px-2 py-0.5 rounded-full font-mono">
-                  FOCO Admin
-                </span>
-              </h1>
-              <p className="text-[11px] text-stone-400">
-                Performance Ads • Dynamic Pixels • Mangwale Nashik Logistics
-              </p>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-3">
-            <Link
-              href="/"
-              className="text-xs bg-stone-800 hover:bg-stone-700 text-stone-200 px-3 py-1.5 rounded-lg transition"
-            >
-              ← Back to Storefront
-            </Link>
-          </div>
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
+      {statusMessage && (
+        <div className="p-3 bg-emerald-950/60 border border-emerald-700/60 text-emerald-300 rounded-xl text-xs font-semibold flex items-center gap-2 shadow-sm">
+          <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+          <span>{statusMessage}</span>
         </div>
-      </header>
+      )}
 
-      {/* Main Workspace */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6 flex-1 w-full">
-        {statusMessage && (
-          <div className="p-3 bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-xl text-xs font-semibold flex items-center gap-2 shadow-sm animate-fade-in">
-            <CheckCircle2 className="w-4 h-4 text-emerald-600" />
-            <span>{statusMessage}</span>
+      {/* Metric Cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
+        <div className="bg-slate-900 p-5 rounded-2xl border border-slate-800 shadow-sm space-y-1">
+          <div className="flex items-center justify-between text-slate-400 text-xs font-medium">
+            <span>Total Orders</span>
+            <ShoppingBag className="w-4 h-4 text-amber-400" />
           </div>
-        )}
+          <p className="text-2xl font-black text-white">{filteredOrders.length}</p>
+          <p className="text-[11px] text-slate-500">Across active Nashik outlets</p>
+        </div>
 
-        {/* Metric Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
-          <div className="bg-white p-5 rounded-2xl border border-stone-200 shadow-sm space-y-1">
-            <div className="flex items-center justify-between text-stone-500 text-xs font-medium">
-              <span>Total Orders</span>
-              <ShoppingBag className="w-4 h-4 text-amber-600" />
-            </div>
-            <p className="text-2xl font-black text-stone-900">{filteredOrders.length}</p>
-            <p className="text-[11px] text-stone-400">Across active outlets</p>
+        <div className="bg-slate-900 p-5 rounded-2xl border border-slate-800 shadow-sm space-y-1">
+          <div className="flex items-center justify-between text-slate-400 text-xs font-medium">
+            <span>Gross Sales</span>
+            <DollarSign className="w-4 h-4 text-emerald-400" />
           </div>
+          <p className="text-2xl font-black text-white">₹{totalRevenue.toLocaleString()}</p>
+          <p className="text-[11px] text-emerald-400 font-medium">FOCO Outlet Settlement</p>
+        </div>
 
-          <div className="bg-white p-5 rounded-2xl border border-stone-200 shadow-sm space-y-1">
-            <div className="flex items-center justify-between text-stone-500 text-xs font-medium">
-              <span>Gross Sales</span>
-              <DollarSign className="w-4 h-4 text-emerald-600" />
-            </div>
-            <p className="text-2xl font-black text-stone-900">₹{totalRevenue.toLocaleString()}</p>
-            <p className="text-[11px] text-emerald-600 font-medium">100% Direct Outlet Settlement</p>
+        <div className="bg-slate-900 p-5 rounded-2xl border border-slate-800 shadow-sm space-y-1">
+          <div className="flex items-center justify-between text-slate-400 text-xs font-medium">
+            <span>Active Outlets</span>
+            <Store className="w-4 h-4 text-indigo-400" />
           </div>
+          <p className="text-2xl font-black text-white">3 Outlets</p>
+          <p className="text-[11px] text-slate-500">College Rd, Nashik Rd, Indira Nagar</p>
+        </div>
 
-          <div className="bg-white p-5 rounded-2xl border border-stone-200 shadow-sm space-y-1">
-            <div className="flex items-center justify-between text-stone-500 text-xs font-medium">
-              <span>Active Outlets</span>
-              <Store className="w-4 h-4 text-indigo-600" />
-            </div>
-            <p className="text-2xl font-black text-stone-900">3 Outlets</p>
-            <p className="text-[11px] text-stone-400">College Rd, Nashik Rd, Indira Nagar</p>
+        <div className="bg-slate-900 p-5 rounded-2xl border border-slate-800 shadow-sm space-y-1">
+          <div className="flex items-center justify-between text-slate-400 text-xs font-medium">
+            <span>Active Deliveries</span>
+            <Truck className="w-4 h-4 text-rose-400" />
           </div>
+          <p className="text-2xl font-black text-white">
+            {filteredOrders.filter((o) => o.mangwale?.taskId).length} In Transit
+          </p>
+          <p className="text-[11px] text-slate-500">Automated Dispatch Fleet</p>
+        </div>
+      </div>
 
-          <div className="bg-white p-5 rounded-2xl border border-stone-200 shadow-sm space-y-1">
-            <div className="flex items-center justify-between text-stone-500 text-xs font-medium">
-              <span>Mangwale Dispatches</span>
-              <Bike className="w-4 h-4 text-rose-600" />
-            </div>
-            <p className="text-2xl font-black text-stone-900">
-              {filteredOrders.filter((o) => o.mangwale?.taskId).length} Active
+      {/* Tabs Bar & Outlet Filter */}
+      <div className="flex flex-col sm:flex-row items-center justify-between gap-4 bg-slate-900 p-2.5 rounded-2xl border border-slate-800">
+        <div className="flex items-center gap-1.5 w-full sm:w-auto overflow-x-auto">
+          <button
+            onClick={() => setActiveTab('pixels')}
+            className={`px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-1.5 ${
+              activeTab === 'pixels'
+                ? 'bg-amber-500 text-slate-950 font-bold'
+                : 'text-slate-400 hover:bg-slate-800 hover:text-white'
+            }`}
+          >
+            <Activity className="w-3.5 h-3.5" />
+            <span>Dynamic Meta Pixels &amp; Ad Tags</span>
+          </button>
+
+          <button
+            onClick={() => setActiveTab('orders')}
+            className={`px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-1.5 ${
+              activeTab === 'orders'
+                ? 'bg-amber-500 text-slate-950 font-bold'
+                : 'text-slate-400 hover:bg-slate-800 hover:text-white'
+            }`}
+          >
+            <ShoppingBag className="w-3.5 h-3.5" />
+            <span>Orders &amp; Outlets ({filteredOrders.length})</span>
+          </button>
+
+          <button
+            onClick={() => setActiveTab('dispatch')}
+            className={`px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-1.5 ${
+              activeTab === 'dispatch'
+                ? 'bg-amber-500 text-slate-950 font-bold'
+                : 'text-slate-400 hover:bg-slate-800 hover:text-white'
+            }`}
+          >
+            <Truck className="w-3.5 h-3.5" />
+            <span>Delivery API Operations</span>
+          </button>
+        </div>
+
+        <div className="flex items-center gap-2 w-full sm:w-auto">
+          <Filter className="w-3.5 h-3.5 text-slate-400" />
+          <select
+            value={selectedOutletFilter}
+            onChange={(e) => setSelectedOutletFilter(e.target.value)}
+            className="bg-slate-800 border border-slate-700 text-white rounded-xl px-3 py-1.5 text-xs font-medium focus:outline-none"
+          >
+            <option value="all">All 3 Outlets (Brand HQ View)</option>
+            {outlets.map((o) => (
+              <option key={o.slug} value={o.slug}>
+                {o.name.replace("Puffs 'n' Rolls - ", '')}
+              </option>
+            ))}
+          </select>
+        </div>
+      </div>
+
+      {/* TAB 1: DYNAMIC PIXELS */}
+      {activeTab === 'pixels' && (
+        <div className="bg-slate-900 rounded-3xl border border-slate-800 p-6 space-y-6">
+          <div>
+            <h2 className="text-base font-bold text-white">
+              Dynamic Performance Marketing &amp; Meta Pixel Router
+            </h2>
+            <p className="text-xs text-slate-400 mt-0.5">
+              Every outlet campaign page automatically injects its configured Meta Pixel ID and Google Ads conversion tag. You can attach, replace, or test new pixel IDs dynamically here.
             </p>
-            <p className="text-[11px] text-stone-400">Nashik Hyperlocal Fleet</p>
-          </div>
-        </div>
-
-        {/* Tab Switcher & Outlet Filter */}
-        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 bg-white p-2.5 rounded-2xl border border-stone-200 shadow-sm">
-          <div className="flex items-center gap-1.5 w-full sm:w-auto overflow-x-auto">
-            <button
-              onClick={() => setActiveTab('pixels')}
-              className={`px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-1.5 ${
-                activeTab === 'pixels'
-                  ? 'bg-amber-600 text-white shadow-sm'
-                  : 'text-stone-600 hover:bg-stone-100'
-              }`}
-            >
-              <Activity className="w-3.5 h-3.5" />
-              <span>Dynamic Meta Pixels &amp; Ads</span>
-            </button>
-
-            <button
-              onClick={() => setActiveTab('orders')}
-              className={`px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-1.5 ${
-                activeTab === 'orders'
-                  ? 'bg-amber-600 text-white shadow-sm'
-                  : 'text-stone-600 hover:bg-stone-100'
-              }`}
-            >
-              <ShoppingBag className="w-3.5 h-3.5" />
-              <span>Orders &amp; Outlets ({filteredOrders.length})</span>
-            </button>
-
-            <button
-              onClick={() => setActiveTab('mangwale')}
-              className={`px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-1.5 ${
-                activeTab === 'mangwale'
-                  ? 'bg-amber-600 text-white shadow-sm'
-                  : 'text-stone-600 hover:bg-stone-100'
-              }`}
-            >
-              <Bike className="w-3.5 h-3.5" />
-              <span>Mangwale Logistics Simulator</span>
-            </button>
           </div>
 
-          <div className="flex items-center gap-2 w-full sm:w-auto">
-            <Filter className="w-3.5 h-3.5 text-stone-400" />
-            <select
-              value={selectedOutletFilter}
-              onChange={(e) => setSelectedOutletFilter(e.target.value)}
-              className="bg-stone-50 border border-stone-200 rounded-xl px-3 py-1.5 text-xs font-medium text-stone-800 focus:outline-none"
-            >
-              <option value="all">All 3 Outlets (Brand View)</option>
-              {outlets.map((o) => (
-                <option key={o.slug} value={o.slug}>
-                  {o.name.replace('Puffs and Rolls - ', '')}
-                </option>
-              ))}
-            </select>
-          </div>
-        </div>
+          <div className="divide-y divide-slate-800">
+            {campaigns.map((camp) => {
+              const targetOutlet = outlets.find((o) => o.slug === camp.outletSlug);
+              const isEditing = editCampaignId === camp.id;
 
-        {/* TAB 1: DYNAMIC META PIXELS & ADS CONFIGURATION */}
-        {activeTab === 'pixels' && (
-          <div className="bg-white rounded-3xl border border-stone-200 shadow-sm p-6 space-y-6">
-            <div>
-              <h2 className="text-lg font-black text-stone-900">
-                Dynamic Performance Marketing &amp; Meta Pixel Router
-              </h2>
-              <p className="text-xs text-stone-500 mt-0.5">
-                Each campaign landing page dynamically injects its configured Meta Pixel ID and Google Ads conversion tag. You can attach or update Pixel IDs dynamically here.
-              </p>
-            </div>
-
-            <div className="divide-y divide-stone-100">
-              {campaigns.map((camp) => {
-                const targetOutlet = outlets.find((o) => o.slug === camp.outletSlug);
-                const isEditing = editCampaignId === camp.id;
-
-                return (
-                  <div key={camp.id} className="py-5 space-y-3">
-                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-100 text-amber-800">
-                            {camp.badge}
-                          </span>
-                          <span className="text-xs font-semibold text-stone-500">
-                            Outlet: <strong>{targetOutlet?.name.replace('Puffs and Rolls - ', '')}</strong>
-                          </span>
-                        </div>
-                        <h3 className="font-extrabold text-stone-900 text-base mt-1">
-                          {camp.title}
-                        </h3>
-                        <p className="text-xs text-stone-500 font-mono mt-0.5">
-                          Destination URL: /{camp.outletSlug}/{camp.slug}
-                        </p>
-                      </div>
-
+              return (
+                <div key={camp.id} className="py-5 space-y-3">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                    <div>
                       <div className="flex items-center gap-2">
-                        <Link
-                          href={`/${camp.outletSlug}/${camp.slug}`}
-                          target="_blank"
-                          className="px-3 py-1.5 bg-stone-100 hover:bg-stone-200 text-stone-800 rounded-lg text-xs font-semibold flex items-center gap-1 transition"
-                        >
-                          <span>Open Landing Page</span>
-                          <ExternalLink className="w-3.5 h-3.5" />
-                        </Link>
-
-                        {!isEditing && (
-                          <button
-                            onClick={() => {
-                              setEditCampaignId(camp.id);
-                              setEditPixelId(camp.metaPixelId || '');
-                              setEditGoogleAdsId(camp.googleAdsId || '');
-                            }}
-                            className="px-3 py-1.5 bg-amber-600 hover:bg-amber-700 text-white rounded-lg text-xs font-bold transition flex items-center gap-1"
-                          >
-                            <SlidersHorizontal className="w-3 h-3" />
-                            <span>Edit Tags</span>
-                          </button>
-                        )}
+                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-800 text-amber-300 border border-slate-700">
+                          {camp.badge}
+                        </span>
+                        <span className="text-xs font-semibold text-slate-400">
+                          Outlet: <strong>{targetOutlet?.name.replace("Puffs 'n' Rolls - ", '')}</strong>
+                        </span>
                       </div>
+                      <h3 className="font-bold text-white text-base mt-1">
+                        {camp.title}
+                      </h3>
+                      <p className="text-xs text-slate-400 font-mono mt-0.5">
+                        Target URL: /{camp.outletSlug}/{camp.slug}
+                      </p>
                     </div>
 
-                    {/* Tag Editor Form */}
-                    {isEditing ? (
-                      <div className="p-4 bg-amber-50/70 rounded-2xl border border-amber-200 space-y-3">
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                          <div>
-                            <label className="block text-[11px] font-bold text-stone-700 mb-1">
-                              Meta Pixel ID (Facebook / Instagram)
-                            </label>
-                            <input
-                              type="text"
-                              value={editPixelId}
-                              onChange={(e) => setEditPixelId(e.target.value)}
-                              placeholder="e.g. 112233445566778"
-                              className="w-full px-3 py-2 bg-white border border-stone-300 rounded-lg text-xs font-mono focus:ring-1 focus:ring-amber-500 focus:outline-none"
-                            />
-                          </div>
-
-                          <div>
-                            <label className="block text-[11px] font-bold text-stone-700 mb-1">
-                              Google Ads Conversion Tag
-                            </label>
-                            <input
-                              type="text"
-                              value={editGoogleAdsId}
-                              onChange={(e) => setEditGoogleAdsId(e.target.value)}
-                              placeholder="e.g. AW-987654321/CR_PURCHASE"
-                              className="w-full px-3 py-2 bg-white border border-stone-300 rounded-lg text-xs font-mono focus:ring-1 focus:ring-amber-500 focus:outline-none"
-                            />
-                          </div>
-                        </div>
-
-                        <div className="flex items-center gap-2 pt-1">
-                          <button
-                            onClick={() => handleSavePixel(camp.id)}
-                            disabled={isSaving}
-                            className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-lg flex items-center gap-1.5 transition disabled:opacity-60"
-                          >
-                            <Save className="w-3.5 h-3.5" />
-                            <span>{isSaving ? 'Saving...' : 'Apply Live Tracking'}</span>
-                          </button>
-                          <button
-                            onClick={() => setEditCampaignId(null)}
-                            className="px-3 py-2 bg-stone-200 hover:bg-stone-300 text-stone-700 text-xs font-semibold rounded-lg transition"
-                          >
-                            Cancel
-                          </button>
-                        </div>
-                      </div>
-                    ) : (
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs bg-stone-50 p-3 rounded-xl border border-stone-200/80">
-                        <div className="flex items-center justify-between">
-                          <span className="text-stone-500">Active Meta Pixel:</span>
-                          <span className="font-mono text-emerald-700 font-bold">
-                            {camp.metaPixelId || 'Default Brand Pixel'}
-                          </span>
-                        </div>
-                        <div className="flex items-center justify-between">
-                          <span className="text-stone-500">Google Ads Conversion ID:</span>
-                          <span className="font-mono text-sky-700 font-bold">
-                            {camp.googleAdsId || 'None'}
-                          </span>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        )}
-
-        {/* TAB 2: LIVE ORDERS TABLE */}
-        {activeTab === 'orders' && (
-          <div className="bg-white rounded-3xl border border-stone-200 shadow-sm p-6 space-y-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <h2 className="text-lg font-black text-stone-900">Live Orders &amp; Dispatches</h2>
-                <p className="text-xs text-stone-500">
-                  Showing orders for {selectedOutletFilter === 'all' ? 'all outlets' : selectedOutletFilter}
-                </p>
-              </div>
-              <button
-                onClick={fetchOrders}
-                className="p-2 hover:bg-stone-100 rounded-lg text-stone-600 text-xs font-medium flex items-center gap-1"
-              >
-                <RefreshCw className="w-3.5 h-3.5" />
-                <span>Refresh</span>
-              </button>
-            </div>
-
-            <div className="overflow-x-auto">
-              <table className="w-full text-xs text-left">
-                <thead className="bg-stone-50 text-stone-600 border-b border-stone-200 uppercase font-semibold">
-                  <tr>
-                    <th className="py-3 px-3">Order ID</th>
-                    <th className="py-3 px-3">Outlet</th>
-                    <th className="py-3 px-3">Customer</th>
-                    <th className="py-3 px-3">Items</th>
-                    <th className="py-3 px-3">Total</th>
-                    <th className="py-3 px-3">Order Status</th>
-                    <th className="py-3 px-3">Mangwale Dispatch</th>
-                    <th className="py-3 px-3 text-right">Action</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-stone-100">
-                  {filteredOrders.map((ord) => (
-                    <tr key={ord.id} className="hover:bg-stone-50/80">
-                      <td className="py-3.5 px-3 font-mono font-bold text-stone-900">
-                        {ord.orderNumber}
-                      </td>
-                      <td className="py-3.5 px-3">
-                        <span className="capitalize font-medium text-amber-800">
-                          {ord.outletSlug.replace('-', ' ')}
-                        </span>
-                      </td>
-                      <td className="py-3.5 px-3">
-                        <p className="font-semibold text-stone-900">{ord.customer.name}</p>
-                        <p className="text-stone-400 text-[10px]">{ord.customer.phone}</p>
-                      </td>
-                      <td className="py-3.5 px-3 text-stone-600">
-                        {ord.items.map((i) => `${i.quantity}x ${i.name}`).join(', ')}
-                      </td>
-                      <td className="py-3.5 px-3 font-bold text-stone-900">
-                        ₹{ord.total}
-                        <span className="block text-[10px] text-stone-400 font-normal">
-                          {ord.paymentMethod}
-                        </span>
-                      </td>
-                      <td className="py-3.5 px-3">
-                        <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-800">
-                          {ord.orderStatus}
-                        </span>
-                      </td>
-                      <td className="py-3.5 px-3">
-                        <p className="font-mono text-emerald-700 font-semibold text-[11px]">
-                          {ord.mangwale.taskId || 'Queued'}
-                        </p>
-                        <p className="text-[10px] text-stone-500">
-                          {ord.mangwale.riderName ? `Rider: ${ord.mangwale.riderName}` : 'Assigning'}
-                        </p>
-                      </td>
-                      <td className="py-3.5 px-3 text-right">
-                        <Link
-                          href={`/${ord.outletSlug}/order/${ord.id}`}
-                          target="_blank"
-                          className="text-amber-700 hover:text-amber-900 font-bold hover:underline"
-                        >
-                          View Track
-                        </Link>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        )}
-
-        {/* TAB 3: MANGWALE LOGISTICS WEBHOOK SIMULATOR */}
-        {activeTab === 'mangwale' && (
-          <div className="bg-white rounded-3xl border border-stone-200 shadow-sm p-6 space-y-6">
-            <div>
-              <h2 className="text-lg font-black text-stone-900">
-                Mangwale Nashik Delivery API Integration Simulator
-              </h2>
-              <p className="text-xs text-stone-500 mt-0.5">
-                Test Mangwale webhook callbacks to verify live state updates across customer order tracking screens and outlet owner panels.
-              </p>
-            </div>
-
-            <div className="space-y-4">
-              {filteredOrders.map((ord) => (
-                <div
-                  key={ord.id}
-                  className="p-4 bg-stone-50 rounded-2xl border border-stone-200/80 flex flex-col sm:flex-row sm:items-center justify-between gap-4"
-                >
-                  <div className="space-y-1">
                     <div className="flex items-center gap-2">
-                      <span className="font-mono font-bold text-stone-900">
-                        {ord.orderNumber}
-                      </span>
-                      <span className="text-[10px] px-2 py-0.5 rounded-full bg-stone-200 font-mono text-stone-700">
-                        Task: {ord.mangwale.taskId || 'Not Assigned'}
-                      </span>
-                      <span className="text-xs font-bold text-emerald-600">
-                        Current: {ord.orderStatus}
-                      </span>
+                      <Link
+                        href={`/${camp.outletSlug}/${camp.slug}`}
+                        target="_blank"
+                        className="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg text-xs font-semibold flex items-center gap-1 transition"
+                      >
+                        <span>Open Ad Page</span>
+                        <ExternalLink className="w-3.5 h-3.5" />
+                      </Link>
+
+                      {!isEditing && (
+                        <button
+                          onClick={() => {
+                            setEditCampaignId(camp.id);
+                            setEditPixelId(camp.metaPixelId || '');
+                            setEditGoogleAdsId(camp.googleAdsId || '');
+                          }}
+                          className="px-3 py-1.5 bg-amber-500 hover:bg-amber-400 text-slate-950 rounded-lg text-xs font-bold transition flex items-center gap-1"
+                        >
+                          <SlidersHorizontal className="w-3 h-3" />
+                          <span>Attach / Edit Pixels</span>
+                        </button>
+                      )}
                     </div>
-                    <p className="text-xs text-stone-500">
-                      Destination: {ord.customer.name} ({ord.customer.area}, Nashik) • ₹{ord.total}
-                    </p>
                   </div>
 
-                  {ord.mangwale.taskId ? (
-                    <div className="flex flex-wrap items-center gap-2">
-                      <button
-                        onClick={() =>
-                          handleSimulateMangwaleStatus(ord.mangwale.taskId!, 'RIDER_ASSIGNED')
-                        }
-                        className="px-2.5 py-1 bg-sky-100 hover:bg-sky-200 text-sky-800 rounded-lg text-xs font-semibold transition"
-                      >
-                        1. Assign Rider
-                      </button>
-                      <button
-                        onClick={() =>
-                          handleSimulateMangwaleStatus(ord.mangwale.taskId!, 'PICKED')
-                        }
-                        className="px-2.5 py-1 bg-amber-100 hover:bg-amber-200 text-amber-800 rounded-lg text-xs font-semibold transition"
-                      >
-                        2. Picked Up
-                      </button>
-                      <button
-                        onClick={() =>
-                          handleSimulateMangwaleStatus(ord.mangwale.taskId!, 'OUT_FOR_DELIVERY')
-                        }
-                        className="px-2.5 py-1 bg-indigo-100 hover:bg-indigo-200 text-indigo-800 rounded-lg text-xs font-semibold transition"
-                      >
-                        3. In Transit
-                      </button>
-                      <button
-                        onClick={() =>
-                          handleSimulateMangwaleStatus(ord.mangwale.taskId!, 'DELIVERED')
-                        }
-                        className="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-semibold transition"
-                      >
-                        4. Delivered
-                      </button>
+                  {isEditing ? (
+                    <div className="p-4 bg-slate-800/80 rounded-2xl border border-slate-700 space-y-3">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div>
+                          <label className="block text-[11px] font-bold text-slate-300 mb-1">
+                            Meta Pixel ID (Facebook / Instagram)
+                          </label>
+                          <input
+                            type="text"
+                            value={editPixelId}
+                            onChange={(e) => setEditPixelId(e.target.value)}
+                            placeholder="e.g. 112233445566778"
+                            className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-lg text-xs font-mono text-white focus:ring-1 focus:ring-amber-500 focus:outline-none"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="block text-[11px] font-bold text-slate-300 mb-1">
+                            Google Ads Conversion Tag
+                          </label>
+                          <input
+                            type="text"
+                            value={editGoogleAdsId}
+                            onChange={(e) => setEditGoogleAdsId(e.target.value)}
+                            placeholder="e.g. AW-987654321/CR_PURCHASE"
+                            className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-lg text-xs font-mono text-white focus:ring-1 focus:ring-amber-500 focus:outline-none"
+                          />
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-2 pt-1">
+                        <button
+                          onClick={() => handleSavePixel(camp.id)}
+                          disabled={isSaving}
+                          className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold rounded-lg flex items-center gap-1.5 transition disabled:opacity-60"
+                        >
+                          <Save className="w-3.5 h-3.5" />
+                          <span>{isSaving ? 'Applying...' : 'Save & Publish Pixel'}</span>
+                        </button>
+                        <button
+                          onClick={() => setEditCampaignId(null)}
+                          className="px-3 py-2 bg-slate-700 hover:bg-slate-600 text-slate-200 text-xs font-semibold rounded-lg transition"
+                        >
+                          Cancel
+                        </button>
+                      </div>
                     </div>
                   ) : (
-                    <span className="text-xs text-stone-400 italic">No Task ID</span>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs bg-slate-950 p-3 rounded-xl border border-slate-800">
+                      <div className="flex items-center justify-between">
+                        <span className="text-slate-500">Active Meta Pixel:</span>
+                        <span className="font-mono text-emerald-400 font-bold">
+                          {camp.metaPixelId || 'Default Brand Pixel'}
+                        </span>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-slate-500">Google Ads Conversion ID:</span>
+                        <span className="font-mono text-sky-400 font-bold">
+                          {camp.googleAdsId || 'None'}
+                        </span>
+                      </div>
+                    </div>
                   )}
                 </div>
-              ))}
-            </div>
+              );
+            })}
           </div>
-        )}
-      </div>
+        </div>
+      )}
+
+      {/* TAB 2: LIVE ORDERS TABLE */}
+      {activeTab === 'orders' && (
+        <div className="bg-slate-900 rounded-3xl border border-slate-800 p-6 space-y-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <h2 className="text-base font-bold text-white">Live Orders &amp; Dispatches</h2>
+              <p className="text-xs text-slate-400">
+                Filtered for: {selectedOutletFilter === 'all' ? 'All Outlets' : selectedOutletFilter}
+              </p>
+            </div>
+            <button
+              onClick={fetchOrders}
+              className="p-2 hover:bg-slate-800 rounded-lg text-slate-400 hover:text-white text-xs font-medium flex items-center gap-1"
+            >
+              <RefreshCw className="w-3.5 h-3.5" />
+              <span>Refresh</span>
+            </button>
+          </div>
+
+          <div className="overflow-x-auto">
+            <table className="w-full text-xs text-left">
+              <thead className="bg-slate-950 text-slate-400 border-b border-slate-800 uppercase font-semibold">
+                <tr>
+                  <th className="py-3 px-3">Order ID</th>
+                  <th className="py-3 px-3">Outlet</th>
+                  <th className="py-3 px-3">Customer</th>
+                  <th className="py-3 px-3">Items</th>
+                  <th className="py-3 px-3">Total</th>
+                  <th className="py-3 px-3">Status</th>
+                  <th className="py-3 px-3">Dispatch Task</th>
+                  <th className="py-3 px-3 text-right">Action</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-800">
+                {filteredOrders.map((ord) => (
+                  <tr key={ord.id} className="hover:bg-slate-800/50">
+                    <td className="py-3.5 px-3 font-mono font-bold text-white">
+                      {ord.orderNumber}
+                    </td>
+                    <td className="py-3.5 px-3">
+                      <span className="capitalize font-medium text-amber-400">
+                        {ord.outletSlug.replace('-', ' ')}
+                      </span>
+                    </td>
+                    <td className="py-3.5 px-3">
+                      <p className="font-semibold text-white">{ord.customer.name}</p>
+                      <p className="text-slate-400 text-[10px]">{ord.customer.phone}</p>
+                    </td>
+                    <td className="py-3.5 px-3 text-slate-300">
+                      {ord.items.map((i) => `${i.quantity}x ${i.name}`).join(', ')}
+                    </td>
+                    <td className="py-3.5 px-3 font-bold text-white">
+                      ₹{ord.total}
+                      <span className="block text-[10px] text-slate-400 font-normal">
+                        {ord.paymentMethod}
+                      </span>
+                    </td>
+                    <td className="py-3.5 px-3">
+                      <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-800 text-amber-300 border border-slate-700">
+                        {ord.orderStatus}
+                      </span>
+                    </td>
+                    <td className="py-3.5 px-3">
+                      <p className="font-mono text-emerald-400 font-semibold text-[11px]">
+                        {ord.mangwale.taskId || 'Queued'}
+                      </p>
+                      <p className="text-[10px] text-slate-400">
+                        {ord.mangwale.riderName ? `Rider: ${ord.mangwale.riderName}` : 'Assigning'}
+                      </p>
+                    </td>
+                    <td className="py-3.5 px-3 text-right">
+                      <Link
+                        href={`/${ord.outletSlug}/order/${ord.id}`}
+                        target="_blank"
+                        className="text-amber-400 hover:text-amber-300 font-bold hover:underline"
+                      >
+                        Live Screen
+                      </Link>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
+      {/* TAB 3: DISPATCH API TERMINAL */}
+      {activeTab === 'dispatch' && (
+        <div className="bg-slate-900 rounded-3xl border border-slate-800 p-6 space-y-6">
+          <div>
+            <h2 className="text-base font-bold text-white">
+              Logistics API Integration Terminal
+            </h2>
+            <p className="text-xs text-slate-400 mt-0.5">
+              Simulate or verify live rider status updates from the logistics network.
+            </p>
+          </div>
+
+          <div className="space-y-4">
+            {filteredOrders.map((ord) => (
+              <div
+                key={ord.id}
+                className="p-4 bg-slate-950 rounded-2xl border border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-4"
+              >
+                <div className="space-y-1">
+                  <div className="flex items-center gap-2">
+                    <span className="font-mono font-bold text-white">
+                      {ord.orderNumber}
+                    </span>
+                    <span className="text-[10px] px-2 py-0.5 rounded-full bg-slate-800 font-mono text-slate-300">
+                      Task: {ord.mangwale.taskId || 'Not Assigned'}
+                    </span>
+                    <span className="text-xs font-bold text-emerald-400">
+                      Status: {ord.orderStatus}
+                    </span>
+                  </div>
+                  <p className="text-xs text-slate-400">
+                    Destination: {ord.customer.name} ({ord.customer.area}, Nashik) • ₹{ord.total}
+                  </p>
+                </div>
+
+                {ord.mangwale.taskId ? (
+                  <div className="flex flex-wrap items-center gap-2">
+                    <button
+                      onClick={() =>
+                        handleSimulateStatus(ord.mangwale.taskId!, 'RIDER_ASSIGNED')
+                      }
+                      className="px-2.5 py-1 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg text-xs font-semibold transition"
+                    >
+                      1. Assign Rider
+                    </button>
+                    <button
+                      onClick={() =>
+                        handleSimulateStatus(ord.mangwale.taskId!, 'PICKED')
+                      }
+                      className="px-2.5 py-1 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg text-xs font-semibold transition"
+                    >
+                      2. Picked Up
+                    </button>
+                    <button
+                      onClick={() =>
+                        handleSimulateStatus(ord.mangwale.taskId!, 'OUT_FOR_DELIVERY')
+                      }
+                      className="px-2.5 py-1 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg text-xs font-semibold transition"
+                    >
+                      3. In Transit
+                    </button>
+                    <button
+                      onClick={() =>
+                        handleSimulateStatus(ord.mangwale.taskId!, 'DELIVERED')
+                      }
+                      className="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-xs font-semibold transition"
+                    >
+                      4. Delivered
+                    </button>
+                  </div>
+                ) : (
+                  <span className="text-xs text-slate-500 italic">No Task ID</span>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -2,10 +2,11 @@
 
 import React from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { OUTLETS } from '@/lib/data/mock-data';
 import { useCart } from '@/context/CartContext';
-import { ShoppingBag, MapPin, Store, SlidersHorizontal } from 'lucide-react';
+import { ShoppingBag, MapPin, SlidersHorizontal, ChevronDown } from 'lucide-react';
 
 interface NavbarProps {
   currentOutletSlug?: string;
@@ -30,61 +31,66 @@ export function Navbar({ currentOutletSlug, currentCampaignSlug }: NavbarProps) 
   };
 
   return (
-    <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-stone-200 shadow-sm">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-4">
-        {/* Brand Logo */}
-        <Link href="/" className="flex items-center gap-2.5 shrink-0 group">
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-amber-700 to-amber-500 text-white flex items-center justify-center font-black text-lg shadow-md group-hover:scale-105 transition">
-            P&R
-          </div>
-          <div>
-            <span className="font-black text-stone-900 tracking-tight text-base sm:text-lg block leading-none">
-              PUFFS &amp; ROLLS
-            </span>
-            <span className="text-[10px] font-semibold text-amber-700 tracking-wider uppercase block mt-0.5">
-              Nashik Artisanal Bakery
-            </span>
+    <header className="sticky top-0 z-40 bg-[#FDFCFB]/90 backdrop-blur-md border-b border-stone-200/70 transition-all">
+      {/* Top subtle announcement bar */}
+      <div className="bg-[#1C1917] text-stone-300 text-[11px] py-1.5 px-4 text-center tracking-widest uppercase font-medium">
+        <span>Baking Excellence Since 2001 • Fresh Handcrafted Bakes Across Nashik</span>
+      </div>
+
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between gap-4">
+        {/* Brand Logo from puffsnrolls.com */}
+        <Link href="/" className="flex items-center gap-3 shrink-0 group">
+          <div className="relative h-12 w-36 sm:w-44 transition-transform group-hover:scale-[1.02]">
+            <Image
+              src="https://puffsnrolls.com/wp-content/uploads/2025/12/banner-logo.png"
+              alt="Puffs 'n' Rolls"
+              fill
+              priority
+              sizes="(max-width: 768px) 144px, 176px"
+              className="object-contain object-left"
+            />
           </div>
         </Link>
 
-        {/* Outlet Switcher */}
+        {/* Minimalist Outlet Switcher */}
         <div className="flex items-center gap-2">
-          <div className="flex items-center gap-1.5 bg-stone-50 border border-stone-200/80 rounded-xl px-2.5 py-1.5 text-xs text-stone-700">
-            <MapPin className="w-3.5 h-3.5 text-amber-600 shrink-0" />
+          <div className="relative flex items-center bg-white border border-stone-200/90 rounded-full px-3 py-1.5 text-xs text-stone-700 hover:border-stone-400 transition shadow-[0_1px_2px_rgba(0,0,0,0.03)]">
+            <MapPin className="w-3.5 h-3.5 text-stone-600 mr-1.5 shrink-0" />
             <select
               value={currentOutletSlug || ''}
               onChange={handleOutletChange}
-              className="bg-transparent font-medium text-stone-800 text-xs focus:outline-none cursor-pointer"
+              className="appearance-none bg-transparent font-medium text-stone-800 text-xs pr-6 focus:outline-none cursor-pointer tracking-wide"
             >
               <option value="">All Outlets (Nashik)</option>
               {OUTLETS.map((outlet) => (
                 <option key={outlet.slug} value={outlet.slug}>
-                  {outlet.name.replace('Puffs and Rolls - ', '')}
+                  {outlet.name.replace("Puffs 'n' Rolls - ", '')}
                 </option>
               ))}
             </select>
+            <ChevronDown className="w-3.5 h-3.5 text-stone-400 absolute right-2.5 pointer-events-none" />
           </div>
         </div>
 
         {/* Actions: Admin & Cart */}
-        <div className="flex items-center gap-2 sm:gap-3">
+        <div className="flex items-center gap-3">
           <Link
             href="/admin"
-            className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-stone-200 hover:border-stone-300 text-stone-600 hover:text-stone-900 text-xs font-semibold transition"
+            className="hidden md:flex items-center gap-1.5 px-3 py-1.5 rounded-full text-stone-500 hover:text-stone-900 text-xs font-medium tracking-wide transition"
           >
-            <SlidersHorizontal className="w-3.5 h-3.5 text-stone-500" />
-            <span>Admin &amp; Pixels</span>
+            <SlidersHorizontal className="w-3.5 h-3.5" />
+            <span>Admin</span>
           </Link>
 
-          {/* Cart Button */}
+          {/* Minimalist Cart Trigger */}
           <button
             onClick={() => setIsCartOpen(true)}
-            className="relative px-3.5 py-2 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs flex items-center gap-2 shadow-sm transition"
+            className="relative px-4 py-2 rounded-full bg-[#1C1917] hover:bg-stone-800 text-white font-medium text-xs flex items-center gap-2 transition duration-200 shadow-sm"
           >
-            <ShoppingBag className="w-4 h-4" />
-            <span className="hidden sm:inline">Basket</span>
+            <ShoppingBag className="w-3.5 h-3.5 text-stone-300" />
+            <span className="tracking-wide">Bag</span>
             {itemCount > 0 && (
-              <span className="bg-white text-amber-700 font-extrabold text-[11px] px-1.5 py-0.2 rounded-full min-w-[18px] text-center shadow">
+              <span className="bg-white text-stone-900 font-bold text-[10px] px-1.5 py-0.2 rounded-full min-w-[16px] text-center">
                 {itemCount}
               </span>
             )}
