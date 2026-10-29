@@ -150,7 +150,7 @@ export function CartDrawer({ outletSlug, campaignSlug }: CartDrawerProps) {
       const orderData = await createRes.json();
       if (!createRes.ok || !orderData.success) {
         setIsSubmitting(false);
-        setSubmitError(orderData.message || 'Unable to initialize Razorpay checkout');
+        setSubmitError(orderData.message || 'Unable to initialize secure payment. Please try again or select Cash on Delivery.');
         return;
       }
 
@@ -478,7 +478,7 @@ export function CartDrawer({ outletSlug, campaignSlug }: CartDrawerProps) {
                     </div>
 
                     <div className="space-y-2">
-                      {/* Razorpay Option */}
+                      {/* Instant Online Payment Option */}
                       <button
                         type="button"
                         onClick={() => setPaymentMethod('UPI')}
@@ -500,7 +500,7 @@ export function CartDrawer({ outletSlug, campaignSlug }: CartDrawerProps) {
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center justify-between">
                             <span className="text-xs font-bold text-stone-900">
-                              Online Pay (Razorpay Gateway)
+                              Instant Online Payment
                             </span>
                             <span className="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
                               Instant
@@ -546,7 +546,7 @@ export function CartDrawer({ outletSlug, campaignSlug }: CartDrawerProps) {
 
                     <p className="text-[10px] text-stone-400 text-center mt-2 flex items-center justify-center gap-1.5">
                       <ShieldCheck className="w-3.5 h-3.5 text-stone-500" />
-                      Razorpay Verified Partner • Safe & Secure Checkouts
+                      100% Safe &amp; Secure 256-bit Encrypted Checkout
                     </p>
                   </div>
                 </div>
@@ -588,14 +588,14 @@ export function CartDrawer({ outletSlug, campaignSlug }: CartDrawerProps) {
               <button
                 onClick={handleCheckout}
                 disabled={isSubmitting}
-                className="w-full py-3 bg-[#1C1917] hover:bg-stone-800 text-white rounded-full font-medium text-xs uppercase tracking-wider transition shadow-sm flex items-center justify-center gap-2 disabled:opacity-60"
+                className="w-full py-3 bg-[#1C1917] hover:bg-stone-800 text-white rounded-full font-medium text-xs uppercase tracking-wider transition shadow-sm flex items-center justify-center gap-2 disabled:opacity-60 cursor-pointer"
               >
                 {isSubmitting ? (
-                  <span>Connecting Secure Gateway...</span>
+                  <span>Connecting Secure Payment...</span>
                 ) : paymentMethod === 'UPI' ? (
                   <>
                     <Lock className="w-3.5 h-3.5 text-emerald-400" />
-                    <span>Pay via Razorpay • ₹{total}</span>
+                    <span>Pay Online • ₹{total}</span>
                     <ArrowRight className="w-3.5 h-3.5" />
                   </>
                 ) : (

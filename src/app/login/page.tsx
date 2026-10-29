@@ -140,14 +140,11 @@ export default function CustomerLoginPage() {
             </form>
           )}
 
-          <div className="pt-4 border-t border-stone-100 flex items-center justify-between text-xs text-stone-500">
+          <div className="pt-4 border-t border-stone-100 flex items-center justify-center text-xs text-stone-500">
             <span className="flex items-center gap-1">
               <ShieldCheck className="w-3.5 h-3.5 text-stone-700" />
-              Fast &amp; Secure
+              100% Safe &amp; Secure Verification
             </span>
-            <Link href="/admin/login" className="text-stone-400 hover:text-stone-700">
-              Admin Portal →
-            </Link>
           </div>
         </div>
       </main>

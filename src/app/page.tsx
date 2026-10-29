@@ -159,21 +159,16 @@ export default function HomePage() {
 
               <div>
                 <h4 className="font-semibold text-white uppercase tracking-wider text-[11px] mb-2 sm:mb-3">
-                  Portals &amp; Assistance
+                  Bakery Helpline
                 </h4>
                 <div className="space-y-2">
                   <p className="flex items-center gap-1.5 text-stone-300">
                     <Phone className="w-3.5 h-3.5" />
                     +91 94236 39911
                   </p>
-                  <div className="flex items-center gap-4 pt-1">
-                    <Link href="/login" className="hover:text-white transition underline">
-                      Customer Login
-                    </Link>
-                    <Link href="/admin/login" className="hover:text-white transition underline">
-                      Admin Portal
-                    </Link>
-                  </div>
+                  <p className="text-[11px] text-stone-400 pt-0.5">
+                    Open Daily: 9:00 AM - 10:30 PM
+                  </p>
                 </div>
               </div>
             </div>

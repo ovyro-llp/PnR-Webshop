@@ -195,7 +195,7 @@ export default function MarketingViewPage() {
       });
       const data = await res.json();
       if (data.success) {
-        setStatusMessage('✓ Razorpay API payment gateway configuration saved!');
+        setStatusMessage('✓ Payment gateway configuration saved successfully!');
         fetchPaymentConfig();
         setTimeout(() => setStatusMessage(''), 4000);
       } else {
@@ -271,14 +271,14 @@ export default function MarketingViewPage() {
           </button>
           <button
             onClick={() => setActiveTab('payments')}
-            className={`px-3.5 py-1.5 rounded-full text-xs font-medium transition flex items-center gap-1.5 ${
+            className={`px-3.5 py-1.5 rounded-full text-xs font-medium transition flex items-center gap-1.5 cursor-pointer ${
               activeTab === 'payments'
                 ? 'bg-[#1C1917] text-white font-semibold'
                 : 'text-stone-600 hover:text-stone-900 hover:bg-stone-50'
             }`}
           >
             <CreditCard className="w-3.5 h-3.5" />
-            <span>Razorpay Gateway</span>
+            <span>Payment Gateway</span>
           </button>
         </div>
       </div>
@@ -772,7 +772,7 @@ export default function MarketingViewPage() {
                 <div>
                   <div className="flex items-center gap-2">
                     <h2 className="text-base sm:text-lg font-serif font-bold text-stone-900">
-                      Razorpay Enterprise Gateway Integration
+                      Enterprise Online Payment Gateway
                     </h2>
                     <span
                       className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${
@@ -799,7 +799,7 @@ export default function MarketingViewPage() {
                   rel="noreferrer"
                   className="px-3.5 py-2 bg-stone-100 hover:bg-stone-200 text-stone-800 text-xs font-medium rounded-xl transition flex items-center gap-1.5"
                 >
-                  <span>Razorpay Dashboard</span>
+                  <span>Merchant Portal</span>
                   <ExternalLink className="w-3.5 h-3.5 text-stone-500" />
                 </a>
               </div>
@@ -821,7 +821,7 @@ export default function MarketingViewPage() {
                 <div className="space-y-4">
                   <div>
                     <label className="block text-xs font-semibold text-stone-800 mb-1">
-                      Razorpay Key ID
+                      Payment Gateway Key ID
                     </label>
                     <input
                       type="text"
@@ -829,17 +829,17 @@ export default function MarketingViewPage() {
                       onChange={(e) =>
                         setPaymentConfig({ ...paymentConfig, razorpayKeyId: e.target.value })
                       }
-                      placeholder="rzp_test_... or rzp_live_..."
+                      placeholder="key_id_live_... or test_key_..."
                       className="w-full px-3.5 py-2.5 bg-stone-50/50 border border-stone-200 rounded-xl text-xs font-mono text-stone-900 focus:bg-white focus:outline-none focus:ring-1 focus:ring-stone-900"
                     />
                     <p className="text-[11px] text-stone-400 mt-1">
-                      Available in your Razorpay Dashboard &gt; Settings &gt; API Keys.
+                      Available in your merchant payment gateway settings.
                     </p>
                   </div>
 
                   <div>
                     <label className="block text-xs font-semibold text-stone-800 mb-1">
-                      Razorpay Key Secret
+                      Payment Gateway Key Secret
                     </label>
                     <input
                       type="password"
@@ -924,7 +924,7 @@ export default function MarketingViewPage() {
 
                   <div>
                     <label className="block text-xs font-semibold text-stone-800 mb-1">
-                      Razorpay Webhook Secret
+                      Payment Webhook Secret
                     </label>
                     <input
                       type="password"
@@ -935,11 +935,11 @@ export default function MarketingViewPage() {
                           razorpayWebhookSecret: e.target.value,
                         })
                       }
-                      placeholder="Webhook secret string configured in Razorpay"
+                      placeholder="Webhook secret string configured in payment dashboard"
                       className="w-full px-3.5 py-2.5 bg-stone-50/50 border border-stone-200 rounded-xl text-xs font-mono text-stone-900 focus:bg-white focus:outline-none focus:ring-1 focus:ring-stone-900"
                     />
                     <p className="text-[11px] text-stone-400 mt-1">
-                      Verifies incoming webhook requests with x-razorpay-signature header.
+                      Verifies incoming webhook transaction signatures.
                     </p>
                   </div>
                 </div>
@@ -956,7 +956,7 @@ export default function MarketingViewPage() {
                 <div className="space-y-3">
                   <label className="flex items-center justify-between p-3 rounded-xl bg-stone-50 border border-stone-200 cursor-pointer">
                     <div>
-                      <p className="text-xs font-bold text-stone-900">Enable Razorpay</p>
+                      <p className="text-xs font-bold text-stone-900">Enable Online Payments</p>
                       <p className="text-[11px] text-stone-500">
                         Allow customers to pay online at checkout
                       </p>
@@ -1014,7 +1014,7 @@ export default function MarketingViewPage() {
                   <span>Compliance &amp; PCI-DSS</span>
                 </div>
                 <p className="text-[11px] text-stone-500 leading-relaxed">
-                  All payment transactions occur through Razorpay's PCI-DSS Level 1 compliant infrastructure.
+                  All payment transactions occur through PCI-DSS Level 1 compliant bank-grade encrypted infrastructure.
                   No card details or CVVs are ever stored on Puffs 'n' Rolls bakery servers.
                 </p>
               </div>

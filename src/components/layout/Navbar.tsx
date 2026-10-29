@@ -127,7 +127,7 @@ export function Navbar({ currentOutletSlug, currentCampaignSlug }: NavbarProps) 
           </div>
 
           {/* Desktop Direct Navigation (Hidden on Mobile, Visible on Desktop) */}
-          <nav className="hidden md:flex items-center gap-5 text-xs font-medium text-stone-600">
+          <nav className="hidden md:flex items-center gap-6 text-xs font-medium text-stone-600">
             <Link
               href="/"
               className="hover:text-stone-950 transition"
@@ -148,13 +148,6 @@ export function Navbar({ currentOutletSlug, currentCampaignSlug }: NavbarProps) 
               <Phone className="w-3 h-3 text-amber-600" />
               <span>+91 98220 11223</span>
             </a>
-            <Link
-              href="/admin"
-              className="hover:text-stone-950 transition flex items-center gap-1 text-[11px] text-stone-500 hover:text-stone-800 px-2.5 py-1 rounded-full bg-stone-100 hover:bg-stone-200 border border-stone-200"
-            >
-              <ShieldCheck className="w-3 h-3 text-stone-600" />
-              <span>Operations Portal</span>
-            </Link>
           </nav>
 
           {/* Right: Customer & Cart Actions */}
@@ -343,25 +336,6 @@ export function Navbar({ currentOutletSlug, currentCampaignSlug }: NavbarProps) 
                     <div className="flex items-center gap-2">
                       <User className="w-3.5 h-3.5 text-stone-600" />
                       <span className="font-medium">My Orders &amp; Addresses</span>
-                    </div>
-                    <ChevronRight className="w-3.5 h-3.5 text-stone-400" />
-                  </Link>
-                </div>
-
-                {/* Section 4: Operations & Staff */}
-                <div className="space-y-2 pt-2 border-t border-stone-200/80">
-                  <p className="text-[10px] font-bold uppercase tracking-wider text-stone-400">
-                    Team &amp; Franchise Operations
-                  </p>
-
-                  <Link
-                    href="/admin"
-                    onClick={() => setIsDrawerOpen(false)}
-                    className="p-2.5 rounded-xl bg-stone-100 hover:bg-stone-200 text-stone-800 border border-stone-200 flex items-center justify-between transition"
-                  >
-                    <div className="flex items-center gap-2">
-                      <ShieldCheck className="w-3.5 h-3.5 text-stone-700" />
-                      <span className="font-medium">Operations &amp; Kitchen Portal</span>
                     </div>
                     <ChevronRight className="w-3.5 h-3.5 text-stone-400" />
                   </Link>
