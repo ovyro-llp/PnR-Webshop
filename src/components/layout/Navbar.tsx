@@ -79,16 +79,16 @@ export function Navbar({ currentOutletSlug, currentCampaignSlug }: NavbarProps) 
           <span>Baking Excellence Since 2001 • Handcrafted in Nashik</span>
         </div>
 
-        <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 h-14 sm:h-16 flex items-center justify-between gap-1.5 sm:gap-4 w-full">
-          {/* Left: Hamburger Menu Button & Brand Logo */}
+        <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 h-14 sm:h-16 flex items-center justify-between gap-2 sm:gap-4 w-full">
+          {/* Left: Mobile-Only Hamburger Toggle & Brand Logo */}
           <div className="flex items-center gap-1.5 sm:gap-3 shrink-0">
-            {/* Universal Hamburger Toggle */}
+            {/* Mobile-Only Hamburger Toggle (Hidden on Desktop) */}
             <button
               onClick={() => setIsDrawerOpen(true)}
-              className="p-1.5 sm:p-2 -ml-1 rounded-xl text-stone-800 hover:bg-stone-100 transition active:scale-95 flex items-center justify-center cursor-pointer"
-              aria-label="Open Navigation Menu"
+              className="md:hidden p-1.5 sm:p-2 -ml-1 rounded-xl text-stone-800 hover:bg-stone-100 transition active:scale-95 flex items-center justify-center cursor-pointer"
+              aria-label="Open Mobile Menu"
             >
-              <Menu className="w-5 h-5 sm:w-5 sm:h-5 stroke-[2.2]" />
+              <Menu className="w-5 h-5 stroke-[2.2]" />
             </button>
 
             {/* Brand Logo */}
@@ -106,14 +106,14 @@ export function Navbar({ currentOutletSlug, currentCampaignSlug }: NavbarProps) 
             </Link>
           </div>
 
-          {/* Center: Compact Mobile-First Outlet Switcher */}
-          <div className="flex items-center max-w-[125px] sm:max-w-xs shrink min-w-0">
-            <div className="relative flex items-center bg-white border border-stone-200 rounded-full px-2 py-1 text-xs text-stone-700 hover:border-stone-400 transition shadow-xs w-full">
-              <MapPin className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-stone-600 mr-1 shrink-0" />
+          {/* Center-Left: Luxury Outlet Switcher */}
+          <div className="flex items-center max-w-[130px] sm:max-w-xs shrink min-w-0">
+            <div className="relative flex items-center bg-white border border-stone-200 rounded-full px-2.5 py-1 text-xs text-stone-700 hover:border-stone-400 transition shadow-xs w-full">
+              <MapPin className="w-3 h-3 text-stone-600 mr-1 shrink-0" />
               <select
                 value={currentOutletSlug || ''}
                 onChange={(e) => handleOutletChange(e.target.value)}
-                className="appearance-none bg-transparent font-medium text-stone-800 text-[10px] sm:text-xs pr-3.5 focus:outline-none cursor-pointer truncate w-full"
+                className="appearance-none bg-transparent font-medium text-stone-800 text-[10px] sm:text-xs pr-4 focus:outline-none cursor-pointer truncate w-full"
               >
                 <option value="">All Outlets</option>
                 {outlets.map((outlet) => (
@@ -122,9 +122,40 @@ export function Navbar({ currentOutletSlug, currentCampaignSlug }: NavbarProps) 
                   </option>
                 ))}
               </select>
-              <ChevronDown className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-stone-400 absolute right-1.5 pointer-events-none shrink-0" />
+              <ChevronDown className="w-3 h-3 text-stone-400 absolute right-1.5 pointer-events-none shrink-0" />
             </div>
           </div>
+
+          {/* Desktop Direct Navigation (Hidden on Mobile, Visible on Desktop) */}
+          <nav className="hidden md:flex items-center gap-5 text-xs font-medium text-stone-600">
+            <Link
+              href="/"
+              className="hover:text-stone-950 transition"
+            >
+              Our Outlets
+            </Link>
+            <Link
+              href={currentOutletSlug ? `/${currentOutletSlug}` : '/college-road'}
+              className="hover:text-stone-950 transition"
+            >
+              Fresh Menu
+            </Link>
+            <a
+              href="tel:+919822011223"
+              className="hover:text-stone-950 transition flex items-center gap-1 font-mono text-[11px]"
+              title="Call Bakery Helpline"
+            >
+              <Phone className="w-3 h-3 text-amber-600" />
+              <span>+91 98220 11223</span>
+            </a>
+            <Link
+              href="/admin"
+              className="hover:text-stone-950 transition flex items-center gap-1 text-[11px] text-stone-500 hover:text-stone-800 px-2.5 py-1 rounded-full bg-stone-100 hover:bg-stone-200 border border-stone-200"
+            >
+              <ShieldCheck className="w-3 h-3 text-stone-600" />
+              <span>Operations Portal</span>
+            </Link>
+          </nav>
 
           {/* Right: Customer & Cart Actions */}
           <div className="flex items-center gap-1.5 sm:gap-3 shrink-0">
@@ -166,10 +197,10 @@ export function Navbar({ currentOutletSlug, currentCampaignSlug }: NavbarProps) 
       </header>
 
       {/* =========================================================================
-          UNIVERSAL CUSTOMER HAMBURGER SLIDE-OVER DRAWER
+          MOBILE-ONLY CUSTOMER SLIDE-OVER DRAWER
          ========================================================================= */}
       {isDrawerOpen && (
-        <div className="fixed inset-0 z-50 overflow-hidden">
+        <div className="md:hidden fixed inset-0 z-50 overflow-hidden">
           {/* Backdrop */}
           <div
             className="fixed inset-0 bg-black/50 backdrop-blur-xs transition-opacity animate-in fade-in"

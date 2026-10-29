@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { useAuth } from '@/context/AuthContext';
 import { OutletAnalytics, CampaignAnalytics, Outlet } from '@/types';
 import { OUTLETS } from '@/lib/data/mock-data';
 import { OutletSelector } from '@/components/admin/OutletSelector';
@@ -18,6 +19,12 @@ import {
 } from 'lucide-react';
 
 export default function AnalyticsDashboardPage() {
+  const { user } = useAuth();
+  const adminUser = user && user.role === 'ADMIN' ? user : null;
+  const isOutletManager = Boolean(
+    adminUser?.outletAccess && !adminUser.outletAccess.includes('all')
+  );
+
   const [analyticsData, setAnalyticsData] = useState<{
     summary?: {
       totalGMV: number;
@@ -29,8 +36,16 @@ export default function AnalyticsDashboardPage() {
     campaigns?: CampaignAnalytics[];
   }>({});
   const [outlets, setOutlets] = useState<Outlet[]>(OUTLETS);
-  const [selectedOutlet, setSelectedOutlet] = useState<string>('all');
+  const [selectedOutlet, setSelectedOutlet] = useState<string>(
+    adminUser?.outletAccess && !adminUser.outletAccess.includes('all') ? adminUser.outletAccess[0] : 'all'
+  );
   const [isLoading, setIsLoading] = useState<boolean>(true);
+
+  useEffect(() => {
+    if (isOutletManager && adminUser?.outletAccess?.[0]) {
+      setSelectedOutlet(adminUser.outletAccess[0]);
+    }
+  }, [isOutletManager, adminUser]);
 
   const fetchOutlets = async () => {
     try {
@@ -95,20 +110,27 @@ export default function AnalyticsDashboardPage() {
         </div>
 
         <div className="flex items-center gap-2">
-          {/* Outlet selector dropdown - zero horizontal scrolling */}
-          <OutletSelector
-            outlets={outlets}
-            selectedOutlet={selectedOutlet}
-            onSelectOutlet={(slug) => setSelectedOutlet(slug)}
-            includeAll={true}
-            allLabel="All Outlets (HQ)"
-            label="Filter Scope:"
-            size="sm"
-          />
+          {/* Outlet selector dropdown or locked kitchen badge */}
+          {isOutletManager ? (
+            <div className="flex items-center gap-2 bg-amber-50 border border-amber-200 px-3.5 py-1.5 rounded-full text-xs font-semibold text-amber-900 shadow-2xs">
+              <Store className="w-3.5 h-3.5 text-amber-700" />
+              <span>{outlets.find((o) => o.slug === selectedOutlet)?.name.replace("Puffs 'n' Rolls - ", '') || 'Your Outlet'}</span>
+            </div>
+          ) : (
+            <OutletSelector
+              outlets={outlets}
+              selectedOutlet={selectedOutlet}
+              onSelectOutlet={(slug) => setSelectedOutlet(slug)}
+              includeAll={true}
+              allLabel="All Outlets (HQ)"
+              label="Filter Scope:"
+              size="sm"
+            />
+          )}
 
           <button
             onClick={fetchAnalytics}
-            className="p-2 bg-white hover:bg-stone-50 text-stone-600 border border-stone-200 rounded-full transition shadow-2xs"
+            className="p-2 bg-white hover:bg-stone-50 text-stone-600 border border-stone-200 rounded-full transition shadow-2xs cursor-pointer"
             title="Refresh Analytics"
           >
             <RefreshCw className={`w-3.5 h-3.5 ${isLoading ? 'animate-spin' : ''}`} />

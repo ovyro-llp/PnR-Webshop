@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { useAuth } from '@/context/AuthContext';
 import { Employee, EmployeeRole, Outlet } from '@/types';
 import { OUTLETS } from '@/lib/data/mock-data';
 import { OutletSelector } from '@/components/admin/OutletSelector';
@@ -20,9 +21,17 @@ import {
 } from 'lucide-react';
 
 export default function EmployeesManagementPage() {
+  const { user } = useAuth();
+  const adminUser = user && user.role === 'ADMIN' ? user : null;
+  const isOutletManager = Boolean(
+    adminUser?.outletAccess && !adminUser.outletAccess.includes('all')
+  );
+
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [outlets, setOutlets] = useState<Outlet[]>(OUTLETS);
-  const [selectedOutlet, setSelectedOutlet] = useState<string>('all');
+  const [selectedOutlet, setSelectedOutlet] = useState<string>(
+    adminUser?.outletAccess && !adminUser.outletAccess.includes('all') ? adminUser.outletAccess[0] : 'all'
+  );
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
   const [isLoading, setIsLoading] = useState<boolean>(true);
@@ -32,9 +41,19 @@ export default function EmployeesManagementPage() {
   const [newName, setNewName] = useState('');
   const [newEmail, setNewEmail] = useState('');
   const [newPhone, setNewPhone] = useState('');
-  const [newRole, setNewRole] = useState<EmployeeRole>('OUTLET_MANAGER');
-  const [newOutlet, setNewOutlet] = useState('college-road');
+  const [newRole, setNewRole] = useState<EmployeeRole>(isOutletManager ? 'KITCHEN_STAFF' : 'OUTLET_MANAGER');
+  const [newOutlet, setNewOutlet] = useState(
+    adminUser?.outletAccess && !adminUser.outletAccess.includes('all') ? adminUser.outletAccess[0] : 'college-road'
+  );
   const [newDesignation, setNewDesignation] = useState('');
+
+  useEffect(() => {
+    if (isOutletManager && adminUser?.outletAccess?.[0]) {
+      setSelectedOutlet(adminUser.outletAccess[0]);
+      setNewOutlet(adminUser.outletAccess[0]);
+      setNewRole('KITCHEN_STAFF');
+    }
+  }, [isOutletManager, adminUser]);
 
   const fetchOutlets = async () => {
     try {
@@ -247,16 +266,23 @@ export default function EmployeesManagementPage() {
           />
         </div>
 
-        {/* Outlet Filter Selector - Zero horizontal scroll */}
-        <OutletSelector
-          outlets={outlets}
-          selectedOutlet={selectedOutlet}
-          onSelectOutlet={(slug) => setSelectedOutlet(slug)}
-          includeAll={true}
-          allLabel="All Staff (HQ)"
-          label="Outlet Team:"
-          size="sm"
-        />
+        {/* Outlet Filter Selector or locked kitchen badge */}
+        {isOutletManager ? (
+          <div className="flex items-center gap-2 bg-amber-50 border border-amber-200 px-3.5 py-2 rounded-2xl text-xs font-semibold text-amber-900 shadow-2xs shrink-0">
+            <Store className="w-3.5 h-3.5 text-amber-700" />
+            <span>{outlets.find((o) => o.slug === selectedOutlet)?.name.replace("Puffs 'n' Rolls - ", '') || 'Your Kitchen Staff'}</span>
+          </div>
+        ) : (
+          <OutletSelector
+            outlets={outlets}
+            selectedOutlet={selectedOutlet}
+            onSelectOutlet={(slug) => setSelectedOutlet(slug)}
+            includeAll={true}
+            allLabel="All Staff (HQ)"
+            label="Outlet Team:"
+            size="sm"
+          />
+        )}
       </div>
 
       {/* Staff Directory Grid */}
@@ -405,32 +431,44 @@ export default function EmployeesManagementPage() {
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="text-stone-700 block font-semibold mb-1">Access Role</label>
-                  <select
-                    value={newRole}
-                    onChange={(e) => setNewRole(e.target.value as EmployeeRole)}
-                    className="w-full bg-stone-50 border border-stone-200 rounded-xl px-3 py-2 text-stone-900 focus:outline-none focus:border-stone-500"
-                  >
-                    <option value="OUTLET_MANAGER">Store Manager</option>
-                    <option value="KITCHEN_STAFF">Kitchen Staff</option>
-                    <option value="SUPER_ADMIN">HQ Super Admin</option>
-                  </select>
+                  {isOutletManager ? (
+                    <div className="w-full bg-stone-100 border border-stone-200 rounded-xl px-3 py-2 text-stone-700 font-medium">
+                      Kitchen Staff
+                    </div>
+                  ) : (
+                    <select
+                      value={newRole}
+                      onChange={(e) => setNewRole(e.target.value as EmployeeRole)}
+                      className="w-full bg-stone-50 border border-stone-200 rounded-xl px-3 py-2 text-stone-900 focus:outline-none focus:border-stone-500"
+                    >
+                      <option value="OUTLET_MANAGER">Store Manager</option>
+                      <option value="KITCHEN_STAFF">Kitchen Staff</option>
+                      <option value="SUPER_ADMIN">HQ Super Admin</option>
+                    </select>
+                  )}
                 </div>
 
                 <div>
                   <label className="text-stone-700 block font-semibold mb-1">Assigned Outlet</label>
-                  <select
-                    value={newRole === 'SUPER_ADMIN' ? 'all' : newOutlet}
-                    disabled={newRole === 'SUPER_ADMIN'}
-                    onChange={(e) => setNewOutlet(e.target.value)}
-                    className="w-full bg-stone-50 border border-stone-200 rounded-xl px-3 py-2 text-stone-900 focus:outline-none focus:border-stone-500 disabled:opacity-50"
-                  >
-                    {newRole === 'SUPER_ADMIN' && <option value="all">All Outlets (HQ)</option>}
-                    {outlets.map((o) => (
-                      <option key={o.slug} value={o.slug}>
-                        {o.name.replace("Puffs 'n' Rolls - ", '')}
-                      </option>
-                    ))}
-                  </select>
+                  {isOutletManager ? (
+                    <div className="w-full bg-stone-100 border border-stone-200 rounded-xl px-3 py-2 text-stone-700 font-medium truncate">
+                      {outlets.find((o) => o.slug === newOutlet)?.name.replace("Puffs 'n' Rolls - ", '') || newOutlet}
+                    </div>
+                  ) : (
+                    <select
+                      value={newRole === 'SUPER_ADMIN' ? 'all' : newOutlet}
+                      disabled={newRole === 'SUPER_ADMIN'}
+                      onChange={(e) => setNewOutlet(e.target.value)}
+                      className="w-full bg-stone-50 border border-stone-200 rounded-xl px-3 py-2 text-stone-900 focus:outline-none focus:border-stone-500 disabled:opacity-50"
+                    >
+                      {newRole === 'SUPER_ADMIN' && <option value="all">All Outlets (HQ)</option>}
+                      {outlets.map((o) => (
+                        <option key={o.slug} value={o.slug}>
+                          {o.name.replace("Puffs 'n' Rolls - ", '')}
+                        </option>
+                      ))}
+                    </select>
+                  )}
                 </div>
               </div>
 

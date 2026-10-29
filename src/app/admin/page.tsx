@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { useAuth } from '@/context/AuthContext';
 import { OUTLETS, CAMPAIGNS } from '@/lib/data/mock-data';
 import { Order, Campaign, Outlet } from '@/types';
 import {
@@ -21,12 +22,26 @@ import {
 } from 'lucide-react';
 
 export default function AdminPage() {
+  const { user } = useAuth();
+  const adminUser = user && user.role === 'ADMIN' ? user : null;
+  const isOutletManager = Boolean(
+    adminUser?.outletAccess && !adminUser.outletAccess.includes('all')
+  );
+
   const [activeTab, setActiveTab] = useState<'orders' | 'dispatch'>('orders');
   const [outlets, setOutlets] = useState<Outlet[]>(OUTLETS);
   const [orders, setOrders] = useState<Order[]>([]);
-  const [selectedOutletFilter, setSelectedOutletFilter] = useState<string>('all');
+  const [selectedOutletFilter, setSelectedOutletFilter] = useState<string>(
+    adminUser?.outletAccess && !adminUser.outletAccess.includes('all') ? adminUser.outletAccess[0] : 'all'
+  );
   const [statusMessage, setStatusMessage] = useState<string>('');
   const [isLoading, setIsLoading] = useState(false);
+
+  useEffect(() => {
+    if (isOutletManager && adminUser?.outletAccess?.[0]) {
+      setSelectedOutletFilter(adminUser.outletAccess[0]);
+    }
+  }, [isOutletManager, adminUser]);
 
   const fetchOrders = async () => {
     setIsLoading(true);
@@ -128,25 +143,32 @@ export default function AdminPage() {
 
         {/* Outlet Filter & Refresh */}
         <div className="flex items-center gap-2.5">
-          <div className="flex items-center gap-2 bg-white px-3 py-1.5 rounded-full border border-stone-200 text-xs">
-            <Filter className="w-3.5 h-3.5 text-stone-400" />
-            <select
-              value={selectedOutletFilter}
-              onChange={(e) => setSelectedOutletFilter(e.target.value)}
-              className="bg-transparent text-stone-800 font-medium focus:outline-none"
-            >
-              <option value="all">All Outlets (HQ View)</option>
-              {outlets.map((o) => (
-                <option key={o.slug} value={o.slug}>
-                  {o.name.replace("Puffs 'n' Rolls - ", '')}
-                </option>
-              ))}
-            </select>
-          </div>
+          {isOutletManager ? (
+            <div className="flex items-center gap-2 bg-amber-50 border border-amber-200 px-3.5 py-1.5 rounded-full text-xs font-semibold text-amber-900 shadow-2xs">
+              <Store className="w-3.5 h-3.5 text-amber-700" />
+              <span>{outlets.find((o) => o.slug === selectedOutletFilter)?.name.replace("Puffs 'n' Rolls - ", '') || 'Your Outlet'}</span>
+            </div>
+          ) : (
+            <div className="flex items-center gap-2 bg-white px-3 py-1.5 rounded-full border border-stone-200 text-xs shadow-2xs">
+              <Filter className="w-3.5 h-3.5 text-stone-400" />
+              <select
+                value={selectedOutletFilter}
+                onChange={(e) => setSelectedOutletFilter(e.target.value)}
+                className="bg-transparent text-stone-800 font-medium focus:outline-none cursor-pointer"
+              >
+                <option value="all">All Outlets (HQ View)</option>
+                {outlets.map((o) => (
+                  <option key={o.slug} value={o.slug}>
+                    {o.name.replace("Puffs 'n' Rolls - ", '')}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
 
           <button
             onClick={fetchOrders}
-            className="p-2 bg-white hover:bg-stone-50 text-stone-600 border border-stone-200 rounded-full transition shadow-2xs"
+            className="p-2 bg-white hover:bg-stone-50 text-stone-600 border border-stone-200 rounded-full transition shadow-2xs cursor-pointer"
             title="Refresh Orders"
           >
             <RefreshCw className={`w-3.5 h-3.5 ${isLoading ? 'animate-spin' : ''}`} />

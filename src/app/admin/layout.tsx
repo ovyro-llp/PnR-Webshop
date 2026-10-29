@@ -35,9 +35,20 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
     if (!user || user.role !== 'ADMIN') {
       router.push('/admin/login');
-    } else {
-      setIsChecking(false);
+      return;
     }
+
+    // RBAC: Lock outlet managers out of HQ-only modules
+    const isManager = user.outletAccess && !user.outletAccess.includes('all');
+    if (
+      isManager &&
+      (pathname.startsWith('/admin/outlets') || pathname.startsWith('/admin/marketing'))
+    ) {
+      router.push('/admin/inventory');
+      return;
+    }
+
+    setIsChecking(false);
   }, [user, isHydrated, pathname, router]);
 
   // Close sidebar automatically when route changes
@@ -260,10 +271,10 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       </header>
 
       {/* =========================================================================
-          UNIVERSAL SLIDE-OVER SIDEBAR DRAWER (Hamburger Menu)
+          MOBILE SLIDE-OVER SIDEBAR DRAWER (Only rendered on mobile)
          ========================================================================= */}
       {isMobileSidebarOpen && (
-        <div className="fixed inset-0 z-50 animate-in fade-in duration-200">
+        <div className="md:hidden fixed inset-0 z-50 animate-in fade-in duration-200">
           {/* Backdrop Overlay */}
           <div
             className="fixed inset-0 bg-black/40 backdrop-blur-xs transition-opacity"
@@ -358,25 +369,23 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           MAIN ADMIN CONTENT VIEWPORT
          ========================================================================= */}
       <main className="flex-1 min-w-0 overflow-y-auto">
-        {/* Desktop Sticky Header Bar with Hamburger Button */}
-        <div className="hidden md:flex items-center justify-between px-6 py-3 bg-white/80 backdrop-blur-md border-b border-stone-200/80 sticky top-0 z-20">
+        {/* Desktop Sticky Header Bar (Zero redundant hamburger button; sidebar is permanently on left) */}
+        <div className="hidden md:flex items-center justify-between px-6 py-3.5 bg-white/90 backdrop-blur-md border-b border-stone-200/80 sticky top-0 z-20">
           <div className="flex items-center gap-3">
-            <button
-              onClick={() => setIsMobileSidebarOpen(true)}
-              className="p-1.5 rounded-xl text-stone-700 hover:bg-stone-100 transition cursor-pointer flex items-center gap-2"
-              title="Open Navigation Menu"
-            >
-              <Menu className="w-5 h-5 stroke-[2.2]" />
-            </button>
-            <span className="font-serif font-bold text-sm text-stone-900">
+            <span className="font-serif font-bold text-base text-stone-900 tracking-tight">
               {currentTab.label}
             </span>
-            <span className="text-[10px] uppercase font-mono px-2 py-0.5 rounded-full bg-stone-100 text-stone-600 font-semibold border border-stone-200">
-              P&amp;R Operations
+            <span className="text-[10px] uppercase font-mono px-2.5 py-0.5 rounded-full bg-stone-100 text-stone-600 font-semibold border border-stone-200">
+              {isOutletManager ? 'Kitchen Partner' : 'HQ Operations'}
             </span>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2 text-xs text-stone-500 font-mono">
+              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+              <span>{user?.name}</span>
+            </div>
+
             <Link
               href="/"
               target="_blank"
