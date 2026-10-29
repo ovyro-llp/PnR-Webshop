@@ -103,7 +103,7 @@ export function CartDrawer({ outletSlug, campaignSlug }: CartDrawerProps) {
         onClick={() => setIsCartOpen(false)}
       />
 
-      <div className="fixed inset-y-0 right-0 max-w-full flex pl-6 sm:pl-10">
+      <div className="fixed inset-y-0 right-0 max-w-full flex pl-0 sm:pl-10">
         <div className="w-screen max-w-md bg-[#FAF8F5] shadow-2xl flex flex-col justify-between border-l border-stone-200">
           {/* Header */}
           <div className="p-4 sm:p-5 border-b border-stone-200 bg-white flex items-center justify-between">
@@ -264,6 +264,7 @@ export function CartDrawer({ outletSlug, campaignSlug }: CartDrawerProps) {
 
                     <input
                       type="tel"
+                      inputMode="tel"
                       required
                       placeholder="WhatsApp Phone Number *"
                       value={customer.phone}
@@ -298,6 +299,7 @@ export function CartDrawer({ outletSlug, campaignSlug }: CartDrawerProps) {
 
                       <input
                         type="text"
+                        inputMode="numeric"
                         placeholder="Pincode"
                         value={customer.pincode}
                         onChange={(e) => setCustomer({ ...customer, pincode: e.target.value })}
