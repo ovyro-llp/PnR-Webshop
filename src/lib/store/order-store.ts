@@ -8,6 +8,8 @@ import {
   CampaignAnalytics,
   OutletAnalytics,
   PaymentGatewayConfig,
+  CreateProductDTO,
+  UpdateProductDTO,
 } from '@/types';
 import { OUTLETS, CAMPAIGNS, MENU_ITEMS, INITIAL_ORDERS } from '@/lib/data/mock-data';
 import { dispatchToMangwale } from '@/lib/logistics/mangwale';
@@ -29,6 +31,8 @@ declare global {
   var __PNR_MARKETING_TAGS__: Record<string, unknown> | undefined;
   // eslint-disable-next-line no-var
   var __PNR_PAYMENT_CONFIG__: PaymentGatewayConfig | undefined;
+  // eslint-disable-next-line no-var
+  var __PNR_MASTER_PRODUCTS__: MenuItem[] | undefined;
 }
 
 if (!globalThis.__PNR_ORDERS__) {
@@ -39,6 +43,9 @@ if (!globalThis.__PNR_CAMPAIGNS__) {
 }
 if (!globalThis.__PNR_OUTLETS__) {
   globalThis.__PNR_OUTLETS__ = [...OUTLETS];
+}
+if (!globalThis.__PNR_MASTER_PRODUCTS__) {
+  globalThis.__PNR_MASTER_PRODUCTS__ = [...MENU_ITEMS];
 }
 
 // Initial Employees Hierarchical Seed
@@ -482,26 +489,339 @@ export const orderStore = {
     return undefined;
   },
 
-  // Menu items filtered by outlet and stock availability
+  // Centralized Master Product Catalog
+  getMasterProducts: (options?: {
+    category?: string;
+    search?: string;
+    outletSlug?: string;
+    isVeg?: boolean;
+  }): MenuItem[] => {
+    let list = (globalThis.__PNR_MASTER_PRODUCTS__ || MENU_ITEMS).filter(
+      (item) => !item.isArchived
+    );
+
+    if (options?.category && options.category !== 'ALL') {
+      list = list.filter((item) => item.category === options.category);
+    }
+
+    if (options?.isVeg !== undefined) {
+      list = list.filter((item) => item.isVeg === options.isVeg);
+    }
+
+    if (options?.search) {
+      const q = options.search.toLowerCase().trim();
+      list = list.filter(
+        (item) =>
+          item.name.toLowerCase().includes(q) ||
+          item.description.toLowerCase().includes(q) ||
+          item.category.toLowerCase().includes(q)
+      );
+    }
+
+    if (options?.outletSlug) {
+      list = list.filter((item) =>
+        item.availableOutlets.includes(options.outletSlug!)
+      );
+    }
+
+    return list;
+  },
+
+  getMasterProductById: (id: string): MenuItem | undefined => {
+    return (globalThis.__PNR_MASTER_PRODUCTS__ || MENU_ITEMS).find(
+      (item) => item.id === id && !item.isArchived
+    );
+  },
+
+  createMasterProduct: (productData: CreateProductDTO): MenuItem => {
+    const list = globalThis.__PNR_MASTER_PRODUCTS__ || [...MENU_ITEMS];
+    const outlets = globalThis.__PNR_OUTLETS__ || OUTLETS;
+
+    let targetOutlets = productData.availableOutlets || [];
+    if (targetOutlets.includes('all') || targetOutlets.length === 0) {
+      targetOutlets = outlets.map((o) => o.slug);
+    }
+
+    const newProduct: MenuItem = {
+      id: `prod-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
+      name: productData.name.trim(),
+      description: productData.description.trim(),
+      category: productData.category,
+      price: Number(productData.price),
+      originalPrice: productData.originalPrice ? Number(productData.originalPrice) : undefined,
+      image:
+        productData.image ||
+        'https://images.unsplash.com/photo-1509440159596-0249088772ff?auto=format&fit=crop&q=80&w=800',
+      isVeg: productData.isVeg !== undefined ? productData.isVeg : true,
+      isBestseller: Boolean(productData.isBestseller),
+      isSpicy: Boolean(productData.isSpicy),
+      preparationTimeMinutes: productData.preparationTimeMinutes || 15,
+      availableOutlets: targetOutlets,
+      isAvailable: true,
+      stockQuantity: productData.initialStock || 25,
+      isArchived: false,
+    };
+
+    list.unshift(newProduct);
+    globalThis.__PNR_MASTER_PRODUCTS__ = list;
+
+    // Provision stock items for assigned outlets
+    if (!globalThis.__PNR_OUTLET_STOCK__) {
+      globalThis.__PNR_OUTLET_STOCK__ = [];
+    }
+
+    targetOutlets.forEach((outletSlug) => {
+      const existingStock = globalThis.__PNR_OUTLET_STOCK__?.find(
+        (s) => s.outletSlug === outletSlug && s.itemId === newProduct.id
+      );
+      if (!existingStock) {
+        globalThis.__PNR_OUTLET_STOCK__?.push({
+          itemId: newProduct.id,
+          name: newProduct.name,
+          category: newProduct.category,
+          basePrice: newProduct.price,
+          outletSlug,
+          isAvailable: true,
+          stockQuantity: productData.initialStock || 25,
+          lowStockThreshold: 5,
+          lastUpdated: new Date().toISOString(),
+          updatedBy: 'Central Catalog Creation',
+        });
+      }
+    });
+
+    return newProduct;
+  },
+
+  updateMasterProduct: (
+    id: string,
+    updates: UpdateProductDTO
+  ): MenuItem | undefined => {
+    const list = globalThis.__PNR_MASTER_PRODUCTS__ || [];
+    const idx = list.findIndex((item) => item.id === id);
+    if (idx === -1) return undefined;
+
+    const current = list[idx];
+    const updated: MenuItem = {
+      ...current,
+      ...updates,
+      price: updates.price !== undefined ? Number(updates.price) : current.price,
+      originalPrice:
+        updates.originalPrice !== undefined
+          ? Number(updates.originalPrice)
+          : current.originalPrice,
+    };
+    list[idx] = updated;
+
+    // Sync changes to outlet stock matrix
+    const stockList = globalThis.__PNR_OUTLET_STOCK__ || [];
+    stockList.forEach((stock) => {
+      if (stock.itemId === id) {
+        if (updates.name) stock.name = updates.name;
+        if (updates.price !== undefined) stock.basePrice = Number(updates.price);
+        if (updates.category) stock.category = updates.category;
+      }
+    });
+
+    // If available outlets changed, reconcile stock
+    if (updates.availableOutlets) {
+      const outlets = globalThis.__PNR_OUTLETS__ || OUTLETS;
+      let targetOutlets = updates.availableOutlets;
+      if (targetOutlets.includes('all')) {
+        targetOutlets = outlets.map((o) => o.slug);
+      }
+
+      targetOutlets.forEach((slug) => {
+        const found = stockList.find(
+          (s) => s.outletSlug === slug && s.itemId === id
+        );
+        if (!found) {
+          stockList.push({
+            itemId: updated.id,
+            name: updated.name,
+            category: updated.category,
+            basePrice: updated.price,
+            outletSlug: slug,
+            isAvailable: true,
+            stockQuantity: 20,
+            lowStockThreshold: 5,
+            lastUpdated: new Date().toISOString(),
+            updatedBy: 'Catalog Sync',
+          });
+        } else {
+          found.isAvailable = true;
+        }
+      });
+    }
+
+    return updated;
+  },
+
+  deleteMasterProduct: (id: string): boolean => {
+    const list = globalThis.__PNR_MASTER_PRODUCTS__ || [];
+    const idx = list.findIndex((item) => item.id === id);
+    if (idx !== -1) {
+      list[idx].isArchived = true;
+      list[idx].availableOutlets = [];
+
+      // Deactivate from all outlet stock
+      const stockList = globalThis.__PNR_OUTLET_STOCK__ || [];
+      stockList.forEach((s) => {
+        if (s.itemId === id) {
+          s.isAvailable = false;
+          s.stockQuantity = 0;
+        }
+      });
+
+      return true;
+    }
+    return false;
+  },
+
+  // 1-Tap Toggle Product Availability for an Outlet
+  toggleProductOutletAvailability: (
+    outletSlug: string,
+    itemId: string,
+    isAvailableForOutlet: boolean
+  ): { product?: MenuItem; stockItem?: OutletStockItem } => {
+    const products = globalThis.__PNR_MASTER_PRODUCTS__ || MENU_ITEMS;
+    const product = products.find((p) => p.id === itemId);
+    if (!product) return {};
+
+    const stockList = globalThis.__PNR_OUTLET_STOCK__ || [];
+    let stockItem = stockList.find(
+      (s) => s.outletSlug === outletSlug && s.itemId === itemId
+    );
+
+    if (isAvailableForOutlet) {
+      // Add outlet to availableOutlets if not already present
+      if (!product.availableOutlets.includes(outletSlug)) {
+        product.availableOutlets.push(outletSlug);
+      }
+
+      // Provision or reactivate stock
+      if (!stockItem) {
+        stockItem = {
+          itemId: product.id,
+          name: product.name,
+          category: product.category,
+          basePrice: product.price,
+          outletSlug,
+          isAvailable: true,
+          stockQuantity: 15,
+          lowStockThreshold: 5,
+          lastUpdated: new Date().toISOString(),
+          updatedBy: 'Outlet Selection',
+        };
+        stockList.push(stockItem);
+      } else {
+        stockItem.isAvailable = true;
+        if (stockItem.stockQuantity === 0) {
+          stockItem.stockQuantity = 15;
+        }
+        stockItem.lastUpdated = new Date().toISOString();
+        stockItem.updatedBy = 'Outlet Manager Activated';
+      }
+    } else {
+      // Remove outlet from product's availableOutlets
+      product.availableOutlets = product.availableOutlets.filter(
+        (slug) => slug !== outletSlug
+      );
+
+      // Deactivate in outlet stock
+      if (stockItem) {
+        stockItem.isAvailable = false;
+        stockItem.stockQuantity = 0;
+        stockItem.lastUpdated = new Date().toISOString();
+        stockItem.updatedBy = 'Outlet Manager Removed';
+      }
+    }
+
+    return { product, stockItem };
+  },
+
+  // Bulk Assign Products to Outlet
+  bulkAssignProductsToOutlet: (
+    outletSlug: string,
+    selectedItemIds: string[]
+  ): OutletStockItem[] => {
+    const products = globalThis.__PNR_MASTER_PRODUCTS__ || MENU_ITEMS;
+    const stockList = globalThis.__PNR_OUTLET_STOCK__ || [];
+    const selectedSet = new Set(selectedItemIds);
+
+    products.forEach((product) => {
+      const isSelected = selectedSet.has(product.id);
+      let stockItem = stockList.find(
+        (s) => s.outletSlug === outletSlug && s.itemId === product.id
+      );
+
+      if (isSelected) {
+        if (!product.availableOutlets.includes(outletSlug)) {
+          product.availableOutlets.push(outletSlug);
+        }
+
+        if (!stockItem) {
+          stockItem = {
+            itemId: product.id,
+            name: product.name,
+            category: product.category,
+            basePrice: product.price,
+            outletSlug,
+            isAvailable: true,
+            stockQuantity: 15,
+            lowStockThreshold: 5,
+            lastUpdated: new Date().toISOString(),
+            updatedBy: 'Bulk Outlet Sync',
+          };
+          stockList.push(stockItem);
+        } else {
+          stockItem.isAvailable = true;
+          if (stockItem.stockQuantity === 0) {
+            stockItem.stockQuantity = 15;
+          }
+          stockItem.lastUpdated = new Date().toISOString();
+        }
+      } else {
+        product.availableOutlets = product.availableOutlets.filter(
+          (slug) => slug !== outletSlug
+        );
+        if (stockItem) {
+          stockItem.isAvailable = false;
+          stockItem.stockQuantity = 0;
+          stockItem.lastUpdated = new Date().toISOString();
+        }
+      }
+    });
+
+    return stockList.filter(
+      (s) => s.outletSlug === outletSlug && s.isAvailable
+    );
+  },
+
+  // Menu items filtered by outlet and stock availability (reads from master catalog)
   getMenuItems: (outletSlug?: string): MenuItem[] => {
-    if (!outletSlug) return MENU_ITEMS;
-    
+    const master = (globalThis.__PNR_MASTER_PRODUCTS__ || MENU_ITEMS).filter(
+      (p) => !p.isArchived
+    );
+    if (!outletSlug) return master;
+
     // Look up this outlet's stock items
     const stockMap = new Map<string, OutletStockItem>();
     (globalThis.__PNR_OUTLET_STOCK__ || [])
       .filter((s) => s.outletSlug === outletSlug)
       .forEach((s) => stockMap.set(s.itemId, s));
 
-    return MENU_ITEMS.filter((item) => {
-      return item.availableOutlets.includes(outletSlug);
-    }).map((item) => {
-      const stock = stockMap.get(item.id);
-      return {
-        ...item,
-        isAvailable: stock !== undefined ? stock.isAvailable : true,
-        stockQuantity: stock !== undefined ? stock.stockQuantity : 15,
-      };
-    });
+    return master
+      .filter((item) => item.availableOutlets.includes(outletSlug))
+      .map((item) => {
+        const stock = stockMap.get(item.id);
+        return {
+          ...item,
+          price: stock?.customPrice || item.price,
+          isAvailable: stock !== undefined ? stock.isAvailable : true,
+          stockQuantity: stock !== undefined ? stock.stockQuantity : 15,
+        };
+      });
   },
 
   // Outlet Stock Management (For Store Managers)

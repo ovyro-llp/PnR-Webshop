@@ -75,8 +75,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       icon: Store,
     },
     {
-      label: 'Stock & 86-ing',
-      shortLabel: 'Stock 86',
+      label: 'Inventory & Catalog',
+      shortLabel: 'Catalog',
       href: '/admin/inventory',
       icon: Package,
     },
@@ -228,10 +228,10 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       </header>
 
       {/* =========================================================================
-          MOBILE SLIDE-OVER SIDEBAR DRAWER (Hamburger Menu)
+          UNIVERSAL SLIDE-OVER SIDEBAR DRAWER (Hamburger Menu)
          ========================================================================= */}
       {isMobileSidebarOpen && (
-        <div className="md:hidden fixed inset-0 z-50 animate-in fade-in duration-200">
+        <div className="fixed inset-0 z-50 animate-in fade-in duration-200">
           {/* Backdrop Overlay */}
           <div
             className="fixed inset-0 bg-black/40 backdrop-blur-xs transition-opacity"
@@ -259,7 +259,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
                 <button
                   onClick={() => setIsMobileSidebarOpen(false)}
-                  className="p-1.5 rounded-full text-stone-400 hover:text-stone-900 hover:bg-stone-100 transition"
+                  className="p-1.5 rounded-full text-stone-400 hover:text-stone-900 hover:bg-stone-100 transition cursor-pointer"
                   aria-label="Close Menu"
                 >
                   <X className="w-5 h-5" />
@@ -312,7 +312,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                   logout();
                   router.push('/admin/login');
                 }}
-                className="w-full py-2.5 px-4 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-700 text-xs font-semibold flex items-center justify-center gap-2 transition"
+                className="w-full py-2.5 px-4 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-700 text-xs font-semibold flex items-center justify-center gap-2 transition cursor-pointer"
               >
                 <LogOut className="w-4 h-4" />
                 <span>Sign Out</span>
@@ -326,6 +326,36 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           MAIN ADMIN CONTENT VIEWPORT
          ========================================================================= */}
       <main className="flex-1 min-w-0 overflow-y-auto">
+        {/* Desktop Sticky Header Bar with Hamburger Button */}
+        <div className="hidden md:flex items-center justify-between px-6 py-3 bg-white/80 backdrop-blur-md border-b border-stone-200/80 sticky top-0 z-20">
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => setIsMobileSidebarOpen(true)}
+              className="p-1.5 rounded-xl text-stone-700 hover:bg-stone-100 transition cursor-pointer flex items-center gap-2"
+              title="Open Navigation Menu"
+            >
+              <Menu className="w-5 h-5 stroke-[2.2]" />
+            </button>
+            <span className="font-serif font-bold text-sm text-stone-900">
+              {currentTab.label}
+            </span>
+            <span className="text-[10px] uppercase font-mono px-2 py-0.5 rounded-full bg-stone-100 text-stone-600 font-semibold border border-stone-200">
+              P&amp;R Operations
+            </span>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <Link
+              href="/"
+              target="_blank"
+              className="px-3 py-1.5 rounded-xl bg-stone-50 hover:bg-stone-100 text-stone-700 border border-stone-200 text-xs font-medium flex items-center gap-1.5 transition"
+            >
+              <span>Live Storefront</span>
+              <ExternalLink className="w-3 h-3 text-stone-400" />
+            </Link>
+          </div>
+        </div>
+
         <div className="w-full max-w-7xl mx-auto">{children}</div>
       </main>
     </div>

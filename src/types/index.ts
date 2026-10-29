@@ -96,9 +96,41 @@ export interface MenuItem {
   isBestseller?: boolean;
   isSpicy?: boolean;
   preparationTimeMinutes: number;
-  availableOutlets: string[]; // Outlet slugs
+  availableOutlets: string[]; // Outlet slugs where this item is active
   isAvailable?: boolean;
   stockQuantity?: number;
+  isArchived?: boolean;
+  sku?: string;
+}
+
+export interface CreateProductDTO {
+  name: string;
+  description: string;
+  category: MenuCategory;
+  price: number;
+  originalPrice?: number;
+  image: string;
+  isVeg: boolean;
+  isBestseller?: boolean;
+  isSpicy?: boolean;
+  preparationTimeMinutes?: number;
+  availableOutlets?: string[];
+  initialStock?: number;
+}
+
+export interface UpdateProductDTO {
+  name?: string;
+  description?: string;
+  category?: MenuCategory;
+  price?: number;
+  originalPrice?: number;
+  image?: string;
+  isVeg?: boolean;
+  isBestseller?: boolean;
+  isSpicy?: boolean;
+  preparationTimeMinutes?: number;
+  availableOutlets?: string[];
+  isArchived?: boolean;
 }
 
 export interface CartItem {
