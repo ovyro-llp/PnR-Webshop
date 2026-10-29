@@ -29,6 +29,30 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    if (!outlet.isOpen) {
+      return NextResponse.json(
+        { success: false, message: `Orders are currently paused for ${outlet.name}. Please choose another outlet.` },
+        { status: 400 }
+      );
+    }
+
+    // Validate items in outlet stock
+    if (items && Array.isArray(items)) {
+      const stockList = orderStore.getOutletStock(outletSlug);
+      for (const item of items) {
+        const stock = stockList.find((s) => s.itemId === item.itemId);
+        if (!stock || !stock.isAvailable || stock.stockQuantity < (item.quantity || 1)) {
+          return NextResponse.json(
+            {
+              success: false,
+              message: `"${item.name || 'Item'}" is currently sold out at ${outlet.name}. Please remove it to proceed.`,
+            },
+            { status: 400 }
+          );
+        }
+      }
+    }
+
     const receipt = `rcpt_${outletSlug}_${Date.now()}`;
     const notes: Record<string, string> = {
       outletSlug,

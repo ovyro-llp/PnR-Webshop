@@ -279,6 +279,23 @@ export const orderStore = {
       throw new Error(`Outlet not found: ${orderData.outletSlug}`);
     }
 
+    if (!outlet.isOpen) {
+      throw new Error(`Orders are currently paused for ${outlet.name}. Please select another outlet.`);
+    }
+
+    // Validate stock and availability before order acceptance
+    const stockList = globalThis.__PNR_OUTLET_STOCK__ || [];
+    for (const item of orderData.items) {
+      const stock = stockList.find(
+        (s) => s.outletSlug === orderData.outletSlug && s.itemId === item.itemId
+      );
+      if (stock && (!stock.isAvailable || stock.stockQuantity < item.quantity)) {
+        throw new Error(
+          `"${item.name}" is currently sold out at ${outlet.name}. Please remove it to proceed.`
+        );
+      }
+    }
+
     const orderNumber = `PNR-${Math.floor(10000 + Math.random() * 90000)}`;
     const newOrder: Order = {
       ...orderData,
@@ -872,9 +889,7 @@ export const orderStore = {
       }
     });
 
-    return stockList.filter(
-      (s) => s.outletSlug === outletSlug && s.isAvailable
-    );
+    return orderStore.getOutletStock(outletSlug);
   },
 
   // Menu items filtered by outlet and stock availability (reads from master catalog)
@@ -903,10 +918,17 @@ export const orderStore = {
       });
   },
 
-  // Outlet Stock Management (For Store Managers)
+  // Outlet Stock Management (For Store Managers) - strictly scoped to assigned products
   getOutletStock: (outletSlug: string): OutletStockItem[] => {
+    const products = globalThis.__PNR_MASTER_PRODUCTS__ || MENU_ITEMS;
+    const assignedItemIds = new Set(
+      products
+        .filter((p) => !p.isArchived && p.availableOutlets.includes(outletSlug))
+        .map((p) => p.id)
+    );
+
     return (globalThis.__PNR_OUTLET_STOCK__ || []).filter(
-      (s) => s.outletSlug === outletSlug
+      (s) => s.outletSlug === outletSlug && assignedItemIds.has(s.itemId)
     );
   },
 

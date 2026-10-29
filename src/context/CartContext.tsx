@@ -66,6 +66,15 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   }, [items]);
 
   const addItem = (item: MenuItem, quantity = 1) => {
+    // Validate live availability and stock quantity before adding
+    if (
+      item.isAvailable === false ||
+      (typeof item.stockQuantity === 'number' && item.stockQuantity <= 0)
+    ) {
+      console.warn(`Cannot add sold-out item "${item.name}" to basket`);
+      return;
+    }
+
     setItems((prev) => {
       const existing = prev.find((i) => i.item.id === item.id);
       if (existing) {

@@ -1408,7 +1408,7 @@ export default function OutletInventoryPage() {
                   <div className="space-y-2.5">
                     {filteredDrawerProducts.map((product) => {
                       const stockItem = stockItems.find((s) => s.itemId === product.id);
-                      const isChecked = product.availableOutlets.includes(selectedOutlet) && (stockItem ? stockItem.isAvailable : true);
+                      const isChecked = product.availableOutlets.includes(selectedOutlet);
                       const currentStock = stockItem?.stockQuantity ?? 25;
 
                       return (

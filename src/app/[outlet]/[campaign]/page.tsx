@@ -8,6 +8,9 @@ import { MobileCartBar } from '@/components/cart/MobileCartBar';
 import { TrackingProvider } from '@/components/tracking/TrackingProvider';
 import { Star, ShieldCheck, CheckCircle2, Award, Clock } from 'lucide-react';
 
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 export default async function CampaignLandingPage({
   params,
 }: {

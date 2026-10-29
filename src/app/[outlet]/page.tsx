@@ -5,8 +5,11 @@ import { MenuItemCard } from '@/components/menu/MenuItemCard';
 import { CartDrawer } from '@/components/cart/CartDrawer';
 import { MobileCartBar } from '@/components/cart/MobileCartBar';
 import { TrackingProvider } from '@/components/tracking/TrackingProvider';
-import { MapPin, Phone, Clock, Star, Sparkles, ArrowRight } from 'lucide-react';
+import { MapPin, Phone, Clock, Star, Sparkles, ArrowRight, Package } from 'lucide-react';
 import Link from 'next/link';
+
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
 
 export default async function OutletPage({
   params,
@@ -43,10 +46,17 @@ export default async function OutletPage({
                   <span className="text-[10px] uppercase tracking-wider font-semibold px-2 py-0.5 rounded-full bg-stone-100 text-stone-700">
                     Nashik Bakery Outlet
                   </span>
-                  <span className="text-[10px] font-medium text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded-full flex items-center gap-1">
-                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-600" />
-                    Baking Fresh
-                  </span>
+                  {outlet.isOpen ? (
+                    <span className="text-[10px] font-medium text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded-full flex items-center gap-1 border border-emerald-200">
+                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-600" />
+                      Baking Fresh
+                    </span>
+                  ) : (
+                    <span className="text-[10px] font-medium text-rose-800 bg-rose-50 px-2 py-0.5 rounded-full flex items-center gap-1 border border-rose-200">
+                      <span className="w-1.5 h-1.5 rounded-full bg-rose-600" />
+                      Orders Paused
+                    </span>
+                  )}
                   <span className="text-xs text-stone-500 flex items-center gap-1">
                     <Star className="w-3.5 h-3.5 fill-stone-700 text-stone-700" />
                     {outlet.rating} ({outlet.reviewCount})
@@ -107,6 +117,13 @@ export default async function OutletPage({
           </div>
         </section>
 
+        {/* Notice if outlet orders are paused */}
+        {!outlet.isOpen && (
+          <div className="bg-rose-50 border-b border-rose-200 py-3 px-4 text-center text-xs text-rose-800 font-medium flex items-center justify-center gap-2">
+            <span>⚠️ Our kitchen at {outlet.name} is currently busy or taking a scheduled baking pause. Online orders are temporarily paused.</span>
+          </div>
+        )}
+
         {/* Outlet Active Campaign Bar */}
         {outletCampaigns.length > 0 && (
           <section className="bg-[#1C1917] text-white py-3 border-b border-stone-800 w-full">
@@ -140,11 +157,35 @@ export default async function OutletPage({
             </p>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
-            {menuItems.map((item) => (
-              <MenuItemCard key={item.id} item={item} />
-            ))}
-          </div>
+          {menuItems.length === 0 ? (
+            <div className="p-12 text-center bg-white rounded-3xl border border-stone-200/90 space-y-4 max-w-lg mx-auto my-8">
+              <div className="w-14 h-14 bg-amber-50 text-amber-800 rounded-full flex items-center justify-center mx-auto">
+                <Package className="w-7 h-7 text-amber-700" />
+              </div>
+              <div className="space-y-1.5">
+                <h3 className="font-serif font-bold text-stone-900 text-lg">
+                  Fresh Batch In Preparation
+                </h3>
+                <p className="text-xs text-stone-500 leading-relaxed">
+                  Our bakers at {outlet.name} are currently preparing today&apos;s fresh bakes. No products are currently assigned to this outlet&apos;s counter.
+                </p>
+              </div>
+              <div className="pt-2 flex flex-col sm:flex-row items-center justify-center gap-2">
+                <Link
+                  href="/"
+                  className="px-4 py-2 bg-[#1C1917] text-white rounded-full text-xs font-semibold hover:bg-stone-800 transition"
+                >
+                  Explore Other Outlets
+                </Link>
+              </div>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+              {menuItems.map((item) => (
+                <MenuItemCard key={item.id} item={item} />
+              ))}
+            </div>
+          )}
         </main>
 
         <MobileCartBar />

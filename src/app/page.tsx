@@ -1,18 +1,28 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { orderStore } from '@/lib/store/order-store';
-import { MENU_ITEMS } from '@/lib/data/mock-data';
 import { Navbar } from '@/components/layout/Navbar';
 import { MenuItemCard } from '@/components/menu/MenuItemCard';
 import { CartDrawer } from '@/components/cart/CartDrawer';
 import { MobileCartBar } from '@/components/cart/MobileCartBar';
 import { TrackingProvider } from '@/components/tracking/TrackingProvider';
 import { CustomerLoginModal } from '@/components/auth/CustomerLoginModal';
-import { MapPin, ArrowRight, Sparkles, Phone, Compass } from 'lucide-react';
+import { MapPin, ArrowRight, Sparkles, Phone, Compass, Package } from 'lucide-react';
+
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
 
 export default function HomePage() {
   const outlets = orderStore.getOutlets();
-  const bestsellers = MENU_ITEMS.filter((item) => item.isBestseller);
+  // Find primary outlet with active products, or fallback to first open outlet
+  const activeOutlet =
+    outlets.find((o) => o.isOpen && orderStore.getMenuItems(o.slug).length > 0) ||
+    outlets.find((o) => o.isOpen) ||
+    outlets[0];
+
+  const outletItems = orderStore.getMenuItems(activeOutlet?.slug);
+  const bestsellers = outletItems.filter((item) => item.isBestseller);
+  const displayedItems = bestsellers.length > 0 ? bestsellers : outletItems.slice(0, 4);
 
   return (
     <TrackingProvider
@@ -117,15 +127,27 @@ export default function HomePage() {
               Bestselling Creations
             </h2>
             <p className="text-xs sm:text-sm text-stone-500 mt-0.5">
-              Prepared in small batches every morning. Delivered piping hot.
+              {activeOutlet
+                ? `Prepared in small batches every morning at our ${activeOutlet.area} bakery. Delivered piping hot.`
+                : 'Prepared in small batches every morning. Delivered piping hot.'}
             </p>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
-            {bestsellers.map((item) => (
-              <MenuItemCard key={item.id} item={item} />
-            ))}
-          </div>
+          {displayedItems.length === 0 ? (
+            <div className="p-8 text-center bg-stone-50 rounded-2xl border border-stone-200 space-y-2">
+              <Package className="w-8 h-8 text-stone-400 mx-auto" />
+              <p className="font-serif font-bold text-stone-800 text-sm">Fresh Batch Baking Now</p>
+              <p className="text-xs text-stone-500 max-w-md mx-auto">
+                Our artisanal bakers are currently preparing today&apos;s fresh batch. Explore our outlets above to see live counter availability.
+              </p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+              {displayedItems.map((item) => (
+                <MenuItemCard key={item.id} item={item} />
+              ))}
+            </div>
+          )}
         </section>
 
         {/* Minimalist Mobile-First Footer */}
@@ -182,7 +204,7 @@ export default function HomePage() {
 
         {/* Mobile Sticky Cart Bar, Cart Drawer & Login Modal */}
         <MobileCartBar />
-        <CartDrawer outletSlug="college-road" />
+        <CartDrawer outletSlug={activeOutlet?.slug || 'college-road'} />
         <CustomerLoginModal />
       </div>
     </TrackingProvider>
