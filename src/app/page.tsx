@@ -1,15 +1,17 @@
 import Link from 'next/link';
 import Image from 'next/image';
-import { OUTLETS, CAMPAIGNS, MENU_ITEMS } from '@/lib/data/mock-data';
+import { orderStore } from '@/lib/store/order-store';
+import { MENU_ITEMS } from '@/lib/data/mock-data';
 import { Navbar } from '@/components/layout/Navbar';
 import { MenuItemCard } from '@/components/menu/MenuItemCard';
 import { CartDrawer } from '@/components/cart/CartDrawer';
 import { MobileCartBar } from '@/components/cart/MobileCartBar';
 import { TrackingProvider } from '@/components/tracking/TrackingProvider';
 import { CustomerLoginModal } from '@/components/auth/CustomerLoginModal';
-import { MapPin, ArrowRight, Sparkles, Phone } from 'lucide-react';
+import { MapPin, ArrowRight, Sparkles, Phone, Compass } from 'lucide-react';
 
 export default function HomePage() {
+  const outlets = orderStore.getOutlets();
   const bestsellers = MENU_ITEMS.filter((item) => item.isBestseller);
 
   return (
@@ -38,7 +40,7 @@ export default function HomePage() {
 
             {/* Outlets Grid */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6 pt-1">
-              {OUTLETS.map((outlet) => (
+              {outlets.map((outlet) => (
                 <div
                   key={outlet.slug}
                   className="bg-white border border-stone-200/90 rounded-3xl p-5 sm:p-7 hover:border-stone-400 transition-all duration-200 flex flex-col justify-between space-y-5 shadow-xs"
@@ -48,8 +50,10 @@ export default function HomePage() {
                       <span className="text-[10px] font-semibold tracking-widest uppercase text-stone-400">
                         {outlet.area}
                       </span>
-                      <span className="text-[10px] text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded-full font-medium">
-                        Open Now
+                      <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${
+                        outlet.isOpen ? 'text-emerald-800 bg-emerald-50' : 'text-rose-800 bg-rose-50'
+                      }`}>
+                        {outlet.isOpen ? 'Open Now' : 'Orders Paused'}
                       </span>
                     </div>
 
@@ -60,10 +64,29 @@ export default function HomePage() {
                       {outlet.tagline}
                     </p>
 
-                    <p className="text-xs text-stone-600 flex items-start gap-1.5 pt-0.5">
-                      <MapPin className="w-3.5 h-3.5 text-stone-400 shrink-0 mt-0.5" />
-                      <span className="line-clamp-1">{outlet.address}</span>
-                    </p>
+                    <div className="space-y-1.5 pt-1 text-xs text-stone-600">
+                      <p className="flex items-start gap-1.5">
+                        <MapPin className="w-3.5 h-3.5 text-stone-400 shrink-0 mt-0.5" />
+                        <span className="line-clamp-1">{outlet.address}</span>
+                      </p>
+                      <div className="flex items-center justify-between text-[11px] text-stone-500 pt-1">
+                        <a href={`tel:${outlet.phone}`} className="flex items-center gap-1 hover:text-stone-950 font-mono">
+                          <Phone className="w-3 h-3 text-stone-400" />
+                          <span>{outlet.phone}</span>
+                        </a>
+                        {outlet.googleMapsUrl && (
+                          <a
+                            href={outlet.googleMapsUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-1 text-stone-800 hover:text-amber-700 font-medium transition"
+                          >
+                            <Compass className="w-3 h-3 text-amber-600" />
+                            <span>Directions</span>
+                          </a>
+                        )}
+                      </div>
+                    </div>
                   </div>
 
                   <div className="pt-3.5 border-t border-stone-100 flex items-center justify-between">
@@ -80,76 +103,6 @@ export default function HomePage() {
                   </div>
                 </div>
               ))}
-            </div>
-          </div>
-        </section>
-
-        {/* Targeted Performance Offers */}
-        <section className="py-12 bg-[#FAF8F5] border-b border-stone-200/80 w-full">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
-            <div>
-              <span className="text-[10px] uppercase tracking-widest font-semibold text-stone-400 block">
-                Outlet Campaigns
-              </span>
-              <h2 className="text-xl sm:text-2xl md:text-3xl font-serif font-bold text-stone-900 mt-0.5">
-                Active Seasonal Offers
-              </h2>
-              <p className="text-xs sm:text-sm text-stone-500 mt-0.5">
-                Tailored destinations with dynamic tracking and exclusive outlet menus.
-              </p>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6">
-              {CAMPAIGNS.map((camp) => {
-                const targetOutlet = OUTLETS.find((o) => o.slug === camp.outletSlug);
-                return (
-                  <div
-                    key={camp.id}
-                    className="bg-white rounded-3xl border border-stone-200/90 p-5 sm:p-6 flex flex-col justify-between space-y-4 hover:border-stone-400 transition shadow-xs"
-                  >
-                    <div className="space-y-2.5">
-                      <div className="flex items-center justify-between">
-                        <span className="text-[10px] uppercase tracking-wider font-semibold text-stone-500 bg-stone-100 px-2.5 py-0.5 rounded-full">
-                          {camp.badge}
-                        </span>
-                        <span className="text-xs font-bold text-stone-900">
-                          {camp.discountPercentage}% OFF
-                        </span>
-                      </div>
-
-                      <h3 className="font-serif font-bold text-base sm:text-lg text-stone-900 leading-snug">
-                        {camp.title}
-                      </h3>
-                      <p className="text-xs text-stone-500 line-clamp-2 leading-relaxed">
-                        {camp.subheadline}
-                      </p>
-
-                      <div className="p-3 bg-stone-50 rounded-2xl border border-stone-100 text-xs space-y-1">
-                        <div className="flex justify-between text-stone-500">
-                          <span>Outlet:</span>
-                          <span className="font-medium text-stone-800">
-                            {targetOutlet?.name.replace("Puffs 'n' Rolls - ", '')}
-                          </span>
-                        </div>
-                        <div className="flex justify-between text-stone-500">
-                          <span>Promo Code:</span>
-                          <span className="font-mono text-stone-900 font-bold">
-                            {camp.offerCode}
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-
-                    <Link
-                      href={`/${camp.outletSlug}/${camp.slug}`}
-                      className="w-full py-2.5 bg-[#1C1917] hover:bg-stone-800 active:scale-98 text-white rounded-full text-xs font-medium tracking-wide flex items-center justify-center gap-1.5 transition"
-                    >
-                      <span>View Campaign Destination</span>
-                      <ArrowRight className="w-3.5 h-3.5" />
-                    </Link>
-                  </div>
-                );
-              })}
             </div>
           </div>
         </section>

@@ -12,14 +12,12 @@ import {
   Plus,
   Minus,
   RefreshCw,
-  Sliders,
   Power,
   Store,
-  Clock,
-  Sparkles,
 } from 'lucide-react';
 
 export default function OutletInventoryPage() {
+  const [outlets, setOutlets] = useState<Outlet[]>(OUTLETS);
   const [selectedOutlet, setSelectedOutlet] = useState<string>('college-road');
   const [stockItems, setStockItems] = useState<OutletStockItem[]>([]);
   const [isOutletOpen, setIsOutletOpen] = useState<boolean>(true);
@@ -27,6 +25,18 @@ export default function OutletInventoryPage() {
   const [selectedCategory, setSelectedCategory] = useState<string>('ALL');
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [statusMessage, setStatusMessage] = useState<string>('');
+
+  const fetchOutlets = async () => {
+    try {
+      const res = await fetch('/api/outlets');
+      const data = await res.json();
+      if (data.success && data.outlets) {
+        setOutlets(data.outlets);
+      }
+    } catch (e) {
+      console.error(e);
+    }
+  };
 
   const fetchInventory = async (outletSlug: string) => {
     setIsLoading(true);
@@ -43,6 +53,10 @@ export default function OutletInventoryPage() {
       setIsLoading(false);
     }
   };
+
+  useEffect(() => {
+    fetchOutlets();
+  }, []);
 
   useEffect(() => {
     fetchInventory(selectedOutlet);
@@ -91,7 +105,7 @@ export default function OutletInventoryPage() {
       }
     } catch (err) {
       console.error('Update failed', err);
-      fetchInventory(selectedOutlet); // Revert on failure
+      fetchInventory(selectedOutlet);
     }
   };
 
@@ -171,35 +185,35 @@ export default function OutletInventoryPage() {
   ).length;
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
-      {/* Page Header & Outlet Switcher */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-800 pb-5">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
+      {/* Header & Outlet Switcher */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-stone-200/80 pb-5">
         <div>
           <div className="flex items-center gap-2">
-            <span className="p-1.5 rounded-lg bg-amber-500/10 text-amber-400 border border-amber-500/20">
+            <span className="p-1.5 rounded-lg bg-stone-100 text-stone-900 border border-stone-200">
               <Package className="w-5 h-5" />
             </span>
-            <h1 className="text-xl sm:text-2xl font-bold text-white tracking-tight">
-              Outlet Inventory &amp; 86-ing Terminal
+            <h1 className="text-xl sm:text-2xl font-serif font-bold text-stone-900 tracking-tight">
+              Outlet Stock &amp; 86-ing Terminal
             </h1>
           </div>
-          <p className="text-xs text-slate-400 mt-1">
-            Real-time outlet stock levels, 1-tap sold-out toggles, and kitchen load controls
+          <p className="text-xs text-stone-500 mt-1">
+            Real-time outlet stock levels, 1-tap sold-out toggles, and kitchen rush pause controls
           </p>
         </div>
 
         {/* Outlet Switcher Pills */}
-        <div className="flex items-center gap-1.5 bg-slate-900 p-1.5 rounded-xl border border-slate-800 overflow-x-auto no-scrollbar">
-          {OUTLETS.map((outlet) => {
+        <div className="flex items-center gap-1.5 bg-white p-1 rounded-full border border-stone-200 overflow-x-auto no-scrollbar shadow-2xs">
+          {outlets.map((outlet) => {
             const isSelected = selectedOutlet === outlet.slug;
             return (
               <button
                 key={outlet.slug}
                 onClick={() => setSelectedOutlet(outlet.slug)}
-                className={`px-3 py-1.5 rounded-lg text-xs font-medium transition shrink-0 flex items-center gap-1.5 ${
+                className={`px-3.5 py-1.5 rounded-full text-xs font-medium transition shrink-0 flex items-center gap-1.5 ${
                   isSelected
-                    ? 'bg-amber-500 text-slate-950 font-bold shadow-sm'
-                    : 'text-slate-400 hover:text-white hover:bg-slate-800'
+                    ? 'bg-[#1C1917] text-white font-semibold shadow-xs'
+                    : 'text-stone-600 hover:text-stone-900 hover:bg-stone-50'
                 }`}
               >
                 <Store className="w-3.5 h-3.5" />
@@ -211,29 +225,29 @@ export default function OutletInventoryPage() {
       </div>
 
       {/* Outlet Kitchen Operating State & Quick 86 Alert Bar */}
-      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4 p-4 rounded-xl bg-slate-900/90 border border-slate-800">
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4 p-4 rounded-3xl bg-white border border-stone-200/90 shadow-[0_2px_8px_rgba(0,0,0,0.02)]">
         <div className="flex items-center gap-3">
           <div
             className={`w-3.5 h-3.5 rounded-full animate-pulse ${
-              isOutletOpen ? 'bg-emerald-500' : 'bg-rose-500'
+              isOutletOpen ? 'bg-emerald-600' : 'bg-rose-600'
             }`}
           />
           <div>
             <div className="flex items-center gap-2">
-              <span className="text-sm font-bold text-white">
+              <span className="text-sm font-serif font-bold text-stone-900">
                 {isOutletOpen ? 'Accepting Orders' : 'Kitchen Rush / Orders Paused'}
               </span>
               <span
                 className={`text-[10px] font-mono px-2 py-0.5 rounded-full uppercase font-semibold ${
                   isOutletOpen
-                    ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/30'
-                    : 'bg-rose-500/10 text-rose-400 border border-rose-500/30'
+                    ? 'bg-emerald-50 text-emerald-800 border border-emerald-200'
+                    : 'bg-rose-50 text-rose-800 border border-rose-200'
                 }`}
               >
                 {isOutletOpen ? 'ONLINE' : 'PAUSED'}
               </span>
             </div>
-            <p className="text-xs text-slate-400 mt-0.5">
+            <p className="text-xs text-stone-500 mt-0.5">
               {isOutletOpen
                 ? 'Storefront customers can place live delivery and pickup orders'
                 : 'Customer checkout is temporarily paused to let the bakery catch up'}
@@ -243,42 +257,41 @@ export default function OutletInventoryPage() {
 
         <button
           onClick={handleToggleOutletOpen}
-          className={`px-4 py-2 rounded-xl text-xs font-semibold flex items-center justify-center gap-2 transition shrink-0 ${
+          className={`px-4 py-2 rounded-full text-xs font-semibold flex items-center justify-center gap-2 transition shrink-0 ${
             isOutletOpen
-              ? 'bg-rose-500/15 hover:bg-rose-500/25 text-rose-300 border border-rose-500/30'
-              : 'bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold'
+              ? 'bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200'
+              : 'bg-[#1C1917] hover:bg-stone-800 text-white'
           }`}
         >
           <Power className="w-4 h-4" />
-          <span>{isOutletOpen ? 'Emergency Pause Outlet' : 'Resume Accepting Orders'}</span>
+          <span>{isOutletOpen ? 'Pause Outlet Orders' : 'Resume Accepting Orders'}</span>
         </button>
       </div>
 
-      {/* Status Feedback Toast */}
       {statusMessage && (
-        <div className="p-3 bg-amber-500/15 border border-amber-500/30 rounded-xl text-xs font-medium text-amber-300 flex items-center gap-2 animate-in fade-in">
-          <CheckCircle2 className="w-4 h-4 text-amber-400" />
+        <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-2xl text-xs font-medium text-emerald-800 flex items-center gap-2 animate-in fade-in">
+          <CheckCircle2 className="w-4 h-4 text-emerald-600" />
           <span>{statusMessage}</span>
         </div>
       )}
 
       {/* Metric Cards */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
-        <div className="bg-slate-900 p-4 rounded-xl border border-slate-800">
-          <span className="text-xs text-slate-400 block font-medium">Total Items</span>
-          <span className="text-2xl font-bold text-white mt-1 block">{totalItems}</span>
+        <div className="bg-white p-4 rounded-3xl border border-stone-200/90 shadow-[0_2px_8px_rgba(0,0,0,0.02)]">
+          <span className="text-xs text-stone-400 block font-medium">Total Items</span>
+          <span className="text-2xl font-serif font-bold text-stone-900 mt-1 block">{totalItems}</span>
         </div>
-        <div className="bg-slate-900 p-4 rounded-xl border border-slate-800">
-          <span className="text-xs text-emerald-400 block font-medium">In Stock</span>
-          <span className="text-2xl font-bold text-emerald-300 mt-1 block">{inStockCount}</span>
+        <div className="bg-white p-4 rounded-3xl border border-stone-200/90 shadow-[0_2px_8px_rgba(0,0,0,0.02)]">
+          <span className="text-xs text-emerald-700 block font-medium">In Stock</span>
+          <span className="text-2xl font-serif font-bold text-emerald-800 mt-1 block">{inStockCount}</span>
         </div>
-        <div className="bg-slate-900 p-4 rounded-xl border border-slate-800">
-          <span className="text-xs text-rose-400 block font-medium">Sold Out (86-ed)</span>
-          <span className="text-2xl font-bold text-rose-300 mt-1 block">{soldOutCount}</span>
+        <div className="bg-white p-4 rounded-3xl border border-stone-200/90 shadow-[0_2px_8px_rgba(0,0,0,0.02)]">
+          <span className="text-xs text-rose-700 block font-medium">Sold Out (86-ed)</span>
+          <span className="text-2xl font-serif font-bold text-rose-800 mt-1 block">{soldOutCount}</span>
         </div>
-        <div className="bg-slate-900 p-4 rounded-xl border border-slate-800">
-          <span className="text-xs text-amber-400 block font-medium">Low Stock (&lt; 5)</span>
-          <span className="text-2xl font-bold text-amber-300 mt-1 block">{lowStockCount}</span>
+        <div className="bg-white p-4 rounded-3xl border border-stone-200/90 shadow-[0_2px_8px_rgba(0,0,0,0.02)]">
+          <span className="text-xs text-amber-700 block font-medium">Low Stock (&lt; 5)</span>
+          <span className="text-2xl font-serif font-bold text-amber-800 mt-1 block">{lowStockCount}</span>
         </div>
       </div>
 
@@ -286,19 +299,19 @@ export default function OutletInventoryPage() {
       <div className="space-y-3">
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
           <div className="relative flex-1">
-            <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+            <Search className="w-4 h-4 text-stone-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
             <input
               type="text"
               placeholder="Search bakery items by name..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full bg-slate-900 border border-slate-800 rounded-xl pl-10 pr-4 py-2.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-amber-500/50"
+              className="w-full bg-white border border-stone-200 rounded-2xl pl-10 pr-4 py-2.5 text-xs text-stone-900 placeholder-stone-400 focus:outline-none focus:border-stone-400 shadow-2xs"
             />
           </div>
 
           <button
             onClick={() => fetchInventory(selectedOutlet)}
-            className="flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-300 border border-slate-800 text-xs transition"
+            className="flex items-center justify-center gap-1.5 px-3.5 py-2.5 rounded-full bg-white hover:bg-stone-50 text-stone-700 border border-stone-200 text-xs font-medium transition shadow-2xs"
           >
             <RefreshCw className={`w-3.5 h-3.5 ${isLoading ? 'animate-spin' : ''}`} />
             <span>Refresh</span>
@@ -311,10 +324,10 @@ export default function OutletInventoryPage() {
             <button
               key={cat}
               onClick={() => setSelectedCategory(cat)}
-              className={`px-3 py-1.5 rounded-lg text-xs font-medium transition shrink-0 ${
+              className={`px-3.5 py-1.5 rounded-full text-xs font-medium transition shrink-0 ${
                 selectedCategory === cat
-                  ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40'
-                  : 'bg-slate-900 text-slate-400 hover:text-slate-200 border border-slate-800'
+                  ? 'bg-[#1C1917] text-white font-semibold'
+                  : 'bg-white text-stone-600 hover:text-stone-900 border border-stone-200'
               }`}
             >
               {cat}
@@ -323,8 +336,8 @@ export default function OutletInventoryPage() {
         </div>
       </div>
 
-      {/* Inventory Item Grid (Mobile-friendly card list) */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+      {/* Inventory Item Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {filteredItems.map((item) => {
           const isSoldOut = !item.isAvailable || item.stockQuantity === 0;
           const isLowStock = !isSoldOut && item.stockQuantity <= item.lowStockThreshold;
@@ -332,21 +345,21 @@ export default function OutletInventoryPage() {
           return (
             <div
               key={item.itemId}
-              className={`p-4 rounded-xl border transition-all duration-200 flex flex-col justify-between ${
+              className={`p-5 rounded-3xl border transition-all duration-200 flex flex-col justify-between shadow-[0_2px_8px_rgba(0,0,0,0.02)] ${
                 isSoldOut
-                  ? 'bg-slate-900/40 border-rose-900/30'
+                  ? 'bg-stone-50/70 border-stone-200 opacity-75'
                   : isLowStock
-                  ? 'bg-slate-900 border-amber-900/40'
-                  : 'bg-slate-900 border-slate-800 hover:border-slate-700'
+                  ? 'bg-amber-50/30 border-amber-200'
+                  : 'bg-white border-stone-200/90 hover:border-stone-400'
               }`}
             >
               <div>
                 <div className="flex items-start justify-between gap-2">
                   <div>
-                    <span className="text-[10px] uppercase font-mono tracking-wider text-slate-400 block">
+                    <span className="text-[10px] uppercase font-mono tracking-wider font-semibold text-stone-400 block">
                       {item.category}
                     </span>
-                    <h3 className="text-sm font-bold text-white mt-0.5 line-clamp-1">
+                    <h3 className="text-sm font-serif font-bold text-stone-900 mt-0.5 line-clamp-1">
                       {item.name}
                     </h3>
                   </div>
@@ -354,20 +367,20 @@ export default function OutletInventoryPage() {
                   {/* 1-Tap Quick 86 Button */}
                   <button
                     onClick={() => handleToggleAvailability(item)}
-                    className={`px-2.5 py-1 rounded-lg text-[11px] font-bold uppercase tracking-wider transition shrink-0 flex items-center gap-1 ${
+                    className={`px-3 py-1 rounded-full text-[11px] font-semibold uppercase tracking-wider transition shrink-0 flex items-center gap-1 ${
                       isSoldOut
-                        ? 'bg-rose-500/20 hover:bg-rose-500/30 text-rose-300 border border-rose-500/40'
-                        : 'bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 border border-emerald-500/40'
+                        ? 'bg-rose-100 hover:bg-rose-200 text-rose-800'
+                        : 'bg-emerald-100 hover:bg-emerald-200 text-emerald-800'
                     }`}
                   >
                     {isSoldOut ? (
                       <>
-                        <XCircle className="w-3 h-3 text-rose-400" />
+                        <XCircle className="w-3 h-3 text-rose-600" />
                         <span>Sold Out</span>
                       </>
                     ) : (
                       <>
-                        <CheckCircle2 className="w-3 h-3 text-emerald-400" />
+                        <CheckCircle2 className="w-3 h-3 text-emerald-600" />
                         <span>In Stock</span>
                       </>
                     )}
@@ -375,49 +388,49 @@ export default function OutletInventoryPage() {
                 </div>
 
                 <div className="flex items-center gap-2 mt-2">
-                  <span className="text-sm font-bold text-amber-400 font-mono">
+                  <span className="text-sm font-bold text-stone-900 font-mono">
                     ₹{item.basePrice}
                   </span>
                   {isLowStock && (
-                    <span className="text-[10px] font-semibold text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded-full border border-amber-500/20 flex items-center gap-1">
+                    <span className="text-[10px] font-semibold text-amber-800 bg-amber-50 px-2.5 py-0.5 rounded-full border border-amber-200 flex items-center gap-1">
                       <AlertTriangle className="w-3 h-3" />
-                      Low Stock Warning
+                      Low Stock (&lt; 5)
                     </span>
                   )}
                 </div>
               </div>
 
               {/* Quantity Stepper & Last Updated Info */}
-              <div className="pt-3 mt-3 border-t border-slate-800/80 flex items-center justify-between">
+              <div className="pt-3 mt-4 border-t border-stone-100 flex items-center justify-between">
                 <div>
-                  <span className="text-[10px] text-slate-400 block font-mono">
+                  <span className="text-[10px] text-stone-400 block font-mono">
                     Updated: {new Date(item.lastUpdated).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                   </span>
-                  <span className="text-[9px] text-slate-400 font-mono">
+                  <span className="text-[9px] text-stone-400 font-mono">
                     By: {item.updatedBy || 'Outlet Manager'}
                   </span>
                 </div>
 
                 {/* Counter Control */}
-                <div className="flex items-center gap-1.5 bg-slate-950 px-2 py-1 rounded-lg border border-slate-800">
+                <div className="flex items-center gap-1 bg-stone-100 px-2 py-1 rounded-full border border-stone-200">
                   <button
                     onClick={() => handleAdjustQuantity(item, -1)}
                     disabled={item.stockQuantity <= 0}
-                    className="p-1 rounded text-slate-400 hover:text-white disabled:opacity-30 disabled:cursor-not-allowed"
+                    className="p-1 rounded-full text-stone-600 hover:text-stone-900 disabled:opacity-30 disabled:cursor-not-allowed"
                     title="Decrease Stock"
                   >
                     <Minus className="w-3 h-3" />
                   </button>
                   <span
-                    className={`text-xs font-mono font-bold min-w-[24px] text-center ${
-                      isSoldOut ? 'text-rose-400' : isLowStock ? 'text-amber-400' : 'text-white'
+                    className={`text-xs font-mono font-bold min-w-[22px] text-center ${
+                      isSoldOut ? 'text-rose-600' : isLowStock ? 'text-amber-700' : 'text-stone-900'
                     }`}
                   >
                     {item.stockQuantity}
                   </span>
                   <button
                     onClick={() => handleAdjustQuantity(item, 1)}
-                    className="p-1 rounded text-slate-400 hover:text-white"
+                    className="p-1 rounded-full text-stone-600 hover:text-stone-900"
                     title="Increase Stock"
                   >
                     <Plus className="w-3 h-3" />

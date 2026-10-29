@@ -65,6 +65,24 @@ export default async function OutletPage({
                     <MapPin className="w-3.5 h-3.5 text-stone-400" />
                     {outlet.address}
                   </span>
+                  {outlet.googleMapsUrl && (
+                    <a
+                      href={outlet.googleMapsUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1 text-stone-900 hover:text-amber-700 font-medium underline underline-offset-2 transition"
+                    >
+                      <span>Get Directions</span>
+                      <ArrowRight className="w-3 h-3 -rotate-45" />
+                    </a>
+                  )}
+                  <a
+                    href={`tel:${outlet.phone}`}
+                    className="flex items-center gap-1 text-stone-700 hover:text-stone-950 font-mono font-medium"
+                  >
+                    <Phone className="w-3.5 h-3.5 text-stone-400" />
+                    <span>{outlet.phone}</span>
+                  </a>
                   <span className="flex items-center gap-1">
                     <Clock className="w-3.5 h-3.5 text-stone-400" />
                     {outlet.openingHours}

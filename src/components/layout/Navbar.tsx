@@ -1,10 +1,11 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { OUTLETS } from '@/lib/data/mock-data';
+import { Outlet } from '@/types';
 import { useCart } from '@/context/CartContext';
 import { useAuth } from '@/context/AuthContext';
 import { ShoppingBag, MapPin, ChevronDown, User } from 'lucide-react';
@@ -18,6 +19,18 @@ export function Navbar({ currentOutletSlug, currentCampaignSlug }: NavbarProps) 
   const router = useRouter();
   const { itemCount, setIsCartOpen } = useCart();
   const { user, isCustomer, openCustomerLogin } = useAuth();
+  const [outlets, setOutlets] = useState<Outlet[]>(OUTLETS);
+
+  useEffect(() => {
+    fetch('/api/outlets')
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.success && data.outlets) {
+          setOutlets(data.outlets);
+        }
+      })
+      .catch(() => {});
+  }, []);
 
   const handleOutletChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const newSlug = e.target.value;
@@ -64,7 +77,7 @@ export function Navbar({ currentOutletSlug, currentCampaignSlug }: NavbarProps) 
               className="appearance-none bg-transparent font-medium text-stone-800 text-[10px] sm:text-xs pr-3.5 focus:outline-none cursor-pointer truncate w-full"
             >
               <option value="">All Outlets</option>
-              {OUTLETS.map((outlet) => (
+              {outlets.map((outlet) => (
                 <option key={outlet.slug} value={outlet.slug}>
                   {outlet.name.replace("Puffs 'n' Rolls - ", '')}
                 </option>

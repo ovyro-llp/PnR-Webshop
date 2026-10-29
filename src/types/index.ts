@@ -38,6 +38,7 @@ export interface Outlet {
   pincode: string;
   phone: string;
   email: string;
+  googleMapsUrl?: string;
   openingHours: string;
   rating: number;
   reviewCount: number;

@@ -35,6 +35,7 @@ async function run() {
 
   const adminRoutes = [
     { name: 'admin-orders-mobile', url: 'http://localhost:3000/admin' },
+    { name: 'admin-outlets-mobile', url: 'http://localhost:3000/admin/outlets' },
     { name: 'admin-inventory-mobile', url: 'http://localhost:3000/admin/inventory' },
     { name: 'admin-marketing-mobile', url: 'http://localhost:3000/admin/marketing' },
     { name: 'admin-employees-mobile', url: 'http://localhost:3000/admin/employees' },

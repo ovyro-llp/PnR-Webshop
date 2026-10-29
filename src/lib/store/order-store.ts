@@ -281,7 +281,58 @@ export const orderStore = {
   },
 
   getOutletBySlug: (slug: string): Outlet | undefined => {
-    return (globalThis.__PNR_OUTLETS__ || []).find((o) => o.slug === slug);
+    return (globalThis.__PNR_OUTLETS__ || []).find((o) => o.slug === slug || o.id === slug);
+  },
+
+  createOutlet: (data: Omit<Outlet, 'id'>): Outlet => {
+    const newOutlet: Outlet = {
+      ...data,
+      id: `out-${Date.now()}`,
+    };
+    if (!globalThis.__PNR_OUTLETS__) {
+      globalThis.__PNR_OUTLETS__ = [];
+    }
+    globalThis.__PNR_OUTLETS__.push(newOutlet);
+
+    // Seed stock inventory for this new outlet
+    if (globalThis.__PNR_OUTLET_STOCK__) {
+      MENU_ITEMS.forEach((item) => {
+        globalThis.__PNR_OUTLET_STOCK__?.push({
+          itemId: item.id,
+          name: item.name,
+          category: item.category,
+          basePrice: item.price,
+          outletSlug: newOutlet.slug,
+          isAvailable: true,
+          stockQuantity: item.category === 'Cakes & Pastries' ? 8 : 35,
+          lowStockThreshold: 5,
+          lastUpdated: new Date().toISOString(),
+          updatedBy: 'System Auto-Seed',
+        });
+      });
+    }
+
+    return newOutlet;
+  },
+
+  updateOutlet: (idOrSlug: string, updates: Partial<Outlet>): Outlet | undefined => {
+    const outlets = globalThis.__PNR_OUTLETS__ || [];
+    const idx = outlets.findIndex((o) => o.slug === idOrSlug || o.id === idOrSlug);
+    if (idx !== -1) {
+      outlets[idx] = {
+        ...outlets[idx],
+        ...updates,
+      };
+      return outlets[idx];
+    }
+    return undefined;
+  },
+
+  deleteOutlet: (idOrSlug: string): boolean => {
+    const outlets = globalThis.__PNR_OUTLETS__ || [];
+    const initialLen = outlets.length;
+    globalThis.__PNR_OUTLETS__ = outlets.filter((o) => o.slug !== idOrSlug && o.id !== idOrSlug);
+    return (globalThis.__PNR_OUTLETS__ || []).length < initialLen;
   },
 
   toggleOutletOpenStatus: (slug: string, isOpen: boolean): Outlet | undefined => {

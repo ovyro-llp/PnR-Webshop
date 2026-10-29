@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { OUTLETS, CAMPAIGNS } from '@/lib/data/mock-data';
-import { Campaign, CampaignAnalytics } from '@/types';
+import { Campaign, CampaignAnalytics, Outlet } from '@/types';
 import {
   SlidersHorizontal,
   Target,
@@ -12,10 +12,7 @@ import {
   ExternalLink,
   Code2,
   TrendingUp,
-  DollarSign,
-  Activity,
   Sparkles,
-  Share2,
   RefreshCw,
   Eye,
   Check,
@@ -23,6 +20,7 @@ import {
 
 export default function MarketingViewPage() {
   const [activeTab, setActiveTab] = useState<'tags' | 'generator' | 'analytics'>('tags');
+  const [outlets, setOutlets] = useState<Outlet[]>(OUTLETS);
   const [tags, setTags] = useState({
     globalMetaPixelId: '999888777666555',
     globalGoogleAdsId: 'AW-987654300',
@@ -71,8 +69,21 @@ export default function MarketingViewPage() {
     }
   };
 
+  const fetchOutlets = async () => {
+    try {
+      const res = await fetch('/api/outlets');
+      const data = await res.json();
+      if (data.success && data.outlets) {
+        setOutlets(data.outlets);
+      }
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
   useEffect(() => {
     fetchMarketingData();
+    fetchOutlets();
   }, []);
 
   const handleSaveTags = async (e: React.FormEvent) => {
@@ -148,31 +159,31 @@ export default function MarketingViewPage() {
   };
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
-      {/* View Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-800 pb-5">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
+      {/* Header */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-stone-200/80 pb-5">
         <div>
           <div className="flex items-center gap-2">
-            <span className="p-1.5 rounded-lg bg-amber-500/10 text-amber-400 border border-amber-500/20">
+            <span className="p-1.5 rounded-lg bg-stone-100 text-stone-900 border border-stone-200">
               <SlidersHorizontal className="w-5 h-5" />
             </span>
-            <h1 className="text-xl sm:text-2xl font-bold text-white tracking-tight">
+            <h1 className="text-xl sm:text-2xl font-serif font-bold text-stone-900 tracking-tight">
               Performance Marketing &amp; Tag Manager
             </h1>
           </div>
-          <p className="text-xs text-slate-400 mt-1">
-            Dedicated view for media buyers, growth marketers &amp; agencies to connect tracking codes and generate UTM campaigns
+          <p className="text-xs text-stone-500 mt-1">
+            Dedicated portal for performance marketers and agencies to connect ad pixels and generate campaign URLs
           </p>
         </div>
 
         {/* Tab Switcher */}
-        <div className="flex items-center gap-1.5 bg-slate-900 p-1.5 rounded-xl border border-slate-800">
+        <div className="flex items-center gap-1.5 bg-white p-1 rounded-full border border-stone-200 shadow-2xs">
           <button
             onClick={() => setActiveTab('tags')}
-            className={`px-3 py-1.5 rounded-lg text-xs font-medium transition flex items-center gap-1.5 ${
+            className={`px-3.5 py-1.5 rounded-full text-xs font-medium transition flex items-center gap-1.5 ${
               activeTab === 'tags'
-                ? 'bg-amber-500 text-slate-950 font-bold'
-                : 'text-slate-400 hover:text-white'
+                ? 'bg-[#1C1917] text-white font-semibold'
+                : 'text-stone-600 hover:text-stone-900 hover:bg-stone-50'
             }`}
           >
             <Code2 className="w-3.5 h-3.5" />
@@ -180,10 +191,10 @@ export default function MarketingViewPage() {
           </button>
           <button
             onClick={() => setActiveTab('generator')}
-            className={`px-3 py-1.5 rounded-lg text-xs font-medium transition flex items-center gap-1.5 ${
+            className={`px-3.5 py-1.5 rounded-full text-xs font-medium transition flex items-center gap-1.5 ${
               activeTab === 'generator'
-                ? 'bg-amber-500 text-slate-950 font-bold'
-                : 'text-slate-400 hover:text-white'
+                ? 'bg-[#1C1917] text-white font-semibold'
+                : 'text-stone-600 hover:text-stone-900 hover:bg-stone-50'
             }`}
           >
             <LinkIcon className="w-3.5 h-3.5" />
@@ -191,10 +202,10 @@ export default function MarketingViewPage() {
           </button>
           <button
             onClick={() => setActiveTab('analytics')}
-            className={`px-3 py-1.5 rounded-lg text-xs font-medium transition flex items-center gap-1.5 ${
+            className={`px-3.5 py-1.5 rounded-full text-xs font-medium transition flex items-center gap-1.5 ${
               activeTab === 'analytics'
-                ? 'bg-amber-500 text-slate-950 font-bold'
-                : 'text-slate-400 hover:text-white'
+                ? 'bg-[#1C1917] text-white font-semibold'
+                : 'text-stone-600 hover:text-stone-900 hover:bg-stone-50'
             }`}
           >
             <TrendingUp className="w-3.5 h-3.5" />
@@ -204,8 +215,8 @@ export default function MarketingViewPage() {
       </div>
 
       {statusMessage && (
-        <div className="p-3 bg-amber-500/15 border border-amber-500/30 rounded-xl text-xs font-medium text-amber-300 flex items-center gap-2">
-          <CheckCircle2 className="w-4 h-4 text-amber-400" />
+        <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-2xl text-xs font-medium text-emerald-800 flex items-center gap-2 animate-in fade-in">
+          <CheckCircle2 className="w-4 h-4 text-emerald-600" />
           <span>{statusMessage}</span>
         </div>
       )}
@@ -215,20 +226,20 @@ export default function MarketingViewPage() {
         <form onSubmit={handleSaveTags} className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
             {/* Meta (Facebook & Instagram) */}
-            <div className="bg-slate-900 p-5 rounded-2xl border border-slate-800 space-y-4">
+            <div className="bg-white p-6 rounded-3xl border border-stone-200/90 shadow-[0_2px_8px_rgba(0,0,0,0.02)] space-y-4">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <div className="w-3 h-3 rounded-full bg-blue-500" />
-                  <h3 className="text-sm font-bold text-white">Meta (Facebook &amp; Instagram)</h3>
+                  <div className="w-3 h-3 rounded-full bg-blue-600" />
+                  <h3 className="text-sm font-serif font-bold text-stone-900">Meta (Facebook &amp; Instagram)</h3>
                 </div>
-                <span className="text-[10px] font-mono text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/20">
+                <span className="text-[10px] font-mono text-emerald-800 bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-200 font-semibold">
                   CAPI Active
                 </span>
               </div>
 
               <div className="space-y-3">
                 <div>
-                  <label className="text-xs text-slate-400 block font-medium mb-1">
+                  <label className="text-xs text-stone-700 block font-semibold mb-1">
                     Global Meta Pixel ID
                   </label>
                   <input
@@ -236,15 +247,15 @@ export default function MarketingViewPage() {
                     value={tags.globalMetaPixelId}
                     onChange={(e) => setTags({ ...tags, globalMetaPixelId: e.target.value })}
                     placeholder="e.g. 999888777666555"
-                    className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2 text-xs font-mono text-white focus:outline-none focus:border-amber-500"
+                    className="w-full bg-stone-50 border border-stone-200 rounded-xl px-3.5 py-2 text-xs font-mono text-stone-900 focus:outline-none focus:border-stone-500"
                   />
-                  <span className="text-[10px] text-slate-500 mt-1 block">
+                  <span className="text-[10px] text-stone-500 mt-1 block">
                     Fires standard PageView, ViewContent, AddToCart, InitiateCheckout &amp; Purchase events.
                   </span>
                 </div>
 
                 <div>
-                  <label className="text-xs text-slate-400 block font-medium mb-1">
+                  <label className="text-xs text-stone-700 block font-semibold mb-1">
                     Server-Side Conversions API (CAPI) Access Token
                   </label>
                   <input
@@ -252,30 +263,30 @@ export default function MarketingViewPage() {
                     value={tags.metaCapiAccessToken}
                     onChange={(e) => setTags({ ...tags, metaCapiAccessToken: e.target.value })}
                     placeholder="EAABw..."
-                    className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2 text-xs font-mono text-white focus:outline-none focus:border-amber-500"
+                    className="w-full bg-stone-50 border border-stone-200 rounded-xl px-3.5 py-2 text-xs font-mono text-stone-900 focus:outline-none focus:border-stone-500"
                   />
-                  <span className="text-[10px] text-slate-500 mt-1 block">
-                    Bypasses iOS ad-blockers by firing server-to-server purchases via Next.js backend.
+                  <span className="text-[10px] text-stone-500 mt-1 block">
+                    Bypasses ad blockers by firing server-to-server purchases via Next.js backend.
                   </span>
                 </div>
               </div>
             </div>
 
             {/* Google Ads & GTM */}
-            <div className="bg-slate-900 p-5 rounded-2xl border border-slate-800 space-y-4">
+            <div className="bg-white p-6 rounded-3xl border border-stone-200/90 shadow-[0_2px_8px_rgba(0,0,0,0.02)] space-y-4">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <div className="w-3 h-3 rounded-full bg-amber-500" />
-                  <h3 className="text-sm font-bold text-white">Google Ads &amp; GTM</h3>
+                  <h3 className="text-sm font-serif font-bold text-stone-900">Google Ads &amp; GTM</h3>
                 </div>
-                <span className="text-[10px] font-mono text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded-full border border-amber-500/20">
+                <span className="text-[10px] font-mono text-amber-800 bg-amber-50 px-2.5 py-0.5 rounded-full border border-amber-200 font-semibold">
                   Dual Tagging
                 </span>
               </div>
 
               <div className="space-y-3">
                 <div>
-                  <label className="text-xs text-slate-400 block font-medium mb-1">
+                  <label className="text-xs text-stone-700 block font-semibold mb-1">
                     Google Ads Conversion ID
                   </label>
                   <input
@@ -283,12 +294,12 @@ export default function MarketingViewPage() {
                     value={tags.globalGoogleAdsId}
                     onChange={(e) => setTags({ ...tags, globalGoogleAdsId: e.target.value })}
                     placeholder="AW-987654300"
-                    className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2 text-xs font-mono text-white focus:outline-none focus:border-amber-500"
+                    className="w-full bg-stone-50 border border-stone-200 rounded-xl px-3.5 py-2 text-xs font-mono text-stone-900 focus:outline-none focus:border-stone-500"
                   />
                 </div>
 
                 <div>
-                  <label className="text-xs text-slate-400 block font-medium mb-1">
+                  <label className="text-xs text-stone-700 block font-semibold mb-1">
                     Google Tag Manager Container ID
                   </label>
                   <input
@@ -296,22 +307,22 @@ export default function MarketingViewPage() {
                     value={tags.globalGtmId}
                     onChange={(e) => setTags({ ...tags, globalGtmId: e.target.value })}
                     placeholder="GTM-PNR2026"
-                    className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2 text-xs font-mono text-white focus:outline-none focus:border-amber-500"
+                    className="w-full bg-stone-50 border border-stone-200 rounded-xl px-3.5 py-2 text-xs font-mono text-stone-900 focus:outline-none focus:border-stone-500"
                   />
                 </div>
               </div>
             </div>
 
             {/* TikTok & Snapchat */}
-            <div className="bg-slate-900 p-5 rounded-2xl border border-slate-800 space-y-4">
+            <div className="bg-white p-6 rounded-3xl border border-stone-200/90 shadow-[0_2px_8px_rgba(0,0,0,0.02)] space-y-4">
               <div className="flex items-center gap-2">
                 <div className="w-3 h-3 rounded-full bg-pink-500" />
-                <h3 className="text-sm font-bold text-white">TikTok &amp; Snapchat Ad Pixels</h3>
+                <h3 className="text-sm font-serif font-bold text-stone-900">TikTok &amp; Snapchat Ad Pixels</h3>
               </div>
 
               <div className="space-y-3">
                 <div>
-                  <label className="text-xs text-slate-400 block font-medium mb-1">
+                  <label className="text-xs text-stone-700 block font-semibold mb-1">
                     TikTok Pixel ID
                   </label>
                   <input
@@ -319,12 +330,12 @@ export default function MarketingViewPage() {
                     value={tags.tiktokPixelId}
                     onChange={(e) => setTags({ ...tags, tiktokPixelId: e.target.value })}
                     placeholder="e.g. C1234567890ABCD"
-                    className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2 text-xs font-mono text-white focus:outline-none focus:border-amber-500"
+                    className="w-full bg-stone-50 border border-stone-200 rounded-xl px-3.5 py-2 text-xs font-mono text-stone-900 focus:outline-none focus:border-stone-500"
                   />
                 </div>
 
                 <div>
-                  <label className="text-xs text-slate-400 block font-medium mb-1">
+                  <label className="text-xs text-stone-700 block font-semibold mb-1">
                     Snapchat Pixel ID
                   </label>
                   <input
@@ -332,21 +343,21 @@ export default function MarketingViewPage() {
                     value={tags.snapchatPixelId}
                     onChange={(e) => setTags({ ...tags, snapchatPixelId: e.target.value })}
                     placeholder="e.g. 1a2b3c4d-5e6f-7g8h"
-                    className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2 text-xs font-mono text-white focus:outline-none focus:border-amber-500"
+                    className="w-full bg-stone-50 border border-stone-200 rounded-xl px-3.5 py-2 text-xs font-mono text-stone-900 focus:outline-none focus:border-stone-500"
                   />
                 </div>
               </div>
             </div>
 
-            {/* Custom Scripts & Code Injections */}
-            <div className="bg-slate-900 p-5 rounded-2xl border border-slate-800 space-y-4">
+            {/* Custom Scripts */}
+            <div className="bg-white p-6 rounded-3xl border border-stone-200/90 shadow-[0_2px_8px_rgba(0,0,0,0.02)] space-y-4">
               <div className="flex items-center gap-2">
-                <div className="w-3 h-3 rounded-full bg-emerald-500" />
-                <h3 className="text-sm font-bold text-white">Custom Header / Body Scripts</h3>
+                <div className="w-3 h-3 rounded-full bg-emerald-600" />
+                <h3 className="text-sm font-serif font-bold text-stone-900">Custom Header / Body Scripts</h3>
               </div>
 
               <div>
-                <label className="text-xs text-slate-400 block font-medium mb-1">
+                <label className="text-xs text-stone-700 block font-semibold mb-1">
                   Custom Analytics &amp; Heatmap Tags (Clarity, Hotjar, Twitter)
                 </label>
                 <textarea
@@ -354,7 +365,7 @@ export default function MarketingViewPage() {
                   value={tags.customHeaderScript}
                   onChange={(e) => setTags({ ...tags, customHeaderScript: e.target.value })}
                   placeholder="<!-- Paste your custom tracking script here -->"
-                  className="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-xs font-mono text-amber-300 focus:outline-none focus:border-amber-500"
+                  className="w-full bg-stone-50 border border-stone-200 rounded-xl p-3 text-xs font-mono text-stone-800 focus:outline-none focus:border-stone-500"
                 />
               </div>
             </div>
@@ -364,17 +375,17 @@ export default function MarketingViewPage() {
             <button
               type="submit"
               disabled={isSaving}
-              className="px-6 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs transition flex items-center gap-2 shadow-md disabled:opacity-50"
+              className="px-6 py-2.5 rounded-full bg-[#1C1917] hover:bg-stone-800 text-white font-medium text-xs transition flex items-center gap-2 shadow-xs disabled:opacity-50"
             >
               {isSaving ? (
                 <>
-                  <span className="w-3.5 h-3.5 border-2 border-slate-950 border-t-transparent rounded-full animate-spin" />
+                  <span className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
                   <span>Saving Tags...</span>
                 </>
               ) : (
                 <>
                   <CheckCircle2 className="w-4 h-4" />
-                  <span>Save All Tracking Tags</span>
+                  <span>Save All Tracking Codes</span>
                 </>
               )}
             </button>
@@ -386,23 +397,23 @@ export default function MarketingViewPage() {
       {activeTab === 'generator' && (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Builder Form */}
-          <div className="bg-slate-900 p-5 rounded-2xl border border-slate-800 space-y-4">
-            <h3 className="text-sm font-bold text-white flex items-center gap-2">
-              <Sparkles className="w-4 h-4 text-amber-400" />
+          <div className="bg-white p-6 rounded-3xl border border-stone-200/90 shadow-[0_2px_8px_rgba(0,0,0,0.02)] space-y-4">
+            <h3 className="text-sm font-serif font-bold text-stone-900 flex items-center gap-2">
+              <Sparkles className="w-4 h-4 text-stone-700" />
               <span>Create Ad Campaign &amp; Generate UTM URL</span>
             </h3>
 
             <div className="space-y-3">
               <div>
-                <label className="text-xs text-slate-400 block font-medium mb-1">
+                <label className="text-xs text-stone-700 block font-semibold mb-1">
                   Destination Bakery Outlet
                 </label>
                 <select
                   value={genOutlet}
                   onChange={(e) => setGenOutlet(e.target.value)}
-                  className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2 text-xs text-white focus:outline-none focus:border-amber-500"
+                  className="w-full bg-stone-50 border border-stone-200 rounded-xl px-3.5 py-2 text-xs text-stone-900 focus:outline-none focus:border-stone-500"
                 >
-                  {OUTLETS.map((o) => (
+                  {outlets.map((o) => (
                     <option key={o.slug} value={o.slug}>
                       {o.name}
                     </option>
@@ -412,7 +423,7 @@ export default function MarketingViewPage() {
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="text-xs text-slate-400 block font-medium mb-1">
+                  <label className="text-xs text-stone-700 block font-semibold mb-1">
                     Campaign Slug
                   </label>
                   <input
@@ -420,11 +431,11 @@ export default function MarketingViewPage() {
                     value={genSlug}
                     onChange={(e) => setGenSlug(e.target.value)}
                     placeholder="weekend-puff-fest"
-                    className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2 text-xs text-white focus:outline-none focus:border-amber-500"
+                    className="w-full bg-stone-50 border border-stone-200 rounded-xl px-3.5 py-2 text-xs text-stone-900 focus:outline-none focus:border-stone-500"
                   />
                 </div>
                 <div>
-                  <label className="text-xs text-slate-400 block font-medium mb-1">
+                  <label className="text-xs text-stone-700 block font-semibold mb-1">
                     Campaign Title
                   </label>
                   <input
@@ -432,44 +443,44 @@ export default function MarketingViewPage() {
                     value={genTitle}
                     onChange={(e) => setGenTitle(e.target.value)}
                     placeholder="Weekend Puff Carnival"
-                    className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2 text-xs text-white focus:outline-none focus:border-amber-500"
+                    className="w-full bg-stone-50 border border-stone-200 rounded-xl px-3.5 py-2 text-xs text-stone-900 focus:outline-none focus:border-stone-500"
                   />
                 </div>
               </div>
 
               <div className="grid grid-cols-3 gap-2">
                 <div>
-                  <label className="text-xs text-slate-400 block font-medium mb-1">UTM Source</label>
+                  <label className="text-xs text-stone-700 block font-semibold mb-1">UTM Source</label>
                   <input
                     type="text"
                     value={genUtmSource}
                     onChange={(e) => setGenUtmSource(e.target.value)}
-                    className="w-full bg-slate-950 border border-slate-800 rounded-xl px-2.5 py-2 text-xs text-white focus:outline-none"
+                    className="w-full bg-stone-50 border border-stone-200 rounded-xl px-2.5 py-2 text-xs text-stone-900 focus:outline-none"
                   />
                 </div>
                 <div>
-                  <label className="text-xs text-slate-400 block font-medium mb-1">UTM Medium</label>
+                  <label className="text-xs text-stone-700 block font-semibold mb-1">UTM Medium</label>
                   <input
                     type="text"
                     value={genUtmMedium}
                     onChange={(e) => setGenUtmMedium(e.target.value)}
-                    className="w-full bg-slate-950 border border-slate-800 rounded-xl px-2.5 py-2 text-xs text-white focus:outline-none"
+                    className="w-full bg-stone-50 border border-stone-200 rounded-xl px-2.5 py-2 text-xs text-stone-900 focus:outline-none"
                   />
                 </div>
                 <div>
-                  <label className="text-xs text-slate-400 block font-medium mb-1">Campaign Tag</label>
+                  <label className="text-xs text-stone-700 block font-semibold mb-1">Campaign Tag</label>
                   <input
                     type="text"
                     value={genUtmCampaign}
                     onChange={(e) => setGenUtmCampaign(e.target.value)}
-                    className="w-full bg-slate-950 border border-slate-800 rounded-xl px-2.5 py-2 text-xs text-white focus:outline-none"
+                    className="w-full bg-stone-50 border border-stone-200 rounded-xl px-2.5 py-2 text-xs text-stone-900 focus:outline-none"
                   />
                 </div>
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="text-xs text-slate-400 block font-medium mb-1">
+                  <label className="text-xs text-stone-700 block font-semibold mb-1">
                     Promo Code (Auto-applied)
                   </label>
                   <input
@@ -477,11 +488,11 @@ export default function MarketingViewPage() {
                     value={genDiscountCode}
                     onChange={(e) => setGenDiscountCode(e.target.value.toUpperCase())}
                     placeholder="WEEKEND20"
-                    className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2 text-xs font-mono text-amber-400 focus:outline-none"
+                    className="w-full bg-stone-50 border border-stone-200 rounded-xl px-3.5 py-2 text-xs font-mono text-stone-900 focus:outline-none"
                   />
                 </div>
                 <div>
-                  <label className="text-xs text-slate-400 block font-medium mb-1">
+                  <label className="text-xs text-stone-700 block font-semibold mb-1">
                     Discount %
                   </label>
                   <input
@@ -489,28 +500,15 @@ export default function MarketingViewPage() {
                     value={genDiscountPercent}
                     onChange={(e) => setGenDiscountPercent(e.target.value)}
                     placeholder="20"
-                    className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2 text-xs font-mono text-white focus:outline-none"
+                    className="w-full bg-stone-50 border border-stone-200 rounded-xl px-3.5 py-2 text-xs font-mono text-stone-900 focus:outline-none"
                   />
                 </div>
-              </div>
-
-              <div>
-                <label className="text-xs text-slate-400 block font-medium mb-1">
-                  Dedicated Meta Pixel ID for this Ad Set (Optional override)
-                </label>
-                <input
-                  type="text"
-                  value={genCustomPixel}
-                  onChange={(e) => setGenCustomPixel(e.target.value)}
-                  placeholder="Defaults to Global Meta Pixel ID"
-                  className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2 text-xs font-mono text-white focus:outline-none"
-                />
               </div>
 
               <button
                 type="button"
                 onClick={handleCreateCampaign}
-                className="w-full py-2.5 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold rounded-xl text-xs transition flex items-center justify-center gap-2"
+                className="w-full py-2.5 bg-[#1C1917] hover:bg-stone-800 text-white font-medium rounded-full text-xs transition flex items-center justify-center gap-2"
               >
                 <Sparkles className="w-4 h-4" />
                 <span>Save Dynamic Landing Page</span>
@@ -519,29 +517,29 @@ export default function MarketingViewPage() {
           </div>
 
           {/* Generated URL & Live Preview Card */}
-          <div className="bg-slate-900 p-5 rounded-2xl border border-slate-800 flex flex-col justify-between space-y-4">
+          <div className="bg-white p-6 rounded-3xl border border-stone-200/90 shadow-[0_2px_8px_rgba(0,0,0,0.02)] flex flex-col justify-between space-y-4">
             <div>
               <div className="flex items-center justify-between">
-                <span className="text-xs uppercase font-mono tracking-wider text-slate-400">
+                <span className="text-xs uppercase font-mono tracking-wider font-semibold text-stone-400">
                   Ready-To-Use Ad Link
                 </span>
-                <span className="text-[10px] text-amber-400 font-mono bg-amber-500/10 px-2 py-0.5 rounded-full border border-amber-500/20">
+                <span className="text-[10px] text-stone-700 font-mono bg-stone-100 px-2.5 py-0.5 rounded-full border border-stone-200">
                   Meta &amp; Google Compatible
                 </span>
               </div>
 
-              <div className="mt-3 p-4 bg-slate-950 rounded-xl border border-slate-800 break-all font-mono text-xs text-amber-300 leading-relaxed select-all">
+              <div className="mt-3 p-4 bg-[#FAF8F5] rounded-2xl border border-stone-200 break-all font-mono text-xs text-stone-900 leading-relaxed select-all">
                 {fullGeneratedUrl}
               </div>
 
-              <div className="flex items-center gap-3 mt-3">
+              <div className="flex items-center gap-3 mt-4">
                 <button
                   type="button"
                   onClick={copyToClipboard}
-                  className={`flex-1 py-2 rounded-xl text-xs font-semibold flex items-center justify-center gap-2 transition ${
+                  className={`flex-1 py-2.5 rounded-full text-xs font-medium flex items-center justify-center gap-2 transition ${
                     copiedUrl
-                      ? 'bg-emerald-500 text-slate-950 font-bold'
-                      : 'bg-slate-800 hover:bg-slate-700 text-white'
+                      ? 'bg-emerald-600 text-white'
+                      : 'bg-[#1C1917] hover:bg-stone-800 text-white'
                   }`}
                 >
                   {copiedUrl ? (
@@ -560,7 +558,7 @@ export default function MarketingViewPage() {
                 <a
                   href={`/${genOutlet}/${genSlug}`}
                   target="_blank"
-                  className="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold flex items-center gap-1.5 transition"
+                  className="px-4 py-2.5 rounded-full bg-stone-100 hover:bg-stone-200 text-stone-800 text-xs font-medium flex items-center gap-1.5 transition"
                 >
                   <Eye className="w-4 h-4" />
                   <span>Preview LP</span>
@@ -569,13 +567,13 @@ export default function MarketingViewPage() {
             </div>
 
             {/* Campaign Summary Box */}
-            <div className="p-4 bg-slate-950/80 rounded-xl border border-slate-800/80 space-y-2 text-xs">
-              <span className="font-bold text-white block">Ad Placement Checklist:</span>
-              <ul className="text-slate-400 space-y-1 list-disc pl-4 text-[11px]">
+            <div className="p-4 bg-[#FAF8F5] rounded-2xl border border-stone-200 space-y-2 text-xs">
+              <span className="font-serif font-bold text-stone-900 block">Ad Placement Checklist:</span>
+              <ul className="text-stone-600 space-y-1 list-disc pl-4 text-[11px] leading-relaxed">
                 <li>Paste this destination URL into Meta Ads Manager (Ad set level).</li>
                 <li>Meta Pixel ID will fire automatic ViewContent &amp; InitiateCheckout tags.</li>
                 <li>Conversions will fire both client-side and server-side via CAPI.</li>
-                <li>Discount code <span className="text-amber-400 font-mono">{genDiscountCode}</span> is pre-applied in customer cart drawer.</li>
+                <li>Discount code <span className="text-stone-900 font-mono font-bold">{genDiscountCode}</span> is pre-applied in customer cart drawer.</li>
               </ul>
             </div>
           </div>
@@ -587,42 +585,42 @@ export default function MarketingViewPage() {
         <div className="space-y-5">
           {/* Funnel High Level Cards */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-            <div className="bg-slate-900 p-4 rounded-xl border border-slate-800">
-              <span className="text-xs text-slate-400 block font-medium">Total Campaign GMV</span>
-              <span className="text-2xl font-bold text-amber-400 mt-1 block font-mono">
+            <div className="bg-white p-5 rounded-3xl border border-stone-200/90 shadow-[0_2px_8px_rgba(0,0,0,0.02)]">
+              <span className="text-xs text-stone-400 block font-medium">Campaign GMV</span>
+              <span className="text-2xl font-serif font-bold text-stone-900 mt-1 block font-mono">
                 ₹{analytics.reduce((acc, c) => acc + c.grossRevenue, 0).toLocaleString()}
               </span>
             </div>
 
-            <div className="bg-slate-900 p-4 rounded-xl border border-slate-800">
-              <span className="text-xs text-slate-400 block font-medium">Orders Generated</span>
-              <span className="text-2xl font-bold text-emerald-400 mt-1 block font-mono">
+            <div className="bg-white p-5 rounded-3xl border border-stone-200/90 shadow-[0_2px_8px_rgba(0,0,0,0.02)]">
+              <span className="text-xs text-stone-400 block font-medium">Orders Generated</span>
+              <span className="text-2xl font-serif font-bold text-emerald-800 mt-1 block font-mono">
                 {analytics.reduce((acc, c) => acc + c.ordersPlaced, 0)}
               </span>
             </div>
 
-            <div className="bg-slate-900 p-4 rounded-xl border border-slate-800">
-              <span className="text-xs text-slate-400 block font-medium">Total Ad Clicks</span>
-              <span className="text-2xl font-bold text-blue-400 mt-1 block font-mono">
+            <div className="bg-white p-5 rounded-3xl border border-stone-200/90 shadow-[0_2px_8px_rgba(0,0,0,0.02)]">
+              <span className="text-xs text-stone-400 block font-medium">Total Ad Clicks</span>
+              <span className="text-2xl font-serif font-bold text-stone-900 mt-1 block font-mono">
                 {analytics.reduce((acc, c) => acc + c.clicks, 0).toLocaleString()}
               </span>
             </div>
 
-            <div className="bg-slate-900 p-4 rounded-xl border border-slate-800">
-              <span className="text-xs text-slate-400 block font-medium">Blended ROAS</span>
-              <span className="text-2xl font-bold text-white mt-1 block font-mono">
+            <div className="bg-white p-5 rounded-3xl border border-stone-200/90 shadow-[0_2px_8px_rgba(0,0,0,0.02)]">
+              <span className="text-xs text-stone-400 block font-medium">Blended ROAS</span>
+              <span className="text-2xl font-serif font-bold text-stone-900 mt-1 block font-mono">
                 4.8x
               </span>
             </div>
           </div>
 
           {/* Campaign Attribution Table */}
-          <div className="bg-slate-900 rounded-2xl border border-slate-800 overflow-hidden">
-            <div className="p-4 border-b border-slate-800 flex items-center justify-between">
-              <h3 className="text-sm font-bold text-white">Campaign Funnel &amp; Tag Attribution</h3>
+          <div className="bg-white rounded-3xl border border-stone-200/90 shadow-[0_2px_8px_rgba(0,0,0,0.02)] overflow-hidden">
+            <div className="p-4 sm:p-5 border-b border-stone-100 flex items-center justify-between">
+              <h3 className="text-sm font-serif font-bold text-stone-900">Campaign Funnel &amp; Tag Attribution</h3>
               <button
                 onClick={fetchMarketingData}
-                className="text-xs text-slate-400 hover:text-white flex items-center gap-1"
+                className="text-xs text-stone-500 hover:text-stone-900 flex items-center gap-1"
               >
                 <RefreshCw className="w-3 h-3" />
                 <span>Refresh Metrics</span>
@@ -631,55 +629,55 @@ export default function MarketingViewPage() {
 
             <div className="overflow-x-auto">
               <table className="w-full text-left text-xs">
-                <thead className="bg-slate-950 text-slate-400 uppercase font-mono text-[10px]">
+                <thead className="bg-[#FAF8F5] text-stone-500 uppercase font-mono text-[10px] border-b border-stone-100">
                   <tr>
-                    <th className="p-3">Campaign / Landing Page</th>
-                    <th className="p-3">Outlet</th>
-                    <th className="p-3 text-right">Impressions</th>
-                    <th className="p-3 text-right">Clicks</th>
-                    <th className="p-3 text-right">CTR</th>
-                    <th className="p-3 text-right">Orders</th>
-                    <th className="p-3 text-right">Conv. Rate</th>
-                    <th className="p-3 text-right">Revenue</th>
-                    <th className="p-3">Tracking Pixel</th>
+                    <th className="p-3.5">Campaign / Landing Page</th>
+                    <th className="p-3.5">Outlet</th>
+                    <th className="p-3.5 text-right">Impressions</th>
+                    <th className="p-3.5 text-right">Clicks</th>
+                    <th className="p-3.5 text-right">CTR</th>
+                    <th className="p-3.5 text-right">Orders</th>
+                    <th className="p-3.5 text-right">Conv. Rate</th>
+                    <th className="p-3.5 text-right">Revenue</th>
+                    <th className="p-3.5">Tracking Pixel</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-800">
+                <tbody className="divide-y divide-stone-100">
                   {analytics.map((camp) => (
-                    <tr key={camp.campaignSlug} className="hover:bg-slate-800/40">
-                      <td className="p-3 font-medium text-white">
+                    <tr key={camp.campaignSlug} className="hover:bg-stone-50/50">
+                      <td className="p-3.5 font-medium text-stone-900">
                         <div>
-                          <span className="block font-bold">{camp.title}</span>
-                          <span className="text-[10px] text-slate-400 font-mono">
+                          <span className="block font-semibold">{camp.title}</span>
+                          <span className="text-[10px] text-stone-400 font-mono">
                             /{camp.outletSlug}/{camp.campaignSlug}
                           </span>
                         </div>
                       </td>
-                      <td className="p-3">
-                        <span className="px-2 py-0.5 rounded-full bg-slate-800 text-slate-300 text-[10px]">
+                      <td className="p-3.5">
+                        <span className="px-2.5 py-0.5 rounded-full bg-stone-100 text-stone-700 text-[10px] font-medium">
                           {camp.outletSlug}
                         </span>
                       </td>
-                      <td className="p-3 text-right font-mono text-slate-300">
+                      <td className="p-3.5 text-right font-mono text-stone-600">
                         {camp.impressions.toLocaleString()}
                       </td>
-                      <td className="p-3 text-right font-mono text-slate-300">
+                      <td className="p-3.5 text-right font-mono text-stone-600">
                         {camp.clicks.toLocaleString()}
                       </td>
-                      <td className="p-3 text-right font-mono text-emerald-400">
+                      <td className="p-3.5 text-right font-mono text-emerald-700 font-medium">
                         {camp.ctr}%
                       </td>
-                      <td className="p-3 text-right font-mono font-bold text-white">
+                      <td className="p-3.5 text-right font-mono font-bold text-stone-900">
                         {camp.ordersPlaced}
                       </td>
-                      <td className="p-3 text-right font-mono text-amber-400">
+                      <td className="p-3.5 text-right font-mono text-stone-900">
                         {camp.conversionRate}%
                       </td>
-                      <td className="p-3 text-right font-mono font-bold text-amber-300">
+                      <td className="p-3.5 text-right font-mono font-bold text-stone-900">
                         ₹{camp.grossRevenue.toLocaleString()}
                       </td>
-                      <td className="p-3">
-                        <span className="font-mono text-[10px] text-slate-400 bg-slate-950 px-2 py-1 rounded border border-slate-800">
+                      <td className="p-3.5">
+                        <span className="font-mono text-[10px] text-stone-600 bg-stone-50 px-2 py-1 rounded border border-stone-200">
                           {camp.metaPixelId || 'Global Pixel'}
                         </span>
                       </td>
