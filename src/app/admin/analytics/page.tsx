@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { OutletAnalytics, CampaignAnalytics, Outlet } from '@/types';
 import { OUTLETS } from '@/lib/data/mock-data';
+import { OutletSelector } from '@/components/admin/OutletSelector';
 import {
   BarChart3,
   TrendingUp,
@@ -94,32 +95,16 @@ export default function AnalyticsDashboardPage() {
         </div>
 
         <div className="flex items-center gap-2">
-          {/* Outlet filter pills */}
-          <div className="flex items-center gap-1.5 bg-white p-1 rounded-full border border-stone-200 overflow-x-auto no-scrollbar shadow-2xs">
-            <button
-              onClick={() => setSelectedOutlet('all')}
-              className={`px-3.5 py-1.5 rounded-full text-xs font-medium transition shrink-0 ${
-                selectedOutlet === 'all'
-                  ? 'bg-[#1C1917] text-white font-semibold'
-                  : 'text-stone-600 hover:text-stone-900'
-              }`}
-            >
-              All Outlets
-            </button>
-            {outlets.map((o) => (
-              <button
-                key={o.slug}
-                onClick={() => setSelectedOutlet(o.slug)}
-                className={`px-3.5 py-1.5 rounded-full text-xs font-medium transition shrink-0 ${
-                  selectedOutlet === o.slug
-                    ? 'bg-[#1C1917] text-white font-semibold'
-                    : 'text-stone-600 hover:text-stone-900'
-                }`}
-              >
-                {o.name.replace("Puffs 'n' Rolls - ", '')}
-              </button>
-            ))}
-          </div>
+          {/* Outlet selector dropdown - zero horizontal scrolling */}
+          <OutletSelector
+            outlets={outlets}
+            selectedOutlet={selectedOutlet}
+            onSelectOutlet={(slug) => setSelectedOutlet(slug)}
+            includeAll={true}
+            allLabel="All Outlets (HQ)"
+            label="Filter Scope:"
+            size="sm"
+          />
 
           <button
             onClick={fetchAnalytics}

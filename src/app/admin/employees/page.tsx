@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { Employee, EmployeeRole, Outlet } from '@/types';
 import { OUTLETS } from '@/lib/data/mock-data';
+import { OutletSelector } from '@/components/admin/OutletSelector';
 import {
   Users,
   UserPlus,
@@ -246,32 +247,16 @@ export default function EmployeesManagementPage() {
           />
         </div>
 
-        {/* Outlet Filter Pills */}
-        <div className="flex items-center gap-1.5 bg-white p-1 rounded-full border border-stone-200 overflow-x-auto no-scrollbar shadow-2xs">
-          <button
-            onClick={() => setSelectedOutlet('all')}
-            className={`px-3.5 py-1.5 rounded-full text-xs font-medium transition shrink-0 ${
-              selectedOutlet === 'all'
-                ? 'bg-[#1C1917] text-white font-semibold'
-                : 'text-stone-600 hover:text-stone-900'
-            }`}
-          >
-            All Staff
-          </button>
-          {outlets.map((outlet) => (
-            <button
-              key={outlet.slug}
-              onClick={() => setSelectedOutlet(outlet.slug)}
-              className={`px-3.5 py-1.5 rounded-full text-xs font-medium transition shrink-0 ${
-                selectedOutlet === outlet.slug
-                  ? 'bg-[#1C1917] text-white font-semibold'
-                  : 'text-stone-600 hover:text-stone-900'
-              }`}
-            >
-              {outlet.name.replace("Puffs 'n' Rolls - ", '')}
-            </button>
-          ))}
-        </div>
+        {/* Outlet Filter Selector - Zero horizontal scroll */}
+        <OutletSelector
+          outlets={outlets}
+          selectedOutlet={selectedOutlet}
+          onSelectOutlet={(slug) => setSelectedOutlet(slug)}
+          includeAll={true}
+          allLabel="All Staff (HQ)"
+          label="Outlet Team:"
+          size="sm"
+        />
       </div>
 
       {/* Staff Directory Grid */}

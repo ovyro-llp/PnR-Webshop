@@ -133,6 +133,20 @@ export interface UpdateProductDTO {
   isArchived?: boolean;
 }
 
+export interface MediaUpload {
+  id: string;
+  filename: string;
+  mimeType: string;
+  byteSize: number;
+  dataUrl?: string;
+  url: string;
+  title?: string;
+  altText?: string;
+  category?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface CartItem {
   item: MenuItem;
   quantity: number;

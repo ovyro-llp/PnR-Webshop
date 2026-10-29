@@ -2,7 +2,8 @@
 
 import React, { useState, useEffect } from 'react';
 import { OUTLETS } from '@/lib/data/mock-data';
-import { OutletStockItem, Outlet, MenuItem, MenuCategory } from '@/types';
+import { OutletStockItem, Outlet, MenuItem, MenuCategory, MediaUpload } from '@/types';
+import { OutletSelector } from '@/components/admin/OutletSelector';
 import {
   Package,
   Search,
@@ -22,6 +23,12 @@ import {
   Trash2,
   Sparkles,
   ArrowRight,
+  Database,
+  UploadCloud,
+  Image as ImageIcon,
+  Copy,
+  ExternalLink,
+  FileText,
 } from 'lucide-react';
 import Image from 'next/image';
 
@@ -58,11 +65,16 @@ const PRESET_IMAGES = [
 ];
 
 export default function OutletInventoryPage() {
-  const [activeTab, setActiveTab] = useState<'outlet' | 'catalog'>('outlet');
+  const [activeTab, setActiveTab] = useState<'outlet' | 'catalog' | 'media'>('outlet');
   const [outlets, setOutlets] = useState<Outlet[]>(OUTLETS);
   const [selectedOutlet, setSelectedOutlet] = useState<string>('college-road');
   const [stockItems, setStockItems] = useState<OutletStockItem[]>([]);
   const [masterProducts, setMasterProducts] = useState<MenuItem[]>([]);
+  const [mediaAssets, setMediaAssets] = useState<MediaUpload[]>([]);
+  const [isUploadingMedia, setIsUploadingMedia] = useState<boolean>(false);
+  const [mediaSearchQuery, setMediaSearchQuery] = useState<string>('');
+  const [isMediaPickerOpen, setIsMediaPickerOpen] = useState<boolean>(false);
+  const [mediaTargetMode, setMediaTargetMode] = useState<'new' | 'edit'>('new');
   const [isOutletOpen, setIsOutletOpen] = useState<boolean>(true);
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [selectedCategory, setSelectedCategory] = useState<string>('ALL');
@@ -130,9 +142,86 @@ export default function OutletInventoryPage() {
     }
   };
 
+  const fetchMediaAssets = async () => {
+    try {
+      const res = await fetch('/api/media?limit=100');
+      const data = await res.json();
+      if (data.success && data.media) {
+        setMediaAssets(data.media);
+      }
+    } catch (err) {
+      console.error('Failed to load media assets', err);
+    }
+  };
+
+  const handleUploadMediaFile = async (file: File, target: 'new' | 'edit' = 'new') => {
+    if (!file.type.startsWith('image/')) {
+      setStatusMessage('Please select a valid image file (PNG, JPG, WebP)');
+      setTimeout(() => setStatusMessage(''), 4000);
+      return;
+    }
+
+    setIsUploadingMedia(true);
+    try {
+      const reader = new FileReader();
+      reader.onload = async () => {
+        const dataUrl = reader.result as string;
+        const res = await fetch('/api/media', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            filename: file.name,
+            mimeType: file.type,
+            byteSize: file.size,
+            dataUrl,
+            title: file.name.replace(/\.[^/.]+$/, ''),
+            category: 'bakery',
+          }),
+        });
+
+        const data = await res.json();
+        if (data.success && data.media) {
+          if (target === 'edit' && editingProduct) {
+            setEditingProduct({ ...editingProduct, image: data.media.url });
+          } else {
+            setNewProductForm((prev) => ({ ...prev, image: data.media.url }));
+          }
+          await fetchMediaAssets();
+          setStatusMessage(`Uploaded to Supabase PostgreSQL: ${file.name}`);
+          setTimeout(() => setStatusMessage(''), 4000);
+        } else {
+          setStatusMessage(`Upload failed: ${data.error || 'Unknown error'}`);
+          setTimeout(() => setStatusMessage(''), 4000);
+        }
+      };
+      reader.readAsDataURL(file);
+    } catch (err: any) {
+      setStatusMessage(`Upload error: ${err.message}`);
+      setTimeout(() => setStatusMessage(''), 4000);
+    } finally {
+      setIsUploadingMedia(false);
+    }
+  };
+
+  const handleDeleteMediaAsset = async (id: string) => {
+    if (!confirm('Are you sure you want to permanently delete this media asset from Supabase?')) return;
+    try {
+      const res = await fetch(`/api/media/${id}`, { method: 'DELETE' });
+      const data = await res.json();
+      if (data.success) {
+        setStatusMessage('Media asset deleted from Supabase PostgreSQL');
+        setTimeout(() => setStatusMessage(''), 3000);
+        fetchMediaAssets();
+      }
+    } catch (err: any) {
+      console.error('Delete error', err);
+    }
+  };
+
   useEffect(() => {
     fetchOutlets();
     fetchMasterProducts();
+    fetchMediaAssets();
   }, []);
 
   useEffect(() => {
@@ -462,18 +551,24 @@ export default function OutletInventoryPage() {
               <Package className="w-5 h-5" />
             </span>
             <h1 className="text-xl sm:text-2xl font-serif font-bold text-stone-900 tracking-tight">
-              {activeTab === 'outlet' ? 'Outlet Inventory & 86-ing Terminal' : 'Central Master Product Catalog'}
+              {activeTab === 'outlet'
+                ? 'Outlet Inventory & 86-ing Terminal'
+                : activeTab === 'catalog'
+                ? 'Central Master Product Catalog'
+                : 'Supabase Media Storage'}
             </h1>
           </div>
           <p className="text-xs text-stone-500 mt-1">
             {activeTab === 'outlet'
               ? 'Select master products for this outlet, adjust live batch counts, and 1-tap 86 sold-out items.'
-              : 'Corporate headquarters repository of all products, master pricing, and photography assets across Nashik.'}
+              : activeTab === 'catalog'
+              ? 'Corporate headquarters repository of all products, master pricing, and photography assets across Nashik.'
+              : 'Bakery photography and media uploads stored securely in Supabase PostgreSQL.'}
           </p>
         </div>
 
-        {/* Tab Switcher */}
-        <div className="flex items-center gap-1.5 bg-white p-1 rounded-full border border-stone-200 shadow-2xs shrink-0">
+        {/* Tab Switcher - Wrapped cleanly, zero horizontal scrolling */}
+        <div className="flex flex-wrap sm:flex-nowrap items-center gap-1.5 bg-white p-1 rounded-2xl sm:rounded-full border border-stone-200 shadow-2xs shrink-0">
           <button
             onClick={() => setActiveTab('outlet')}
             className={`px-3.5 py-1.5 rounded-full text-xs font-medium transition flex items-center gap-1.5 cursor-pointer ${
@@ -500,6 +595,21 @@ export default function OutletInventoryPage() {
               {masterProducts.length}
             </span>
           </button>
+
+          <button
+            onClick={() => setActiveTab('media')}
+            className={`px-3.5 py-1.5 rounded-full text-xs font-medium transition flex items-center gap-1.5 cursor-pointer ${
+              activeTab === 'media'
+                ? 'bg-[#1C1917] text-white font-semibold shadow-xs'
+                : 'text-stone-600 hover:text-stone-900 hover:bg-stone-50'
+            }`}
+          >
+            <Database className="w-3.5 h-3.5 text-amber-500" />
+            <span>Supabase Media</span>
+            <span className="text-[10px] bg-amber-100 text-amber-900 px-1.5 py-0.2 rounded-full font-bold ml-0.5">
+              {mediaAssets.length}
+            </span>
+          </button>
         </div>
       </div>
 
@@ -515,30 +625,15 @@ export default function OutletInventoryPage() {
          ========================================================================= */}
       {activeTab === 'outlet' && (
         <div className="space-y-6">
-          {/* Outlet Switcher Pills & Kitchen State Bar */}
+          {/* Outlet Switcher & Kitchen State Bar */}
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4 p-4 rounded-3xl bg-white border border-stone-200/90 shadow-[0_2px_8px_rgba(0,0,0,0.02)]">
-            <div className="flex items-center gap-2 overflow-x-auto no-scrollbar">
-              <span className="text-xs font-bold text-stone-700 uppercase tracking-wider shrink-0 mr-1">
-                Active Outlet:
-              </span>
-              {outlets.map((outlet) => {
-                const isSelected = selectedOutlet === outlet.slug;
-                return (
-                  <button
-                    key={outlet.slug}
-                    onClick={() => setSelectedOutlet(outlet.slug)}
-                    className={`px-3.5 py-1.5 rounded-full text-xs font-medium transition shrink-0 flex items-center gap-1.5 cursor-pointer ${
-                      isSelected
-                        ? 'bg-[#1C1917] text-white font-semibold shadow-xs'
-                        : 'bg-stone-50 text-stone-600 hover:text-stone-900 border border-stone-200'
-                    }`}
-                  >
-                    <Store className="w-3.5 h-3.5" />
-                    <span>{outlet.name.replace("Puffs 'n' Rolls - ", '')}</span>
-                  </button>
-                );
-              })}
-            </div>
+            {/* Non-scrolling luxury outlet dropdown selector */}
+            <OutletSelector
+              outlets={outlets}
+              selectedOutlet={selectedOutlet}
+              onSelectOutlet={(slug) => setSelectedOutlet(slug)}
+              label="Active Kitchen Outlet:"
+            />
 
             {/* Quick Actions: Assign from Master Catalog & Pause */}
             <div className="flex items-center gap-2 shrink-0">
@@ -620,8 +715,8 @@ export default function OutletInventoryPage() {
               />
             </div>
 
-            {/* Category Pills */}
-            <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar">
+            {/* Category Pills - Natural Wrap, Zero Horizontal Scrolling */}
+            <div className="flex flex-wrap items-center gap-1.5">
               {['ALL', ...CATEGORIES].map((cat) => {
                 const isSelected = selectedCategory === cat;
                 return (
@@ -817,7 +912,8 @@ export default function OutletInventoryPage() {
               />
             </div>
 
-            <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar">
+            {/* Category Pills - Natural Wrap, Zero Horizontal Scrolling */}
+            <div className="flex flex-wrap items-center gap-1.5">
               {['ALL', ...CATEGORIES].map((cat) => {
                 const isSelected = selectedCategory === cat;
                 return (
@@ -929,6 +1025,151 @@ export default function OutletInventoryPage() {
               </div>
             ))}
           </div>
+        </div>
+      )}
+
+      {/* =========================================================================
+          TAB 3: SUPABASE MEDIA ASSETS STUDIO
+         ========================================================================= */}
+      {activeTab === 'media' && (
+        <div className="space-y-6">
+          {/* Supabase PostgreSQL DB Connection Card */}
+          <div className="p-5 rounded-3xl bg-white border border-stone-200/90 shadow-[0_2px_8px_rgba(0,0,0,0.02)] flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-2xl bg-amber-50 border border-amber-200 flex items-center justify-center text-amber-700 shrink-0">
+                <Database className="w-5 h-5" />
+              </div>
+              <div>
+                <div className="flex items-center gap-2">
+                  <h3 className="text-sm font-bold text-stone-900 font-serif">
+                    Supabase PostgreSQL Media Storage
+                  </h3>
+                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                    Live Connected
+                  </span>
+                </div>
+                <p className="text-xs text-stone-500 font-mono mt-0.5">
+                  aws-0-ap-south-1.pooler.supabase.com:5432 &bull; table: public.media_uploads
+                </p>
+              </div>
+            </div>
+
+            {/* Direct Media Upload Input */}
+            <div className="flex items-center gap-2 w-full md:w-auto">
+              <label className="flex-1 md:flex-none px-4 py-2 bg-[#1C1917] hover:bg-stone-800 text-white rounded-full text-xs font-semibold flex items-center justify-center gap-2 transition cursor-pointer shadow-xs">
+                <UploadCloud className="w-4 h-4 text-amber-400" />
+                <span>{isUploadingMedia ? 'Uploading to Supabase...' : 'Upload Media to Supabase'}</span>
+                <input
+                  type="file"
+                  accept="image/*"
+                  disabled={isUploadingMedia}
+                  className="hidden"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) handleUploadMediaFile(file, 'new');
+                  }}
+                />
+              </label>
+
+              <button
+                onClick={fetchMediaAssets}
+                className="p-2.5 bg-stone-100 hover:bg-stone-200 text-stone-700 rounded-full transition cursor-pointer"
+                title="Refresh Media Assets"
+              >
+                <RefreshCw className="w-3.5 h-3.5" />
+              </button>
+            </div>
+          </div>
+
+          {/* Media Search Bar */}
+          <div className="relative max-w-md">
+            <Search className="w-4 h-4 text-stone-400 absolute left-3.5 top-3" />
+            <input
+              type="text"
+              placeholder="Search media by filename, title, or category..."
+              value={mediaSearchQuery}
+              onChange={(e) => setMediaSearchQuery(e.target.value)}
+              className="w-full pl-9 pr-4 py-2 bg-white border border-stone-200 rounded-2xl text-xs text-stone-900 placeholder:text-stone-400 focus:outline-none focus:ring-1 focus:ring-stone-900 shadow-2xs"
+            />
+          </div>
+
+          {/* Media Assets Gallery Grid */}
+          {mediaAssets.length === 0 ? (
+            <div className="text-center py-16 bg-white border border-stone-200 rounded-3xl p-8 space-y-3">
+              <div className="w-12 h-12 rounded-2xl bg-stone-100 flex items-center justify-center mx-auto text-stone-400">
+                <ImageIcon className="w-6 h-6" />
+              </div>
+              <h4 className="text-sm font-semibold text-stone-800">No media assets in Supabase yet</h4>
+              <p className="text-xs text-stone-500 max-w-sm mx-auto">
+                Upload bakery photos from your device. They will be stored directly in Supabase PostgreSQL and served with high-performance edge caching.
+              </p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+              {mediaAssets
+                .filter(
+                  (m) =>
+                    !mediaSearchQuery ||
+                    m.filename.toLowerCase().includes(mediaSearchQuery.toLowerCase()) ||
+                    (m.title && m.title.toLowerCase().includes(mediaSearchQuery.toLowerCase()))
+                )
+                .map((asset) => (
+                  <div
+                    key={asset.id}
+                    className="group bg-white rounded-2xl border border-stone-200 overflow-hidden shadow-2xs hover:shadow-md transition flex flex-col justify-between"
+                  >
+                    <div className="relative w-full h-36 bg-stone-100">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={asset.url}
+                        alt={asset.title || asset.filename}
+                        className="w-full h-full object-cover group-hover:scale-105 transition duration-300"
+                      />
+                      <span className="absolute top-2 left-2 px-1.5 py-0.5 rounded-md text-[9px] font-semibold bg-black/70 text-white backdrop-blur-xs">
+                        {asset.mimeType.replace('image/', '').toUpperCase()}
+                      </span>
+                    </div>
+
+                    <div className="p-3 space-y-2 flex-1 flex flex-col justify-between">
+                      <div>
+                        <p className="text-xs font-semibold text-stone-900 truncate" title={asset.filename}>
+                          {asset.title || asset.filename}
+                        </p>
+                        <div className="flex items-center justify-between text-[10px] text-stone-400 font-mono pt-0.5">
+                          <span>{(asset.byteSize / 1024).toFixed(1)} KB</span>
+                          <span>{new Date(asset.createdAt).toLocaleDateString()}</span>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-1.5 pt-2 border-t border-stone-100">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            navigator.clipboard.writeText(asset.url);
+                            setStatusMessage(`Copied media URL: ${asset.url}`);
+                            setTimeout(() => setStatusMessage(''), 3000);
+                          }}
+                          className="flex-1 py-1 px-2 rounded-lg bg-stone-50 hover:bg-stone-100 text-stone-700 text-[10px] font-medium flex items-center justify-center gap-1 border border-stone-200 transition cursor-pointer"
+                        >
+                          <Copy className="w-3 h-3" />
+                          <span>Copy URL</span>
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => handleDeleteMediaAsset(asset.id)}
+                          className="p-1 rounded-lg hover:bg-rose-50 text-stone-400 hover:text-rose-600 transition cursor-pointer"
+                          title="Delete Asset from Supabase"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+            </div>
+          )}
         </div>
       )}
 
@@ -1153,38 +1394,95 @@ export default function OutletInventoryPage() {
                 />
               </div>
 
-              {/* Photo Image Presets & URL */}
-              <div>
-                <label className="block text-xs font-semibold text-stone-800 mb-1">
-                  Product Photo Asset
-                </label>
-                <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar pb-1 mb-2">
-                  {PRESET_IMAGES.map((preset) => (
-                    <button
-                      key={preset.name}
-                      type="button"
-                      onClick={() =>
-                        setNewProductForm({ ...newProductForm, image: preset.url })
-                      }
-                      className={`px-2.5 py-1 rounded-lg text-[10px] font-medium border shrink-0 transition cursor-pointer ${
-                        newProductForm.image === preset.url
-                          ? 'bg-stone-900 text-white border-stone-900'
-                          : 'bg-stone-50 text-stone-600 border-stone-200'
-                      }`}
-                    >
-                      {preset.name}
-                    </button>
-                  ))}
+              {/* Photo Image Asset - Supabase Upload, Library Picker, and Presets */}
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <label className="text-xs font-semibold text-stone-800">
+                    Product Photo Asset
+                  </label>
+                  <span className="text-[10px] text-stone-400 font-mono flex items-center gap-1">
+                    <Database className="w-3 h-3 text-amber-500" />
+                    Supabase Storage
+                  </span>
                 </div>
-                <input
-                  type="url"
-                  placeholder="https://... photo url"
-                  value={newProductForm.image}
-                  onChange={(e) =>
-                    setNewProductForm({ ...newProductForm, image: e.target.value })
-                  }
-                  className="w-full px-3.5 py-2 bg-stone-50 border border-stone-200 rounded-xl text-xs text-stone-900 font-mono focus:bg-white focus:outline-none"
-                />
+
+                {/* Upload from device or pick from library */}
+                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+                  <label className="flex-1 px-3 py-2 bg-white border border-stone-300 hover:border-stone-900 rounded-xl text-xs font-medium text-stone-800 flex items-center justify-center gap-1.5 transition cursor-pointer shadow-2xs">
+                    <UploadCloud className="w-4 h-4 text-stone-600" />
+                    <span>{isUploadingMedia ? 'Uploading to Supabase...' : 'Upload from Phone / PC'}</span>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      disabled={isUploadingMedia}
+                      className="hidden"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) handleUploadMediaFile(file, 'new');
+                      }}
+                    />
+                  </label>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setMediaTargetMode('new');
+                      setIsMediaPickerOpen(true);
+                    }}
+                    className="px-3 py-2 bg-stone-100 hover:bg-stone-200 text-stone-700 rounded-xl text-xs font-medium flex items-center justify-center gap-1.5 transition cursor-pointer"
+                  >
+                    <ImageIcon className="w-4 h-4 text-stone-500" />
+                    <span>Supabase Library ({mediaAssets.length})</span>
+                  </button>
+                </div>
+
+                {/* Presets - Natural Wrap, Zero Horizontal Scrolling */}
+                <div className="pt-1">
+                  <span className="text-[10px] text-stone-400 uppercase font-semibold block mb-1">
+                    Quick Bakery Presets:
+                  </span>
+                  <div className="flex flex-wrap items-center gap-1.5">
+                    {PRESET_IMAGES.map((preset) => (
+                      <button
+                        key={preset.name}
+                        type="button"
+                        onClick={() =>
+                          setNewProductForm({ ...newProductForm, image: preset.url })
+                        }
+                        className={`px-2.5 py-1 rounded-lg text-[10px] font-medium border transition cursor-pointer ${
+                          newProductForm.image === preset.url
+                            ? 'bg-stone-900 text-white border-stone-900'
+                            : 'bg-stone-50 text-stone-600 border-stone-200 hover:bg-stone-100'
+                        }`}
+                      >
+                        {preset.name}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Preview & Custom URL */}
+                <div className="flex items-center gap-2 pt-1">
+                  {newProductForm.image && (
+                    <div className="relative w-10 h-10 rounded-lg overflow-hidden bg-stone-100 border border-stone-200 shrink-0">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={newProductForm.image}
+                        alt="Preview"
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+                  )}
+                  <input
+                    type="url"
+                    placeholder="https://... photo url or /api/media/..."
+                    value={newProductForm.image}
+                    onChange={(e) =>
+                      setNewProductForm({ ...newProductForm, image: e.target.value })
+                    }
+                    className="flex-1 px-3 py-2 bg-stone-50 border border-stone-200 rounded-xl text-xs text-stone-900 font-mono focus:bg-white focus:outline-none"
+                  />
+                </div>
               </div>
 
               {/* Toggles: Pure Veg & Initial Stock */}
@@ -1367,6 +1665,70 @@ export default function OutletInventoryPage() {
                 />
               </div>
 
+              {/* Photo Asset for Editing Product */}
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <label className="text-xs font-semibold text-stone-800">
+                    Product Photo Asset
+                  </label>
+                  <span className="text-[10px] text-stone-400 font-mono flex items-center gap-1">
+                    <Database className="w-3 h-3 text-amber-500" />
+                    Supabase Storage
+                  </span>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <label className="flex-1 px-3 py-2 bg-white border border-stone-300 hover:border-stone-900 rounded-xl text-xs font-medium text-stone-800 flex items-center justify-center gap-1.5 transition cursor-pointer shadow-2xs">
+                    <UploadCloud className="w-4 h-4 text-stone-600" />
+                    <span>{isUploadingMedia ? 'Uploading...' : 'Upload Photo'}</span>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      disabled={isUploadingMedia}
+                      className="hidden"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) handleUploadMediaFile(file, 'edit');
+                      }}
+                    />
+                  </label>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setMediaTargetMode('edit');
+                      setIsMediaPickerOpen(true);
+                    }}
+                    className="px-3 py-2 bg-stone-100 hover:bg-stone-200 text-stone-700 rounded-xl text-xs font-medium flex items-center justify-center gap-1.5 transition cursor-pointer"
+                  >
+                    <ImageIcon className="w-4 h-4 text-stone-500" />
+                    <span>Library</span>
+                  </button>
+                </div>
+
+                <div className="flex items-center gap-2 pt-1">
+                  {editingProduct.image && (
+                    <div className="relative w-10 h-10 rounded-lg overflow-hidden bg-stone-100 border border-stone-200 shrink-0">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={editingProduct.image}
+                        alt="Preview"
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+                  )}
+                  <input
+                    type="url"
+                    value={editingProduct.image || ''}
+                    onChange={(e) =>
+                      setEditingProduct({ ...editingProduct, image: e.target.value })
+                    }
+                    placeholder="https://... or /api/media/..."
+                    className="flex-1 px-3 py-2 bg-stone-50 border border-stone-200 rounded-xl text-xs text-stone-900 font-mono focus:bg-white focus:outline-none"
+                  />
+                </div>
+              </div>
+
               <div className="pt-3 border-t border-stone-100 flex items-center justify-end gap-2">
                 <button
                   type="button"
@@ -1383,6 +1745,90 @@ export default function OutletInventoryPage() {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* =========================================================================
+          MEDIA PICKER MODAL (SUPABASE POSTGRESQL ASSETS)
+         ========================================================================= */}
+      {isMediaPickerOpen && (
+        <div className="fixed inset-0 z-60 overflow-y-auto bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in">
+          <div className="bg-[#FAF8F5] border border-stone-200 rounded-3xl w-full max-w-2xl p-5 sm:p-6 space-y-4 shadow-2xl">
+            <div className="flex items-center justify-between border-b border-stone-200 pb-3">
+              <div className="flex items-center gap-2">
+                <Database className="w-5 h-5 text-amber-600" />
+                <div>
+                  <h3 className="font-serif font-bold text-base text-stone-900">
+                    Select from Supabase Media Storage
+                  </h3>
+                  <p className="text-xs text-stone-500 font-mono">
+                    PostgreSQL pooler &bull; aws-0-ap-south-1.pooler.supabase.com
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => setIsMediaPickerOpen(false)}
+                className="p-1.5 text-stone-400 hover:text-stone-800 rounded-full hover:bg-stone-100 transition cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {mediaAssets.length === 0 ? (
+              <div className="text-center py-12 space-y-2">
+                <ImageIcon className="w-8 h-8 text-stone-400 mx-auto" />
+                <p className="text-xs text-stone-600 font-medium">No assets in Supabase yet</p>
+                <p className="text-[11px] text-stone-400">Upload a photo first using the upload button.</p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 max-h-96 overflow-y-auto p-1">
+                {mediaAssets.map((asset) => (
+                  <button
+                    key={asset.id}
+                    type="button"
+                    onClick={() => {
+                      if (mediaTargetMode === 'edit' && editingProduct) {
+                        setEditingProduct({ ...editingProduct, image: asset.url });
+                      } else {
+                        setNewProductForm({ ...newProductForm, image: asset.url });
+                      }
+                      setIsMediaPickerOpen(false);
+                      setStatusMessage(`Selected media: ${asset.filename}`);
+                      setTimeout(() => setStatusMessage(''), 3000);
+                    }}
+                    className="group bg-white rounded-xl border border-stone-200 hover:border-stone-900 overflow-hidden shadow-2xs hover:shadow-md transition text-left cursor-pointer flex flex-col justify-between"
+                  >
+                    <div className="relative w-full h-24 bg-stone-100">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={asset.url}
+                        alt={asset.title || asset.filename}
+                        className="w-full h-full object-cover group-hover:scale-105 transition duration-200"
+                      />
+                    </div>
+                    <div className="p-2">
+                      <p className="text-[11px] font-semibold text-stone-900 truncate">
+                        {asset.title || asset.filename}
+                      </p>
+                      <span className="text-[9px] text-stone-400 font-mono">
+                        {(asset.byteSize / 1024).toFixed(1)} KB
+                      </span>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            )}
+
+            <div className="pt-2 border-t border-stone-200 flex justify-end">
+              <button
+                type="button"
+                onClick={() => setIsMediaPickerOpen(false)}
+                className="px-4 py-2 bg-stone-200 hover:bg-stone-300 text-stone-800 text-xs font-semibold rounded-xl transition cursor-pointer"
+              >
+                Close
+              </button>
+            </div>
           </div>
         </div>
       )}
