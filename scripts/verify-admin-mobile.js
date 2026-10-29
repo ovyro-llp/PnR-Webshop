@@ -47,6 +47,26 @@ async function run() {
     await page.goto(item.url, { waitUntil: 'networkidle2' });
     await new Promise((r) => setTimeout(r, 800));
 
+    // Test hamburger drawer on the first route
+    if (item.name === 'admin-orders-mobile') {
+      try {
+        await page.waitForSelector('button[aria-label="Open Admin Menu"]', { timeout: 4000 });
+        const menuBtn = await page.$('button[aria-label="Open Admin Menu"]');
+        if (menuBtn) {
+          console.log('Opening mobile hamburger sidebar drawer...');
+          await menuBtn.click();
+          await new Promise((r) => setTimeout(r, 600));
+          await page.screenshot({ path: path.join(OUTPUT_DIR, 'admin-hamburger-drawer-mobile.png') });
+          console.log('Captured admin-hamburger-drawer-mobile.png');
+          const closeBtn = await page.$('button[aria-label="Close Menu"]');
+          if (closeBtn) await closeBtn.click();
+          await new Promise((r) => setTimeout(r, 400));
+        }
+      } catch (e) {
+        console.log('Menu button wait error:', e.message);
+      }
+    }
+
     const overflowInfo = await page.evaluate(() => {
       const docWidth = document.documentElement.clientWidth;
       const scrollWidth = document.documentElement.scrollWidth;
