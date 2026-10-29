@@ -6,7 +6,8 @@ import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { OUTLETS } from '@/lib/data/mock-data';
 import { useCart } from '@/context/CartContext';
-import { ShoppingBag, MapPin, SlidersHorizontal, ChevronDown } from 'lucide-react';
+import { useAuth } from '@/context/AuthContext';
+import { ShoppingBag, MapPin, ChevronDown, User } from 'lucide-react';
 
 interface NavbarProps {
   currentOutletSlug?: string;
@@ -16,6 +17,7 @@ interface NavbarProps {
 export function Navbar({ currentOutletSlug, currentCampaignSlug }: NavbarProps) {
   const router = useRouter();
   const { itemCount, setIsCartOpen } = useCart();
+  const { user, isCustomer, openCustomerLogin } = useAuth();
 
   const handleOutletChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const newSlug = e.target.value;
@@ -72,15 +74,25 @@ export function Navbar({ currentOutletSlug, currentCampaignSlug }: NavbarProps) 
           </div>
         </div>
 
-        {/* Actions: Admin & Cart */}
-        <div className="flex items-center gap-3">
-          <Link
-            href="/admin"
-            className="hidden md:flex items-center gap-1.5 px-3 py-1.5 rounded-full text-stone-500 hover:text-stone-900 text-xs font-medium tracking-wide transition"
-          >
-            <SlidersHorizontal className="w-3.5 h-3.5" />
-            <span>Admin</span>
-          </Link>
+        {/* Actions: Customer Account & Cart */}
+        <div className="flex items-center gap-2.5 sm:gap-3">
+          {user && isCustomer ? (
+            <Link
+              href="/account"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-stone-700 hover:text-stone-950 text-xs font-medium tracking-wide transition border border-stone-200 bg-white"
+            >
+              <User className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">{user.name.split(' ')[0]}</span>
+            </Link>
+          ) : (
+            <button
+              onClick={openCustomerLogin}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-stone-600 hover:text-stone-950 text-xs font-medium tracking-wide transition"
+            >
+              <User className="w-3.5 h-3.5" />
+              <span>Sign In</span>
+            </button>
+          )}
 
           {/* Minimalist Cart Trigger */}
           <button

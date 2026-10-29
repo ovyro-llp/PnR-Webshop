@@ -5,7 +5,6 @@ import { CampaignHero } from '@/components/marketing/CampaignHero';
 import { MenuItemCard } from '@/components/menu/MenuItemCard';
 import { CartDrawer } from '@/components/cart/CartDrawer';
 import { TrackingProvider } from '@/components/tracking/TrackingProvider';
-import { PixelDebuggerBadge } from '@/components/tracking/PixelDebuggerBadge';
 import { Star, ShieldCheck, CheckCircle2, Award, Clock } from 'lucide-react';
 
 export default async function CampaignLandingPage({
@@ -175,7 +174,6 @@ export default async function CampaignLandingPage({
         </main>
 
         <CartDrawer outletSlug={outlet.slug} campaignSlug={campaignSlug} />
-        <PixelDebuggerBadge />
       </div>
     </TrackingProvider>
   );

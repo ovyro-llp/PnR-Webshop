@@ -5,7 +5,6 @@ import { Navbar } from '@/components/layout/Navbar';
 import { MenuItemCard } from '@/components/menu/MenuItemCard';
 import { CartDrawer } from '@/components/cart/CartDrawer';
 import { TrackingProvider } from '@/components/tracking/TrackingProvider';
-import { PixelDebuggerBadge } from '@/components/tracking/PixelDebuggerBadge';
 import { CustomerLoginModal } from '@/components/auth/CustomerLoginModal';
 import { MapPin, ArrowRight, Sparkles, Clock, Star, Phone } from 'lucide-react';
 
@@ -234,10 +233,9 @@ export default function HomePage() {
           </div>
         </footer>
 
-        {/* Cart Drawer, Login Modal & Tag Monitor */}
+        {/* Cart Drawer & Login Modal */}
         <CartDrawer outletSlug="college-road" />
         <CustomerLoginModal />
-        <PixelDebuggerBadge />
       </div>
     </TrackingProvider>
   );

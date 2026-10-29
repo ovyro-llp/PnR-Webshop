@@ -4,7 +4,6 @@ import { Navbar } from '@/components/layout/Navbar';
 import { MenuItemCard } from '@/components/menu/MenuItemCard';
 import { CartDrawer } from '@/components/cart/CartDrawer';
 import { TrackingProvider } from '@/components/tracking/TrackingProvider';
-import { PixelDebuggerBadge } from '@/components/tracking/PixelDebuggerBadge';
 import { MapPin, Phone, Clock, Star, Sparkles, ArrowRight } from 'lucide-react';
 import Link from 'next/link';
 
@@ -141,7 +140,6 @@ export default async function OutletPage({
         </main>
 
         <CartDrawer outletSlug={outlet.slug} />
-        <PixelDebuggerBadge />
       </div>
     </TrackingProvider>
   );
