@@ -40,54 +40,59 @@ export interface MangwaleDispatchResponse {
   message: string;
 }
 
-// Configurable via ENV or Admin Settings
-const MANGWALE_API_ENDPOINT = process.env.MANGWALE_API_URL || 'https://api.mangwale.in/v1/deliveries';
-const MANGWALE_API_KEY = process.env.MANGWALE_API_KEY || 'MNG_PROD_NASHIK_SECRET_KEY';
+// Mangwale Enterprise Parcel API V1 Specification (business.mangwale.com)
+const MANGWALE_API_ENDPOINT = process.env.MANGWALE_API_URL || 'https://business.mangwale.com/api/v1/enterprise';
+const MANGWALE_API_KEY = process.env.MANGWALE_API_KEY || 'mw_live_nashik_pnr';
+const MANGWALE_API_SECRET = process.env.MANGWALE_API_SECRET || 'sk_live_nashik_secret';
+const MANGWALE_ENV = process.env.MANGWALE_ENV || 'live';
 
 /**
- * Dispatches an order to Mangwale Nashik Logistics API
- * Supports fallback to live simulation in sandbox/demo mode
+ * Dispatches an order to Mangwale Nashik Logistics API (v1 enterprise)
+ * Supports live HTTP dispatch with seamless local sandbox fallback
  */
 export async function dispatchToMangwale(
   order: Order,
   outlet: Outlet
 ): Promise<MangwaleDispatchResponse> {
-  const payload: MangwaleDispatchRequest = {
-    orderId: order.id,
-    orderNumber: order.orderNumber,
-    outlet: {
-      name: outlet.name,
-      address: outlet.address,
-      phone: outlet.phone,
+  const payload = {
+    external_order_id: order.orderNumber,
+    pickup: {
+      business_name: outlet.name,
+      contact_phone: outlet.phone,
+      address_line1: outlet.address,
       area: outlet.area,
+      city: 'Nashik',
+      pincode: outlet.pincode,
       coordinates: outlet.coordinates,
     },
-    dropoff: {
-      customerName: order.customer.name,
-      customerPhone: order.customer.phone,
-      deliveryAddress: order.customer.address,
-      area: order.customer.area,
-      pincode: order.customer.pincode,
-      specialInstructions: order.customer.specialInstructions,
-    },
-    packageDetails: {
-      itemCount: order.items.reduce((acc, it) => acc + it.quantity, 0),
-      description: order.items.map(it => `${it.quantity}x ${it.name}`).join(', '),
-      orderValue: order.total,
-      paymentMode: order.paymentMethod === 'COD' ? 'COD' : 'PREPAID',
-      codAmount: order.paymentMethod === 'COD' ? order.total : 0,
-    },
+    drops: [
+      {
+        customer_name: order.customer.name,
+        customer_phone: order.customer.phone,
+        address_line1: order.customer.address,
+        area: order.customer.area,
+        city: 'Nashik',
+        pincode: order.customer.pincode,
+        special_instructions: order.customer.specialInstructions,
+        package_value: order.total,
+        is_prepaid: order.paymentMethod !== 'COD',
+      },
+    ],
+    vehicle_class: 'BIKE',
+    items_description: order.items.map((it) => `${it.quantity}x ${it.name}`).join(', '),
   };
 
   try {
-    // If live API key is provided and not default placeholder, attempt real HTTP dispatch
-    if (process.env.MANGWALE_API_KEY && process.env.MANGWALE_API_KEY !== 'MNG_PROD_NASHIK_SECRET_KEY') {
-      const res = await fetch(`${MANGWALE_API_ENDPOINT}/dispatch`, {
+    // If production or sandbox API credentials are configured in ENV, dispatch via live HTTP API
+    if (process.env.MANGWALE_API_KEY && process.env.MANGWALE_API_SECRET) {
+      const res = await fetch(`${MANGWALE_API_ENDPOINT}/orders`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${MANGWALE_API_KEY}`,
-          'X-Outlet-Slug': outlet.slug,
+          'X-API-Key': MANGWALE_API_KEY,
+          'X-API-Secret': MANGWALE_API_SECRET,
+          'X-Environment': MANGWALE_ENV,
+          'X-Request-ID': order.orderNumber,
         },
         body: JSON.stringify(payload),
       });
@@ -96,10 +101,16 @@ export async function dispatchToMangwale(
         const data = await res.json();
         return {
           success: true,
-          taskId: data.taskId,
-          trackingUrl: data.trackingUrl || `https://mangwale.in/track/${data.taskId}`,
-          estimatedDeliveryMinutes: data.estimatedMinutes || 25,
-          rider: data.rider,
+          taskId: data.order_id || data.taskId,
+          trackingUrl: data.tracking_url || `https://business.mangwale.com/track/${data.order_id || order.orderNumber}`,
+          estimatedDeliveryMinutes: data.estimated_minutes || 22,
+          rider: data.rider
+            ? {
+                name: data.rider.name,
+                phone: data.rider.phone,
+                vehicleNo: data.rider.vehicle_number || data.rider.vehicleNo,
+              }
+            : undefined,
           message: 'Order successfully dispatched to Mangwale Nashik fleet',
         };
       }
