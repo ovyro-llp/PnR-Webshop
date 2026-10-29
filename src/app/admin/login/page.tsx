@@ -95,7 +95,7 @@ export default function AdminLoginPage() {
           <button
             type="submit"
             disabled={isLoading}
-            className="w-full py-3 bg-[#1C1917] hover:bg-stone-800 text-white rounded-full text-xs font-medium tracking-wide flex items-center justify-center gap-2 transition shadow-xs disabled:opacity-50"
+            className="w-full py-3 bg-[#1C1917] hover:bg-stone-800 text-white rounded-full text-xs font-medium tracking-wide flex items-center justify-center gap-2 transition shadow-xs disabled:opacity-50 cursor-pointer"
           >
             {isLoading ? (
               <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
@@ -107,6 +107,62 @@ export default function AdminLoginPage() {
             )}
           </button>
         </form>
+
+        {/* 1-Tap Demo Roles Switcher */}
+        <div className="pt-2">
+          <span className="text-[10px] font-semibold text-stone-400 uppercase tracking-wider block mb-2">
+            1-Tap Quick Login for Demo &amp; Review:
+          </span>
+          <div className="grid grid-cols-2 gap-2">
+            <button
+              type="button"
+              onClick={() => {
+                setEmail('admin@puffsnrolls.com');
+                setPassword('pnr@admin2026');
+              }}
+              className="p-2 text-left bg-stone-50 hover:bg-stone-100 rounded-xl border border-stone-200 transition cursor-pointer"
+            >
+              <span className="text-[11px] font-bold text-stone-900 block">HQ Super Admin</span>
+              <span className="text-[10px] text-stone-400">All Outlets &amp; Master Catalog</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => {
+                setEmail('collegeroad@puffsnrolls.com');
+                setPassword('college2026');
+              }}
+              className="p-2 text-left bg-stone-50 hover:bg-stone-100 rounded-xl border border-stone-200 transition cursor-pointer"
+            >
+              <span className="text-[11px] font-bold text-stone-900 block">College Road Manager</span>
+              <span className="text-[10px] text-stone-400">Kitchen &amp; Stock Terminal</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => {
+                setEmail('nashikroad@puffsnrolls.com');
+                setPassword('nashik2026');
+              }}
+              className="p-2 text-left bg-stone-50 hover:bg-stone-100 rounded-xl border border-stone-200 transition cursor-pointer"
+            >
+              <span className="text-[11px] font-bold text-stone-900 block">Nashik Road Manager</span>
+              <span className="text-[10px] text-stone-400">Station Hub Stock</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => {
+                setEmail('indiranagar@puffsnrolls.com');
+                setPassword('indira2026');
+              }}
+              className="p-2 text-left bg-stone-50 hover:bg-stone-100 rounded-xl border border-stone-200 transition cursor-pointer"
+            >
+              <span className="text-[11px] font-bold text-stone-900 block">Indira Nagar Manager</span>
+              <span className="text-[10px] text-stone-400">Express Kitchen Stock</span>
+            </button>
+          </div>
+        </div>
 
         <div className="pt-4 border-t border-stone-100 flex items-center justify-between text-[11px] text-stone-500">
           <Link href="/" className="hover:text-stone-900 transition">

@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { useAuth } from '@/context/AuthContext';
 import { OUTLETS } from '@/lib/data/mock-data';
 import { OutletStockItem, Outlet, MenuItem, MenuCategory, MediaUpload, Category, SubCategory } from '@/types';
 import { OutletSelector } from '@/components/admin/OutletSelector';
@@ -68,9 +69,18 @@ const PRESET_IMAGES = [
 ];
 
 export default function OutletInventoryPage() {
+  const { user } = useAuth();
+  const adminUser = user && user.role === 'ADMIN' ? user : null;
+  const isOutletManager = Boolean(
+    adminUser?.outletAccess &&
+    !adminUser.outletAccess.includes('all')
+  );
+
   const [activeTab, setActiveTab] = useState<'outlet' | 'catalog' | 'media'>('outlet');
   const [outlets, setOutlets] = useState<Outlet[]>(OUTLETS);
-  const [selectedOutlet, setSelectedOutlet] = useState<string>('college-road');
+  const [selectedOutlet, setSelectedOutlet] = useState<string>(
+    adminUser?.outletAccess && !adminUser.outletAccess.includes('all') ? adminUser.outletAccess[0] : 'college-road'
+  );
   const [stockItems, setStockItems] = useState<OutletStockItem[]>([]);
   const [masterProducts, setMasterProducts] = useState<MenuItem[]>([]);
   const [mediaAssets, setMediaAssets] = useState<MediaUpload[]>([]);
@@ -82,6 +92,11 @@ export default function OutletInventoryPage() {
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [selectedCategory, setSelectedCategory] = useState<string>('ALL');
   const [selectedSubCategory, setSelectedSubCategory] = useState<string>('ALL');
+
+  // Master Catalog Search & Filter inside Assign Drawer for Outlet Manager
+  const [drawerSearchQuery, setDrawerSearchQuery] = useState<string>('');
+  const [drawerCategory, setDrawerCategory] = useState<string>('ALL');
+
   const [categories, setCategories] = useState<Category[]>([]);
   const [isCategoryModalOpen, setIsCategoryModalOpen] = useState<boolean>(false);
   const [selectedCategoryForSub, setSelectedCategoryForSub] = useState<string>('');
@@ -90,6 +105,14 @@ export default function OutletInventoryPage() {
   const [newSubCategoryName, setNewSubCategoryName] = useState<string>('');
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [statusMessage, setStatusMessage] = useState<string>('');
+
+  // Lock Outlet Manager to their specific kitchen and hide HQ tabs
+  useEffect(() => {
+    if (isOutletManager && adminUser?.outletAccess?.[0]) {
+      setSelectedOutlet(adminUser.outletAccess[0]);
+      setActiveTab('outlet');
+    }
+  }, [isOutletManager, adminUser]);
 
   // Modals state
   const [isAssignDrawerOpen, setIsAssignDrawerOpen] = useState<boolean>(false);
@@ -505,6 +528,39 @@ export default function OutletInventoryPage() {
     }
   };
 
+  // Live update stock quantity directly from Drawer or Outlet View
+  const handleUpdateStock = async (itemId: string, newStock: number) => {
+    setStockItems((prev) =>
+      prev.map((s) =>
+        s.itemId === itemId
+          ? { ...s, stockQuantity: newStock, isAvailable: newStock > 0 }
+          : s
+      )
+    );
+
+    try {
+      const res = await fetch('/api/inventory', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          outletSlug: selectedOutlet,
+          itemId,
+          stockQuantity: newStock,
+          isAvailable: newStock > 0,
+          updatedBy: isOutletManager ? user?.name : 'Inventory Terminal',
+        }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setStatusMessage(`Stock updated to ${newStock} units`);
+        setTimeout(() => setStatusMessage(''), 2000);
+      }
+    } catch (err) {
+      console.error('Failed to update stock', err);
+      fetchInventory(selectedOutlet);
+    }
+  };
+
   // Bulk Assign All Master Products to Current Outlet
   const handleSelectAllMasterProducts = async () => {
     const allIds = masterProducts.map((p) => p.id);
@@ -685,6 +741,17 @@ export default function OutletInventoryPage() {
     return matchesSearch && matchesCat && matchesSub;
   });
 
+  // Filter Master Products inside Assign Drawer for Outlet Manager
+  const filteredDrawerProducts = masterProducts.filter((product) => {
+    const matchesSearch =
+      !drawerSearchQuery ||
+      product.name.toLowerCase().includes(drawerSearchQuery.toLowerCase()) ||
+      product.category.toLowerCase().includes(drawerSearchQuery.toLowerCase()) ||
+      (product.subCategory && product.subCategory.toLowerCase().includes(drawerSearchQuery.toLowerCase()));
+    const matchesCat = drawerCategory === 'ALL' || product.category === drawerCategory;
+    return matchesSearch && matchesCat;
+  });
+
   const totalItems = stockItems.length;
   const inStockCount = stockItems.filter((s) => s.isAvailable && s.stockQuantity > 0).length;
   const soldOutCount = totalItems - inStockCount;
@@ -702,7 +769,9 @@ export default function OutletInventoryPage() {
               <Package className="w-5 h-5" />
             </span>
             <h1 className="text-xl sm:text-2xl font-serif font-bold text-stone-900 tracking-tight">
-              {activeTab === 'outlet'
+              {isOutletManager
+                ? `${activeOutletObj?.name || 'Outlet'} Storefront & Stock Terminal`
+                : activeTab === 'outlet'
                 ? 'Outlet Inventory & 86-ing Terminal'
                 : activeTab === 'catalog'
                 ? 'Central Master Product Catalog'
@@ -710,7 +779,9 @@ export default function OutletInventoryPage() {
             </h1>
           </div>
           <p className="text-xs text-stone-500 mt-1">
-            {activeTab === 'outlet'
+            {isOutletManager
+              ? 'Search central master products to display on your storefront, 1-tap add items, set live batch inventory, and 86 items when sold out.'
+              : activeTab === 'outlet'
               ? 'Select master products for this outlet, adjust live batch counts, and 1-tap 86 sold-out items.'
               : activeTab === 'catalog'
               ? 'Corporate headquarters repository of all products, master pricing, and photography assets across Nashik.'
@@ -718,50 +789,52 @@ export default function OutletInventoryPage() {
           </p>
         </div>
 
-        {/* Tab Switcher - Wrapped cleanly, zero horizontal scrolling */}
-        <div className="flex flex-wrap sm:flex-nowrap items-center gap-1.5 bg-white p-1 rounded-2xl sm:rounded-full border border-stone-200 shadow-2xs shrink-0">
-          <button
-            onClick={() => setActiveTab('outlet')}
-            className={`px-3.5 py-1.5 rounded-full text-xs font-medium transition flex items-center gap-1.5 cursor-pointer ${
-              activeTab === 'outlet'
-                ? 'bg-[#1C1917] text-white font-semibold shadow-xs'
-                : 'text-stone-600 hover:text-stone-900 hover:bg-stone-50'
-            }`}
-          >
-            <Store className="w-3.5 h-3.5" />
-            <span>Outlet Stock &amp; 86</span>
-          </button>
+        {/* Tab Switcher - Only shown to Super Admin, hidden from Outlet Managers */}
+        {!isOutletManager && (
+          <div className="flex flex-wrap sm:flex-nowrap items-center gap-1.5 bg-white p-1 rounded-2xl sm:rounded-full border border-stone-200 shadow-2xs shrink-0">
+            <button
+              onClick={() => setActiveTab('outlet')}
+              className={`px-3.5 py-1.5 rounded-full text-xs font-medium transition flex items-center gap-1.5 cursor-pointer ${
+                activeTab === 'outlet'
+                  ? 'bg-[#1C1917] text-white font-semibold shadow-xs'
+                  : 'text-stone-600 hover:text-stone-900 hover:bg-stone-50'
+              }`}
+            >
+              <Store className="w-3.5 h-3.5" />
+              <span>Outlet Stock &amp; 86</span>
+            </button>
 
-          <button
-            onClick={() => setActiveTab('catalog')}
-            className={`px-3.5 py-1.5 rounded-full text-xs font-medium transition flex items-center gap-1.5 cursor-pointer ${
-              activeTab === 'catalog'
-                ? 'bg-[#1C1917] text-white font-semibold shadow-xs'
-                : 'text-stone-600 hover:text-stone-900 hover:bg-stone-50'
-            }`}
-          >
-            <Layers className="w-3.5 h-3.5" />
-            <span>Master Catalog</span>
-            <span className="text-[10px] bg-stone-100 text-stone-700 px-1.5 py-0.2 rounded-full font-bold ml-0.5">
-              {masterProducts.length}
-            </span>
-          </button>
+            <button
+              onClick={() => setActiveTab('catalog')}
+              className={`px-3.5 py-1.5 rounded-full text-xs font-medium transition flex items-center gap-1.5 cursor-pointer ${
+                activeTab === 'catalog'
+                  ? 'bg-[#1C1917] text-white font-semibold shadow-xs'
+                  : 'text-stone-600 hover:text-stone-900 hover:bg-stone-50'
+              }`}
+            >
+              <Layers className="w-3.5 h-3.5" />
+              <span>Master Catalog</span>
+              <span className="text-[10px] bg-stone-100 text-stone-700 px-1.5 py-0.2 rounded-full font-bold ml-0.5">
+                {masterProducts.length}
+              </span>
+            </button>
 
-          <button
-            onClick={() => setActiveTab('media')}
-            className={`px-3.5 py-1.5 rounded-full text-xs font-medium transition flex items-center gap-1.5 cursor-pointer ${
-              activeTab === 'media'
-                ? 'bg-[#1C1917] text-white font-semibold shadow-xs'
-                : 'text-stone-600 hover:text-stone-900 hover:bg-stone-50'
-            }`}
-          >
-            <Database className="w-3.5 h-3.5 text-amber-500" />
-            <span>Supabase Media</span>
-            <span className="text-[10px] bg-amber-100 text-amber-900 px-1.5 py-0.2 rounded-full font-bold ml-0.5">
-              {mediaAssets.length}
-            </span>
-          </button>
-        </div>
+            <button
+              onClick={() => setActiveTab('media')}
+              className={`px-3.5 py-1.5 rounded-full text-xs font-medium transition flex items-center gap-1.5 cursor-pointer ${
+                activeTab === 'media'
+                  ? 'bg-[#1C1917] text-white font-semibold shadow-xs'
+                  : 'text-stone-600 hover:text-stone-900 hover:bg-stone-50'
+              }`}
+            >
+              <Database className="w-3.5 h-3.5 text-amber-500" />
+              <span>Supabase Media</span>
+              <span className="text-[10px] bg-amber-100 text-amber-900 px-1.5 py-0.2 rounded-full font-bold ml-0.5">
+                {mediaAssets.length}
+              </span>
+            </button>
+          </div>
+        )}
       </div>
 
       {statusMessage && (
@@ -778,22 +851,47 @@ export default function OutletInventoryPage() {
         <div className="space-y-6">
           {/* Outlet Switcher & Kitchen State Bar */}
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4 p-4 rounded-3xl bg-white border border-stone-200/90 shadow-[0_2px_8px_rgba(0,0,0,0.02)]">
-            {/* Non-scrolling luxury outlet dropdown selector */}
-            <OutletSelector
-              outlets={outlets}
-              selectedOutlet={selectedOutlet}
-              onSelectOutlet={(slug) => setSelectedOutlet(slug)}
-              label="Active Kitchen Outlet:"
-            />
+            {/* Non-scrolling luxury outlet dropdown selector or locked partner badge */}
+            {isOutletManager ? (
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-2xl bg-amber-50 border border-amber-200 flex items-center justify-center text-amber-800 shrink-0">
+                  <Store className="w-5 h-5" />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm font-serif font-bold text-stone-900">
+                      {activeOutletObj?.name}
+                    </span>
+                    <span className="px-2 py-0.5 rounded-full text-[9px] font-mono uppercase font-bold bg-amber-100 text-amber-900">
+                      Your Outlet
+                    </span>
+                  </div>
+                  <p className="text-[11px] text-stone-400 font-mono">
+                    {activeOutletObj?.address}
+                  </p>
+                </div>
+              </div>
+            ) : (
+              <OutletSelector
+                outlets={outlets}
+                selectedOutlet={selectedOutlet}
+                onSelectOutlet={(slug) => setSelectedOutlet(slug)}
+                label="Active Kitchen Outlet:"
+              />
+            )}
 
             {/* Quick Actions: Assign from Master Catalog & Pause */}
             <div className="flex items-center gap-2 shrink-0">
               <button
-                onClick={() => setIsAssignDrawerOpen(true)}
+                onClick={() => {
+                  setDrawerSearchQuery('');
+                  setDrawerCategory('ALL');
+                  setIsAssignDrawerOpen(true);
+                }}
                 className="px-4 py-2 bg-[#1C1917] hover:bg-stone-800 text-white rounded-full text-xs font-semibold flex items-center gap-1.5 transition shadow-xs cursor-pointer"
               >
                 <Plus className="w-3.5 h-3.5" />
-                <span>Assign from Master Catalog</span>
+                <span>Search Master Catalog &amp; Add</span>
               </button>
 
               <button
@@ -805,7 +903,7 @@ export default function OutletInventoryPage() {
                 }`}
               >
                 <Power className="w-3.5 h-3.5" />
-                <span>{isOutletOpen ? 'Pause Orders' : 'Resume'}</span>
+                <span>{isOutletOpen ? 'Pause Orders' : 'Resume Orders'}</span>
               </button>
             </div>
           </div>
@@ -1396,10 +1494,10 @@ export default function OutletInventoryPage() {
               <div className="p-5 border-b border-stone-200 bg-white flex items-center justify-between">
                 <div>
                   <h2 className="text-base font-serif font-bold text-stone-900">
-                    Assign to {activeOutletObj?.name}
+                    Search &amp; Add Products for {activeOutletObj?.name}
                   </h2>
                   <p className="text-xs text-stone-500">
-                    Check products from P&amp;R Master Catalog to immediately activate them for this outlet
+                    Click products to display on your shop and mark live inventory counts
                   </p>
                 </div>
                 <button
@@ -1412,10 +1510,43 @@ export default function OutletInventoryPage() {
 
               {/* Drawer Content */}
               <div className="flex-1 overflow-y-auto p-5 space-y-4">
-                {/* Quick Selection Shortcuts */}
+                {/* Search Bar for Master Products */}
+                <div className="relative">
+                  <Search className="w-4 h-4 text-stone-400 absolute left-3.5 top-3" />
+                  <input
+                    type="text"
+                    placeholder="Search master catalog (e.g. Veg Puff, Kathi Roll, Chai)..."
+                    value={drawerSearchQuery}
+                    onChange={(e) => setDrawerSearchQuery(e.target.value)}
+                    className="w-full pl-9 pr-4 py-2.5 bg-white border border-stone-200 rounded-2xl text-xs text-stone-900 placeholder:text-stone-400 focus:outline-none focus:ring-1 focus:ring-stone-900 shadow-2xs"
+                  />
+                </div>
+
+                {/* Category Pills - Natural Wrap, Zero Horizontal Scrolling */}
+                <div className="flex flex-wrap items-center gap-1.5">
+                  {['ALL', ...categories.map((c) => c.name)].map((cat) => {
+                    const isSelected = drawerCategory === cat;
+                    return (
+                      <button
+                        key={cat}
+                        type="button"
+                        onClick={() => setDrawerCategory(cat)}
+                        className={`px-2.5 py-1 rounded-full text-[10px] font-medium transition cursor-pointer ${
+                          isSelected
+                            ? 'bg-stone-900 text-white font-semibold'
+                            : 'bg-white text-stone-600 border border-stone-200 hover:bg-stone-50'
+                        }`}
+                      >
+                        {cat}
+                      </button>
+                    );
+                  })}
+                </div>
+
+                {/* Quick Selection Status Bar */}
                 <div className="flex items-center justify-between bg-white p-3 rounded-2xl border border-stone-200/90 shadow-2xs">
                   <span className="text-xs text-stone-600 font-medium">
-                    {masterProducts.filter((p) => p.availableOutlets.includes(selectedOutlet)).length} of {masterProducts.length} items active
+                    {masterProducts.filter((p) => p.availableOutlets.includes(selectedOutlet)).length} of {masterProducts.length} items active on shop
                   </span>
                   <div className="flex items-center gap-2">
                     <button
@@ -1428,65 +1559,142 @@ export default function OutletInventoryPage() {
                   </div>
                 </div>
 
-                {/* Master Products List with Checkboxes */}
-                <div className="space-y-2">
-                  {masterProducts.map((product) => {
-                    const isChecked = product.availableOutlets.includes(selectedOutlet);
-                    return (
-                      <div
-                        key={product.id}
-                        onClick={() => handleToggleProductForOutlet(product.id, !isChecked)}
-                        className={`p-3 bg-white rounded-2xl border transition flex items-center justify-between gap-3 cursor-pointer ${
-                          isChecked
-                            ? 'border-stone-900 bg-white ring-1 ring-stone-900 shadow-2xs'
-                            : 'border-stone-200/90 opacity-70 hover:opacity-100'
-                        }`}
-                      >
-                        <div className="flex items-center gap-3 min-w-0">
-                          <input
-                            type="checkbox"
-                            checked={isChecked}
-                            onChange={() => {}} // handled by parent onClick
-                            className="w-4 h-4 rounded text-stone-900 focus:ring-stone-900 cursor-pointer"
-                          />
-                          <div className="relative w-10 h-10 rounded-xl overflow-hidden bg-stone-100 shrink-0">
-                            <Image
-                              src={product.image}
-                              alt={product.name}
-                              fill
-                              className="object-cover"
-                            />
-                          </div>
-                          <div className="min-w-0">
-                            <div className="flex items-center gap-1.5">
-                              <span
-                                className={`w-1.5 h-1.5 rounded-full shrink-0 ${
-                                  product.isVeg ? 'bg-emerald-600' : 'bg-rose-600'
-                                }`}
-                              />
-                              <p className="text-xs font-bold text-stone-900 truncate">
-                                {product.name}
-                              </p>
-                            </div>
-                            <p className="text-[11px] text-stone-400">
-                              {product.category} • ₹{product.price}
-                            </p>
-                          </div>
-                        </div>
+                {/* Master Products List with 1-Tap Click & Stock Inventory Marker */}
+                {filteredDrawerProducts.length === 0 ? (
+                  <div className="text-center py-12 bg-white rounded-2xl border border-dashed border-stone-200 p-6 space-y-1">
+                    <Package className="w-8 h-8 text-stone-300 mx-auto" />
+                    <p className="text-xs text-stone-600 font-medium">No products found</p>
+                    <p className="text-[10px] text-stone-400">Try adjusting your search query or category filter.</p>
+                  </div>
+                ) : (
+                  <div className="space-y-2.5">
+                    {filteredDrawerProducts.map((product) => {
+                      const stockItem = stockItems.find((s) => s.itemId === product.id);
+                      const isChecked = product.availableOutlets.includes(selectedOutlet) && (stockItem ? stockItem.isAvailable : true);
+                      const currentStock = stockItem?.stockQuantity ?? 25;
 
-                        <span
-                          className={`text-[10px] font-mono px-2 py-0.5 rounded-full font-bold uppercase shrink-0 ${
+                      return (
+                        <div
+                          key={product.id}
+                          className={`p-3.5 bg-white rounded-2xl border transition space-y-2.5 ${
                             isChecked
-                              ? 'bg-emerald-50 text-emerald-800 border border-emerald-200'
-                              : 'bg-stone-100 text-stone-500'
+                              ? 'border-stone-900 bg-white ring-1 ring-stone-900 shadow-2xs'
+                              : 'border-stone-200/90 hover:border-stone-300'
                           }`}
                         >
-                          {isChecked ? 'Active' : 'Add'}
-                        </span>
-                      </div>
-                    );
-                  })}
-                </div>
+                          {/* Top Row: Photo, Info, and 1-Tap Toggle */}
+                          <div className="flex items-center justify-between gap-3">
+                            <div className="flex items-center gap-3 min-w-0">
+                              <div className="relative w-12 h-12 rounded-xl overflow-hidden bg-stone-100 shrink-0 border border-stone-100">
+                                <Image
+                                  src={product.image}
+                                  alt={product.name}
+                                  fill
+                                  className="object-cover"
+                                />
+                              </div>
+                              <div className="min-w-0">
+                                <div className="flex items-center gap-1.5">
+                                  <span
+                                    className={`w-1.5 h-1.5 rounded-full shrink-0 ${
+                                      product.isVeg ? 'bg-emerald-600' : 'bg-rose-600'
+                                    }`}
+                                  />
+                                  <p className="text-xs font-bold text-stone-900 truncate">
+                                    {product.name}
+                                  </p>
+                                </div>
+                                <p className="text-[11px] text-stone-400">
+                                  {product.category} {product.subCategory ? `• ${product.subCategory}` : ''} • ₹{product.price}
+                                </p>
+                              </div>
+                            </div>
+
+                            <button
+                              type="button"
+                              onClick={() => handleToggleProductForOutlet(product.id, !isChecked)}
+                              className={`px-3 py-1.5 rounded-full text-xs font-semibold flex items-center gap-1 transition cursor-pointer shrink-0 ${
+                                isChecked
+                                  ? 'bg-emerald-50 text-emerald-800 border border-emerald-300 hover:bg-rose-50 hover:text-rose-700 hover:border-rose-300'
+                                  : 'bg-[#1C1917] hover:bg-stone-800 text-white shadow-xs'
+                              }`}
+                            >
+                              {isChecked ? (
+                                <>
+                                  <Check className="w-3.5 h-3.5 text-emerald-600" />
+                                  <span>On Shop</span>
+                                </>
+                              ) : (
+                                <>
+                                  <Plus className="w-3.5 h-3.5" />
+                                  <span>Add</span>
+                                </>
+                              )}
+                            </button>
+                          </div>
+
+                          {/* Bottom Row: Mark Live Inventory (Visible when product is on shop) */}
+                          {isChecked && (
+                            <div className="pt-2 border-t border-stone-100 flex flex-wrap items-center justify-between gap-2 bg-stone-50/80 p-2 rounded-xl">
+                              <span className="text-[11px] font-semibold text-stone-700">
+                                Mark Inventory:
+                              </span>
+                              <div className="flex items-center gap-1.5">
+                                <div className="flex items-center gap-1 bg-white rounded-full border border-stone-300 px-2 py-0.5 shadow-2xs">
+                                  <button
+                                    type="button"
+                                    onClick={() => handleUpdateStock(product.id, Math.max(0, currentStock - 5))}
+                                    className="w-5 h-5 rounded-full text-stone-600 hover:text-stone-900 hover:bg-stone-100 flex items-center justify-center text-xs font-bold cursor-pointer"
+                                    title="-5 units"
+                                  >
+                                    -
+                                  </button>
+                                  <input
+                                    type="number"
+                                    min="0"
+                                    value={currentStock}
+                                    onChange={(e) => {
+                                      const val = parseInt(e.target.value, 10);
+                                      if (!isNaN(val)) handleUpdateStock(product.id, val);
+                                    }}
+                                    className="w-12 text-center text-xs font-mono font-bold bg-transparent focus:outline-none"
+                                  />
+                                  <span className="text-[10px] text-stone-400 font-mono">pcs</span>
+                                  <button
+                                    type="button"
+                                    onClick={() => handleUpdateStock(product.id, currentStock + 5)}
+                                    className="w-5 h-5 rounded-full text-stone-600 hover:text-stone-900 hover:bg-stone-100 flex items-center justify-center text-xs font-bold cursor-pointer"
+                                    title="+5 units"
+                                  >
+                                    +
+                                  </button>
+                                </div>
+
+                                {/* Quick Batch Selectors */}
+                                <div className="flex items-center gap-1">
+                                  {[15, 30, 50].map((qty) => (
+                                    <button
+                                      key={qty}
+                                      type="button"
+                                      onClick={() => handleUpdateStock(product.id, qty)}
+                                      className={`px-2 py-0.5 rounded-full text-[10px] font-mono font-bold border transition cursor-pointer ${
+                                        currentStock === qty
+                                          ? 'bg-stone-900 text-white border-stone-900'
+                                          : 'bg-white text-stone-600 border-stone-200 hover:bg-stone-100'
+                                      }`}
+                                    >
+                                      {qty}
+                                    </button>
+                                  ))}
+                                </div>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
               </div>
 
               {/* Drawer Footer */}
@@ -1497,7 +1705,7 @@ export default function OutletInventoryPage() {
                   className="w-full py-3 bg-[#1C1917] hover:bg-stone-800 text-white rounded-full text-xs font-semibold uppercase tracking-wider transition shadow-xs cursor-pointer flex items-center justify-center gap-2"
                 >
                   <Check className="w-4 h-4" />
-                  <span>Done / Synchronize Outlet</span>
+                  <span>Done / Synchronize with Outlet Shop</span>
                 </button>
               </div>
             </div>

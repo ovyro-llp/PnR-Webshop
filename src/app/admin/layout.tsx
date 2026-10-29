@@ -60,45 +60,75 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     );
   }
 
-  const navItems = [
-    {
-      label: 'Orders & Dispatch',
-      shortLabel: 'Orders',
-      href: '/admin',
-      icon: ShoppingBag,
-      exact: true,
-    },
-    {
-      label: 'Outlets Directory',
-      shortLabel: 'Outlets',
-      href: '/admin/outlets',
-      icon: Store,
-    },
-    {
-      label: 'Inventory & Catalog',
-      shortLabel: 'Catalog',
-      href: '/admin/inventory',
-      icon: Package,
-    },
-    {
-      label: 'Performance Marketing',
-      shortLabel: 'Marketing',
-      href: '/admin/marketing',
-      icon: SlidersHorizontal,
-    },
-    {
-      label: 'Staff & Roles',
-      shortLabel: 'Staff',
-      href: '/admin/employees',
-      icon: Users,
-    },
-    {
-      label: 'FOCO Analytics',
-      shortLabel: 'Analytics',
-      href: '/admin/analytics',
-      icon: BarChart3,
-    },
-  ];
+  const isOutletManager = user?.role === 'ADMIN' && user?.outletAccess && !user.outletAccess.includes('all');
+
+  const navItems = isOutletManager
+    ? [
+        {
+          label: 'Orders & Dispatch',
+          shortLabel: 'Orders',
+          href: '/admin',
+          icon: ShoppingBag,
+          exact: true,
+        },
+        {
+          label: 'Outlet Stock & 86',
+          shortLabel: 'Stock',
+          href: '/admin/inventory',
+          icon: Package,
+        },
+        {
+          label: 'Kitchen Staff',
+          shortLabel: 'Staff',
+          href: '/admin/employees',
+          icon: Users,
+        },
+        {
+          label: 'Outlet Analytics',
+          shortLabel: 'Analytics',
+          href: '/admin/analytics',
+          icon: BarChart3,
+        },
+      ]
+    : [
+        {
+          label: 'Orders & Dispatch',
+          shortLabel: 'Orders',
+          href: '/admin',
+          icon: ShoppingBag,
+          exact: true,
+        },
+        {
+          label: 'Outlets Directory',
+          shortLabel: 'Outlets',
+          href: '/admin/outlets',
+          icon: Store,
+        },
+        {
+          label: 'Inventory & Catalog',
+          shortLabel: 'Catalog',
+          href: '/admin/inventory',
+          icon: Package,
+        },
+        {
+          label: 'Performance Marketing',
+          shortLabel: 'Marketing',
+          href: '/admin/marketing',
+          icon: SlidersHorizontal,
+        },
+        {
+          label: 'Staff & Roles',
+          shortLabel: 'Staff',
+          href: '/admin/employees',
+          icon: Users,
+        },
+        {
+          label: 'FOCO Analytics',
+          shortLabel: 'Analytics',
+          href: '/admin/analytics',
+          icon: BarChart3,
+        },
+      ];
 
   const currentTab = navItems.find((item) =>
     item.exact ? pathname === item.href : pathname.startsWith(item.href)
@@ -121,7 +151,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                 Puffs &apos;n&apos; Rolls
               </span>
               <span className="text-[10px] uppercase font-mono tracking-wider font-semibold text-stone-500">
-                HQ Operations Admin
+                {isOutletManager ? 'Outlet Kitchen Partner' : 'HQ Operations Admin'}
               </span>
             </div>
           </Link>
@@ -166,7 +196,9 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                 <span className="text-xs font-semibold text-stone-900 block truncate">
                   {user?.name || 'Administrator'}
                 </span>
-                <span className="text-[10px] text-stone-400 font-mono block">Brand HQ</span>
+                <span className="text-[10px] text-stone-400 font-mono block">
+                  {isOutletManager ? user.title : 'Brand HQ'}
+                </span>
               </div>
             </div>
 
