@@ -76,7 +76,7 @@ export default function OutletInventoryPage() {
     !adminUser.outletAccess.includes('all')
   );
 
-  const [activeTab, setActiveTab] = useState<'outlet' | 'catalog' | 'media'>('outlet');
+  const [activeTab, setActiveTab] = useState<'outlet' | 'catalog'>('outlet');
   const [outlets, setOutlets] = useState<Outlet[]>(OUTLETS);
   const [selectedOutlet, setSelectedOutlet] = useState<string>(
     adminUser?.outletAccess && !adminUser.outletAccess.includes('all') ? adminUser.outletAccess[0] : 'college-road'
@@ -222,7 +222,7 @@ export default function OutletInventoryPage() {
             setNewProductForm((prev) => ({ ...prev, image: data.media.url }));
           }
           await fetchMediaAssets();
-          setStatusMessage(`Uploaded to Supabase PostgreSQL: ${file.name}`);
+          setStatusMessage(`Uploaded photo: ${file.name}`);
           setTimeout(() => setStatusMessage(''), 4000);
         } else {
           setStatusMessage(`Upload failed: ${data.error || 'Unknown error'}`);
@@ -239,12 +239,12 @@ export default function OutletInventoryPage() {
   };
 
   const handleDeleteMediaAsset = async (id: string) => {
-    if (!confirm('Are you sure you want to permanently delete this media asset from Supabase?')) return;
+    if (!confirm('Are you sure you want to permanently delete this media asset?')) return;
     try {
       const res = await fetch(`/api/media/${id}`, { method: 'DELETE' });
       const data = await res.json();
       if (data.success) {
-        setStatusMessage('Media asset deleted from Supabase PostgreSQL');
+        setStatusMessage('Media asset deleted successfully');
         setTimeout(() => setStatusMessage(''), 3000);
         fetchMediaAssets();
       }
@@ -773,9 +773,7 @@ export default function OutletInventoryPage() {
                 ? `${activeOutletObj?.name || 'Outlet'} Storefront & Stock Terminal`
                 : activeTab === 'outlet'
                 ? 'Outlet Inventory & 86-ing Terminal'
-                : activeTab === 'catalog'
-                ? 'Central Master Product Catalog'
-                : 'Supabase Media Storage'}
+                : 'Central Master Product Catalog'}
             </h1>
           </div>
           <p className="text-xs text-stone-500 mt-1">
@@ -783,9 +781,7 @@ export default function OutletInventoryPage() {
               ? 'Search central master products to display on your storefront, 1-tap add items, set live batch inventory, and 86 items when sold out.'
               : activeTab === 'outlet'
               ? 'Select master products for this outlet, adjust live batch counts, and 1-tap 86 sold-out items.'
-              : activeTab === 'catalog'
-              ? 'Corporate headquarters repository of all products, master pricing, and photography assets across Nashik.'
-              : 'Bakery photography and media uploads stored securely in Supabase PostgreSQL.'}
+              : 'Corporate headquarters repository of all products, master pricing, and photography assets across Nashik.'}
           </p>
         </div>
 
@@ -816,21 +812,6 @@ export default function OutletInventoryPage() {
               <span>Master Catalog</span>
               <span className="text-[10px] bg-stone-100 text-stone-700 px-1.5 py-0.2 rounded-full font-bold ml-0.5">
                 {masterProducts.length}
-              </span>
-            </button>
-
-            <button
-              onClick={() => setActiveTab('media')}
-              className={`px-3.5 py-1.5 rounded-full text-xs font-medium transition flex items-center gap-1.5 cursor-pointer ${
-                activeTab === 'media'
-                  ? 'bg-[#1C1917] text-white font-semibold shadow-xs'
-                  : 'text-stone-600 hover:text-stone-900 hover:bg-stone-50'
-              }`}
-            >
-              <Database className="w-3.5 h-3.5 text-amber-500" />
-              <span>Supabase Media</span>
-              <span className="text-[10px] bg-amber-100 text-amber-900 px-1.5 py-0.2 rounded-full font-bold ml-0.5">
-                {mediaAssets.length}
               </span>
             </button>
           </div>
@@ -1333,150 +1314,7 @@ export default function OutletInventoryPage() {
         </div>
       )}
 
-      {/* =========================================================================
-          TAB 3: SUPABASE MEDIA ASSETS STUDIO
-         ========================================================================= */}
-      {activeTab === 'media' && (
-        <div className="space-y-6">
-          {/* Supabase PostgreSQL DB Connection Card */}
-          <div className="p-5 rounded-3xl bg-white border border-stone-200/90 shadow-[0_2px_8px_rgba(0,0,0,0.02)] flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-2xl bg-amber-50 border border-amber-200 flex items-center justify-center text-amber-700 shrink-0">
-                <Database className="w-5 h-5" />
-              </div>
-              <div>
-                <div className="flex items-center gap-2">
-                  <h3 className="text-sm font-bold text-stone-900 font-serif">
-                    Supabase PostgreSQL Media Storage
-                  </h3>
-                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
-                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
-                    Live Connected
-                  </span>
-                </div>
-                <p className="text-xs text-stone-500 font-mono mt-0.5">
-                  aws-0-ap-south-1.pooler.supabase.com:5432 &bull; table: public.media_uploads
-                </p>
-              </div>
-            </div>
 
-            {/* Direct Media Upload Input */}
-            <div className="flex items-center gap-2 w-full md:w-auto">
-              <label className="flex-1 md:flex-none px-4 py-2 bg-[#1C1917] hover:bg-stone-800 text-white rounded-full text-xs font-semibold flex items-center justify-center gap-2 transition cursor-pointer shadow-xs">
-                <UploadCloud className="w-4 h-4 text-amber-400" />
-                <span>{isUploadingMedia ? 'Uploading to Supabase...' : 'Upload Media to Supabase'}</span>
-                <input
-                  type="file"
-                  accept="image/*"
-                  disabled={isUploadingMedia}
-                  className="hidden"
-                  onChange={(e) => {
-                    const file = e.target.files?.[0];
-                    if (file) handleUploadMediaFile(file, 'new');
-                  }}
-                />
-              </label>
-
-              <button
-                onClick={fetchMediaAssets}
-                className="p-2.5 bg-stone-100 hover:bg-stone-200 text-stone-700 rounded-full transition cursor-pointer"
-                title="Refresh Media Assets"
-              >
-                <RefreshCw className="w-3.5 h-3.5" />
-              </button>
-            </div>
-          </div>
-
-          {/* Media Search Bar */}
-          <div className="relative max-w-md">
-            <Search className="w-4 h-4 text-stone-400 absolute left-3.5 top-3" />
-            <input
-              type="text"
-              placeholder="Search media by filename, title, or category..."
-              value={mediaSearchQuery}
-              onChange={(e) => setMediaSearchQuery(e.target.value)}
-              className="w-full pl-9 pr-4 py-2 bg-white border border-stone-200 rounded-2xl text-xs text-stone-900 placeholder:text-stone-400 focus:outline-none focus:ring-1 focus:ring-stone-900 shadow-2xs"
-            />
-          </div>
-
-          {/* Media Assets Gallery Grid */}
-          {mediaAssets.length === 0 ? (
-            <div className="text-center py-16 bg-white border border-stone-200 rounded-3xl p-8 space-y-3">
-              <div className="w-12 h-12 rounded-2xl bg-stone-100 flex items-center justify-center mx-auto text-stone-400">
-                <ImageIcon className="w-6 h-6" />
-              </div>
-              <h4 className="text-sm font-semibold text-stone-800">No media assets in Supabase yet</h4>
-              <p className="text-xs text-stone-500 max-w-sm mx-auto">
-                Upload bakery photos from your device. They will be stored directly in Supabase PostgreSQL and served with high-performance edge caching.
-              </p>
-            </div>
-          ) : (
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
-              {mediaAssets
-                .filter(
-                  (m) =>
-                    !mediaSearchQuery ||
-                    m.filename.toLowerCase().includes(mediaSearchQuery.toLowerCase()) ||
-                    (m.title && m.title.toLowerCase().includes(mediaSearchQuery.toLowerCase()))
-                )
-                .map((asset) => (
-                  <div
-                    key={asset.id}
-                    className="group bg-white rounded-2xl border border-stone-200 overflow-hidden shadow-2xs hover:shadow-md transition flex flex-col justify-between"
-                  >
-                    <div className="relative w-full h-36 bg-stone-100">
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img
-                        src={asset.url}
-                        alt={asset.title || asset.filename}
-                        className="w-full h-full object-cover group-hover:scale-105 transition duration-300"
-                      />
-                      <span className="absolute top-2 left-2 px-1.5 py-0.5 rounded-md text-[9px] font-semibold bg-black/70 text-white backdrop-blur-xs">
-                        {asset.mimeType.replace('image/', '').toUpperCase()}
-                      </span>
-                    </div>
-
-                    <div className="p-3 space-y-2 flex-1 flex flex-col justify-between">
-                      <div>
-                        <p className="text-xs font-semibold text-stone-900 truncate" title={asset.filename}>
-                          {asset.title || asset.filename}
-                        </p>
-                        <div className="flex items-center justify-between text-[10px] text-stone-400 font-mono pt-0.5">
-                          <span>{(asset.byteSize / 1024).toFixed(1)} KB</span>
-                          <span>{new Date(asset.createdAt).toLocaleDateString()}</span>
-                        </div>
-                      </div>
-
-                      <div className="flex items-center gap-1.5 pt-2 border-t border-stone-100">
-                        <button
-                          type="button"
-                          onClick={() => {
-                            navigator.clipboard.writeText(asset.url);
-                            setStatusMessage(`Copied media URL: ${asset.url}`);
-                            setTimeout(() => setStatusMessage(''), 3000);
-                          }}
-                          className="flex-1 py-1 px-2 rounded-lg bg-stone-50 hover:bg-stone-100 text-stone-700 text-[10px] font-medium flex items-center justify-center gap-1 border border-stone-200 transition cursor-pointer"
-                        >
-                          <Copy className="w-3 h-3" />
-                          <span>Copy URL</span>
-                        </button>
-
-                        <button
-                          type="button"
-                          onClick={() => handleDeleteMediaAsset(asset.id)}
-                          className="p-1 rounded-lg hover:bg-rose-50 text-stone-400 hover:text-rose-600 transition cursor-pointer"
-                          title="Delete Asset from Supabase"
-                        >
-                          <Trash2 className="w-3.5 h-3.5" />
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-            </div>
-          )}
-        </div>
-      )}
 
       {/* =========================================================================
           DRAWER MODAL: ASSIGN FROM MASTER CATALOG TO CURRENT OUTLET
@@ -1850,7 +1688,7 @@ export default function OutletInventoryPage() {
                 />
               </div>
 
-              {/* Photo Image Asset - Supabase Upload, Library Picker, and Presets */}
+              {/* Photo Image Asset - Upload, Library Picker, and Presets */}
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
                   <label className="text-xs font-semibold text-stone-800">
@@ -1858,7 +1696,7 @@ export default function OutletInventoryPage() {
                   </label>
                   <span className="text-[10px] text-stone-400 font-mono flex items-center gap-1">
                     <Database className="w-3 h-3 text-amber-500" />
-                    Supabase Storage
+                    Cloud Storage
                   </span>
                 </div>
 
@@ -1866,7 +1704,7 @@ export default function OutletInventoryPage() {
                 <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
                   <label className="flex-1 px-3 py-2 bg-white border border-stone-300 hover:border-stone-900 rounded-xl text-xs font-medium text-stone-800 flex items-center justify-center gap-1.5 transition cursor-pointer shadow-2xs">
                     <UploadCloud className="w-4 h-4 text-stone-600" />
-                    <span>{isUploadingMedia ? 'Uploading to Supabase...' : 'Upload from Phone / PC'}</span>
+                    <span>{isUploadingMedia ? 'Uploading...' : 'Upload from Phone / PC'}</span>
                     <input
                       type="file"
                       accept="image/*"
@@ -1888,7 +1726,7 @@ export default function OutletInventoryPage() {
                     className="px-3 py-2 bg-stone-100 hover:bg-stone-200 text-stone-700 rounded-xl text-xs font-medium flex items-center justify-center gap-1.5 transition cursor-pointer"
                   >
                     <ImageIcon className="w-4 h-4 text-stone-500" />
-                    <span>Supabase Library ({mediaAssets.length})</span>
+                    <span>Photo Library ({mediaAssets.length})</span>
                   </button>
                 </div>
 
@@ -2169,7 +2007,7 @@ export default function OutletInventoryPage() {
                   </label>
                   <span className="text-[10px] text-stone-400 font-mono flex items-center gap-1">
                     <Database className="w-3 h-3 text-amber-500" />
-                    Supabase Storage
+                    Cloud Storage
                   </span>
                 </div>
 
@@ -2246,7 +2084,7 @@ export default function OutletInventoryPage() {
       )}
 
       {/* =========================================================================
-          MEDIA PICKER MODAL (SUPABASE POSTGRESQL ASSETS)
+          MEDIA PICKER MODAL (CLOUD MEDIA ASSETS)
          ========================================================================= */}
       {isMediaPickerOpen && (
         <div className="fixed inset-0 z-60 overflow-y-auto bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in">
@@ -2256,10 +2094,10 @@ export default function OutletInventoryPage() {
                 <Database className="w-5 h-5 text-amber-600" />
                 <div>
                   <h3 className="font-serif font-bold text-base text-stone-900">
-                    Select from Supabase Media Storage
+                    Select from Media Library
                   </h3>
                   <p className="text-xs text-stone-500 font-mono">
-                    PostgreSQL pooler &bull; aws-0-ap-south-1.pooler.supabase.com
+                    Bakery Cloud Photography Repository
                   </p>
                 </div>
               </div>
@@ -2274,7 +2112,7 @@ export default function OutletInventoryPage() {
             {mediaAssets.length === 0 ? (
               <div className="text-center py-12 space-y-2">
                 <ImageIcon className="w-8 h-8 text-stone-400 mx-auto" />
-                <p className="text-xs text-stone-600 font-medium">No assets in Supabase yet</p>
+                <p className="text-xs text-stone-600 font-medium">No media assets uploaded yet</p>
                 <p className="text-[11px] text-stone-400">Upload a photo first using the upload button.</p>
               </div>
             ) : (

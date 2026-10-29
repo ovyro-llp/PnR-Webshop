@@ -1,8 +1,9 @@
 import { Pool } from 'pg';
 import { MediaUpload } from '@/types';
 
-// Supabase PostgreSQL pooler connection URL
+// PostgreSQL pooler connection URL
 const rawUrl =
+  process.env.DATABASE_URL ||
   process.env.SUPABASE_DB_URL ||
   'postgresql://postgres.rfkzjxbasckvtipouclf:24Hrushi%4002@aws-0-ap-south-1.pooler.supabase.com:5432/postgres';
 
@@ -35,7 +36,7 @@ export function getDbPool(): Pool {
     });
 
     globalThis.__PNR_PG_POOL__.on('error', (err) => {
-      console.error('[Supabase DB Pool Error]:', err.message);
+      console.error('[PostgreSQL DB Pool Error]:', err.message);
     });
   }
   return globalThis.__PNR_PG_POOL__;
@@ -67,7 +68,7 @@ export async function ensureMediaTable(): Promise<void> {
           CREATE INDEX IF NOT EXISTS idx_media_uploads_category ON public.media_uploads(category);
         `);
       } catch (err: any) {
-        console.error('[Supabase ensureMediaTable Error]:', err.message);
+        console.error('[PostgreSQL ensureMediaTable Error]:', err.message);
       }
     })();
   }
@@ -99,7 +100,7 @@ export async function getMediaUploads(limit = 50): Promise<MediaUpload[]> {
       updatedAt: row.updated_at ? new Date(row.updated_at).toISOString() : new Date().toISOString(),
     }));
   } catch (err: any) {
-    console.error('[Supabase getMediaUploads Error]:', err.message);
+    console.error('[PostgreSQL getMediaUploads Error]:', err.message);
     return [];
   }
 }
@@ -133,7 +134,7 @@ export async function getMediaUploadById(id: string): Promise<{
       url: row.url || `/api/media/${row.id}`,
     };
   } catch (err: any) {
-    console.error('[Supabase getMediaUploadById Error]:', err.message);
+    console.error('[PostgreSQL getMediaUploadById Error]:', err.message);
     return null;
   }
 }
@@ -193,7 +194,7 @@ export async function deleteMediaUpload(id: string): Promise<boolean> {
     const res = await pool.query(`DELETE FROM public.media_uploads WHERE id = $1`, [id]);
     return (res.rowCount ?? 0) > 0;
   } catch (err: any) {
-    console.error('[Supabase deleteMediaUpload Error]:', err.message);
+    console.error('[PostgreSQL deleteMediaUpload Error]:', err.message);
     return false;
   }
 }

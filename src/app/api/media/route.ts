@@ -70,7 +70,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      message: 'Media uploaded and persisted to Supabase database successfully',
+      message: 'Media uploaded and persisted successfully',
       media,
     });
   } catch (err: any) {
