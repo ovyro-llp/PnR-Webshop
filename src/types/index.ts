@@ -76,19 +76,31 @@ export interface Campaign {
   countdownMinutes?: number;
 }
 
-export type MenuCategory = 
-  | 'Puffs & Patties'
-  | 'Savory Rolls'
-  | 'Cakes & Pastries'
-  | 'Snack Combos'
-  | 'Breads & Buns'
-  | 'Beverages';
+export interface SubCategory {
+  id: string;
+  categoryId: string;
+  name: string;
+  slug: string;
+  description?: string;
+}
+
+export interface Category {
+  id: string;
+  name: string;
+  slug: string;
+  description?: string;
+  subCategories: SubCategory[];
+}
+
+export type MenuCategory = string;
 
 export interface MenuItem {
   id: string;
   name: string;
   description: string;
   category: MenuCategory;
+  subCategory?: string;
+  subCategoryId?: string;
   price: number;
   originalPrice?: number;
   image: string;
@@ -107,6 +119,8 @@ export interface CreateProductDTO {
   name: string;
   description: string;
   category: MenuCategory;
+  subCategory?: string;
+  subCategoryId?: string;
   price: number;
   originalPrice?: number;
   image: string;
@@ -122,6 +136,8 @@ export interface UpdateProductDTO {
   name?: string;
   description?: string;
   category?: MenuCategory;
+  subCategory?: string;
+  subCategoryId?: string;
   price?: number;
   originalPrice?: number;
   image?: string;

@@ -10,10 +10,80 @@ import {
   PaymentGatewayConfig,
   CreateProductDTO,
   UpdateProductDTO,
+  Category,
+  SubCategory,
 } from '@/types';
 import { OUTLETS, CAMPAIGNS, MENU_ITEMS, INITIAL_ORDERS } from '@/lib/data/mock-data';
 import { dispatchToMangwale } from '@/lib/logistics/mangwale';
 import { sendMetaCAPI } from '@/lib/tracking/pixel-tracker';
+
+export const DEFAULT_CATEGORIES: Category[] = [
+  {
+    id: 'cat-puffs',
+    name: 'Puffs & Patties',
+    slug: 'puffs-and-patties',
+    description: 'Flaky artisanal layered bakery puffs and spiced potato patties',
+    subCategories: [
+      { id: 'sub-veg-puff', categoryId: 'cat-puffs', name: 'Veg Puffs', slug: 'veg-puffs' },
+      { id: 'sub-paneer-puff', categoryId: 'cat-puffs', name: 'Paneer Puffs', slug: 'paneer-puffs' },
+      { id: 'sub-cheese-puff', categoryId: 'cat-puffs', name: 'Cheese & Corn', slug: 'cheese-and-corn' },
+      { id: 'sub-egg-puff', categoryId: 'cat-puffs', name: 'Egg & Non-Veg', slug: 'egg-and-non-veg' },
+    ],
+  },
+  {
+    id: 'cat-rolls',
+    name: 'Savory Rolls',
+    slug: 'savory-rolls',
+    description: 'Fresh grilled rolls, kathi wraps, and flaky savory frankies',
+    subCategories: [
+      { id: 'sub-kathi-roll', categoryId: 'cat-rolls', name: 'Kathi Rolls', slug: 'kathi-rolls' },
+      { id: 'sub-paneer-roll', categoryId: 'cat-rolls', name: 'Paneer Tikka Rolls', slug: 'paneer-tikka-rolls' },
+      { id: 'sub-spring-roll', categoryId: 'cat-rolls', name: 'Spring Rolls', slug: 'spring-rolls' },
+    ],
+  },
+  {
+    id: 'cat-cakes',
+    name: 'Cakes & Pastries',
+    slug: 'cakes-and-pastries',
+    description: 'Decadent Belgian chocolate truffles, red velvet, and tea cakes',
+    subCategories: [
+      { id: 'sub-pastry-slice', categoryId: 'cat-cakes', name: 'Pastry Slices', slug: 'pastry-slices' },
+      { id: 'sub-celebration-cake', categoryId: 'cat-cakes', name: 'Celebration Cakes', slug: 'celebration-cakes' },
+      { id: 'sub-brownies', categoryId: 'cat-cakes', name: 'Brownies & Teacakes', slug: 'brownies-and-teacakes' },
+    ],
+  },
+  {
+    id: 'cat-combos',
+    name: 'Snack Combos',
+    slug: 'snack-combos',
+    description: 'Value tea-time pairings and office snack boxes',
+    subCategories: [
+      { id: 'sub-chai-combo', categoryId: 'cat-combos', name: 'Chai & Puff Combos', slug: 'chai-and-puff-combos' },
+      { id: 'sub-party-packs', categoryId: 'cat-combos', name: 'Party Packs', slug: 'party-packs' },
+    ],
+  },
+  {
+    id: 'cat-breads',
+    name: 'Breads & Buns',
+    slug: 'breads-and-buns',
+    description: 'Freshly baked sourdough, soft pav, and multigrain loaves',
+    subCategories: [
+      { id: 'sub-artisan-bread', categoryId: 'cat-breads', name: 'Artisanal Loaves', slug: 'artisanal-loaves' },
+      { id: 'sub-buns-pav', categoryId: 'cat-breads', name: 'Burger Buns & Pav', slug: 'burger-buns-and-pav' },
+      { id: 'sub-garlic-bread', categoryId: 'cat-breads', name: 'Garlic Breads', slug: 'garlic-breads' },
+    ],
+  },
+  {
+    id: 'cat-beverages',
+    name: 'Beverages',
+    slug: 'beverages',
+    description: 'Hot cutting chai, iced teas, and thick cold coffees',
+    subCategories: [
+      { id: 'sub-hot-chai', categoryId: 'cat-beverages', name: 'Special Chai', slug: 'special-chai' },
+      { id: 'sub-cold-brews', categoryId: 'cat-beverages', name: 'Cold Brews & Shakes', slug: 'cold-brews-and-shakes' },
+    ],
+  },
+];
 
 // In-Memory store across requests for Next.js dev/prod server
 declare global {
@@ -33,6 +103,8 @@ declare global {
   var __PNR_PAYMENT_CONFIG__: PaymentGatewayConfig | undefined;
   // eslint-disable-next-line no-var
   var __PNR_MASTER_PRODUCTS__: MenuItem[] | undefined;
+  // eslint-disable-next-line no-var
+  var __PNR_CATEGORIES__: Category[] | undefined;
 }
 
 if (!globalThis.__PNR_ORDERS__) {
@@ -46,6 +118,9 @@ if (!globalThis.__PNR_OUTLETS__) {
 }
 if (!globalThis.__PNR_MASTER_PRODUCTS__) {
   globalThis.__PNR_MASTER_PRODUCTS__ = [...MENU_ITEMS];
+}
+if (!globalThis.__PNR_CATEGORIES__) {
+  globalThis.__PNR_CATEGORIES__ = [...DEFAULT_CATEGORIES];
 }
 
 // Initial Employees Hierarchical Seed
@@ -547,6 +622,8 @@ export const orderStore = {
       name: productData.name.trim(),
       description: productData.description.trim(),
       category: productData.category,
+      subCategory: productData.subCategory,
+      subCategoryId: productData.subCategoryId,
       price: Number(productData.price),
       originalPrice: productData.originalPrice ? Number(productData.originalPrice) : undefined,
       image:
@@ -605,6 +682,8 @@ export const orderStore = {
     const updated: MenuItem = {
       ...current,
       ...updates,
+      subCategory: updates.subCategory !== undefined ? updates.subCategory : current.subCategory,
+      subCategoryId: updates.subCategoryId !== undefined ? updates.subCategoryId : current.subCategoryId,
       price: updates.price !== undefined ? Number(updates.price) : current.price,
       originalPrice:
         updates.originalPrice !== undefined
@@ -986,5 +1065,62 @@ export const orderStore = {
         hourlyTrend,
       };
     });
+  },
+
+  // Category & Sub-Category Management Engine
+  getCategories: (): Category[] => {
+    return globalThis.__PNR_CATEGORIES__ || DEFAULT_CATEGORIES;
+  },
+
+  createCategory: (data: { name: string; description?: string }): Category => {
+    const categories = globalThis.__PNR_CATEGORIES__ || [...DEFAULT_CATEGORIES];
+    const slug = data.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+    const newCategory: Category = {
+      id: `cat-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
+      name: data.name.trim(),
+      slug: slug || `cat-${Date.now()}`,
+      description: data.description?.trim() || '',
+      subCategories: [],
+    };
+    categories.push(newCategory);
+    globalThis.__PNR_CATEGORIES__ = categories;
+    return newCategory;
+  },
+
+  deleteCategory: (idOrSlug: string): boolean => {
+    const categories = globalThis.__PNR_CATEGORIES__ || [];
+    const target = categories.find((c) => c.id === idOrSlug || c.slug === idOrSlug);
+    if (!target) return false;
+
+    globalThis.__PNR_CATEGORIES__ = categories.filter((c) => c.id !== target.id);
+    return true;
+  },
+
+  createSubCategory: (categoryId: string, data: { name: string; description?: string }): SubCategory | null => {
+    const categories = globalThis.__PNR_CATEGORIES__ || [];
+    const cat = categories.find((c) => c.id === categoryId || c.slug === categoryId);
+    if (!cat) return null;
+
+    const slug = data.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+    const newSub: SubCategory = {
+      id: `sub-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
+      categoryId: cat.id,
+      name: data.name.trim(),
+      slug: slug || `sub-${Date.now()}`,
+      description: data.description?.trim() || '',
+    };
+    if (!cat.subCategories) cat.subCategories = [];
+    cat.subCategories.push(newSub);
+    return newSub;
+  },
+
+  deleteSubCategory: (categoryId: string, subCategoryId: string): boolean => {
+    const categories = globalThis.__PNR_CATEGORIES__ || [];
+    const cat = categories.find((c) => c.id === categoryId || c.slug === categoryId);
+    if (!cat || !cat.subCategories) return false;
+
+    const initialLen = cat.subCategories.length;
+    cat.subCategories = cat.subCategories.filter((s) => s.id !== subCategoryId && s.slug !== subCategoryId);
+    return cat.subCategories.length < initialLen;
   },
 };

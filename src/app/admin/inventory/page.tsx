@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { OUTLETS } from '@/lib/data/mock-data';
-import { OutletStockItem, Outlet, MenuItem, MenuCategory, MediaUpload } from '@/types';
+import { OutletStockItem, Outlet, MenuItem, MenuCategory, MediaUpload, Category, SubCategory } from '@/types';
 import { OutletSelector } from '@/components/admin/OutletSelector';
 import {
   Package,
@@ -29,6 +29,9 @@ import {
   Copy,
   ExternalLink,
   FileText,
+  Tag,
+  FolderTree,
+  ChevronRight,
 } from 'lucide-react';
 import Image from 'next/image';
 
@@ -78,6 +81,13 @@ export default function OutletInventoryPage() {
   const [isOutletOpen, setIsOutletOpen] = useState<boolean>(true);
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [selectedCategory, setSelectedCategory] = useState<string>('ALL');
+  const [selectedSubCategory, setSelectedSubCategory] = useState<string>('ALL');
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [isCategoryModalOpen, setIsCategoryModalOpen] = useState<boolean>(false);
+  const [selectedCategoryForSub, setSelectedCategoryForSub] = useState<string>('');
+  const [newCategoryName, setNewCategoryName] = useState<string>('');
+  const [newCategoryDesc, setNewCategoryDesc] = useState<string>('');
+  const [newSubCategoryName, setNewSubCategoryName] = useState<string>('');
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [statusMessage, setStatusMessage] = useState<string>('');
 
@@ -91,6 +101,8 @@ export default function OutletInventoryPage() {
     name: '',
     description: '',
     category: 'Puffs & Patties' as MenuCategory,
+    subCategory: '',
+    subCategoryId: '',
     price: '',
     originalPrice: '',
     image: PRESET_IMAGES[0].url,
@@ -218,10 +230,139 @@ export default function OutletInventoryPage() {
     }
   };
 
+  const fetchCategories = async () => {
+    try {
+      const res = await fetch('/api/categories');
+      const data = await res.json();
+      if (data.success && data.categories) {
+        setCategories(data.categories);
+        if (data.categories.length > 0) {
+          setSelectedCategoryForSub((prev) => prev || data.categories[0].id);
+        }
+      }
+    } catch (err) {
+      console.error('Failed to load categories', err);
+    }
+  };
+
+  const handleCreateCategory = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newCategoryName.trim()) return;
+
+    try {
+      const res = await fetch('/api/categories', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'CREATE_CATEGORY',
+          name: newCategoryName.trim(),
+          description: newCategoryDesc.trim(),
+        }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setCategories(data.categories);
+        if (data.category) {
+          setSelectedCategoryForSub(data.category.id);
+        }
+        setNewCategoryName('');
+        setNewCategoryDesc('');
+        setStatusMessage(data.message);
+        setTimeout(() => setStatusMessage(''), 4000);
+      } else {
+        setStatusMessage(data.error || 'Failed to create category');
+      }
+    } catch (err: any) {
+      console.error('Error creating category:', err);
+    }
+  };
+
+  const handleDeleteCategory = async (categoryId: string) => {
+    const cat = categories.find((c) => c.id === categoryId);
+    if (!confirm(`Are you sure you want to delete category "${cat?.name || 'this category'}"? Products will remain in the catalog.`)) {
+      return;
+    }
+
+    try {
+      const res = await fetch('/api/categories', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'DELETE_CATEGORY',
+          categoryId,
+        }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setCategories(data.categories);
+        if (selectedCategoryForSub === categoryId && data.categories.length > 0) {
+          setSelectedCategoryForSub(data.categories[0].id);
+        }
+        setStatusMessage('Category deleted successfully');
+        setTimeout(() => setStatusMessage(''), 3000);
+      }
+    } catch (err: any) {
+      console.error('Error deleting category:', err);
+    }
+  };
+
+  const handleCreateSubCategory = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedCategoryForSub || !newSubCategoryName.trim()) return;
+
+    try {
+      const res = await fetch('/api/categories', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'CREATE_SUB_CATEGORY',
+          categoryId: selectedCategoryForSub,
+          name: newSubCategoryName.trim(),
+        }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setCategories(data.categories);
+        setNewSubCategoryName('');
+        setStatusMessage(data.message);
+        setTimeout(() => setStatusMessage(''), 4000);
+      } else {
+        setStatusMessage(data.error || 'Failed to create sub-category');
+      }
+    } catch (err: any) {
+      console.error('Error creating sub-category:', err);
+    }
+  };
+
+  const handleDeleteSubCategory = async (categoryId: string, subCategoryId: string) => {
+    if (!confirm('Are you sure you want to delete this sub-category?')) return;
+
+    try {
+      const res = await fetch('/api/categories', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'DELETE_SUB_CATEGORY',
+          categoryId,
+          subCategoryId,
+        }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setCategories(data.categories);
+        setStatusMessage('Sub-Category deleted successfully');
+        setTimeout(() => setStatusMessage(''), 3000);
+      }
+    } catch (err: any) {
+      console.error('Error deleting sub-category:', err);
+    }
+  };
+
   useEffect(() => {
     fetchOutlets();
     fetchMasterProducts();
     fetchMediaAssets();
+    fetchCategories();
   }, []);
 
   useEffect(() => {
@@ -407,6 +548,8 @@ export default function OutletInventoryPage() {
             name: newProductForm.name,
             description: newProductForm.description || 'Freshly baked artisanal specialty handcrafted in Nashik',
             category: newProductForm.category,
+            subCategory: newProductForm.subCategory,
+            subCategoryId: newProductForm.subCategoryId,
             price: Number(newProductForm.price),
             originalPrice: newProductForm.originalPrice ? Number(newProductForm.originalPrice) : undefined,
             image: newProductForm.image,
@@ -427,7 +570,9 @@ export default function OutletInventoryPage() {
         setNewProductForm({
           name: '',
           description: '',
-          category: 'Puffs & Patties',
+          category: categories.length > 0 ? categories[0].name : 'Puffs & Patties',
+          subCategory: '',
+          subCategoryId: '',
           price: '',
           originalPrice: '',
           image: PRESET_IMAGES[0].url,
@@ -464,6 +609,8 @@ export default function OutletInventoryPage() {
           updates: {
             name: editingProduct.name,
             category: editingProduct.category,
+            subCategory: editingProduct.subCategory,
+            subCategoryId: editingProduct.subCategoryId,
             price: Number(editingProduct.price),
             originalPrice: editingProduct.originalPrice ? Number(editingProduct.originalPrice) : undefined,
             description: editingProduct.description,
@@ -524,14 +671,18 @@ export default function OutletInventoryPage() {
     return matchesSearch && matchesCat;
   });
 
+  const activeSubCategoryParent = categories.find((c) => c.id === selectedCategoryForSub);
+
   // Filter Master Products
   const filteredMasterProducts = masterProducts.filter((product) => {
     const matchesSearch =
       product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       product.category.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (product.subCategory && product.subCategory.toLowerCase().includes(searchQuery.toLowerCase())) ||
       product.description.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesCat = selectedCategory === 'ALL' || product.category === selectedCategory;
-    return matchesSearch && matchesCat;
+    const matchesSub = selectedSubCategory === 'ALL' || product.subCategory === selectedSubCategory;
+    return matchesSearch && matchesCat && matchesSub;
   });
 
   const totalItems = stockItems.length;
@@ -717,7 +868,7 @@ export default function OutletInventoryPage() {
 
             {/* Category Pills - Natural Wrap, Zero Horizontal Scrolling */}
             <div className="flex flex-wrap items-center gap-1.5">
-              {['ALL', ...CATEGORIES].map((cat) => {
+              {['ALL', ...categories.map((c) => c.name)].map((cat) => {
                 const isSelected = selectedCategory === cat;
                 return (
                   <button
@@ -890,13 +1041,27 @@ export default function OutletInventoryPage() {
               </p>
             </div>
 
-            <button
-              onClick={() => setIsAddProductModalOpen(true)}
-              className="px-5 py-2.5 bg-[#1C1917] hover:bg-stone-800 text-white rounded-full text-xs font-semibold flex items-center gap-2 transition shadow-xs shrink-0 cursor-pointer"
-            >
-              <Plus className="w-4 h-4" />
-              <span>+ Upload New Product</span>
-            </button>
+            <div className="flex items-center gap-2 shrink-0">
+              <button
+                type="button"
+                onClick={() => setIsCategoryModalOpen(true)}
+                className="px-4 py-2.5 bg-white hover:bg-stone-50 text-stone-800 border border-stone-200 rounded-full text-xs font-semibold flex items-center gap-1.5 transition shadow-2xs cursor-pointer"
+              >
+                <Tag className="w-3.5 h-3.5 text-amber-600" />
+                <span>Categories &amp; Sub-Categories</span>
+                <span className="ml-0.5 px-1.5 py-0.2 rounded-full bg-stone-100 text-stone-600 text-[10px] font-mono">
+                  {categories.length}
+                </span>
+              </button>
+
+              <button
+                onClick={() => setIsAddProductModalOpen(true)}
+                className="px-5 py-2.5 bg-[#1C1917] hover:bg-stone-800 text-white rounded-full text-xs font-semibold flex items-center gap-2 transition shadow-xs shrink-0 cursor-pointer"
+              >
+                <Plus className="w-4 h-4" />
+                <span>+ Upload New Product</span>
+              </button>
+            </div>
           </div>
 
           {/* Search & Category Filter */}
@@ -914,12 +1079,15 @@ export default function OutletInventoryPage() {
 
             {/* Category Pills - Natural Wrap, Zero Horizontal Scrolling */}
             <div className="flex flex-wrap items-center gap-1.5">
-              {['ALL', ...CATEGORIES].map((cat) => {
+              {['ALL', ...categories.map((c) => c.name)].map((cat) => {
                 const isSelected = selectedCategory === cat;
                 return (
                   <button
                     key={cat}
-                    onClick={() => setSelectedCategory(cat)}
+                    onClick={() => {
+                      setSelectedCategory(cat);
+                      setSelectedSubCategory('ALL');
+                    }}
                     className={`px-3 py-1.5 rounded-full text-[11px] font-medium transition shrink-0 cursor-pointer ${
                       isSelected
                         ? 'bg-[#1C1917] text-white font-semibold'
@@ -932,6 +1100,44 @@ export default function OutletInventoryPage() {
               })}
             </div>
           </div>
+
+          {/* Sub-Category Filter if selected category has subcategories */}
+          {selectedCategory !== 'ALL' &&
+            (() => {
+              const activeCat = categories.find((c) => c.name === selectedCategory);
+              if (!activeCat || !activeCat.subCategories || activeCat.subCategories.length === 0) return null;
+              return (
+                <div className="flex flex-wrap items-center gap-1.5 p-2 bg-stone-50 rounded-2xl border border-stone-200/80">
+                  <span className="text-[10px] font-semibold uppercase tracking-wider text-stone-400 mr-1 flex items-center gap-1">
+                    <FolderTree className="w-3 h-3 text-stone-400" />
+                    Sub-Category:
+                  </span>
+                  <button
+                    onClick={() => setSelectedSubCategory('ALL')}
+                    className={`px-2.5 py-1 rounded-full text-[10px] font-medium transition cursor-pointer ${
+                      selectedSubCategory === 'ALL'
+                        ? 'bg-stone-900 text-white font-semibold'
+                        : 'bg-white text-stone-600 border border-stone-200'
+                    }`}
+                  >
+                    All {selectedCategory}
+                  </button>
+                  {activeCat.subCategories.map((sub) => (
+                    <button
+                      key={sub.id}
+                      onClick={() => setSelectedSubCategory(sub.name)}
+                      className={`px-2.5 py-1 rounded-full text-[10px] font-medium transition cursor-pointer ${
+                        selectedSubCategory === sub.name
+                          ? 'bg-stone-900 text-white font-semibold'
+                          : 'bg-white text-stone-600 border border-stone-200'
+                      }`}
+                    >
+                      {sub.name}
+                    </button>
+                  ))}
+                </div>
+              );
+            })()}
 
           {/* Master Products Table / Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -959,6 +1165,7 @@ export default function OutletInventoryPage() {
                         />
                         <span className="text-[10px] font-mono uppercase font-semibold text-stone-400 truncate">
                           {product.category}
+                          {product.subCategory ? ` › ${product.subCategory}` : ''}
                         </span>
                       </div>
                       <h3 className="font-serif font-bold text-sm text-stone-900 truncate mt-0.5">
@@ -1338,24 +1545,36 @@ export default function OutletInventoryPage() {
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs font-semibold text-stone-800 mb-1">
-                    Category *
-                  </label>
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="text-xs font-semibold text-stone-800">
+                      Category *
+                    </label>
+                    <button
+                      type="button"
+                      onClick={() => setIsCategoryModalOpen(true)}
+                      className="text-[10px] text-amber-700 hover:underline font-medium"
+                    >
+                      + Manage Categories
+                    </button>
+                  </div>
                   <select
                     value={newProductForm.category}
-                    onChange={(e) =>
+                    onChange={(e) => {
+                      const newCat = e.target.value;
                       setNewProductForm({
                         ...newProductForm,
-                        category: e.target.value as MenuCategory,
-                      })
-                    }
+                        category: newCat,
+                        subCategory: '',
+                        subCategoryId: '',
+                      });
+                    }}
                     className="w-full px-3.5 py-2.5 bg-stone-50 border border-stone-200 rounded-xl text-xs text-stone-900 focus:bg-white focus:outline-none"
                   >
-                    {CATEGORIES.map((cat) => (
-                      <option key={cat} value={cat}>
-                        {cat}
+                    {categories.map((cat) => (
+                      <option key={cat.id} value={cat.name}>
+                        {cat.name}
                       </option>
                     ))}
                   </select>
@@ -1363,20 +1582,49 @@ export default function OutletInventoryPage() {
 
                 <div>
                   <label className="block text-xs font-semibold text-stone-800 mb-1">
-                    Base Master Price (₹) *
+                    Sub-Category (Optional)
                   </label>
-                  <input
-                    type="number"
-                    required
-                    min="1"
-                    placeholder="e.g. 45"
-                    value={newProductForm.price}
-                    onChange={(e) =>
-                      setNewProductForm({ ...newProductForm, price: e.target.value })
-                    }
-                    className="w-full px-3.5 py-2.5 bg-stone-50 border border-stone-200 rounded-xl text-xs text-stone-900 font-mono focus:bg-white focus:outline-none focus:ring-1 focus:ring-stone-900"
-                  />
+                  <select
+                    value={newProductForm.subCategory}
+                    onChange={(e) => {
+                      const subName = e.target.value;
+                      const activeCat = categories.find((c) => c.name === newProductForm.category);
+                      const subObj = activeCat?.subCategories?.find((s) => s.name === subName);
+                      setNewProductForm({
+                        ...newProductForm,
+                        subCategory: subName,
+                        subCategoryId: subObj?.id || '',
+                      });
+                    }}
+                    className="w-full px-3.5 py-2.5 bg-stone-50 border border-stone-200 rounded-xl text-xs text-stone-900 focus:bg-white focus:outline-none"
+                  >
+                    <option value="">General / None</option>
+                    {categories
+                      .find((c) => c.name === newProductForm.category)
+                      ?.subCategories?.map((sub) => (
+                        <option key={sub.id} value={sub.name}>
+                          {sub.name}
+                        </option>
+                      ))}
+                  </select>
                 </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-stone-800 mb-1">
+                  Base Master Price (₹) *
+                </label>
+                <input
+                  type="number"
+                  required
+                  min="1"
+                  placeholder="e.g. 45"
+                  value={newProductForm.price}
+                  onChange={(e) =>
+                    setNewProductForm({ ...newProductForm, price: e.target.value })
+                  }
+                  className="w-full px-3.5 py-2.5 bg-stone-50 border border-stone-200 rounded-xl text-xs text-stone-900 font-mono focus:bg-white focus:outline-none focus:ring-1 focus:ring-stone-900"
+                />
               </div>
 
               <div>
@@ -1605,24 +1853,35 @@ export default function OutletInventoryPage() {
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs font-semibold text-stone-800 mb-1">
-                    Category
-                  </label>
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="text-xs font-semibold text-stone-800">
+                      Category
+                    </label>
+                    <button
+                      type="button"
+                      onClick={() => setIsCategoryModalOpen(true)}
+                      className="text-[10px] text-amber-700 hover:underline font-medium"
+                    >
+                      + Manage
+                    </button>
+                  </div>
                   <select
                     value={editingProduct.category}
                     onChange={(e) =>
                       setEditingProduct({
                         ...editingProduct,
                         category: e.target.value as MenuCategory,
+                        subCategory: '',
+                        subCategoryId: '',
                       })
                     }
                     className="w-full px-3.5 py-2.5 bg-stone-50 border border-stone-200 rounded-xl text-xs text-stone-900 focus:bg-white focus:outline-none"
                   >
-                    {CATEGORIES.map((cat) => (
-                      <option key={cat} value={cat}>
-                        {cat}
+                    {categories.map((cat) => (
+                      <option key={cat.id} value={cat.name}>
+                        {cat.name}
                       </option>
                     ))}
                   </select>
@@ -1630,22 +1889,51 @@ export default function OutletInventoryPage() {
 
                 <div>
                   <label className="block text-xs font-semibold text-stone-800 mb-1">
-                    Master Price (₹)
+                    Sub-Category (Optional)
                   </label>
-                  <input
-                    type="number"
-                    required
-                    min="1"
-                    value={editingProduct.price}
-                    onChange={(e) =>
+                  <select
+                    value={editingProduct.subCategory || ''}
+                    onChange={(e) => {
+                      const subName = e.target.value;
+                      const activeCat = categories.find((c) => c.name === editingProduct.category);
+                      const subObj = activeCat?.subCategories?.find((s) => s.name === subName);
                       setEditingProduct({
                         ...editingProduct,
-                        price: Number(e.target.value),
-                      })
-                    }
-                    className="w-full px-3.5 py-2.5 bg-stone-50 border border-stone-200 rounded-xl text-xs text-stone-900 font-mono focus:bg-white focus:outline-none"
-                  />
+                        subCategory: subName,
+                        subCategoryId: subObj?.id || '',
+                      });
+                    }}
+                    className="w-full px-3.5 py-2.5 bg-stone-50 border border-stone-200 rounded-xl text-xs text-stone-900 focus:bg-white focus:outline-none"
+                  >
+                    <option value="">General / None</option>
+                    {categories
+                      .find((c) => c.name === editingProduct.category)
+                      ?.subCategories?.map((sub) => (
+                        <option key={sub.id} value={sub.name}>
+                          {sub.name}
+                        </option>
+                      ))}
+                  </select>
                 </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-stone-800 mb-1">
+                  Master Price (₹)
+                </label>
+                <input
+                  type="number"
+                  required
+                  min="1"
+                  value={editingProduct.price}
+                  onChange={(e) =>
+                    setEditingProduct({
+                      ...editingProduct,
+                      price: Number(e.target.value),
+                    })
+                  }
+                  className="w-full px-3.5 py-2.5 bg-stone-50 border border-stone-200 rounded-xl text-xs text-stone-900 font-mono focus:bg-white focus:outline-none"
+                />
               </div>
 
               <div>
@@ -1827,6 +2115,225 @@ export default function OutletInventoryPage() {
                 className="px-4 py-2 bg-stone-200 hover:bg-stone-300 text-stone-800 text-xs font-semibold rounded-xl transition cursor-pointer"
               >
                 Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* =========================================================================
+          MODAL: CATEGORIES & SUB-CATEGORIES MANAGER
+         ========================================================================= */}
+      {isCategoryModalOpen && (
+        <div className="fixed inset-0 z-60 overflow-y-auto bg-black/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 animate-in fade-in">
+          <div className="bg-[#FAF8F5] border border-stone-200 rounded-3xl w-full max-w-4xl p-5 sm:p-7 space-y-6 shadow-2xl">
+            {/* Header */}
+            <div className="flex items-center justify-between border-b border-stone-200 pb-4">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-2xl bg-amber-50 border border-amber-200 flex items-center justify-center text-amber-700 shrink-0">
+                  <Tag className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="font-serif font-bold text-lg text-stone-900">
+                    Product Categories &amp; Sub-Categories
+                  </h3>
+                  <p className="text-xs text-stone-500">
+                    Create, organize, and delete menu categories for Puffs &apos;n&apos; Rolls master products
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsCategoryModalOpen(false)}
+                className="p-1.5 text-stone-400 hover:text-stone-800 rounded-full hover:bg-stone-100 transition cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Two-Panel Layout */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+              {/* Left Panel: Categories */}
+              <div className="bg-white p-4 sm:p-5 rounded-2xl border border-stone-200 shadow-2xs space-y-4 flex flex-col justify-between">
+                <div>
+                  <div className="flex items-center justify-between mb-3">
+                    <span className="text-xs font-bold uppercase tracking-wider text-stone-800 flex items-center gap-1.5">
+                      <FolderTree className="w-4 h-4 text-stone-500" />
+                      <span>Master Categories ({categories.length})</span>
+                    </span>
+                    <span className="text-[10px] text-stone-400 font-mono">Select to view sub-categories</span>
+                  </div>
+
+                  {/* Categories List */}
+                  <div className="space-y-1.5 max-h-72 overflow-y-auto pr-1">
+                    {categories.map((cat) => {
+                      const isSelected = selectedCategoryForSub === cat.id;
+                      const productCount = masterProducts.filter((p) => p.category === cat.name).length;
+                      const subCount = cat.subCategories ? cat.subCategories.length : 0;
+
+                      return (
+                        <div
+                          key={cat.id}
+                          onClick={() => setSelectedCategoryForSub(cat.id)}
+                          className={`flex items-center justify-between p-2.5 rounded-xl border transition cursor-pointer ${
+                            isSelected
+                              ? 'bg-stone-900 text-white border-stone-900 shadow-xs'
+                              : 'bg-stone-50 hover:bg-stone-100/80 text-stone-800 border-stone-200'
+                          }`}
+                        >
+                          <div className="min-w-0">
+                            <span className="text-xs font-semibold block truncate">{cat.name}</span>
+                            <span
+                              className={`text-[10px] flex items-center gap-2 ${
+                                isSelected ? 'text-stone-300' : 'text-stone-400'
+                              }`}
+                            >
+                              <span>{productCount} products</span>
+                              <span>&bull;</span>
+                              <span>{subCount} sub-categories</span>
+                            </span>
+                          </div>
+
+                          <div className="flex items-center gap-2 shrink-0">
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleDeleteCategory(cat.id);
+                              }}
+                              className={`p-1 rounded-lg transition ${
+                                isSelected
+                                  ? 'hover:bg-rose-900 text-stone-400 hover:text-rose-300'
+                                  : 'hover:bg-rose-50 text-stone-400 hover:text-rose-600'
+                              }`}
+                              title={`Delete Category "${cat.name}"`}
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                            <ChevronRight
+                              className={`w-4 h-4 ${isSelected ? 'text-white' : 'text-stone-400'}`}
+                            />
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* Create Category Form */}
+                <form onSubmit={handleCreateCategory} className="pt-3 border-t border-stone-100 space-y-2">
+                  <span className="text-[11px] font-bold text-stone-700 block">+ Add New Category</span>
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      placeholder="Category name (e.g. Gourmet Pizzas)..."
+                      value={newCategoryName}
+                      onChange={(e) => setNewCategoryName(e.target.value)}
+                      className="flex-1 px-3 py-2 bg-stone-50 border border-stone-200 rounded-xl text-xs text-stone-900 focus:bg-white focus:outline-none focus:ring-1 focus:ring-stone-900"
+                    />
+                    <button
+                      type="submit"
+                      disabled={!newCategoryName.trim()}
+                      className="px-4 py-2 bg-[#1C1917] hover:bg-stone-800 disabled:opacity-40 text-white rounded-xl text-xs font-semibold transition cursor-pointer"
+                    >
+                      Add
+                    </button>
+                  </div>
+                </form>
+              </div>
+
+              {/* Right Panel: Sub-Categories */}
+              <div className="bg-white p-4 sm:p-5 rounded-2xl border border-stone-200 shadow-2xs space-y-4 flex flex-col justify-between">
+                <div>
+                  <div className="flex items-center justify-between mb-3">
+                    <span className="text-xs font-bold uppercase tracking-wider text-stone-800">
+                      Sub-Categories for: <span className="text-amber-800">{activeSubCategoryParent?.name || 'Category'}</span>
+                    </span>
+                    <span className="text-[10px] text-stone-400 font-mono">
+                      {activeSubCategoryParent?.subCategories?.length || 0} items
+                    </span>
+                  </div>
+
+                  {/* Sub-Categories List */}
+                  {!activeSubCategoryParent ? (
+                    <div className="text-center py-12 text-stone-400 text-xs">
+                      Select a category on the left to manage its sub-categories.
+                    </div>
+                  ) : activeSubCategoryParent.subCategories?.length === 0 ? (
+                    <div className="text-center py-10 bg-stone-50 rounded-xl border border-dashed border-stone-200 p-4 space-y-1">
+                      <p className="text-xs text-stone-600 font-medium">No sub-categories yet</p>
+                      <p className="text-[10px] text-stone-400">Add sub-categories below to group items within {activeSubCategoryParent.name}.</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-1.5 max-h-72 overflow-y-auto pr-1">
+                      {activeSubCategoryParent.subCategories.map((sub) => {
+                        const productCount = masterProducts.filter(
+                          (p) => p.subCategory === sub.name || p.subCategoryId === sub.id
+                        ).length;
+
+                        return (
+                          <div
+                            key={sub.id}
+                            className="flex items-center justify-between p-2.5 rounded-xl border border-stone-200 bg-stone-50 hover:bg-stone-100 transition"
+                          >
+                            <div>
+                              <span className="text-xs font-semibold text-stone-800 block">{sub.name}</span>
+                              <span className="text-[10px] text-stone-400">{productCount} products assigned</span>
+                            </div>
+
+                            <button
+                              type="button"
+                              onClick={() => handleDeleteSubCategory(activeSubCategoryParent.id, sub.id)}
+                              className="p-1 rounded-lg hover:bg-rose-50 text-stone-400 hover:text-rose-600 transition cursor-pointer"
+                              title={`Delete Sub-Category "${sub.name}"`}
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+
+                {/* Create Sub-Category Form */}
+                {activeSubCategoryParent && (
+                  <form onSubmit={handleCreateSubCategory} className="pt-3 border-t border-stone-100 space-y-2">
+                    <span className="text-[11px] font-bold text-stone-700 block">
+                      + Add Sub-Category to {activeSubCategoryParent.name}
+                    </span>
+                    <div className="flex gap-2">
+                      <input
+                        type="text"
+                        placeholder="Sub-category name (e.g. Peri Peri Puffs)..."
+                        value={newSubCategoryName}
+                        onChange={(e) => setNewSubCategoryName(e.target.value)}
+                        className="flex-1 px-3 py-2 bg-stone-50 border border-stone-200 rounded-xl text-xs text-stone-900 focus:bg-white focus:outline-none focus:ring-1 focus:ring-stone-900"
+                      />
+                      <button
+                        type="submit"
+                        disabled={!newSubCategoryName.trim()}
+                        className="px-4 py-2 bg-[#1C1917] hover:bg-stone-800 disabled:opacity-40 text-white rounded-xl text-xs font-semibold transition cursor-pointer"
+                      >
+                        Add
+                      </button>
+                    </div>
+                  </form>
+                )}
+              </div>
+            </div>
+
+            {/* Footer */}
+            <div className="pt-3 border-t border-stone-200 flex items-center justify-between">
+              <span className="text-[11px] text-stone-500">
+                Changes cascade immediately to master catalog and outlet menus across Nashik.
+              </span>
+              <button
+                type="button"
+                onClick={() => setIsCategoryModalOpen(false)}
+                className="px-5 py-2 bg-[#1C1917] hover:bg-stone-800 text-white text-xs font-semibold rounded-xl transition cursor-pointer"
+              >
+                Done
               </button>
             </div>
           </div>

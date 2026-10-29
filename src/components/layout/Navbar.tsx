@@ -33,6 +33,7 @@ export function Navbar({ currentOutletSlug, currentCampaignSlug }: NavbarProps) 
   const { itemCount, setIsCartOpen } = useCart();
   const { user, isCustomer, openCustomerLogin } = useAuth();
   const [outlets, setOutlets] = useState<Outlet[]>(OUTLETS);
+  const [categories, setCategories] = useState<{ id: string; name: string }[]>([]);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
 
   useEffect(() => {
@@ -41,6 +42,15 @@ export function Navbar({ currentOutletSlug, currentCampaignSlug }: NavbarProps) 
       .then((data) => {
         if (data.success && data.outlets) {
           setOutlets(data.outlets);
+        }
+      })
+      .catch(() => {});
+
+    fetch('/api/categories')
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.success && data.categories) {
+          setCategories(data.categories);
         }
       })
       .catch(() => {});
@@ -262,14 +272,17 @@ export function Navbar({ currentOutletSlug, currentCampaignSlug }: NavbarProps) 
                     Artisanal Categories
                   </p>
                   <div className="grid grid-cols-2 gap-1.5">
-                    {[
-                      'Puffs & Patties',
-                      'Savory Rolls',
-                      'Cakes & Pastries',
-                      'Snack Combos',
-                      'Breads & Buns',
-                      'Beverages',
-                    ].map((cat) => (
+                    {(categories.length > 0
+                      ? categories.map((c) => c.name)
+                      : [
+                          'Puffs & Patties',
+                          'Savory Rolls',
+                          'Cakes & Pastries',
+                          'Snack Combos',
+                          'Breads & Buns',
+                          'Beverages',
+                        ]
+                    ).map((cat) => (
                       <button
                         key={cat}
                         onClick={() => {
@@ -277,7 +290,7 @@ export function Navbar({ currentOutletSlug, currentCampaignSlug }: NavbarProps) 
                           const target = currentOutletSlug ? `/${currentOutletSlug}` : '/';
                           router.push(target);
                         }}
-                        className="p-2 rounded-xl bg-white border border-stone-200/80 text-[11px] font-medium text-stone-700 hover:border-stone-400 hover:bg-stone-50 transition text-left cursor-pointer"
+                        className="p-2 rounded-xl bg-white border border-stone-200/80 text-[11px] font-medium text-stone-700 hover:border-stone-400 hover:bg-stone-50 transition text-left cursor-pointer truncate"
                       >
                         {cat}
                       </button>
