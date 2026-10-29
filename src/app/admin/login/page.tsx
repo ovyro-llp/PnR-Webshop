@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
@@ -13,50 +13,55 @@ export default function AdminLoginPage() {
   const [password, setPassword] = useState('pnr@admin2026');
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const hasTriggeredAutoLogin = useRef(false);
 
   // Auto-login if query parameter is provided (e.g. ?auto=manager or ?auto=admin)
   useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const params = new URLSearchParams(window.location.search);
-      const auto = params.get('auto');
-      if (
-        auto === 'manager' ||
-        auto === 'cafe' ||
-        auto === 'collegeroad' ||
-        auto === 'college-road'
-      ) {
-        setIsLoading(true);
-        loginAdmin('collegeroad@puffsnrolls.com', 'college2026').then((res) => {
-          setIsLoading(false);
-          if (res.success) {
-            router.push('/admin/inventory');
-          }
-        });
-      } else if (auto === 'nashikroad' || auto === 'nashik-road') {
-        setIsLoading(true);
-        loginAdmin('nashikroad@puffsnrolls.com', 'nashik2026').then((res) => {
-          setIsLoading(false);
-          if (res.success) {
-            router.push('/admin/inventory');
-          }
-        });
-      } else if (auto === 'indiranagar' || auto === 'indira-nagar') {
-        setIsLoading(true);
-        loginAdmin('indiranagar@puffsnrolls.com', 'indira2026').then((res) => {
-          setIsLoading(false);
-          if (res.success) {
-            router.push('/admin/inventory');
-          }
-        });
-      } else if (auto === 'admin' || auto === 'super') {
-        setIsLoading(true);
-        loginAdmin('admin@puffsnrolls.com', 'pnr@admin2026').then((res) => {
-          setIsLoading(false);
-          if (res.success) {
-            router.push('/admin/inventory');
-          }
-        });
-      }
+    if (typeof window === 'undefined' || hasTriggeredAutoLogin.current) return;
+
+    const params = new URLSearchParams(window.location.search);
+    const auto = params.get('auto');
+    if (!auto) return;
+
+    hasTriggeredAutoLogin.current = true;
+
+    if (
+      auto === 'manager' ||
+      auto === 'cafe' ||
+      auto === 'collegeroad' ||
+      auto === 'college-road'
+    ) {
+      setIsLoading(true);
+      loginAdmin('collegeroad@puffsnrolls.com', 'college2026').then((res) => {
+        setIsLoading(false);
+        if (res.success) {
+          router.push('/admin/inventory');
+        }
+      });
+    } else if (auto === 'nashikroad' || auto === 'nashik-road') {
+      setIsLoading(true);
+      loginAdmin('nashikroad@puffsnrolls.com', 'nashik2026').then((res) => {
+        setIsLoading(false);
+        if (res.success) {
+          router.push('/admin/inventory');
+        }
+      });
+    } else if (auto === 'indiranagar' || auto === 'indira-nagar') {
+      setIsLoading(true);
+      loginAdmin('indiranagar@puffsnrolls.com', 'indira2026').then((res) => {
+        setIsLoading(false);
+        if (res.success) {
+          router.push('/admin/inventory');
+        }
+      });
+    } else if (auto === 'admin' || auto === 'super') {
+      setIsLoading(true);
+      loginAdmin('admin@puffsnrolls.com', 'pnr@admin2026').then((res) => {
+        setIsLoading(false);
+        if (res.success) {
+          router.push('/admin/inventory');
+        }
+      });
     }
   }, [loginAdmin, router]);
 

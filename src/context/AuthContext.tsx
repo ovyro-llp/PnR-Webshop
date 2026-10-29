@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 
 export type UserRole = 'CUSTOMER' | 'ADMIN';
 
@@ -66,7 +66,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
-  const loginCustomer = async (phone: string, name: string = 'Nashik Foodie') => {
+  const loginCustomer = useCallback(async (phone: string, name: string = 'Nashik Foodie') => {
     const customer: CustomerUser = {
       id: `cust-${Date.now()}`,
       name: name.trim() || 'Valued Customer',
@@ -87,9 +87,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     localStorage.setItem('pnr_auth_user', JSON.stringify(customer));
     setIsCustomerLoginModalOpen(false);
     return true;
-  };
+  }, []);
 
-  const loginAdmin = async (email: string, password: string) => {
+  const loginAdmin = useCallback(async (email: string, password: string) => {
     const cleanEmail = email.trim().toLowerCase();
 
     // Default Super Admin & Outlet Manager credentials
@@ -165,14 +165,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       success: false,
       error: 'Invalid administrator credentials. Try admin@puffsnrolls.com / pnr@admin2026',
     };
-  };
+  }, []);
 
-  const logout = () => {
+  const logout = useCallback(() => {
     setUser(null);
     localStorage.removeItem('pnr_auth_user');
-  };
+  }, []);
 
-  const openCustomerLogin = () => setIsCustomerLoginModalOpen(true);
+  const openCustomerLogin = useCallback(() => setIsCustomerLoginModalOpen(true), []);
 
   return (
     <AuthContext.Provider
