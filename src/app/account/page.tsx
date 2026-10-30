@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { Navbar } from '@/components/layout/Navbar';
+import { Footer } from '@/components/layout/Footer';
 import { Order } from '@/types';
 import { User, MapPin, Phone, LogOut, ShoppingBag, Clock, ArrowRight } from 'lucide-react';
 
@@ -165,6 +166,8 @@ export default function AccountPage() {
           </div>
         </div>
       </main>
+
+      <Footer />
     </div>
   );
 }

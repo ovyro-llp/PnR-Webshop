@@ -4,6 +4,7 @@ import { Navbar } from '@/components/layout/Navbar';
 import { MenuItemCard } from '@/components/menu/MenuItemCard';
 import { CartDrawer } from '@/components/cart/CartDrawer';
 import { MobileCartBar } from '@/components/cart/MobileCartBar';
+import { Footer } from '@/components/layout/Footer';
 import { TrackingProvider } from '@/components/tracking/TrackingProvider';
 import { MapPin, Phone, Clock, Star, Sparkles, ArrowRight, Package } from 'lucide-react';
 import Link from 'next/link';
@@ -188,6 +189,7 @@ export default async function OutletPage({
           )}
         </main>
 
+        <Footer />
         <MobileCartBar />
         <CartDrawer outletSlug={outlet.slug} />
       </div>

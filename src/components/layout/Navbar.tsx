@@ -354,6 +354,23 @@ export function Navbar({ currentOutletSlug, currentCampaignSlug }: NavbarProps) 
                 <p className="text-[10px] text-stone-400 text-center">
                   Baking Fresh in Nashik Since 2001
                 </p>
+                <div className="flex items-center justify-center gap-3 text-[10px] text-stone-500 pt-1">
+                  <Link
+                    href="/privacy"
+                    onClick={() => setIsDrawerOpen(false)}
+                    className="hover:text-stone-800 transition"
+                  >
+                    Privacy Policy
+                  </Link>
+                  <span>•</span>
+                  <Link
+                    href="/terms"
+                    onClick={() => setIsDrawerOpen(false)}
+                    className="hover:text-stone-800 transition"
+                  >
+                    Terms of Service
+                  </Link>
+                </div>
               </div>
             </div>
           </div>

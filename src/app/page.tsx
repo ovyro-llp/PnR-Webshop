@@ -7,6 +7,7 @@ import { CartDrawer } from '@/components/cart/CartDrawer';
 import { MobileCartBar } from '@/components/cart/MobileCartBar';
 import { TrackingProvider } from '@/components/tracking/TrackingProvider';
 import { CustomerLoginModal } from '@/components/auth/CustomerLoginModal';
+import { Footer } from '@/components/layout/Footer';
 import { MapPin, ArrowRight, Sparkles, Phone, Compass, Package } from 'lucide-react';
 
 export const dynamic = 'force-dynamic';
@@ -150,57 +151,8 @@ export default function HomePage() {
           )}
         </section>
 
-        {/* Minimalist Mobile-First Footer */}
-        <footer className="bg-[#1C1917] text-stone-400 py-10 sm:py-12 text-xs w-full">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 sm:gap-8">
-              <div className="space-y-2">
-                <div className="relative h-9 w-32">
-                  <Image
-                    src="https://puffsnrolls.com/wp-content/uploads/2025/12/banner-logo.png"
-                    alt="Puffs 'n' Rolls"
-                    fill
-                    className="object-contain brightness-0 invert"
-                  />
-                </div>
-                <p className="text-stone-400 text-xs leading-relaxed max-w-xs">
-                  Where Every Bite Unrolls Happiness. Handcrafted bakery delicacies since 2001.
-                </p>
-              </div>
-
-              <div>
-                <h4 className="font-semibold text-white uppercase tracking-wider text-[11px] mb-2 sm:mb-3">
-                  Bakery Outlets (Nashik)
-                </h4>
-                <div className="space-y-1 text-stone-400">
-                  <p>• College Road (Near BYK College)</p>
-                  <p>• Nashik Road (Opp. Bytco Point)</p>
-                  <p>• Indira Nagar (Govind Nagar Ring Road)</p>
-                </div>
-              </div>
-
-              <div>
-                <h4 className="font-semibold text-white uppercase tracking-wider text-[11px] mb-2 sm:mb-3">
-                  Bakery Helpline
-                </h4>
-                <div className="space-y-2">
-                  <p className="flex items-center gap-1.5 text-stone-300">
-                    <Phone className="w-3.5 h-3.5" />
-                    +91 94236 39911
-                  </p>
-                  <p className="text-[11px] text-stone-400 pt-0.5">
-                    Open Daily: 9:00 AM - 10:30 PM
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            <div className="pt-6 border-t border-stone-800 flex flex-col sm:flex-row items-center justify-between text-stone-500 text-[11px] gap-2">
-              <p>© 2026 Puffs &apos;n&apos; Rolls. All rights reserved.</p>
-              <p>Baking Excellence Since 2001</p>
-            </div>
-          </div>
-        </footer>
+        {/* Reusable Footer */}
+        <Footer />
 
         {/* Mobile Sticky Cart Bar, Cart Drawer & Login Modal */}
         <MobileCartBar />
