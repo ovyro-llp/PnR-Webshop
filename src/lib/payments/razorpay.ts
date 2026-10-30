@@ -13,16 +13,15 @@ export function getRazorpayClient() {
   const config = orderStore.getPaymentConfig();
   
   const key_id = config.testMode
-    ? config.testKeyId || config.razorpayKeyId || process.env.RAZORPAY_TEST_KEY_ID || process.env.RAZORPAY_KEY_ID || 'rzp_test_pnr_demo'
+    ? config.testKeyId || config.razorpayKeyId || process.env.RAZORPAY_TEST_KEY_ID || process.env.RAZORPAY_KEY_ID || 'rzp_test_Tu2yDSDcMLoCMU'
     : config.liveKeyId || config.razorpayKeyId || process.env.RAZORPAY_LIVE_KEY_ID || process.env.RAZORPAY_KEY_ID || '';
 
   const key_secret = config.testMode
-    ? config.testKeySecret || config.razorpayKeySecret || process.env.RAZORPAY_TEST_KEY_SECRET || process.env.RAZORPAY_KEY_SECRET || 'rzp_sec_demo_secret_key'
+    ? config.testKeySecret || config.razorpayKeySecret || process.env.RAZORPAY_TEST_KEY_SECRET || process.env.RAZORPAY_KEY_SECRET || 'a4RYbgtPLsopH0QZ2aSHAdNd'
     : config.liveKeySecret || config.razorpayKeySecret || process.env.RAZORPAY_LIVE_KEY_SECRET || process.env.RAZORPAY_KEY_SECRET || '';
 
   const isDemoMode =
     key_id === 'rzp_test_pnr_demo' ||
-    key_id.startsWith('rzp_test_pnr') ||
     key_secret === 'rzp_sec_demo_secret_key' ||
     !key_id ||
     !key_secret;
@@ -97,8 +96,11 @@ export async function createRazorpayOrder({
       mock: false,
     };
   } catch (error) {
-    console.warn('Razorpay API orders.create failed, falling back to mock sandbox:', error);
-    // Graceful fallback so testing or checkout doesn't fail hard on invalid test credentials
+    console.error('Razorpay API orders.create failed:', error);
+    if (!isDemoMode) {
+      throw error;
+    }
+    // Graceful fallback only if explicitly in local demo mode
     return {
       id: `order_pnr_${Date.now()}_${Math.floor(Math.random() * 1000)}`,
       amount: paise,

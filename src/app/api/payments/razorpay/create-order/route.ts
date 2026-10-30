@@ -73,11 +73,13 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({
       success: true,
+      order_id: rzpOrder.id,
       orderId: rzpOrder.id,
       amount: rzpOrder.amount,
       currency: rzpOrder.currency,
       receipt: rzpOrder.receipt,
       keyId,
+      key_id: keyId,
       isDemoMode,
       businessName: "Puffs 'n' Rolls Nashik",
       description: `Artisanal Bakery Order • ${outlet.name}`,
