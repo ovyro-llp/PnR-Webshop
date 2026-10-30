@@ -12,13 +12,41 @@ export interface CreateOrderParams {
 export function getRazorpayClient() {
   const config = orderStore.getPaymentConfig();
   
-  const key_id = config.testMode
-    ? config.testKeyId || config.razorpayKeyId || process.env.RAZORPAY_TEST_KEY_ID || process.env.RAZORPAY_KEY_ID || 'rzp_test_Tu3J2xHanphLOy'
-    : config.liveKeyId || config.razorpayKeyId || process.env.RAZORPAY_LIVE_KEY_ID || process.env.RAZORPAY_KEY_ID || '';
+  // Auto-detect live mode if key starts with rzp_live_ or RAZORPAY_ENV === 'live'
+  const isKeyLive =
+    Boolean(config.razorpayKeyId?.startsWith('rzp_live_')) ||
+    Boolean(config.liveKeyId?.startsWith('rzp_live_')) ||
+    Boolean(process.env.RAZORPAY_KEY_ID?.startsWith('rzp_live_')) ||
+    Boolean(process.env.RAZORPAY_LIVE_KEY_ID?.startsWith('rzp_live_')) ||
+    process.env.RAZORPAY_ENV === 'live';
 
-  const key_secret = config.testMode
-    ? config.testKeySecret || config.razorpayKeySecret || process.env.RAZORPAY_TEST_KEY_SECRET || process.env.RAZORPAY_KEY_SECRET || 'wQKVEbjQupqQMEZeqjA2eeju'
-    : config.liveKeySecret || config.razorpayKeySecret || process.env.RAZORPAY_LIVE_KEY_SECRET || process.env.RAZORPAY_KEY_SECRET || '';
+  const isLive = Boolean(isKeyLive || !config.testMode);
+
+  const key_id = isLive
+    ? config.liveKeyId ||
+      process.env.RAZORPAY_LIVE_KEY_ID?.trim() ||
+      (process.env.RAZORPAY_KEY_ID?.startsWith('rzp_live_') ? process.env.RAZORPAY_KEY_ID.trim() : '') ||
+      config.razorpayKeyId ||
+      process.env.RAZORPAY_KEY_ID ||
+      ''
+    : config.testKeyId ||
+      config.razorpayKeyId ||
+      process.env.RAZORPAY_TEST_KEY_ID ||
+      process.env.RAZORPAY_KEY_ID ||
+      'rzp_test_Tu3J2xHanphLOy';
+
+  const key_secret = isLive
+    ? config.liveKeySecret ||
+      process.env.RAZORPAY_LIVE_KEY_SECRET?.trim() ||
+      (process.env.RAZORPAY_KEY_ID?.startsWith('rzp_live_') ? process.env.RAZORPAY_KEY_SECRET?.trim() : '') ||
+      config.razorpayKeySecret ||
+      process.env.RAZORPAY_KEY_SECRET ||
+      ''
+    : config.testKeySecret ||
+      config.razorpayKeySecret ||
+      process.env.RAZORPAY_TEST_KEY_SECRET ||
+      process.env.RAZORPAY_KEY_SECRET ||
+      'wQKVEbjQupqQMEZeqjA2eeju';
 
   const isDemoMode =
     key_id === 'rzp_test_pnr_demo' ||
@@ -43,7 +71,7 @@ export function getRazorpayClient() {
     keyId: key_id,
     keySecret: key_secret,
     isDemoMode,
-    testMode: config.testMode,
+    testMode: !isLive,
   };
 }
 

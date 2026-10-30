@@ -1,14 +1,21 @@
 import { NextRequest, NextResponse } from 'next/server';
 import Razorpay from 'razorpay';
+import { getRazorpayClient } from '@/lib/payments/razorpay';
 
 export async function POST(req: NextRequest) {
   try {
+    const clientInfo = getRazorpayClient();
     const key_id =
+      clientInfo.keyId ||
       process.env.RAZORPAY_KEY_ID ||
+      process.env.RAZORPAY_LIVE_KEY_ID ||
       process.env.RAZORPAY_TEST_KEY_ID ||
       process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID;
     const key_secret =
-      process.env.RAZORPAY_KEY_SECRET || process.env.RAZORPAY_TEST_KEY_SECRET;
+      clientInfo.keySecret ||
+      process.env.RAZORPAY_KEY_SECRET ||
+      process.env.RAZORPAY_LIVE_KEY_SECRET ||
+      process.env.RAZORPAY_TEST_KEY_SECRET;
 
     if (!key_id || !key_secret) {
       return NextResponse.json(

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useCart } from '@/context/CartContext';
 import { useAuth } from '@/context/AuthContext';
 import { useRouter } from 'next/navigation';
@@ -15,6 +15,8 @@ import {
   Truck,
   Lock,
   CreditCard,
+  Phone,
+  CheckCircle2,
 } from 'lucide-react';
 import { CustomerDetails, PaymentMethod } from '@/types';
 
@@ -25,7 +27,7 @@ interface CartDrawerProps {
 
 export function CartDrawer({ outletSlug, campaignSlug }: CartDrawerProps) {
   const router = useRouter();
-  const { user } = useAuth();
+  const { user, isCustomer, loginCustomer, openCustomerLogin, logout } = useAuth();
   const {
     items,
     cartOutletSlug,
@@ -42,24 +44,65 @@ export function CartDrawer({ outletSlug, campaignSlug }: CartDrawerProps) {
   } = useCart();
 
   const effectiveOutletSlug = cartOutletSlug || outletSlug;
+  const isCustomerLoggedIn = Boolean(user && isCustomer);
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState('');
 
+  // Inline auth state for unauthenticated users
+  const [authName, setAuthName] = useState('');
+  const [authPhone, setAuthPhone] = useState('');
+  const [authError, setAuthError] = useState('');
+  const [isLoggingIn, setIsLoggingIn] = useState(false);
+
   // Customer Form State with initial values derived from user
   const defaultAddr = user?.role === 'CUSTOMER' ? user.savedAddresses?.[0] : undefined;
   const [customer, setCustomer] = useState<CustomerDetails>(() => ({
-    name: user?.role === 'CUSTOMER' ? user.name : 'Gourmet Guest',
-    phone: user?.role === 'CUSTOMER' ? user.phone : '9822334455',
-    address: defaultAddr?.address || 'B-201, Silver Oak, Near Thatte Nagar Circle',
+    name: user?.role === 'CUSTOMER' ? user.name : '',
+    phone: user?.role === 'CUSTOMER' ? user.phone : '',
+    address: defaultAddr?.address || 'Flat 402, Shrinath Heights, Near BYK Circle',
     area: defaultAddr?.area || 'College Road',
     pincode: defaultAddr?.pincode || '422005',
     specialInstructions: '',
   }));
 
+  // Sync customer details when user logs in or updates
+  useEffect(() => {
+    if (user && user.role === 'CUSTOMER') {
+      const addr = user.savedAddresses?.[0];
+      setCustomer((prev) => ({
+        ...prev,
+        name: user.name || prev.name,
+        phone: user.phone || prev.phone,
+        address: prev.address || addr?.address || 'Flat 402, Shrinath Heights, Near BYK Circle',
+        area: prev.area || addr?.area || 'College Road',
+        pincode: prev.pincode || addr?.pincode || '422005',
+      }));
+    }
+  }, [user]);
+
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('UPI');
 
   if (!isCartOpen) return null;
+
+  const handleInlineLogin = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    setAuthError('');
+    const cleanPhone = authPhone.replace(/\D/g, '');
+    if (cleanPhone.length < 10) {
+      setAuthError('Please enter a valid 10-digit WhatsApp number');
+      return;
+    }
+    setIsLoggingIn(true);
+    try {
+      await loginCustomer(cleanPhone, authName.trim() || 'Valued Customer');
+      setAuthError('');
+    } catch {
+      setAuthError('Failed to verify phone. Please try again.');
+    } finally {
+      setIsLoggingIn(false);
+    }
+  };
 
   const loadRazorpayScript = () => {
     return new Promise<boolean>((resolve) => {
@@ -78,6 +121,16 @@ export function CartDrawer({ outletSlug, campaignSlug }: CartDrawerProps) {
   const handleCheckout = async (e: React.FormEvent) => {
     e.preventDefault();
     setSubmitError('');
+
+    if (!isCustomerLoggedIn) {
+      const cleanAuth = authPhone.replace(/\D/g, '');
+      if (cleanAuth.length >= 10) {
+        await loginCustomer(cleanAuth, authName.trim() || 'Valued Customer');
+      } else {
+        setSubmitError('Please verify your WhatsApp phone number before proceeding to payment');
+        return;
+      }
+    }
 
     if (!customer.name.trim()) {
       setSubmitError('Please enter your full name');
@@ -352,152 +405,255 @@ export function CartDrawer({ outletSlug, campaignSlug }: CartDrawerProps) {
                   </div>
                 </div>
 
-                {/* Delivery Form */}
-                <div className="space-y-2.5 pt-2 border-t border-stone-200">
-                  <h4 className="text-[11px] font-bold uppercase tracking-wider text-stone-700">
-                    Delivery Address (Nashik)
-                  </h4>
-
-                  <div className="space-y-2">
-                    <input
-                      type="text"
-                      required
-                      placeholder="Your Full Name *"
-                      value={customer.name}
-                      onChange={(e) => setCustomer({ ...customer, name: e.target.value })}
-                      className="w-full px-3 py-2 bg-white border border-stone-200 rounded-xl text-xs focus:ring-1 focus:ring-stone-900 focus:outline-none"
-                    />
-
-                    <input
-                      type="tel"
-                      inputMode="tel"
-                      required
-                      placeholder="WhatsApp Phone Number *"
-                      value={customer.phone}
-                      onChange={(e) => setCustomer({ ...customer, phone: e.target.value })}
-                      className="w-full px-3 py-2 bg-white border border-stone-200 rounded-xl text-xs focus:ring-1 focus:ring-stone-900 focus:outline-none font-mono"
-                    />
-
-                    <textarea
-                      required
-                      rows={2}
-                      placeholder="House / Flat No., Building, Landmark *"
-                      value={customer.address}
-                      onChange={(e) => setCustomer({ ...customer, address: e.target.value })}
-                      className="w-full px-3 py-2 bg-white border border-stone-200 rounded-xl text-xs focus:ring-1 focus:ring-stone-900 focus:outline-none resize-none"
-                    />
-
-                    <div className="grid grid-cols-2 gap-2">
-                      <select
-                        value={customer.area}
-                        onChange={(e) => setCustomer({ ...customer, area: e.target.value })}
-                        className="px-3 py-2 bg-white border border-stone-200 rounded-xl text-xs text-stone-700 focus:outline-none"
-                      >
-                        <option value="College Road">College Road</option>
-                        <option value="Thatte Nagar">Thatte Nagar</option>
-                        <option value="Gangapur Road">Gangapur Road</option>
-                        <option value="Nashik Road">Nashik Road</option>
-                        <option value="Bytco Point">Bytco Point</option>
-                        <option value="Indira Nagar">Indira Nagar</option>
-                        <option value="Govind Nagar">Govind Nagar</option>
-                        <option value="Panchavati">Panchavati</option>
-                      </select>
-
-                      <input
-                        type="text"
-                        inputMode="numeric"
-                        placeholder="Pincode"
-                        value={customer.pincode}
-                        onChange={(e) => setCustomer({ ...customer, pincode: e.target.value })}
-                        className="px-3 py-2 bg-white border border-stone-200 rounded-xl text-xs font-mono focus:outline-none"
-                      />
-                    </div>
-                  </div>
-
-                  {/* Payment Method */}
-                  <div className="pt-2">
-                    <div className="flex items-center justify-between mb-2">
-                      <p className="text-[11px] font-bold uppercase tracking-wider text-stone-700">
-                        Payment Method
-                      </p>
-                      <span className="inline-flex items-center gap-1 text-[10px] text-stone-500 font-medium">
-                        <Lock className="w-2.5 h-2.5 text-emerald-600" />
-                        100% Encrypted
-                      </span>
-                    </div>
-
-                    <div className="space-y-2">
-                      {/* Instant Online Payment Option */}
-                      <button
-                        type="button"
-                        onClick={() => setPaymentMethod('UPI')}
-                        className={`w-full p-3 rounded-2xl border text-left transition relative flex items-start gap-3 ${
-                          paymentMethod === 'UPI'
-                            ? 'border-stone-900 bg-white ring-1 ring-stone-900 shadow-xs'
-                            : 'border-stone-200 bg-white/60 hover:bg-white text-stone-700'
-                        }`}
-                      >
-                        <div
-                          className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 mt-0.5 ${
-                            paymentMethod === 'UPI'
-                              ? 'bg-[#1C1917] text-white'
-                              : 'bg-stone-100 text-stone-500'
-                          }`}
-                        >
-                          <CreditCard className="w-4 h-4" />
+                {/* Customer Verification & Delivery Form */}
+                <div className="space-y-3 pt-2 border-t border-stone-200">
+                  {!isCustomerLoggedIn ? (
+                    /* Step 1: Customer Phone Verification (Mandatory before Payment) */
+                    <div className="bg-stone-50 border border-stone-200/90 rounded-2xl p-4 space-y-3">
+                      <div className="flex items-start gap-2.5">
+                        <div className="w-8 h-8 rounded-xl bg-amber-100 text-amber-900 flex items-center justify-center shrink-0">
+                          <Phone className="w-4 h-4 text-amber-800" />
                         </div>
                         <div className="flex-1 min-w-0">
-                          <div className="flex items-center justify-between">
-                            <span className="text-xs font-bold text-stone-900">
-                              Instant Online Payment
-                            </span>
-                            <span className="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
-                              Instant
-                            </span>
-                          </div>
-                          <p className="text-[11px] text-stone-500 mt-0.5">
-                            UPI (Google Pay, PhonePe, Paytm), Credit/Debit Cards, NetBanking
+                          <h4 className="text-xs font-bold text-stone-900">
+                            Customer Verification Required
+                          </h4>
+                          <p className="text-[11px] text-stone-500 leading-relaxed mt-0.5">
+                            Please verify your WhatsApp number to receive live tracking and Mangwale delivery notifications.
                           </p>
                         </div>
-                      </button>
+                      </div>
 
-                      {/* Cash on Delivery Option */}
-                      <button
-                        type="button"
-                        onClick={() => setPaymentMethod('COD')}
-                        className={`w-full p-3 rounded-2xl border text-left transition relative flex items-start gap-3 ${
-                          paymentMethod === 'COD'
-                            ? 'border-stone-900 bg-white ring-1 ring-stone-900 shadow-xs'
-                            : 'border-stone-200 bg-white/60 hover:bg-white text-stone-700'
-                        }`}
-                      >
-                        <div
-                          className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 mt-0.5 ${
-                            paymentMethod === 'COD'
-                              ? 'bg-[#1C1917] text-white'
-                              : 'bg-stone-100 text-stone-500'
-                          }`}
+                      <div className="space-y-2 pt-1">
+                        <input
+                          type="text"
+                          placeholder="Your Full Name (e.g. Rahul Deshmukh) *"
+                          value={authName}
+                          onChange={(e) => setAuthName(e.target.value)}
+                          className="w-full px-3 py-2 bg-white border border-stone-200 rounded-xl text-xs focus:ring-1 focus:ring-stone-900 focus:outline-none"
+                        />
+                        <div className="relative">
+                          <span className="absolute left-3 top-2 text-xs font-bold text-stone-400 font-mono">
+                            +91
+                          </span>
+                          <input
+                            type="tel"
+                            inputMode="tel"
+                            maxLength={10}
+                            placeholder="10-digit WhatsApp Number *"
+                            value={authPhone}
+                            onChange={(e) =>
+                              setAuthPhone(e.target.value.replace(/\D/g, '').slice(0, 10))
+                            }
+                            className="w-full pl-10 pr-3 py-2 bg-white border border-stone-200 rounded-xl text-xs font-mono focus:ring-1 focus:ring-stone-900 focus:outline-none"
+                          />
+                        </div>
+
+                        {authError && (
+                          <p className="text-[11px] text-rose-600 font-medium">{authError}</p>
+                        )}
+
+                        <button
+                          type="button"
+                          disabled={isLoggingIn}
+                          onClick={handleInlineLogin}
+                          className="w-full py-2.5 bg-[#1C1917] hover:bg-stone-800 text-white rounded-xl text-xs font-semibold uppercase tracking-wider flex items-center justify-center gap-1.5 transition cursor-pointer disabled:opacity-60"
                         >
-                          <Truck className="w-4 h-4" />
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center justify-between">
-                            <span className="text-xs font-bold text-stone-900">
-                              Cash on Delivery
-                            </span>
-                          </div>
-                          <p className="text-[11px] text-stone-500 mt-0.5">
-                            Pay via Cash or UPI QR scan upon doorstep delivery
-                          </p>
-                        </div>
-                      </button>
-                    </div>
+                          {isLoggingIn ? (
+                            <span>Verifying Phone...</span>
+                          ) : (
+                            <>
+                              <span>Verify Phone &amp; Continue</span>
+                              <ArrowRight className="w-3.5 h-3.5" />
+                            </>
+                          )}
+                        </button>
 
-                    <p className="text-[10px] text-stone-400 text-center mt-2 flex items-center justify-center gap-1.5">
-                      <ShieldCheck className="w-3.5 h-3.5 text-stone-500" />
-                      100% Safe &amp; Secure 256-bit Encrypted Checkout
-                    </p>
-                  </div>
+                        <div className="text-center pt-1">
+                          <button
+                            type="button"
+                            onClick={openCustomerLogin}
+                            className="text-[11px] text-stone-500 hover:text-stone-900 underline transition cursor-pointer"
+                          >
+                            Or sign in with 4-digit WhatsApp OTP modal
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  ) : (
+                    /* Step 2: Customer Authenticated -> Display Verified Badge & Address */
+                    <div className="space-y-3">
+                      <div className="bg-emerald-50/80 border border-emerald-200/90 rounded-2xl p-3 flex items-center justify-between">
+                        <div className="flex items-center gap-2.5 min-w-0">
+                          <div className="w-8 h-8 rounded-xl bg-emerald-600 text-white flex items-center justify-center shrink-0">
+                            <CheckCircle2 className="w-4.5 h-4.5" />
+                          </div>
+                          <div className="min-w-0">
+                            <p className="text-xs font-bold text-emerald-950 truncate">
+                              {user?.name || 'Verified Customer'}
+                            </p>
+                            <p className="text-[11px] text-emerald-700 font-mono">
+                              +91 {user && 'phone' in user ? user.phone : customer.phone}
+                            </p>
+                          </div>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            logout();
+                            setCustomer({
+                              name: '',
+                              phone: '',
+                              address: '',
+                              area: 'College Road',
+                              pincode: '422005',
+                              specialInstructions: '',
+                            });
+                          }}
+                          className="text-[11px] font-semibold text-emerald-800 hover:text-emerald-950 underline px-2 py-1 rounded-lg hover:bg-emerald-100/50 transition cursor-pointer"
+                        >
+                          Change
+                        </button>
+                      </div>
+
+                      <div>
+                        <h4 className="text-[11px] font-bold uppercase tracking-wider text-stone-700 mb-2">
+                          Delivery Address (Nashik)
+                        </h4>
+
+                        <div className="space-y-2">
+                          <input
+                            type="text"
+                            required
+                            placeholder="Your Full Name *"
+                            value={customer.name}
+                            onChange={(e) => setCustomer({ ...customer, name: e.target.value })}
+                            className="w-full px-3 py-2 bg-white border border-stone-200 rounded-xl text-xs focus:ring-1 focus:ring-stone-900 focus:outline-none"
+                          />
+
+                          <textarea
+                            required
+                            rows={2}
+                            placeholder="House / Flat No., Building, Landmark *"
+                            value={customer.address}
+                            onChange={(e) => setCustomer({ ...customer, address: e.target.value })}
+                            className="w-full px-3 py-2 bg-white border border-stone-200 rounded-xl text-xs focus:ring-1 focus:ring-stone-900 focus:outline-none resize-none"
+                          />
+
+                          <div className="grid grid-cols-2 gap-2">
+                            <select
+                              value={customer.area}
+                              onChange={(e) => setCustomer({ ...customer, area: e.target.value })}
+                              className="px-3 py-2 bg-white border border-stone-200 rounded-xl text-xs text-stone-700 focus:outline-none"
+                            >
+                              <option value="College Road">College Road</option>
+                              <option value="Thatte Nagar">Thatte Nagar</option>
+                              <option value="Gangapur Road">Gangapur Road</option>
+                              <option value="Nashik Road">Nashik Road</option>
+                              <option value="Bytco Point">Bytco Point</option>
+                              <option value="Indira Nagar">Indira Nagar</option>
+                              <option value="Govind Nagar">Govind Nagar</option>
+                              <option value="Panchavati">Panchavati</option>
+                            </select>
+
+                            <input
+                              type="text"
+                              inputMode="numeric"
+                              placeholder="Pincode"
+                              value={customer.pincode}
+                              onChange={(e) => setCustomer({ ...customer, pincode: e.target.value })}
+                              className="px-3 py-2 bg-white border border-stone-200 rounded-xl text-xs font-mono focus:outline-none"
+                            />
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Payment Method */}
+                      <div className="pt-2">
+                        <div className="flex items-center justify-between mb-2">
+                          <p className="text-[11px] font-bold uppercase tracking-wider text-stone-700">
+                            Payment Method
+                          </p>
+                          <span className="inline-flex items-center gap-1 text-[10px] text-stone-500 font-medium">
+                            <Lock className="w-2.5 h-2.5 text-emerald-600" />
+                            100% Encrypted
+                          </span>
+                        </div>
+
+                        <div className="space-y-2">
+                          {/* Instant Online Payment Option */}
+                          <button
+                            type="button"
+                            onClick={() => setPaymentMethod('UPI')}
+                            className={`w-full p-3 rounded-2xl border text-left transition relative flex items-start gap-3 ${
+                              paymentMethod === 'UPI'
+                                ? 'border-stone-900 bg-white ring-1 ring-stone-900 shadow-xs'
+                                : 'border-stone-200 bg-white/60 hover:bg-white text-stone-700'
+                            }`}
+                          >
+                            <div
+                              className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 mt-0.5 ${
+                                paymentMethod === 'UPI'
+                                  ? 'bg-[#1C1917] text-white'
+                                  : 'bg-stone-100 text-stone-500'
+                              }`}
+                            >
+                              <CreditCard className="w-4 h-4" />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center justify-between">
+                                <span className="text-xs font-bold text-stone-900">
+                                  Instant Online Payment
+                                </span>
+                                <span className="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
+                                  Instant
+                                </span>
+                              </div>
+                              <p className="text-[11px] text-stone-500 mt-0.5">
+                                UPI (Google Pay, PhonePe, Paytm), Credit/Debit Cards, NetBanking
+                              </p>
+                            </div>
+                          </button>
+
+                          {/* Cash on Delivery Option */}
+                          <button
+                            type="button"
+                            onClick={() => setPaymentMethod('COD')}
+                            className={`w-full p-3 rounded-2xl border text-left transition relative flex items-start gap-3 ${
+                              paymentMethod === 'COD'
+                                ? 'border-stone-900 bg-white ring-1 ring-stone-900 shadow-xs'
+                                : 'border-stone-200 bg-white/60 hover:bg-white text-stone-700'
+                            }`}
+                          >
+                            <div
+                              className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 mt-0.5 ${
+                                paymentMethod === 'COD'
+                                  ? 'bg-[#1C1917] text-white'
+                                  : 'bg-stone-100 text-stone-500'
+                              }`}
+                            >
+                              <Truck className="w-4 h-4" />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center justify-between">
+                                <span className="text-xs font-bold text-stone-900">
+                                  Cash on Delivery
+                                </span>
+                              </div>
+                              <p className="text-[11px] text-stone-500 mt-0.5">
+                                Pay via Cash or UPI QR scan upon doorstep delivery
+                              </p>
+                            </div>
+                          </button>
+                        </div>
+
+                        <p className="text-[10px] text-stone-400 text-center mt-2 flex items-center justify-center gap-1.5">
+                          <ShieldCheck className="w-3.5 h-3.5 text-stone-500" />
+                          100% Safe &amp; Secure 256-bit Encrypted Checkout
+                        </p>
+                      </div>
+                    </div>
+                  )}
                 </div>
 
                 {/* Bill Breakdown */}
@@ -528,26 +684,46 @@ export function CartDrawer({ outletSlug, campaignSlug }: CartDrawerProps) {
           {/* Checkout Footer */}
           {items.length > 0 && (
             <div className="p-4 sm:p-5 border-t border-stone-200 bg-white space-y-2">
-              <button
-                onClick={handleCheckout}
-                disabled={isSubmitting}
-                className="w-full py-3 bg-[#1C1917] hover:bg-stone-800 text-white rounded-full font-medium text-xs uppercase tracking-wider transition shadow-sm flex items-center justify-center gap-2 disabled:opacity-60 cursor-pointer"
-              >
-                {isSubmitting ? (
-                  <span>Connecting Secure Payment...</span>
-                ) : paymentMethod === 'UPI' ? (
-                  <>
-                    <Lock className="w-3.5 h-3.5 text-emerald-400" />
-                    <span>Pay Online • ₹{total}</span>
-                    <ArrowRight className="w-3.5 h-3.5" />
-                  </>
-                ) : (
-                  <>
-                    <span>Place Cash Order • ₹{total}</span>
-                    <ArrowRight className="w-3.5 h-3.5" />
-                  </>
-                )}
-              </button>
+              {!isCustomerLoggedIn ? (
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (authPhone.replace(/\D/g, '').length >= 10) {
+                      handleInlineLogin();
+                    } else {
+                      openCustomerLogin();
+                    }
+                  }}
+                  disabled={isLoggingIn}
+                  className="w-full py-3 bg-[#1C1917] hover:bg-stone-800 text-white rounded-full font-medium text-xs uppercase tracking-wider transition shadow-sm flex items-center justify-center gap-2 disabled:opacity-60 cursor-pointer"
+                >
+                  <Phone className="w-3.5 h-3.5 text-amber-400" />
+                  <span>Verify Phone to Checkout • ₹{total}</span>
+                  <ArrowRight className="w-3.5 h-3.5" />
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  onClick={handleCheckout}
+                  disabled={isSubmitting}
+                  className="w-full py-3 bg-[#1C1917] hover:bg-stone-800 text-white rounded-full font-medium text-xs uppercase tracking-wider transition shadow-sm flex items-center justify-center gap-2 disabled:opacity-60 cursor-pointer"
+                >
+                  {isSubmitting ? (
+                    <span>Connecting Secure Payment...</span>
+                  ) : paymentMethod === 'UPI' ? (
+                    <>
+                      <Lock className="w-3.5 h-3.5 text-emerald-400" />
+                      <span>Pay Online • ₹{total}</span>
+                      <ArrowRight className="w-3.5 h-3.5" />
+                    </>
+                  ) : (
+                    <>
+                      <span>Place Cash Order • ₹{total}</span>
+                      <ArrowRight className="w-3.5 h-3.5" />
+                    </>
+                  )}
+                </button>
+              )}
 
               <p className="text-[10px] text-stone-400 text-center">
                 100% Quality Guaranteed • Fresh Oven Bakes

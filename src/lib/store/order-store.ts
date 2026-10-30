@@ -235,23 +235,32 @@ if (!globalThis.__PNR_MARKETING_TAGS__) {
 }
 
 if (!globalThis.__PNR_PAYMENT_CONFIG__) {
-  const isLiveEnv = process.env.RAZORPAY_ENV === 'live';
+  const isLiveEnv =
+    process.env.RAZORPAY_ENV === 'live' ||
+    Boolean(process.env.RAZORPAY_KEY_ID?.startsWith('rzp_live_')) ||
+    Boolean(process.env.RAZORPAY_LIVE_KEY_ID?.startsWith('rzp_live_'));
   const testKeyId =
     process.env.RAZORPAY_TEST_KEY_ID ||
     process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID ||
     process.env.RAZORPAY_KEY_ID ||
-    'rzp_test_pnr_demo';
+    'rzp_test_Tu3J2xHanphLOy';
   const testKeySecret =
     process.env.RAZORPAY_TEST_KEY_SECRET ||
     process.env.RAZORPAY_KEY_SECRET ||
-    'rzp_sec_demo_secret_key';
+    'wQKVEbjQupqQMEZeqjA2eeju';
   const testWebhookSecret =
     process.env.RAZORPAY_TEST_WEBHOOK_SECRET ||
     process.env.RAZORPAY_WEBHOOK_SECRET ||
     'rzp_whsec_demo';
 
-  const liveKeyId = process.env.RAZORPAY_LIVE_KEY_ID || '';
-  const liveKeySecret = process.env.RAZORPAY_LIVE_KEY_SECRET || '';
+  const liveKeyId =
+    process.env.RAZORPAY_LIVE_KEY_ID ||
+    (process.env.RAZORPAY_KEY_ID?.startsWith('rzp_live_') ? process.env.RAZORPAY_KEY_ID : '') ||
+    '';
+  const liveKeySecret =
+    process.env.RAZORPAY_LIVE_KEY_SECRET ||
+    (process.env.RAZORPAY_KEY_ID?.startsWith('rzp_live_') ? process.env.RAZORPAY_KEY_SECRET : '') ||
+    '';
   const liveWebhookSecret = process.env.RAZORPAY_LIVE_WEBHOOK_SECRET || '';
 
   const activeTestMode = !isLiveEnv;
@@ -570,7 +579,10 @@ export const orderStore = {
   // Payment Gateway (Razorpay) Configuration & Status
   getPaymentConfig: (): PaymentGatewayConfig => {
     if (!globalThis.__PNR_PAYMENT_CONFIG__) {
-      const isLiveEnv = process.env.RAZORPAY_ENV === 'live';
+      const isLiveEnv =
+        process.env.RAZORPAY_ENV === 'live' ||
+        Boolean(process.env.RAZORPAY_KEY_ID?.startsWith('rzp_live_')) ||
+        Boolean(process.env.RAZORPAY_LIVE_KEY_ID?.startsWith('rzp_live_'));
       const testKeyId =
         process.env.RAZORPAY_TEST_KEY_ID ||
         process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID ||
@@ -585,8 +597,14 @@ export const orderStore = {
         process.env.RAZORPAY_WEBHOOK_SECRET ||
         'rzp_whsec_demo';
 
-      const liveKeyId = process.env.RAZORPAY_LIVE_KEY_ID || '';
-      const liveKeySecret = process.env.RAZORPAY_LIVE_KEY_SECRET || '';
+      const liveKeyId =
+        process.env.RAZORPAY_LIVE_KEY_ID ||
+        (process.env.RAZORPAY_KEY_ID?.startsWith('rzp_live_') ? process.env.RAZORPAY_KEY_ID : '') ||
+        '';
+      const liveKeySecret =
+        process.env.RAZORPAY_LIVE_KEY_SECRET ||
+        (process.env.RAZORPAY_KEY_ID?.startsWith('rzp_live_') ? process.env.RAZORPAY_KEY_SECRET : '') ||
+        '';
       const liveWebhookSecret = process.env.RAZORPAY_LIVE_WEBHOOK_SECRET || '';
 
       const activeTestMode = !isLiveEnv;

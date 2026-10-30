@@ -6,7 +6,6 @@ import { MenuItemCard } from '@/components/menu/MenuItemCard';
 import { CartDrawer } from '@/components/cart/CartDrawer';
 import { MobileCartBar } from '@/components/cart/MobileCartBar';
 import { TrackingProvider } from '@/components/tracking/TrackingProvider';
-import { CustomerLoginModal } from '@/components/auth/CustomerLoginModal';
 import { Footer } from '@/components/layout/Footer';
 import { MapPin, ArrowRight, Sparkles, Phone, Compass, Package } from 'lucide-react';
 
@@ -154,10 +153,9 @@ export default function HomePage() {
         {/* Reusable Footer */}
         <Footer />
 
-        {/* Mobile Sticky Cart Bar, Cart Drawer & Login Modal */}
+        {/* Mobile Sticky Cart Bar & Cart Drawer */}
         <MobileCartBar />
         <CartDrawer outletSlug={activeOutlet?.slug || 'college-road'} />
-        <CustomerLoginModal />
       </div>
     </TrackingProvider>
   );
