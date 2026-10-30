@@ -13,11 +13,11 @@ export function getRazorpayClient() {
   const config = orderStore.getPaymentConfig();
   
   const key_id = config.testMode
-    ? config.testKeyId || config.razorpayKeyId || process.env.RAZORPAY_TEST_KEY_ID || process.env.RAZORPAY_KEY_ID || 'rzp_test_Tu2yDSDcMLoCMU'
+    ? config.testKeyId || config.razorpayKeyId || process.env.RAZORPAY_TEST_KEY_ID || process.env.RAZORPAY_KEY_ID || 'rzp_test_Tu3J2xHanphLOy'
     : config.liveKeyId || config.razorpayKeyId || process.env.RAZORPAY_LIVE_KEY_ID || process.env.RAZORPAY_KEY_ID || '';
 
   const key_secret = config.testMode
-    ? config.testKeySecret || config.razorpayKeySecret || process.env.RAZORPAY_TEST_KEY_SECRET || process.env.RAZORPAY_KEY_SECRET || 'a4RYbgtPLsopH0QZ2aSHAdNd'
+    ? config.testKeySecret || config.razorpayKeySecret || process.env.RAZORPAY_TEST_KEY_SECRET || process.env.RAZORPAY_KEY_SECRET || 'wQKVEbjQupqQMEZeqjA2eeju'
     : config.liveKeySecret || config.razorpayKeySecret || process.env.RAZORPAY_LIVE_KEY_SECRET || process.env.RAZORPAY_KEY_SECRET || '';
 
   const isDemoMode =

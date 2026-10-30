@@ -575,11 +575,11 @@ export const orderStore = {
         process.env.RAZORPAY_TEST_KEY_ID ||
         process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID ||
         process.env.RAZORPAY_KEY_ID ||
-        'rzp_test_Tu2yDSDcMLoCMU';
+        'rzp_test_Tu3J2xHanphLOy';
       const testKeySecret =
         process.env.RAZORPAY_TEST_KEY_SECRET ||
         process.env.RAZORPAY_KEY_SECRET ||
-        'a4RYbgtPLsopH0QZ2aSHAdNd';
+        'wQKVEbjQupqQMEZeqjA2eeju';
       const testWebhookSecret =
         process.env.RAZORPAY_TEST_WEBHOOK_SECRET ||
         process.env.RAZORPAY_WEBHOOK_SECRET ||

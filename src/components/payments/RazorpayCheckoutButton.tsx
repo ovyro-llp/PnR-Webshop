@@ -89,7 +89,7 @@ export function RazorpayCheckoutButton({
       const keyId =
         orderData.key_id ||
         process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID ||
-        'rzp_test_Tu2yDSDcMLoCMU';
+        'rzp_test_Tu3J2xHanphLOy';
 
       // 3. Open Razorpay Checkout Modal
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
