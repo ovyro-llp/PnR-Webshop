@@ -12,12 +12,9 @@ import {
   ShoppingBag,
   ArrowRight,
   ShieldCheck,
-  Tag,
   Truck,
   Lock,
-  Smartphone,
   CreditCard,
-  Check,
 } from 'lucide-react';
 import { CustomerDetails, PaymentMethod } from '@/types';
 
@@ -34,13 +31,10 @@ export function CartDrawer({ outletSlug, campaignSlug }: CartDrawerProps) {
     cartOutletSlug,
     itemCount,
     subtotal,
-    discount,
     deliveryFee,
     total,
     updateQuantity,
     removeItem,
-    appliedCoupon,
-    applyCoupon,
     isCartOpen,
     setIsCartOpen,
     submitOrder,
@@ -49,56 +43,23 @@ export function CartDrawer({ outletSlug, campaignSlug }: CartDrawerProps) {
 
   const effectiveOutletSlug = cartOutletSlug || outletSlug;
 
-  const [couponInput, setCouponInput] = useState('');
-  const [couponError, setCouponError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState('');
 
-  // Customer Form State
-  const [customer, setCustomer] = useState<CustomerDetails>({
+  // Customer Form State with initial values derived from user
+  const defaultAddr = user?.role === 'CUSTOMER' ? user.savedAddresses?.[0] : undefined;
+  const [customer, setCustomer] = useState<CustomerDetails>(() => ({
     name: user?.role === 'CUSTOMER' ? user.name : 'Gourmet Guest',
     phone: user?.role === 'CUSTOMER' ? user.phone : '9822334455',
-    address: 'B-201, Silver Oak, Near Thatte Nagar Circle',
-    area: 'College Road',
-    pincode: '422005',
+    address: defaultAddr?.address || 'B-201, Silver Oak, Near Thatte Nagar Circle',
+    area: defaultAddr?.area || 'College Road',
+    pincode: defaultAddr?.pincode || '422005',
     specialInstructions: '',
-  });
-
-  // Sync logged-in customer info automatically
-  React.useEffect(() => {
-    if (user && user.role === 'CUSTOMER') {
-      const defaultAddr = user.savedAddresses?.[0];
-      setCustomer((prev) => ({
-        ...prev,
-        name: user.name || prev.name,
-        phone: user.phone || prev.phone,
-        address: defaultAddr?.address || prev.address,
-        area: defaultAddr?.area || prev.area,
-        pincode: defaultAddr?.pincode || prev.pincode,
-      }));
-    }
-  }, [user]);
+  }));
 
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('UPI');
 
   if (!isCartOpen) return null;
-
-  const handleApplyCoupon = (e: React.FormEvent) => {
-    e.preventDefault();
-    setCouponError('');
-    const code = couponInput.trim().toUpperCase();
-    if (!code) return;
-
-    if (code === 'COLLEGE20' || code === 'PNR20') {
-      applyCoupon(code, 20);
-    } else if (code === 'CAKE150') {
-      applyCoupon(code, 25);
-    } else if (code === 'INDIRAFREE') {
-      applyCoupon(code, 18);
-    } else {
-      setCouponError('Invalid promo code. Try COLLEGE20 or CAKE150');
-    }
-  };
 
   const loadRazorpayScript = () => {
     return new Promise<boolean>((resolve) => {
@@ -378,36 +339,6 @@ export function CartDrawer({ outletSlug, campaignSlug }: CartDrawerProps) {
                   ))}
                 </div>
 
-                {/* Promo Code Section */}
-                <form onSubmit={handleApplyCoupon} className="space-y-1">
-                  <div className="flex gap-2">
-                    <div className="relative flex-1">
-                      <Tag className="w-3.5 h-3.5 absolute left-3 top-2.5 text-stone-400" />
-                      <input
-                        type="text"
-                        placeholder="Promo code (e.g. COLLEGE20)"
-                        value={couponInput}
-                        onChange={(e) => setCouponInput(e.target.value)}
-                        className="w-full pl-8 pr-3 py-2 bg-white border border-stone-200 rounded-xl text-xs uppercase focus:outline-none focus:ring-1 focus:ring-stone-900"
-                      />
-                    </div>
-                    <button
-                      type="submit"
-                      className="px-4 py-2 bg-stone-200 hover:bg-stone-300 text-stone-800 text-xs font-semibold rounded-xl transition"
-                    >
-                      Apply
-                    </button>
-                  </div>
-                  {appliedCoupon && (
-                    <p className="text-[11px] text-emerald-700 font-medium">
-                      ✓ Promo <strong>{appliedCoupon}</strong> applied!
-                    </p>
-                  )}
-                  {couponError && (
-                    <p className="text-[11px] text-rose-500">{couponError}</p>
-                  )}
-                </form>
-
                 {/* Express Bakery Delivery Notice (Zero mention of partner) */}
                 <div className="p-3 bg-white rounded-2xl border border-stone-200/80 flex items-start gap-2.5 shadow-xs">
                   <Truck className="w-4 h-4 text-stone-700 shrink-0 mt-0.5" />
@@ -575,12 +506,6 @@ export function CartDrawer({ outletSlug, campaignSlug }: CartDrawerProps) {
                     <span>Item Subtotal</span>
                     <span>₹{subtotal}</span>
                   </div>
-                  {discount > 0 && (
-                    <div className="flex justify-between text-emerald-700 font-semibold">
-                      <span>Promo Discount</span>
-                      <span>-₹{discount}</span>
-                    </div>
-                  )}
                   <div className="flex justify-between">
                     <span>Delivery</span>
                     <span>{deliveryFee === 0 ? <strong className="text-emerald-700">FREE</strong> : `₹${deliveryFee}`}</span>

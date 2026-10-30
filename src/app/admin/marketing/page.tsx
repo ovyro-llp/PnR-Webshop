@@ -1,20 +1,15 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { OUTLETS, CAMPAIGNS } from '@/lib/data/mock-data';
-import { Campaign, CampaignAnalytics, Outlet } from '@/types';
+import { CampaignAnalytics } from '@/types';
 import {
   SlidersHorizontal,
-  Target,
-  Link as LinkIcon,
   Copy,
   CheckCircle2,
   ExternalLink,
   Code2,
   TrendingUp,
-  Sparkles,
   RefreshCw,
-  Eye,
   Check,
   CreditCard,
   Lock,
@@ -22,8 +17,7 @@ import {
 } from 'lucide-react';
 
 export default function MarketingViewPage() {
-  const [activeTab, setActiveTab] = useState<'tags' | 'generator' | 'analytics' | 'payments'>('tags');
-  const [outlets, setOutlets] = useState<Outlet[]>(OUTLETS);
+  const [activeTab, setActiveTab] = useState<'tags' | 'payments' | 'analytics'>('tags');
   const [tags, setTags] = useState({
     globalMetaPixelId: '999888777666555',
     globalGoogleAdsId: 'AW-987654300',
@@ -51,23 +45,11 @@ export default function MarketingViewPage() {
   });
   const [isSavingPayment, setIsSavingPayment] = useState(false);
   const [copiedWebhookUrl, setCopiedWebhookUrl] = useState(false);
+  const [copiedMangwaleUrl, setCopiedMangwaleUrl] = useState(false);
 
-  const [campaigns, setCampaigns] = useState<Campaign[]>(CAMPAIGNS);
   const [analytics, setAnalytics] = useState<CampaignAnalytics[]>([]);
   const [isSaving, setIsSaving] = useState(false);
-  const [copiedUrl, setCopiedUrl] = useState(false);
   const [statusMessage, setStatusMessage] = useState('');
-
-  // Campaign Generator Form State
-  const [genOutlet, setGenOutlet] = useState('college-road');
-  const [genSlug, setGenSlug] = useState('weekend-puff-fest');
-  const [genTitle, setGenTitle] = useState('Weekend Puff & Cake Carnival');
-  const [genUtmSource, setGenUtmSource] = useState('meta');
-  const [genUtmMedium, setGenUtmMedium] = useState('paid_social');
-  const [genUtmCampaign, setGenUtmCampaign] = useState('diwali_launch_2026');
-  const [genDiscountCode, setGenDiscountCode] = useState('WEEKEND20');
-  const [genDiscountPercent, setGenDiscountPercent] = useState('20');
-  const [genCustomPixel, setGenCustomPixel] = useState('');
 
   const fetchMarketingData = async () => {
     try {
@@ -76,9 +58,6 @@ export default function MarketingViewPage() {
       if (data.success) {
         if (data.tags) {
           setTags((prev) => ({ ...prev, ...data.tags }));
-        }
-        if (data.campaigns) {
-          setCampaigns(data.campaigns);
         }
         if (data.analytics) {
           setAnalytics(data.analytics);
@@ -109,22 +88,41 @@ export default function MarketingViewPage() {
     }
   };
 
-  const fetchOutlets = async () => {
-    try {
-      const res = await fetch('/api/outlets');
-      const data = await res.json();
-      if (data.success && data.outlets) {
-        setOutlets(data.outlets);
-      }
-    } catch (e) {
-      console.error(e);
-    }
-  };
-
   useEffect(() => {
-    fetchMarketingData();
-    fetchOutlets();
-    fetchPaymentConfig();
+    let mounted = true;
+    const load = async () => {
+      try {
+        const [mRes, pRes] = await Promise.all([
+          fetch('/api/marketing'),
+          fetch('/api/payments/config'),
+        ]);
+        const mData = await mRes.json();
+        const pData = await pRes.json();
+
+        if (mounted && mData.success) {
+          if (mData.tags) setTags((prev) => ({ ...prev, ...mData.tags }));
+          if (mData.analytics) setAnalytics(mData.analytics);
+        }
+
+        if (mounted && pData.success && pData.config) {
+          setPaymentConfig((prev) => ({
+            ...prev,
+            razorpayKeyId: pData.config.razorpayKeyId || '',
+            testKeyId: pData.config.testKeyId || prev.testKeyId,
+            liveKeyId: pData.config.liveKeyId || prev.liveKeyId,
+            isEnabled: pData.config.isEnabled ?? true,
+            testMode: pData.config.testMode ?? true,
+            businessName: pData.config.businessName || "Puffs 'n' Rolls Nashik",
+          }));
+        }
+      } catch (err) {
+        console.error('Failed loading marketing/payment config', err);
+      }
+    };
+    load();
+    return () => {
+      mounted = false;
+    };
   }, []);
 
   const handleSaveTags = async (e: React.FormEvent) => {
@@ -148,44 +146,6 @@ export default function MarketingViewPage() {
       }
     } catch (err) {
       console.error('Error saving tags', err);
-    } finally {
-      setIsSaving(false);
-    }
-  };
-
-  const handleCreateCampaign = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsSaving(true);
-    try {
-      const res = await fetch('/api/marketing', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          action: 'CREATE_CAMPAIGN',
-          campaignData: {
-            slug: genSlug,
-            title: genTitle,
-            outletSlug: genOutlet,
-            headline: genTitle,
-            subheadline: 'Handcrafted fresh daily at Nashik bakery',
-            badge: 'Limited Time Ad Special',
-            discountPercentage: parseInt(genDiscountPercent, 10) || 0,
-            discountCode: genDiscountCode,
-            metaPixelId: genCustomPixel || tags.globalMetaPixelId,
-            googleAdsId: tags.globalGoogleAdsId,
-            gtmId: tags.globalGtmId,
-          },
-        }),
-      });
-
-      const data = await res.json();
-      if (data.success) {
-        setStatusMessage(`✓ Campaign /${genOutlet}/${genSlug} created successfully!`);
-        fetchMarketingData();
-        setTimeout(() => setStatusMessage(''), 4000);
-      }
-    } catch (err) {
-      console.error('Failed to create campaign', err);
     } finally {
       setIsSaving(false);
     }
@@ -216,14 +176,6 @@ export default function MarketingViewPage() {
     }
   };
 
-  const fullGeneratedUrl = `https://puffsnrolls.com/${genOutlet}/${genSlug}?utm_source=${genUtmSource}&utm_medium=${genUtmMedium}&utm_campaign=${genUtmCampaign}&offer=${genDiscountCode}`;
-
-  const copyToClipboard = () => {
-    navigator.clipboard.writeText(fullGeneratedUrl);
-    setCopiedUrl(true);
-    setTimeout(() => setCopiedUrl(false), 2500);
-  };
-
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
       {/* Header */}
@@ -234,11 +186,11 @@ export default function MarketingViewPage() {
               <SlidersHorizontal className="w-5 h-5" />
             </span>
             <h1 className="text-xl sm:text-2xl font-serif font-bold text-stone-900 tracking-tight">
-              Performance Marketing &amp; Tag Manager
+              Marketing &amp; Growth Engine
             </h1>
           </div>
           <p className="text-xs text-stone-500 mt-1">
-            Dedicated portal for performance marketers and agencies to connect ad pixels and generate campaign URLs
+            Configure Meta &amp; Google ad tracking pixels, manage Razorpay payment gateway credentials, and inspect order attribution
           </p>
         </div>
 
@@ -246,36 +198,14 @@ export default function MarketingViewPage() {
         <div className="flex items-center gap-1.5 bg-white p-1 rounded-full border border-stone-200 shadow-2xs">
           <button
             onClick={() => setActiveTab('tags')}
-            className={`px-3.5 py-1.5 rounded-full text-xs font-medium transition flex items-center gap-1.5 ${
+            className={`px-3.5 py-1.5 rounded-full text-xs font-medium transition flex items-center gap-1.5 cursor-pointer ${
               activeTab === 'tags'
                 ? 'bg-[#1C1917] text-white font-semibold'
                 : 'text-stone-600 hover:text-stone-900 hover:bg-stone-50'
             }`}
           >
             <Code2 className="w-3.5 h-3.5" />
-            <span>Tracking Tags</span>
-          </button>
-          <button
-            onClick={() => setActiveTab('generator')}
-            className={`px-3.5 py-1.5 rounded-full text-xs font-medium transition flex items-center gap-1.5 ${
-              activeTab === 'generator'
-                ? 'bg-[#1C1917] text-white font-semibold'
-                : 'text-stone-600 hover:text-stone-900 hover:bg-stone-50'
-            }`}
-          >
-            <LinkIcon className="w-3.5 h-3.5" />
-            <span>Campaign Builder</span>
-          </button>
-          <button
-            onClick={() => setActiveTab('analytics')}
-            className={`px-3.5 py-1.5 rounded-full text-xs font-medium transition flex items-center gap-1.5 ${
-              activeTab === 'analytics'
-                ? 'bg-[#1C1917] text-white font-semibold'
-                : 'text-stone-600 hover:text-stone-900 hover:bg-stone-50'
-            }`}
-          >
-            <TrendingUp className="w-3.5 h-3.5" />
-            <span>Attribution &amp; ROAS</span>
+            <span>Tracking Pixels &amp; Tags</span>
           </button>
           <button
             onClick={() => setActiveTab('payments')}
@@ -287,6 +217,17 @@ export default function MarketingViewPage() {
           >
             <CreditCard className="w-3.5 h-3.5" />
             <span>Payment Gateway</span>
+          </button>
+          <button
+            onClick={() => setActiveTab('analytics')}
+            className={`px-3.5 py-1.5 rounded-full text-xs font-medium transition flex items-center gap-1.5 cursor-pointer ${
+              activeTab === 'analytics'
+                ? 'bg-[#1C1917] text-white font-semibold'
+                : 'text-stone-600 hover:text-stone-900 hover:bg-stone-50'
+            }`}
+          >
+            <TrendingUp className="w-3.5 h-3.5" />
+            <span>Attribution &amp; ROAS</span>
           </button>
         </div>
       </div>
@@ -470,194 +411,7 @@ export default function MarketingViewPage() {
         </form>
       )}
 
-      {/* TAB 2: Campaign Builder & UTM Generator */}
-      {activeTab === 'generator' && (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Builder Form */}
-          <div className="bg-white p-6 rounded-3xl border border-stone-200/90 shadow-[0_2px_8px_rgba(0,0,0,0.02)] space-y-4">
-            <h3 className="text-sm font-serif font-bold text-stone-900 flex items-center gap-2">
-              <Sparkles className="w-4 h-4 text-stone-700" />
-              <span>Create Ad Campaign &amp; Generate UTM URL</span>
-            </h3>
-
-            <div className="space-y-3">
-              <div>
-                <label className="text-xs text-stone-700 block font-semibold mb-1">
-                  Destination Bakery Outlet
-                </label>
-                <select
-                  value={genOutlet}
-                  onChange={(e) => setGenOutlet(e.target.value)}
-                  className="w-full bg-stone-50 border border-stone-200 rounded-xl px-3.5 py-2 text-xs text-stone-900 focus:outline-none focus:border-stone-500"
-                >
-                  {outlets.map((o) => (
-                    <option key={o.slug} value={o.slug}>
-                      {o.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="text-xs text-stone-700 block font-semibold mb-1">
-                    Campaign Slug
-                  </label>
-                  <input
-                    type="text"
-                    value={genSlug}
-                    onChange={(e) => setGenSlug(e.target.value)}
-                    placeholder="weekend-puff-fest"
-                    className="w-full bg-stone-50 border border-stone-200 rounded-xl px-3.5 py-2 text-xs text-stone-900 focus:outline-none focus:border-stone-500"
-                  />
-                </div>
-                <div>
-                  <label className="text-xs text-stone-700 block font-semibold mb-1">
-                    Campaign Title
-                  </label>
-                  <input
-                    type="text"
-                    value={genTitle}
-                    onChange={(e) => setGenTitle(e.target.value)}
-                    placeholder="Weekend Puff Carnival"
-                    className="w-full bg-stone-50 border border-stone-200 rounded-xl px-3.5 py-2 text-xs text-stone-900 focus:outline-none focus:border-stone-500"
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-3 gap-2">
-                <div>
-                  <label className="text-xs text-stone-700 block font-semibold mb-1">UTM Source</label>
-                  <input
-                    type="text"
-                    value={genUtmSource}
-                    onChange={(e) => setGenUtmSource(e.target.value)}
-                    className="w-full bg-stone-50 border border-stone-200 rounded-xl px-2.5 py-2 text-xs text-stone-900 focus:outline-none"
-                  />
-                </div>
-                <div>
-                  <label className="text-xs text-stone-700 block font-semibold mb-1">UTM Medium</label>
-                  <input
-                    type="text"
-                    value={genUtmMedium}
-                    onChange={(e) => setGenUtmMedium(e.target.value)}
-                    className="w-full bg-stone-50 border border-stone-200 rounded-xl px-2.5 py-2 text-xs text-stone-900 focus:outline-none"
-                  />
-                </div>
-                <div>
-                  <label className="text-xs text-stone-700 block font-semibold mb-1">Campaign Tag</label>
-                  <input
-                    type="text"
-                    value={genUtmCampaign}
-                    onChange={(e) => setGenUtmCampaign(e.target.value)}
-                    className="w-full bg-stone-50 border border-stone-200 rounded-xl px-2.5 py-2 text-xs text-stone-900 focus:outline-none"
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="text-xs text-stone-700 block font-semibold mb-1">
-                    Promo Code (Auto-applied)
-                  </label>
-                  <input
-                    type="text"
-                    value={genDiscountCode}
-                    onChange={(e) => setGenDiscountCode(e.target.value.toUpperCase())}
-                    placeholder="WEEKEND20"
-                    className="w-full bg-stone-50 border border-stone-200 rounded-xl px-3.5 py-2 text-xs font-mono text-stone-900 focus:outline-none"
-                  />
-                </div>
-                <div>
-                  <label className="text-xs text-stone-700 block font-semibold mb-1">
-                    Discount %
-                  </label>
-                  <input
-                    type="number"
-                    value={genDiscountPercent}
-                    onChange={(e) => setGenDiscountPercent(e.target.value)}
-                    placeholder="20"
-                    className="w-full bg-stone-50 border border-stone-200 rounded-xl px-3.5 py-2 text-xs font-mono text-stone-900 focus:outline-none"
-                  />
-                </div>
-              </div>
-
-              <button
-                type="button"
-                onClick={handleCreateCampaign}
-                className="w-full py-2.5 bg-[#1C1917] hover:bg-stone-800 text-white font-medium rounded-full text-xs transition flex items-center justify-center gap-2"
-              >
-                <Sparkles className="w-4 h-4" />
-                <span>Save Dynamic Landing Page</span>
-              </button>
-            </div>
-          </div>
-
-          {/* Generated URL & Live Preview Card */}
-          <div className="bg-white p-6 rounded-3xl border border-stone-200/90 shadow-[0_2px_8px_rgba(0,0,0,0.02)] flex flex-col justify-between space-y-4">
-            <div>
-              <div className="flex items-center justify-between">
-                <span className="text-xs uppercase font-mono tracking-wider font-semibold text-stone-400">
-                  Ready-To-Use Ad Link
-                </span>
-                <span className="text-[10px] text-stone-700 font-mono bg-stone-100 px-2.5 py-0.5 rounded-full border border-stone-200">
-                  Meta &amp; Google Compatible
-                </span>
-              </div>
-
-              <div className="mt-3 p-4 bg-[#FAF8F5] rounded-2xl border border-stone-200 break-all font-mono text-xs text-stone-900 leading-relaxed select-all">
-                {fullGeneratedUrl}
-              </div>
-
-              <div className="flex items-center gap-3 mt-4">
-                <button
-                  type="button"
-                  onClick={copyToClipboard}
-                  className={`flex-1 py-2.5 rounded-full text-xs font-medium flex items-center justify-center gap-2 transition ${
-                    copiedUrl
-                      ? 'bg-emerald-600 text-white'
-                      : 'bg-[#1C1917] hover:bg-stone-800 text-white'
-                  }`}
-                >
-                  {copiedUrl ? (
-                    <>
-                      <Check className="w-4 h-4" />
-                      <span>Copied Ad URL!</span>
-                    </>
-                  ) : (
-                    <>
-                      <Copy className="w-4 h-4" />
-                      <span>Copy Ad Destination URL</span>
-                    </>
-                  )}
-                </button>
-
-                <a
-                  href={`/${genOutlet}/${genSlug}`}
-                  target="_blank"
-                  className="px-4 py-2.5 rounded-full bg-stone-100 hover:bg-stone-200 text-stone-800 text-xs font-medium flex items-center gap-1.5 transition"
-                >
-                  <Eye className="w-4 h-4" />
-                  <span>Preview LP</span>
-                </a>
-              </div>
-            </div>
-
-            {/* Campaign Summary Box */}
-            <div className="p-4 bg-[#FAF8F5] rounded-2xl border border-stone-200 space-y-2 text-xs">
-              <span className="font-serif font-bold text-stone-900 block">Ad Placement Checklist:</span>
-              <ul className="text-stone-600 space-y-1 list-disc pl-4 text-[11px] leading-relaxed">
-                <li>Paste this destination URL into Meta Ads Manager (Ad set level).</li>
-                <li>Meta Pixel ID will fire automatic ViewContent &amp; InitiateCheckout tags.</li>
-                <li>Conversions will fire both client-side and server-side via CAPI.</li>
-                <li>Discount code <span className="text-stone-900 font-mono font-bold">{genDiscountCode}</span> is pre-applied in customer cart drawer.</li>
-              </ul>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* TAB 3: Attribution & ROAS Dashboard */}
+      {/* Attribution & ROAS Dashboard */}
       {activeTab === 'analytics' && (
         <div className="space-y-5">
           {/* Funnel High Level Cards */}
@@ -1024,35 +778,77 @@ export default function MarketingViewPage() {
               <div className="p-6 bg-white rounded-2xl border border-stone-200/80 shadow-2xs space-y-4">
                 <div className="flex items-center gap-2 pb-3 border-b border-stone-100">
                   <ShieldCheck className="w-4 h-4 text-stone-800" />
-                  <h3 className="text-sm font-serif font-bold text-stone-900">
-                    Webhook Auto-Reconciliation
-                  </h3>
+                  <div>
+                    <h3 className="text-sm font-serif font-bold text-stone-900">
+                      Webhook Auto-Reconciliation &amp; Fleet Endpoints
+                    </h3>
+                    <p className="text-[11px] text-stone-400">
+                      Production Railway deployment endpoints hosted on shop.puffsnrolls.com
+                    </p>
+                  </div>
                 </div>
 
                 <div className="space-y-4">
                   <div>
                     <label className="block text-xs font-semibold text-stone-800 mb-1">
-                      Endpoint URL (Paste into Razorpay Dashboard)
+                      Razorpay Webhook Endpoint (Paste into Razorpay Dashboard)
                     </label>
                     <div className="flex items-center gap-2">
                       <input
                         type="text"
                         readOnly
-                        value="https://puffsnrolls.com/api/payments/razorpay/webhook"
-                        className="flex-1 px-3.5 py-2.5 bg-stone-100/70 border border-stone-200 rounded-xl text-xs font-mono text-stone-700"
+                        value="https://shop.puffsnrolls.com/api/payments/razorpay/webhook"
+                        className="flex-1 px-3.5 py-2.5 bg-stone-100/70 border border-stone-200 rounded-xl text-xs font-mono text-stone-700 select-all"
                       />
                       <button
                         type="button"
                         onClick={() => {
                           navigator.clipboard.writeText(
-                            'https://puffsnrolls.com/api/payments/razorpay/webhook'
+                            'https://shop.puffsnrolls.com/api/payments/razorpay/webhook'
                           );
                           setCopiedWebhookUrl(true);
                           setTimeout(() => setCopiedWebhookUrl(false), 2000);
                         }}
-                        className="px-3.5 py-2.5 bg-stone-100 hover:bg-stone-200 text-stone-800 text-xs font-medium rounded-xl transition flex items-center gap-1.5"
+                        className="px-3.5 py-2.5 bg-stone-100 hover:bg-stone-200 text-stone-800 text-xs font-medium rounded-xl transition flex items-center gap-1.5 cursor-pointer shrink-0"
                       >
                         {copiedWebhookUrl ? (
+                          <>
+                            <Check className="w-3.5 h-3.5 text-emerald-600" />
+                            <span>Copied</span>
+                          </>
+                        ) : (
+                          <>
+                            <Copy className="w-3.5 h-3.5 text-stone-500" />
+                            <span>Copy URL</span>
+                          </>
+                        )}
+                      </button>
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-semibold text-stone-800 mb-1">
+                      Mangwale Logistics Webhook Endpoint (Paste into Mangwale Partner Portal)
+                    </label>
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="text"
+                        readOnly
+                        value="https://shop.puffsnrolls.com/api/webhooks/mangwale"
+                        className="flex-1 px-3.5 py-2.5 bg-stone-100/70 border border-stone-200 rounded-xl text-xs font-mono text-stone-700 select-all"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => {
+                          navigator.clipboard.writeText(
+                            'https://shop.puffsnrolls.com/api/webhooks/mangwale'
+                          );
+                          setCopiedMangwaleUrl(true);
+                          setTimeout(() => setCopiedMangwaleUrl(false), 2000);
+                        }}
+                        className="px-3.5 py-2.5 bg-stone-100 hover:bg-stone-200 text-stone-800 text-xs font-medium rounded-xl transition flex items-center gap-1.5 cursor-pointer shrink-0"
+                      >
+                        {copiedMangwaleUrl ? (
                           <>
                             <Check className="w-3.5 h-3.5 text-emerald-600" />
                             <span>Copied</span>
@@ -1160,7 +956,7 @@ export default function MarketingViewPage() {
                 </div>
                 <p className="text-[11px] text-stone-500 leading-relaxed">
                   All payment transactions occur through PCI-DSS Level 1 compliant bank-grade encrypted infrastructure.
-                  No card details or CVVs are ever stored on Puffs 'n' Rolls bakery servers.
+                  No card details or CVVs are ever stored on Puffs &apos;n&apos; Rolls bakery servers.
                 </p>
               </div>
             </div>
