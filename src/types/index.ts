@@ -261,6 +261,12 @@ export interface PaymentGatewayConfig {
   razorpayKeyId: string;
   razorpayKeySecret?: string;
   razorpayWebhookSecret?: string;
+  testKeyId?: string;
+  testKeySecret?: string;
+  testWebhookSecret?: string;
+  liveKeyId?: string;
+  liveKeySecret?: string;
+  liveWebhookSecret?: string;
   isEnabled: boolean;
   testMode: boolean;
   businessName: string;

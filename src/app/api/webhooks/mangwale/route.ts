@@ -1,11 +1,26 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { orderStore } from '@/lib/store/order-store';
-import { parseMangwaleWebhook } from '@/lib/logistics/mangwale';
+import { parseMangwaleWebhook, verifyMangwaleWebhookSignature } from '@/lib/logistics/mangwale';
 import { OrderStatus } from '@/types';
 
 export async function POST(req: NextRequest) {
   try {
-    const payload = await req.json();
+    const rawBody = await req.text();
+    const signature =
+      req.headers.get('x-mangwale-signature') ||
+      req.headers.get('x-signature') ||
+      '';
+
+    const isValid = verifyMangwaleWebhookSignature({ rawBody, signature });
+    if (!isValid) {
+      console.warn('Invalid Mangwale webhook signature received');
+      return NextResponse.json(
+        { success: false, message: 'Invalid webhook signature' },
+        { status: 401 }
+      );
+    }
+
+    const payload = JSON.parse(rawBody);
     console.log('[Mangwale Webhook Received]', payload);
 
     const logisticsUpdate = parseMangwaleWebhook(payload);

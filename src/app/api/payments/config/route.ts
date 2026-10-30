@@ -8,12 +8,29 @@ export async function GET() {
       success: true,
       config: {
         razorpayKeyId: config.razorpayKeyId,
-        // Mask secret for security
+        // Active secret masked
         razorpayKeySecretMasked: config.razorpayKeySecret
           ? `${config.razorpayKeySecret.slice(0, 6)}••••••••${config.razorpayKeySecret.slice(-4)}`
           : '',
         hasSecret: Boolean(config.razorpayKeySecret),
         hasWebhookSecret: Boolean(config.razorpayWebhookSecret),
+        
+        // Test Credentials
+        testKeyId: config.testKeyId || '',
+        testKeySecretMasked: config.testKeySecret
+          ? `${config.testKeySecret.slice(0, 6)}••••••••${config.testKeySecret.slice(-4)}`
+          : '',
+        hasTestSecret: Boolean(config.testKeySecret),
+        hasTestWebhookSecret: Boolean(config.testWebhookSecret),
+
+        // Live Credentials
+        liveKeyId: config.liveKeyId || '',
+        liveKeySecretMasked: config.liveKeySecret
+          ? `${config.liveKeySecret.slice(0, 6)}••••••••${config.liveKeySecret.slice(-4)}`
+          : '',
+        hasLiveSecret: Boolean(config.liveKeySecret),
+        hasLiveWebhookSecret: Boolean(config.liveWebhookSecret),
+
         isEnabled: config.isEnabled,
         testMode: config.testMode,
         businessName: config.businessName,
@@ -31,7 +48,20 @@ export async function GET() {
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { razorpayKeyId, razorpayKeySecret, razorpayWebhookSecret, isEnabled, testMode } = body;
+    const {
+      razorpayKeyId,
+      razorpayKeySecret,
+      razorpayWebhookSecret,
+      testKeyId,
+      testKeySecret,
+      testWebhookSecret,
+      liveKeyId,
+      liveKeySecret,
+      liveWebhookSecret,
+      isEnabled,
+      testMode,
+      businessName,
+    } = body;
 
     const updates: Record<string, unknown> = {};
     if (razorpayKeyId !== undefined) updates.razorpayKeyId = razorpayKeyId;
@@ -41,8 +71,28 @@ export async function POST(req: NextRequest) {
     if (razorpayWebhookSecret && !razorpayWebhookSecret.includes('••••')) {
       updates.razorpayWebhookSecret = razorpayWebhookSecret;
     }
+
+    // Test credentials
+    if (testKeyId !== undefined) updates.testKeyId = testKeyId;
+    if (testKeySecret && !testKeySecret.includes('••••')) {
+      updates.testKeySecret = testKeySecret;
+    }
+    if (testWebhookSecret && !testWebhookSecret.includes('••••')) {
+      updates.testWebhookSecret = testWebhookSecret;
+    }
+
+    // Live credentials
+    if (liveKeyId !== undefined) updates.liveKeyId = liveKeyId;
+    if (liveKeySecret && !liveKeySecret.includes('••••')) {
+      updates.liveKeySecret = liveKeySecret;
+    }
+    if (liveWebhookSecret && !liveWebhookSecret.includes('••••')) {
+      updates.liveWebhookSecret = liveWebhookSecret;
+    }
+
     if (isEnabled !== undefined) updates.isEnabled = Boolean(isEnabled);
     if (testMode !== undefined) updates.testMode = Boolean(testMode);
+    if (businessName !== undefined) updates.businessName = businessName;
 
     const updated = orderStore.updatePaymentConfig(updates);
 
@@ -51,9 +101,9 @@ export async function POST(req: NextRequest) {
       message: 'Payment Gateway settings updated successfully',
       config: {
         razorpayKeyId: updated.razorpayKeyId,
-        hasSecret: Boolean(updated.razorpayKeySecret),
-        isEnabled: updated.isEnabled,
         testMode: updated.testMode,
+        isEnabled: updated.isEnabled,
+        hasSecret: Boolean(updated.razorpayKeySecret),
       },
     });
   } catch (error) {

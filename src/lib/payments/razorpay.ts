@@ -11,29 +11,32 @@ export interface CreateOrderParams {
 
 export function getRazorpayClient() {
   const config = orderStore.getPaymentConfig();
-  const key_id =
-    config.razorpayKeyId ||
-    process.env.RAZORPAY_KEY_ID ||
-    process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID ||
-    'rzp_test_pnr_demo';
-  const key_secret =
-    config.razorpayKeySecret ||
-    process.env.RAZORPAY_KEY_SECRET ||
-    'rzp_sec_demo_secret_key';
+  
+  const key_id = config.testMode
+    ? config.testKeyId || config.razorpayKeyId || process.env.RAZORPAY_TEST_KEY_ID || process.env.RAZORPAY_KEY_ID || 'rzp_test_pnr_demo'
+    : config.liveKeyId || config.razorpayKeyId || process.env.RAZORPAY_LIVE_KEY_ID || process.env.RAZORPAY_KEY_ID || '';
+
+  const key_secret = config.testMode
+    ? config.testKeySecret || config.razorpayKeySecret || process.env.RAZORPAY_TEST_KEY_SECRET || process.env.RAZORPAY_KEY_SECRET || 'rzp_sec_demo_secret_key'
+    : config.liveKeySecret || config.razorpayKeySecret || process.env.RAZORPAY_LIVE_KEY_SECRET || process.env.RAZORPAY_KEY_SECRET || '';
 
   const isDemoMode =
     key_id === 'rzp_test_pnr_demo' ||
     key_id.startsWith('rzp_test_pnr') ||
-    key_secret === 'rzp_sec_demo_secret_key';
+    key_secret === 'rzp_sec_demo_secret_key' ||
+    !key_id ||
+    !key_secret;
 
   let instance: Razorpay | null = null;
-  try {
-    instance = new Razorpay({
-      key_id,
-      key_secret,
-    });
-  } catch (err) {
-    console.warn('Failed to initialize Razorpay SDK instance:', err);
+  if (!isDemoMode && key_id && key_secret) {
+    try {
+      instance = new Razorpay({
+        key_id,
+        key_secret,
+      });
+    } catch (err) {
+      console.warn('Failed to initialize Razorpay SDK instance:', err);
+    }
   }
 
   return {
@@ -41,6 +44,7 @@ export function getRazorpayClient() {
     keyId: key_id,
     keySecret: key_secret,
     isDemoMode,
+    testMode: config.testMode,
   };
 }
 

@@ -46,6 +46,7 @@ export function CustomerLoginModal() {
               src="https://puffsnrolls.com/wp-content/uploads/2025/12/banner-logo.png"
               alt="Puffs 'n' Rolls"
               fill
+              sizes="160px"
               className="object-contain"
             />
           </div>

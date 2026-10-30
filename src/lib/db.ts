@@ -4,7 +4,6 @@ import { MediaUpload } from '@/types';
 // PostgreSQL pooler connection URL
 const rawUrl =
   process.env.DATABASE_URL ||
-  process.env.SUPABASE_DB_URL ||
   'postgresql://postgres.rfkzjxbasckvtipouclf:24Hrushi%4002@aws-0-ap-south-1.pooler.supabase.com:5432/postgres';
 
 // Ensure special characters in password are properly URL encoded if not already

@@ -44,6 +44,7 @@ export default function CustomerLoginPage() {
                 alt="Puffs 'n' Rolls"
                 fill
                 priority
+                sizes="176px"
                 className="object-contain"
               />
             </div>

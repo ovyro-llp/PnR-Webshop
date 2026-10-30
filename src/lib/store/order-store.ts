@@ -235,13 +235,40 @@ if (!globalThis.__PNR_MARKETING_TAGS__) {
 }
 
 if (!globalThis.__PNR_PAYMENT_CONFIG__) {
+  const isLiveEnv = process.env.RAZORPAY_ENV === 'live';
+  const testKeyId =
+    process.env.RAZORPAY_TEST_KEY_ID ||
+    process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID ||
+    process.env.RAZORPAY_KEY_ID ||
+    'rzp_test_pnr_demo';
+  const testKeySecret =
+    process.env.RAZORPAY_TEST_KEY_SECRET ||
+    process.env.RAZORPAY_KEY_SECRET ||
+    'rzp_sec_demo_secret_key';
+  const testWebhookSecret =
+    process.env.RAZORPAY_TEST_WEBHOOK_SECRET ||
+    process.env.RAZORPAY_WEBHOOK_SECRET ||
+    'rzp_whsec_demo';
+
+  const liveKeyId = process.env.RAZORPAY_LIVE_KEY_ID || '';
+  const liveKeySecret = process.env.RAZORPAY_LIVE_KEY_SECRET || '';
+  const liveWebhookSecret = process.env.RAZORPAY_LIVE_WEBHOOK_SECRET || '';
+
+  const activeTestMode = !isLiveEnv;
+
   globalThis.__PNR_PAYMENT_CONFIG__ = {
-    razorpayKeyId: process.env.RAZORPAY_KEY_ID || process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || 'rzp_test_pnr_demo',
-    razorpayKeySecret: process.env.RAZORPAY_KEY_SECRET || 'rzp_sec_demo_secret_key',
-    razorpayWebhookSecret: process.env.RAZORPAY_WEBHOOK_SECRET || 'rzp_whsec_demo',
+    testMode: activeTestMode,
     isEnabled: true,
-    testMode: true,
     businessName: "Puffs 'n' Rolls Nashik",
+    testKeyId,
+    testKeySecret,
+    testWebhookSecret,
+    liveKeyId,
+    liveKeySecret,
+    liveWebhookSecret,
+    razorpayKeyId: activeTestMode ? testKeyId : (liveKeyId || testKeyId),
+    razorpayKeySecret: activeTestMode ? testKeySecret : (liveKeySecret || testKeySecret),
+    razorpayWebhookSecret: activeTestMode ? testWebhookSecret : (liveWebhookSecret || testWebhookSecret),
   };
 }
 
@@ -542,23 +569,67 @@ export const orderStore = {
 
   // Payment Gateway (Razorpay) Configuration & Status
   getPaymentConfig: (): PaymentGatewayConfig => {
-    return (
-      globalThis.__PNR_PAYMENT_CONFIG__ || {
-        razorpayKeyId: process.env.RAZORPAY_KEY_ID || process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || 'rzp_test_pnr_demo',
-        razorpayKeySecret: process.env.RAZORPAY_KEY_SECRET || 'rzp_sec_demo_secret_key',
-        razorpayWebhookSecret: process.env.RAZORPAY_WEBHOOK_SECRET || 'rzp_whsec_demo',
+    if (!globalThis.__PNR_PAYMENT_CONFIG__) {
+      const isLiveEnv = process.env.RAZORPAY_ENV === 'live';
+      const testKeyId =
+        process.env.RAZORPAY_TEST_KEY_ID ||
+        process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID ||
+        process.env.RAZORPAY_KEY_ID ||
+        'rzp_test_pnr_demo';
+      const testKeySecret =
+        process.env.RAZORPAY_TEST_KEY_SECRET ||
+        process.env.RAZORPAY_KEY_SECRET ||
+        'rzp_sec_demo_secret_key';
+      const testWebhookSecret =
+        process.env.RAZORPAY_TEST_WEBHOOK_SECRET ||
+        process.env.RAZORPAY_WEBHOOK_SECRET ||
+        'rzp_whsec_demo';
+
+      const liveKeyId = process.env.RAZORPAY_LIVE_KEY_ID || '';
+      const liveKeySecret = process.env.RAZORPAY_LIVE_KEY_SECRET || '';
+      const liveWebhookSecret = process.env.RAZORPAY_LIVE_WEBHOOK_SECRET || '';
+
+      const activeTestMode = !isLiveEnv;
+
+      globalThis.__PNR_PAYMENT_CONFIG__ = {
+        testMode: activeTestMode,
         isEnabled: true,
-        testMode: true,
         businessName: "Puffs 'n' Rolls Nashik",
-      }
-    );
+        testKeyId,
+        testKeySecret,
+        testWebhookSecret,
+        liveKeyId,
+        liveKeySecret,
+        liveWebhookSecret,
+        razorpayKeyId: activeTestMode ? testKeyId : (liveKeyId || testKeyId),
+        razorpayKeySecret: activeTestMode ? testKeySecret : (liveKeySecret || testKeySecret),
+        razorpayWebhookSecret: activeTestMode ? testWebhookSecret : (liveWebhookSecret || testWebhookSecret),
+      };
+    }
+    return globalThis.__PNR_PAYMENT_CONFIG__;
   },
 
   updatePaymentConfig: (config: Partial<PaymentGatewayConfig>): PaymentGatewayConfig => {
-    globalThis.__PNR_PAYMENT_CONFIG__ = {
-      ...orderStore.getPaymentConfig(),
+    const current = orderStore.getPaymentConfig();
+    const merged = {
+      ...current,
       ...config,
     };
+
+    // If testMode is toggled, sync active credentials
+    if (config.testMode !== undefined) {
+      if (config.testMode) {
+        merged.razorpayKeyId = merged.testKeyId || merged.razorpayKeyId;
+        merged.razorpayKeySecret = merged.testKeySecret || merged.razorpayKeySecret;
+        merged.razorpayWebhookSecret = merged.testWebhookSecret || merged.razorpayWebhookSecret;
+      } else {
+        merged.razorpayKeyId = merged.liveKeyId || merged.razorpayKeyId;
+        merged.razorpayKeySecret = merged.liveKeySecret || merged.razorpayKeySecret;
+        merged.razorpayWebhookSecret = merged.liveWebhookSecret || merged.razorpayWebhookSecret;
+      }
+    }
+
+    globalThis.__PNR_PAYMENT_CONFIG__ = merged;
     return globalThis.__PNR_PAYMENT_CONFIG__;
   },
 

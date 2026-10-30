@@ -3,7 +3,7 @@ const path = require('path');
 const fs = require('fs');
 
 async function runVerification() {
-  console.log('🚀 Starting UI and Supabase Media Verification...');
+  console.log('🚀 Starting UI and Cloud Media Verification...');
 
   const screenshotsDir = '/Users/hrushi/.gemini/antigravity/brain/304a3096-334f-4c7b-a871-3196847cafad/screenshots';
   if (!fs.existsSync(screenshotsDir)) {
@@ -84,11 +84,11 @@ async function runVerification() {
     await new Promise(r => setTimeout(r, 800));
   }
 
-  // 5. Test Supabase Media Tab
-  console.log('4. Testing Supabase Media Tab...');
+  // 5. Test Cloud Media Tab
+  console.log('4. Testing Cloud Media Tab...');
   const mediaTabBtn = await page.evaluateHandle(() => {
     const buttons = Array.from(document.querySelectorAll('button'));
-    return buttons.find(b => b.innerText.includes('Supabase Media'));
+    return buttons.find(b => b.innerText.includes('Cloud Media') || b.innerText.includes('Media'));
   });
 
   if (mediaTabBtn && mediaTabBtn.asElement()) {
@@ -96,10 +96,10 @@ async function runVerification() {
     await new Promise(r => setTimeout(r, 1200));
 
     await page.screenshot({
-      path: path.join(screenshotsDir, 'admin-supabase-media-tab-mobile.png'),
+      path: path.join(screenshotsDir, 'admin-cloud-media-tab-mobile.png'),
       fullPage: false
     });
-    console.log('📸 Captured: admin-supabase-media-tab-mobile.png');
+    console.log('📸 Captured: admin-cloud-media-tab-mobile.png');
   }
 
   // 6. Test Master Catalog Tab & Upload Modal
@@ -124,10 +124,10 @@ async function runVerification() {
       await new Promise(r => setTimeout(r, 800));
 
       await page.screenshot({
-        path: path.join(screenshotsDir, 'admin-upload-modal-with-supabase-media.png'),
+        path: path.join(screenshotsDir, 'admin-upload-modal-with-cloud-media.png'),
         fullPage: false
       });
-      console.log('📸 Captured: admin-upload-modal-with-supabase-media.png');
+      console.log('📸 Captured: admin-upload-modal-with-cloud-media.png');
     }
   }
 

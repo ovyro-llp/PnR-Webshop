@@ -39,6 +39,12 @@ export default function MarketingViewPage() {
     razorpayKeyId: 'rzp_test_pnr_demo',
     razorpayKeySecret: '',
     razorpayWebhookSecret: '',
+    testKeyId: 'rzp_test_pnr_demo',
+    testKeySecret: '',
+    testWebhookSecret: '',
+    liveKeyId: '',
+    liveKeySecret: '',
+    liveWebhookSecret: '',
     isEnabled: true,
     testMode: true,
     businessName: "Puffs 'n' Rolls Nashik",
@@ -91,6 +97,8 @@ export default function MarketingViewPage() {
         setPaymentConfig((prev) => ({
           ...prev,
           razorpayKeyId: data.config.razorpayKeyId || '',
+          testKeyId: data.config.testKeyId || prev.testKeyId,
+          liveKeyId: data.config.liveKeyId || prev.liveKeyId,
           isEnabled: data.config.isEnabled ?? true,
           testMode: data.config.testMode ?? true,
           businessName: data.config.businessName || "Puffs 'n' Rolls Nashik",
@@ -809,69 +817,206 @@ export default function MarketingViewPage() {
           {/* Configuration Form */}
           <form onSubmit={handleSavePaymentConfig} className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             <div className="lg:col-span-2 space-y-6">
-              {/* API Credentials */}
+              {/* Environment Toggle Header */}
               <div className="p-6 bg-white rounded-2xl border border-stone-200/80 shadow-2xs space-y-4">
-                <div className="flex items-center gap-2 pb-3 border-b border-stone-100">
-                  <Lock className="w-4 h-4 text-stone-800" />
-                  <h3 className="text-sm font-serif font-bold text-stone-900">
-                    API Authentication Keys
-                  </h3>
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-stone-100">
+                  <div className="flex items-center gap-2">
+                    <Lock className="w-4 h-4 text-stone-800" />
+                    <h3 className="text-sm font-serif font-bold text-stone-900">
+                      Gateway Credentials &amp; Environment
+                    </h3>
+                  </div>
+
+                  {/* Mode Pills */}
+                  <div className="flex items-center p-1 rounded-full bg-stone-100 border border-stone-200">
+                    <button
+                      type="button"
+                      onClick={() => setPaymentConfig({ ...paymentConfig, testMode: true })}
+                      className={`px-3 py-1 rounded-full text-xs font-semibold transition ${
+                        paymentConfig.testMode
+                          ? 'bg-amber-600 text-white shadow-2xs'
+                          : 'text-stone-600 hover:text-stone-900'
+                      }`}
+                    >
+                      Sandbox Test Mode
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setPaymentConfig({ ...paymentConfig, testMode: false })}
+                      className={`px-3 py-1 rounded-full text-xs font-semibold transition ${
+                        !paymentConfig.testMode
+                          ? 'bg-emerald-600 text-white shadow-2xs'
+                          : 'text-stone-600 hover:text-stone-900'
+                      }`}
+                    >
+                      Live Production Mode
+                    </button>
+                  </div>
                 </div>
 
-                <div className="space-y-4">
+                <div className="p-3 bg-[#FAF8F5] rounded-xl border border-stone-200/80 flex items-center justify-between text-xs">
+                  <span className="text-stone-600">Currently Active in Storefront Checkout:</span>
+                  <span className="font-mono font-bold text-stone-900">
+                    {paymentConfig.testMode
+                      ? paymentConfig.testKeyId || paymentConfig.razorpayKeyId || 'rzp_test_pnr_demo'
+                      : paymentConfig.liveKeyId || '⚠️ No Live Key Configured (Fallback to Test)'}
+                  </span>
+                </div>
+              </div>
+
+              {/* Test Mode Credentials Card */}
+              <div className={`p-6 bg-white rounded-2xl border shadow-2xs space-y-4 transition ${
+                paymentConfig.testMode ? 'border-amber-300 ring-2 ring-amber-50' : 'border-stone-200/80 opacity-80'
+              }`}>
+                <div className="flex items-center justify-between pb-3 border-b border-stone-100">
+                  <div className="flex items-center gap-2">
+                    <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-amber-100 text-amber-800">
+                      Test / Sandbox
+                    </span>
+                    <h4 className="text-xs font-bold text-stone-900">Razorpay Test Credentials</h4>
+                  </div>
+                  {paymentConfig.testMode && (
+                    <span className="text-[11px] font-semibold text-amber-700">● Active</span>
+                  )}
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-xs font-semibold text-stone-800 mb-1">
-                      Payment Gateway Key ID
+                      Test Key ID (rzp_test_...)
                     </label>
                     <input
                       type="text"
-                      value={paymentConfig.razorpayKeyId}
+                      value={paymentConfig.testKeyId}
                       onChange={(e) =>
-                        setPaymentConfig({ ...paymentConfig, razorpayKeyId: e.target.value })
+                        setPaymentConfig({ ...paymentConfig, testKeyId: e.target.value })
                       }
-                      placeholder="key_id_live_... or test_key_..."
+                      placeholder="rzp_test_..."
                       className="w-full px-3.5 py-2.5 bg-stone-50/50 border border-stone-200 rounded-xl text-xs font-mono text-stone-900 focus:bg-white focus:outline-none focus:ring-1 focus:ring-stone-900"
                     />
-                    <p className="text-[11px] text-stone-400 mt-1">
-                      Available in your merchant payment gateway settings.
-                    </p>
                   </div>
 
                   <div>
                     <label className="block text-xs font-semibold text-stone-800 mb-1">
-                      Payment Gateway Key Secret
+                      Test Key Secret
                     </label>
                     <input
                       type="password"
-                      value={paymentConfig.razorpayKeySecret}
+                      value={paymentConfig.testKeySecret}
                       onChange={(e) =>
-                        setPaymentConfig({ ...paymentConfig, razorpayKeySecret: e.target.value })
+                        setPaymentConfig({ ...paymentConfig, testKeySecret: e.target.value })
                       }
-                      placeholder="Enter new secret or leave blank to keep existing"
+                      placeholder="Enter test secret or leave blank"
                       className="w-full px-3.5 py-2.5 bg-stone-50/50 border border-stone-200 rounded-xl text-xs font-mono text-stone-900 focus:bg-white focus:outline-none focus:ring-1 focus:ring-stone-900"
                     />
-                    <p className="text-[11px] text-stone-400 mt-1">
-                      Used by the backend server for cryptographic HMAC SHA-256 payment signature verification.
-                    </p>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-stone-800 mb-1">
+                    Test Webhook Secret
+                  </label>
+                  <input
+                    type="password"
+                    value={paymentConfig.testWebhookSecret}
+                    onChange={(e) =>
+                      setPaymentConfig({ ...paymentConfig, testWebhookSecret: e.target.value })
+                    }
+                    placeholder="Enter test webhook secret"
+                    className="w-full px-3.5 py-2.5 bg-stone-50/50 border border-stone-200 rounded-xl text-xs font-mono text-stone-900 focus:bg-white focus:outline-none focus:ring-1 focus:ring-stone-900"
+                  />
+                </div>
+              </div>
+
+              {/* Live Mode Credentials Card */}
+              <div className={`p-6 bg-white rounded-2xl border shadow-2xs space-y-4 transition ${
+                !paymentConfig.testMode ? 'border-emerald-400 ring-2 ring-emerald-50' : 'border-stone-200/80 opacity-80'
+              }`}>
+                <div className="flex items-center justify-between pb-3 border-b border-stone-100">
+                  <div className="flex items-center gap-2">
+                    <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-emerald-100 text-emerald-800">
+                      Live Production
+                    </span>
+                    <h4 className="text-xs font-bold text-stone-900">Razorpay Live Production Credentials</h4>
+                  </div>
+                  {!paymentConfig.testMode && (
+                    <span className="text-[11px] font-semibold text-emerald-700">● Active</span>
+                  )}
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-xs font-semibold text-stone-800 mb-1">
+                      Live Key ID (rzp_live_...)
+                    </label>
+                    <input
+                      type="text"
+                      value={paymentConfig.liveKeyId}
+                      onChange={(e) =>
+                        setPaymentConfig({ ...paymentConfig, liveKeyId: e.target.value })
+                      }
+                      placeholder="rzp_live_..."
+                      className="w-full px-3.5 py-2.5 bg-stone-50/50 border border-stone-200 rounded-xl text-xs font-mono text-stone-900 focus:bg-white focus:outline-none focus:ring-1 focus:ring-stone-900"
+                    />
                   </div>
 
                   <div>
                     <label className="block text-xs font-semibold text-stone-800 mb-1">
-                      Business Brand Name
+                      Live Key Secret
                     </label>
                     <input
-                      type="text"
-                      value={paymentConfig.businessName}
+                      type="password"
+                      value={paymentConfig.liveKeySecret}
                       onChange={(e) =>
-                        setPaymentConfig({ ...paymentConfig, businessName: e.target.value })
+                        setPaymentConfig({ ...paymentConfig, liveKeySecret: e.target.value })
                       }
-                      placeholder="Puffs 'n' Rolls Nashik"
-                      className="w-full px-3.5 py-2.5 bg-stone-50/50 border border-stone-200 rounded-xl text-xs text-stone-900 focus:bg-white focus:outline-none focus:ring-1 focus:ring-stone-900"
+                      placeholder="Enter live production secret"
+                      className="w-full px-3.5 py-2.5 bg-stone-50/50 border border-stone-200 rounded-xl text-xs font-mono text-stone-900 focus:bg-white focus:outline-none focus:ring-1 focus:ring-stone-900"
                     />
-                    <p className="text-[11px] text-stone-400 mt-1">
-                      Displayed on the customer checkout popup window.
-                    </p>
                   </div>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-stone-800 mb-1">
+                    Live Webhook Secret
+                  </label>
+                  <input
+                    type="password"
+                    value={paymentConfig.liveWebhookSecret}
+                    onChange={(e) =>
+                      setPaymentConfig({ ...paymentConfig, liveWebhookSecret: e.target.value })
+                    }
+                    placeholder="Enter live webhook secret"
+                    className="w-full px-3.5 py-2.5 bg-stone-50/50 border border-stone-200 rounded-xl text-xs font-mono text-stone-900 focus:bg-white focus:outline-none focus:ring-1 focus:ring-stone-900"
+                  />
+                </div>
+              </div>
+
+              {/* General & Brand Settings */}
+              <div className="p-6 bg-white rounded-2xl border border-stone-200/80 shadow-2xs space-y-4">
+                <div className="flex items-center gap-2 pb-3 border-b border-stone-100">
+                  <CreditCard className="w-4 h-4 text-stone-800" />
+                  <h3 className="text-sm font-serif font-bold text-stone-900">
+                    Checkout Display &amp; Branding
+                  </h3>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-stone-800 mb-1">
+                    Business Brand Name
+                  </label>
+                  <input
+                    type="text"
+                    value={paymentConfig.businessName}
+                    onChange={(e) =>
+                      setPaymentConfig({ ...paymentConfig, businessName: e.target.value })
+                    }
+                    placeholder="Puffs 'n' Rolls Nashik"
+                    className="w-full px-3.5 py-2.5 bg-stone-50/50 border border-stone-200 rounded-xl text-xs text-stone-900 focus:bg-white focus:outline-none focus:ring-1 focus:ring-stone-900"
+                  />
+                  <p className="text-[11px] text-stone-400 mt-1">
+                    Displayed at the top of the Razorpay checkout modal for customers.
+                  </p>
                 </div>
               </div>
 
