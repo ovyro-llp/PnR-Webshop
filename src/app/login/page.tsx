@@ -118,8 +118,8 @@ export default function CustomerLoginPage() {
                   onChange={(e) => setOtp(e.target.value)}
                   className="w-full text-center text-2xl font-mono tracking-widest py-3 bg-stone-50 border border-stone-200 rounded-xl focus:bg-white focus:ring-1 focus:ring-stone-900 focus:outline-none"
                 />
-                <p className="text-[11px] text-stone-400 text-center mt-1.5">
-                  (Demo: enter any 4 numbers or click verify)
+                <p className="text-[11px] text-stone-500 text-center mt-1.5">
+                  Enter the 4-digit verification code sent to your WhatsApp number.
                 </p>
               </div>
 

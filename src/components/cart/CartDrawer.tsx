@@ -419,7 +419,7 @@ export function CartDrawer({ outletSlug, campaignSlug }: CartDrawerProps) {
                             Customer Verification Required
                           </h4>
                           <p className="text-[11px] text-stone-500 leading-relaxed mt-0.5">
-                            Please verify your WhatsApp number to receive live tracking and Mangwale delivery notifications.
+                            Please verify your WhatsApp number to receive real-time bakery tracking and delivery alerts.
                           </p>
                         </div>
                       </div>
@@ -475,7 +475,7 @@ export function CartDrawer({ outletSlug, campaignSlug }: CartDrawerProps) {
                             onClick={openCustomerLogin}
                             className="text-[11px] text-stone-500 hover:text-stone-900 underline transition cursor-pointer"
                           >
-                            Or sign in with 4-digit WhatsApp OTP modal
+                            Or sign in with 4-digit WhatsApp OTP
                           </button>
                         </div>
                       </div>

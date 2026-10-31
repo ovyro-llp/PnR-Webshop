@@ -613,7 +613,7 @@ export default function MarketingViewPage() {
                   <span className="font-mono font-bold text-stone-900">
                     {paymentConfig.testMode
                       ? paymentConfig.testKeyId || paymentConfig.razorpayKeyId || 'rzp_test_pnr_demo'
-                      : paymentConfig.liveKeyId || '⚠️ No Live Key Configured (Fallback to Test)'}
+                      : paymentConfig.liveKeyId || 'Pending Live Configuration (Using Test Mode)'}
                   </span>
                 </div>
               </div>
@@ -625,9 +625,9 @@ export default function MarketingViewPage() {
                 <div className="flex items-center justify-between pb-3 border-b border-stone-100">
                   <div className="flex items-center gap-2">
                     <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-amber-100 text-amber-800">
-                      Test / Sandbox
+                      Sandbox Test Mode
                     </span>
-                    <h4 className="text-xs font-bold text-stone-900">Razorpay Test Credentials</h4>
+                    <h4 className="text-xs font-bold text-stone-900">Sandbox API Keys</h4>
                   </div>
                   {paymentConfig.testMode && (
                     <span className="text-[11px] font-semibold text-amber-700">● Active</span>
@@ -660,7 +660,7 @@ export default function MarketingViewPage() {
                       onChange={(e) =>
                         setPaymentConfig({ ...paymentConfig, testKeySecret: e.target.value })
                       }
-                      placeholder="Enter test secret or leave blank"
+                      placeholder="Enter test key secret"
                       className="w-full px-3.5 py-2.5 bg-stone-50/50 border border-stone-200 rounded-xl text-xs font-mono text-stone-900 focus:bg-white focus:outline-none focus:ring-1 focus:ring-stone-900"
                     />
                   </div>
@@ -828,7 +828,7 @@ export default function MarketingViewPage() {
 
                   <div>
                     <label className="block text-xs font-semibold text-stone-800 mb-1">
-                      Mangwale Logistics Webhook Endpoint (Paste into Mangwale Partner Portal)
+                      Fleet Logistics Webhook Endpoint (Paste into Logistics Partner Portal)
                     </label>
                     <div className="flex items-center gap-2">
                       <input
@@ -916,7 +916,7 @@ export default function MarketingViewPage() {
                     <div>
                       <p className="text-xs font-bold text-stone-900">Test / Sandbox Mode</p>
                       <p className="text-[11px] text-stone-500">
-                        Simulate transactions with test cards &amp; UPI
+                        Enable sandbox testing before activating live collections
                       </p>
                     </div>
                     <input

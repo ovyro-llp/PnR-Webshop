@@ -80,21 +80,7 @@ export default function AdminLoginPage() {
     }
   };
 
-  const handleQuickLogin = async (loginEmail: string, loginPass: string) => {
-    setEmail(loginEmail);
-    setPassword(loginPass);
-    setError('');
-    setIsLoading(true);
 
-    const res = await loginAdmin(loginEmail, loginPass);
-    setIsLoading(false);
-
-    if (res.success) {
-      router.push('/admin/inventory');
-    } else {
-      setError(res.error || 'Authentication failed');
-    }
-  };
 
   return (
     <div className="min-h-screen flex flex-col justify-center items-center bg-[#FAF8F5] text-stone-900 p-4 font-sans">
@@ -175,52 +161,11 @@ export default function AdminLoginPage() {
           </button>
         </form>
 
-        {/* 1-Tap Demo Roles Switcher */}
-        <div className="pt-2">
-          <span className="text-[10px] font-semibold text-stone-400 uppercase tracking-wider block mb-2">
-            1-Tap Quick Login for Demo &amp; Review:
-          </span>
-          <div className="grid grid-cols-2 gap-2">
-            <button
-              type="button"
-              disabled={isLoading}
-              onClick={() => handleQuickLogin('admin@puffsnrolls.com', 'pnr@admin2026')}
-              className="p-2 text-left bg-stone-50 hover:bg-stone-100 rounded-xl border border-stone-200 transition cursor-pointer"
-            >
-              <span className="text-[11px] font-bold text-stone-900 block">HQ Super Admin</span>
-              <span className="text-[10px] text-stone-400">All Outlets &amp; Master Catalog</span>
-            </button>
-
-            <button
-              type="button"
-              disabled={isLoading}
-              onClick={() => handleQuickLogin('collegeroad@puffsnrolls.com', 'college2026')}
-              className="p-2 text-left bg-stone-50 hover:bg-stone-100 rounded-xl border border-stone-200 transition cursor-pointer"
-            >
-              <span className="text-[11px] font-bold text-stone-900 block">College Road Manager</span>
-              <span className="text-[10px] text-stone-400">Kitchen &amp; Stock Terminal</span>
-            </button>
-
-            <button
-              type="button"
-              disabled={isLoading}
-              onClick={() => handleQuickLogin('nashikroad@puffsnrolls.com', 'nashik2026')}
-              className="p-2 text-left bg-stone-50 hover:bg-stone-100 rounded-xl border border-stone-200 transition cursor-pointer"
-            >
-              <span className="text-[11px] font-bold text-stone-900 block">Nashik Road Manager</span>
-              <span className="text-[10px] text-stone-400">Station Hub Stock</span>
-            </button>
-
-            <button
-              type="button"
-              disabled={isLoading}
-              onClick={() => handleQuickLogin('indiranagar@puffsnrolls.com', 'indira2026')}
-              className="p-2 text-left bg-stone-50 hover:bg-stone-100 rounded-xl border border-stone-200 transition cursor-pointer"
-            >
-              <span className="text-[11px] font-bold text-stone-900 block">Indira Nagar Manager</span>
-              <span className="text-[10px] text-stone-400">Express Kitchen Stock</span>
-            </button>
-          </div>
+        {/* Security Notice */}
+        <div className="pt-1 text-center">
+          <p className="text-[11px] text-stone-400">
+            Authorized Puffs &apos;n&apos; Rolls bakery operations &amp; management access only.
+          </p>
         </div>
 
         <div className="pt-4 border-t border-stone-100 flex items-center justify-between text-[11px] text-stone-500">

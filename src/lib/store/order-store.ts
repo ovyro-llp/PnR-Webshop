@@ -230,7 +230,7 @@ if (!globalThis.__PNR_MARKETING_TAGS__) {
     tiktokPixelId: '',
     snapchatPixelId: '',
     metaCapiEnabled: true,
-    customHeaderScript: '<!-- P&R Analytics Tracking Engine Active -->',
+    customHeaderScript: '',
   };
 }
 
