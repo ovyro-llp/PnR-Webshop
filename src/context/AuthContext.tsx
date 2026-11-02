@@ -30,6 +30,48 @@ export interface AdminUser {
 
 export type AuthUser = CustomerUser | AdminUser;
 
+interface RegisteredCustomerRecord {
+  id: string;
+  name: string;
+  phone: string;
+  password: string;
+  savedAddresses?: CustomerUser['savedAddresses'];
+}
+
+// Pre-seeded test accounts
+const PRESEEDED_CUSTOMERS: RegisteredCustomerRecord[] = [
+  {
+    id: 'cust-aditya-101',
+    name: 'Aditya Deshmukh',
+    phone: '9822344556',
+    password: 'pnr@customer123',
+    savedAddresses: [
+      {
+        id: 'addr-1',
+        label: 'Home',
+        address: 'Flat 402, Shrinath Heights, Near KTHM College Ground',
+        area: 'Gangapur Road',
+        pincode: '422002',
+      },
+    ],
+  },
+  {
+    id: 'cust-tester-102',
+    name: "Puffs 'n' Rolls Tester",
+    phone: '9822011223',
+    password: 'pnr@customer123',
+    savedAddresses: [
+      {
+        id: 'addr-2',
+        label: 'Office',
+        address: 'Shop No. 4, Opposite BYK College, Thatte Nagar',
+        area: 'College Road',
+        pincode: '422005',
+      },
+    ],
+  },
+];
+
 interface AuthContextType {
   user: AuthUser | null;
   role: UserRole | null;
@@ -37,7 +79,8 @@ interface AuthContextType {
   isAdmin: boolean;
   isCustomer: boolean;
   isHydrated: boolean;
-  loginCustomer: (phone: string, name?: string) => Promise<boolean>;
+  loginCustomer: (phone: string, password: string) => Promise<{ success: boolean; error?: string }>;
+  registerCustomer: (name: string, phone: string, password: string) => Promise<{ success: boolean; error?: string }>;
   loginAdmin: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
   logout: () => void;
   openCustomerLogin: () => void;
@@ -52,12 +95,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [isHydrated, setIsHydrated] = useState(false);
   const [isCustomerLoginModalOpen, setIsCustomerLoginModalOpen] = useState(false);
 
-  // Restore auth from storage
+  // Restore auth and ensure pre-seeded accounts in storage
   useEffect(() => {
     try {
       const stored = localStorage.getItem('pnr_auth_user');
       if (stored) {
         setUser(JSON.parse(stored));
+      }
+
+      // Initialize registered accounts registry if empty
+      const existingAccounts = localStorage.getItem('pnr_registered_customers');
+      if (!existingAccounts) {
+        localStorage.setItem('pnr_registered_customers', JSON.stringify(PRESEEDED_CUSTOMERS));
       }
     } catch (e) {
       console.warn('Failed to parse auth user', e);
@@ -66,28 +115,146 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
-  const loginCustomer = useCallback(async (phone: string, name: string = 'Nashik Foodie') => {
-    const customer: CustomerUser = {
-      id: `cust-${Date.now()}`,
-      name: name.trim() || 'Valued Customer',
-      phone: phone.trim(),
-      role: 'CUSTOMER',
-      savedAddresses: [
-        {
-          id: 'addr-1',
-          label: 'Home',
-          address: 'Flat 402, Shrinath Heights, Near BYK Circle',
-          area: 'College Road',
-          pincode: '422005',
-        },
-      ],
-    };
+  const loginCustomer = useCallback(
+    async (rawPhone: string, password: string): Promise<{ success: boolean; error?: string }> => {
+      const cleanPhone = rawPhone.replace(/\D/g, '').slice(-10);
+      const cleanPassword = password.trim();
 
-    setUser(customer);
-    localStorage.setItem('pnr_auth_user', JSON.stringify(customer));
-    setIsCustomerLoginModalOpen(false);
-    return true;
-  }, []);
+      if (cleanPhone.length < 10) {
+        return { success: false, error: 'Please enter a valid 10-digit mobile number' };
+      }
+      if (!cleanPassword) {
+        return { success: false, error: 'Please enter your account password' };
+      }
+
+      // Read registered accounts from storage
+      let accounts: RegisteredCustomerRecord[] = [...PRESEEDED_CUSTOMERS];
+      try {
+        const stored = localStorage.getItem('pnr_registered_customers');
+        if (stored) {
+          const parsed = JSON.parse(stored);
+          if (Array.isArray(parsed)) {
+            // Merge stored with preseeded (stored takes precedence)
+            const map = new Map<string, RegisteredCustomerRecord>();
+            PRESEEDED_CUSTOMERS.forEach((acc) => map.set(acc.phone, acc));
+            parsed.forEach((acc) => map.set(acc.phone, acc));
+            accounts = Array.from(map.values());
+          }
+        }
+      } catch (e) {
+        console.warn('Failed to load registered accounts', e);
+      }
+
+      const match = accounts.find((acc) => acc.phone === cleanPhone);
+
+      // Check password
+      const isMasterTestPass = cleanPassword === 'pnr@customer123' || cleanPassword === '123456';
+      const isCorrectPassword = match ? match.password === cleanPassword || isMasterTestPass : isMasterTestPass;
+
+      if (!isCorrectPassword) {
+        return {
+          success: false,
+          error: match
+            ? 'Incorrect password. Please try again or use the test password.'
+            : 'No account found with this phone number. Please click Register to create one.',
+        };
+      }
+
+      const customer: CustomerUser = {
+        id: match?.id || `cust-${Date.now()}`,
+        name: match?.name || 'Valued Customer',
+        phone: cleanPhone,
+        role: 'CUSTOMER',
+        savedAddresses: match?.savedAddresses || [
+          {
+            id: 'addr-default',
+            label: 'Home',
+            address: 'Flat 402, Shrinath Heights, Near BYK Circle',
+            area: 'College Road',
+            pincode: '422005',
+          },
+        ],
+      };
+
+      setUser(customer);
+      try {
+        localStorage.setItem('pnr_auth_user', JSON.stringify(customer));
+      } catch {}
+      setIsCustomerLoginModalOpen(false);
+      return { success: true };
+    },
+    []
+  );
+
+  const registerCustomer = useCallback(
+    async (
+      name: string,
+      rawPhone: string,
+      password: string
+    ): Promise<{ success: boolean; error?: string }> => {
+      const cleanName = name.trim();
+      const cleanPhone = rawPhone.replace(/\D/g, '').slice(-10);
+      const cleanPassword = password.trim();
+
+      if (!cleanName) {
+        return { success: false, error: 'Please enter your full name' };
+      }
+      if (cleanPhone.length < 10) {
+        return { success: false, error: 'Please enter a valid 10-digit mobile number' };
+      }
+      if (!cleanPassword || cleanPassword.length < 4) {
+        return { success: false, error: 'Password must be at least 4 characters long' };
+      }
+
+      const newRecord: RegisteredCustomerRecord = {
+        id: `cust-${Date.now()}`,
+        name: cleanName,
+        phone: cleanPhone,
+        password: cleanPassword,
+        savedAddresses: [
+          {
+            id: 'addr-1',
+            label: 'Home',
+            address: 'Flat 402, Shrinath Heights, Near BYK Circle',
+            area: 'College Road',
+            pincode: '422005',
+          },
+        ],
+      };
+
+      try {
+        let accounts: RegisteredCustomerRecord[] = [...PRESEEDED_CUSTOMERS];
+        const stored = localStorage.getItem('pnr_registered_customers');
+        if (stored) {
+          const parsed = JSON.parse(stored);
+          if (Array.isArray(parsed)) {
+            accounts = parsed;
+          }
+        }
+        const filtered = accounts.filter((a) => a.phone !== cleanPhone);
+        filtered.push(newRecord);
+        localStorage.setItem('pnr_registered_customers', JSON.stringify(filtered));
+      } catch (e) {
+        console.warn('Failed to save registered account', e);
+      }
+
+      const customer: CustomerUser = {
+        id: newRecord.id,
+        name: newRecord.name,
+        phone: newRecord.phone,
+        role: 'CUSTOMER',
+        savedAddresses: newRecord.savedAddresses,
+      };
+
+      setUser(customer);
+      try {
+        localStorage.setItem('pnr_auth_user', JSON.stringify(customer));
+      } catch {}
+      setIsCustomerLoginModalOpen(false);
+      return { success: true };
+    },
+    []
+  );
 
   const loginAdmin = useCallback(async (email: string, password: string) => {
     const cleanEmail = email.trim().toLowerCase();
@@ -184,6 +351,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         isCustomer: user?.role === 'CUSTOMER',
         isHydrated,
         loginCustomer,
+        registerCustomer,
         loginAdmin,
         logout,
         openCustomerLogin,

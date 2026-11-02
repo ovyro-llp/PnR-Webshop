@@ -1,15 +1,20 @@
+'use client';
+
 import React from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { Phone, Mail, MapPin, ShieldCheck, Heart, Clock } from 'lucide-react';
+import { useLocation } from '@/context/LocationContext';
+import { Phone, MapPin, ShieldCheck, Clock, Navigation } from 'lucide-react';
 
 export function Footer() {
+  const { nearestOutlet, openLocationModal, distanceKm } = useLocation();
+
   return (
     <footer className="bg-[#1C1917] text-stone-400 py-12 sm:py-16 text-xs w-full border-t border-stone-800">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-10">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8 sm:gap-10">
           {/* Brand & Story */}
-          <div className="space-y-3 md:col-span-1">
+          <div className="space-y-3 md:col-span-2">
             <Link href="/" className="inline-block relative h-10 w-36">
               <Image
                 src="https://puffsnrolls.com/wp-content/uploads/2025/12/banner-logo.png"
@@ -19,47 +24,48 @@ export function Footer() {
                 className="object-contain brightness-0 invert"
               />
             </Link>
-            <p className="text-stone-400 text-xs leading-relaxed">
-              Where Every Bite Unrolls Happiness. Handcrafting Nashik&apos;s favorite flaky puffs, artisan rolls, and decadent celebration cakes since 2001.
+            <p className="text-stone-400 text-xs leading-relaxed max-w-md">
+              Where Every Bite Unrolls Happiness. Handcrafting Nashik&apos;s favorite flaky puffs, artisan rolls, and decadent celebration cakes since 2001. Delivered fresh from your local bakery kitchen.
             </p>
             <div className="flex items-center gap-2 pt-2 text-stone-300 text-[11px]">
               <ShieldCheck className="w-4 h-4 text-amber-400" />
-              <span>FSSAI Certified Bakery Kitchens</span>
+              <span>FSSAI Certified Bakery Kitchens • Pure Vegetarian Options Available</span>
             </div>
           </div>
 
-          {/* Bakery Outlets */}
+          {/* Customer's Nearest Bakery Kitchen (Exclusive - No other outlets visible) */}
           <div className="space-y-3">
-            <h4 className="font-semibold text-white uppercase tracking-wider text-[11px]">
-              Our Nashik Kitchens
+            <h4 className="font-semibold text-white uppercase tracking-wider text-[11px] flex items-center gap-1.5">
+              <MapPin className="w-3.5 h-3.5 text-amber-400" />
+              <span>Your Nearest Bakery</span>
             </h4>
             <div className="space-y-2 text-stone-400">
               <div>
-                <Link
-                  href="/college-road"
-                  className="font-medium text-stone-200 hover:text-amber-400 transition"
-                >
-                  College Road
-                </Link>
-                <p className="text-[11px] text-stone-500">Shop 4, Shreerang Heights, Opp. BYK College</p>
+                <p className="font-medium text-stone-200 text-sm">
+                  {nearestOutlet.name.replace("Puffs 'n' Rolls - ", '')}
+                </p>
+                <p className="text-[11px] text-stone-500 mt-0.5">
+                  {nearestOutlet.address}
+                </p>
+                {distanceKm && (
+                  <p className="text-[10px] text-amber-400 font-mono mt-0.5">
+                    {distanceKm} km from your location
+                  </p>
+                )}
               </div>
-              <div>
-                <Link
-                  href="/nashik-road"
-                  className="font-medium text-stone-200 hover:text-amber-400 transition"
-                >
-                  Nashik Road
-                </Link>
-                <p className="text-[11px] text-stone-500">Datta Mandir Chowk, Opp. Bytco Point</p>
+              <div className="pt-1 flex items-center gap-1 text-[11px] text-stone-400">
+                <Clock className="w-3.5 h-3.5 text-stone-500" />
+                <span>{nearestOutlet.openingHours}</span>
               </div>
-              <div>
-                <Link
-                  href="/indira-nagar"
-                  className="font-medium text-stone-200 hover:text-amber-400 transition"
+              <div className="pt-1">
+                <button
+                  type="button"
+                  onClick={openLocationModal}
+                  className="text-[11px] text-amber-400 hover:text-amber-300 underline flex items-center gap-1 cursor-pointer"
                 >
-                  Indira Nagar
-                </Link>
-                <p className="text-[11px] text-stone-500">Govind Nagar Ring Road, Near Jogging Track</p>
+                  <Navigation className="w-3 h-3" />
+                  <span>Update My Delivery Location</span>
+                </button>
               </div>
             </div>
           </div>
@@ -71,7 +77,7 @@ export function Footer() {
             </h4>
             <ul className="space-y-2">
               <li>
-                <Link href="/" className="hover:text-white transition">
+                <Link href={`/${nearestOutlet.slug}`} className="hover:text-white transition">
                   Browse Fresh Menu
                 </Link>
               </li>
@@ -97,48 +103,15 @@ export function Footer() {
               </li>
             </ul>
           </div>
-
-          {/* Helpline & Timings */}
-          <div className="space-y-3">
-            <h4 className="font-semibold text-white uppercase tracking-wider text-[11px]">
-              Order Helpline &amp; Hours
-            </h4>
-            <div className="space-y-2.5">
-              <a
-                href="tel:+919423639911"
-                className="flex items-center gap-2 text-stone-200 hover:text-amber-400 transition"
-              >
-                <Phone className="w-3.5 h-3.5 text-amber-400" />
-                <span className="font-medium">+91 94236 39911</span>
-              </a>
-              <a
-                href="mailto:care@puffsnrolls.com"
-                className="flex items-center gap-2 text-stone-300 hover:text-white transition"
-              >
-                <Mail className="w-3.5 h-3.5 text-stone-400" />
-                <span>care@puffsnrolls.com</span>
-              </a>
-              <div className="flex items-start gap-2 text-stone-400 text-[11px] pt-1">
-                <Clock className="w-3.5 h-3.5 text-stone-400 mt-0.5 shrink-0" />
-                <span>Open Everyday: 9:00 AM – 10:30 PM (Fresh hot batches every 2 hours)</span>
-              </div>
-            </div>
-          </div>
         </div>
 
-        {/* Bottom Legal bar */}
-        <div className="pt-8 border-t border-stone-800/80 flex flex-col sm:flex-row items-center justify-between text-stone-500 text-[11px] gap-3">
-          <p>© 2026 Puffs &apos;n&apos; Rolls. All rights reserved. Handcrafted in Nashik.</p>
+        {/* Bottom copyright */}
+        <div className="pt-8 border-t border-stone-800 flex flex-col sm:flex-row items-center justify-between gap-4 text-[11px] text-stone-500">
+          <p>© {new Date().getFullYear()} Puffs &apos;n&apos; Rolls Bakery. All rights reserved.</p>
           <div className="flex items-center gap-4">
-            <Link href="/privacy" className="hover:text-stone-300 transition">
-              Privacy Policy
-            </Link>
-            <span className="text-stone-700">•</span>
-            <Link href="/terms" className="hover:text-stone-300 transition">
-              Terms of Service
-            </Link>
-            <span className="text-stone-700">•</span>
-            <span className="text-stone-600">Baking Excellence Since 2001</span>
+            <a href={`tel:${nearestOutlet.phone}`} className="hover:text-stone-300 font-mono">
+              Direct Kitchen: {nearestOutlet.phone}
+            </a>
           </div>
         </div>
       </div>

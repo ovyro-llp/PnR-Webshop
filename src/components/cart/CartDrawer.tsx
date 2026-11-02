@@ -17,6 +17,10 @@ import {
   CreditCard,
   Phone,
   CheckCircle2,
+  Eye,
+  EyeOff,
+  KeyRound,
+  User,
 } from 'lucide-react';
 import { CustomerDetails, PaymentMethod } from '@/types';
 
@@ -27,7 +31,7 @@ interface CartDrawerProps {
 
 export function CartDrawer({ outletSlug, campaignSlug }: CartDrawerProps) {
   const router = useRouter();
-  const { user, isCustomer, loginCustomer, openCustomerLogin, logout } = useAuth();
+  const { user, isCustomer, loginCustomer, registerCustomer, openCustomerLogin, logout } = useAuth();
   const {
     items,
     cartOutletSlug,
@@ -50,8 +54,11 @@ export function CartDrawer({ outletSlug, campaignSlug }: CartDrawerProps) {
   const [submitError, setSubmitError] = useState('');
 
   // Inline auth state for unauthenticated users
+  const [authMode, setAuthMode] = useState<'LOGIN' | 'REGISTER'>('LOGIN');
   const [authName, setAuthName] = useState('');
   const [authPhone, setAuthPhone] = useState('');
+  const [authPassword, setAuthPassword] = useState('');
+  const [showAuthPassword, setShowAuthPassword] = useState(false);
   const [authError, setAuthError] = useState('');
   const [isLoggingIn, setIsLoggingIn] = useState(false);
 
@@ -88,20 +95,41 @@ export function CartDrawer({ outletSlug, campaignSlug }: CartDrawerProps) {
   const handleInlineLogin = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
     setAuthError('');
-    const cleanPhone = authPhone.replace(/\D/g, '');
+    const cleanPhone = authPhone.replace(/\D/g, '').slice(-10);
     if (cleanPhone.length < 10) {
-      setAuthError('Please enter a valid 10-digit WhatsApp number');
+      setAuthError('Please enter a valid 10-digit mobile number');
       return;
     }
+    if (!authPassword.trim()) {
+      setAuthError('Please enter your account password');
+      return;
+    }
+
     setIsLoggingIn(true);
     try {
-      await loginCustomer(cleanPhone, authName.trim() || 'Valued Customer');
-      setAuthError('');
+      if (authMode === 'LOGIN') {
+        const res = await loginCustomer(cleanPhone, authPassword);
+        if (!res.success) {
+          setAuthError(res.error || 'Incorrect password. Try pnr@customer123');
+        }
+      } else {
+        const res = await registerCustomer(authName || 'Valued Customer', cleanPhone, authPassword);
+        if (!res.success) {
+          setAuthError(res.error || 'Registration failed');
+        }
+      }
     } catch {
-      setAuthError('Failed to verify phone. Please try again.');
+      setAuthError('Failed to sign in. Please try again.');
     } finally {
       setIsLoggingIn(false);
     }
+  };
+
+  const handleQuickFillCartTest = () => {
+    setAuthMode('LOGIN');
+    setAuthPhone('9822344556');
+    setAuthPassword('pnr@customer123');
+    setAuthError('');
   };
 
   const loadRazorpayScript = () => {
@@ -123,13 +151,8 @@ export function CartDrawer({ outletSlug, campaignSlug }: CartDrawerProps) {
     setSubmitError('');
 
     if (!isCustomerLoggedIn) {
-      const cleanAuth = authPhone.replace(/\D/g, '');
-      if (cleanAuth.length >= 10) {
-        await loginCustomer(cleanAuth, authName.trim() || 'Valued Customer');
-      } else {
-        setSubmitError('Please verify your WhatsApp phone number before proceeding to payment');
-        return;
-      }
+      setSubmitError('Please sign in with your mobile number and password before proceeding to payment');
+      return;
     }
 
     if (!customer.name.trim()) {
@@ -137,7 +160,7 @@ export function CartDrawer({ outletSlug, campaignSlug }: CartDrawerProps) {
       return;
     }
     if (!customer.phone.trim() || customer.phone.replace(/\D/g, '').length < 10) {
-      setSubmitError('Please enter a valid 10-digit WhatsApp phone number');
+      setSubmitError('Please enter a valid 10-digit mobile phone number');
       return;
     }
     if (!customer.address.trim()) {
@@ -408,30 +431,82 @@ export function CartDrawer({ outletSlug, campaignSlug }: CartDrawerProps) {
                 {/* Customer Verification & Delivery Form */}
                 <div className="space-y-3 pt-2 border-t border-stone-200">
                   {!isCustomerLoggedIn ? (
-                    /* Step 1: Customer Phone Verification (Mandatory before Payment) */
+                    /* Step 1: Customer Authentication (Mandatory before Payment) */
                     <div className="bg-stone-50 border border-stone-200/90 rounded-2xl p-4 space-y-3">
                       <div className="flex items-start gap-2.5">
                         <div className="w-8 h-8 rounded-xl bg-amber-100 text-amber-900 flex items-center justify-center shrink-0">
-                          <Phone className="w-4 h-4 text-amber-800" />
+                          <Lock className="w-4 h-4 text-amber-800" />
                         </div>
                         <div className="flex-1 min-w-0">
                           <h4 className="text-xs font-bold text-stone-900">
-                            Customer Verification Required
+                            Customer Sign In Required
                           </h4>
                           <p className="text-[11px] text-stone-500 leading-relaxed mt-0.5">
-                            Please verify your WhatsApp number to receive real-time bakery tracking and delivery alerts.
+                            Sign in with your phone number and password to track delivery and access rewards.
                           </p>
                         </div>
                       </div>
 
-                      <div className="space-y-2 pt-1">
-                        <input
-                          type="text"
-                          placeholder="Your Full Name (e.g. Rahul Deshmukh) *"
-                          value={authName}
-                          onChange={(e) => setAuthName(e.target.value)}
-                          className="w-full px-3 py-2 bg-white border border-stone-200 rounded-xl text-xs focus:ring-1 focus:ring-stone-900 focus:outline-none"
-                        />
+                      {/* Test Customer Badge */}
+                      <div className="bg-white/80 border border-amber-200/70 rounded-xl p-2 text-xs flex items-center justify-between">
+                        <div className="flex items-center gap-1.5 min-w-0">
+                          <KeyRound className="w-3.5 h-3.5 text-amber-700 shrink-0" />
+                          <span className="text-[10px] text-amber-900 font-mono truncate">
+                            Test: 9822344556 / pnr@customer123
+                          </span>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={handleQuickFillCartTest}
+                          className="text-[10px] font-bold uppercase text-amber-800 hover:text-amber-950 underline shrink-0 cursor-pointer ml-1"
+                        >
+                          Auto Fill
+                        </button>
+                      </div>
+
+                      {/* Mode Toggle */}
+                      <div className="flex rounded-lg bg-stone-200/70 p-0.5">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setAuthMode('LOGIN');
+                            setAuthError('');
+                          }}
+                          className={`flex-1 py-1 text-[11px] font-semibold rounded-md transition cursor-pointer ${
+                            authMode === 'LOGIN'
+                              ? 'bg-white text-stone-900 shadow-2xs'
+                              : 'text-stone-600 hover:text-stone-900'
+                          }`}
+                        >
+                          Sign In
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setAuthMode('REGISTER');
+                            setAuthError('');
+                          }}
+                          className={`flex-1 py-1 text-[11px] font-semibold rounded-md transition cursor-pointer ${
+                            authMode === 'REGISTER'
+                              ? 'bg-white text-stone-900 shadow-2xs'
+                              : 'text-stone-600 hover:text-stone-900'
+                          }`}
+                        >
+                          New Customer
+                        </button>
+                      </div>
+
+                      <div className="space-y-2 pt-0.5">
+                        {authMode === 'REGISTER' && (
+                          <input
+                            type="text"
+                            placeholder="Your Full Name (e.g. Rahul Deshmukh) *"
+                            value={authName}
+                            onChange={(e) => setAuthName(e.target.value)}
+                            className="w-full px-3 py-2 bg-white border border-stone-200 rounded-xl text-xs focus:ring-1 focus:ring-stone-900 focus:outline-none"
+                          />
+                        )}
+
                         <div className="relative">
                           <span className="absolute left-3 top-2 text-xs font-bold text-stone-400 font-mono">
                             +91
@@ -440,13 +515,34 @@ export function CartDrawer({ outletSlug, campaignSlug }: CartDrawerProps) {
                             type="tel"
                             inputMode="tel"
                             maxLength={10}
-                            placeholder="10-digit WhatsApp Number *"
+                            placeholder="10-digit Mobile Number *"
                             value={authPhone}
                             onChange={(e) =>
                               setAuthPhone(e.target.value.replace(/\D/g, '').slice(0, 10))
                             }
                             className="w-full pl-10 pr-3 py-2 bg-white border border-stone-200 rounded-xl text-xs font-mono focus:ring-1 focus:ring-stone-900 focus:outline-none"
                           />
+                        </div>
+
+                        <div className="relative">
+                          <input
+                            type={showAuthPassword ? 'text' : 'password'}
+                            placeholder="Password *"
+                            value={authPassword}
+                            onChange={(e) => setAuthPassword(e.target.value)}
+                            className="w-full px-3 pr-9 py-2 bg-white border border-stone-200 rounded-xl text-xs focus:ring-1 focus:ring-stone-900 focus:outline-none"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => setShowAuthPassword(!showAuthPassword)}
+                            className="absolute right-2.5 top-2.5 text-stone-400 hover:text-stone-700 cursor-pointer"
+                          >
+                            {showAuthPassword ? (
+                              <EyeOff className="w-3.5 h-3.5" />
+                            ) : (
+                              <Eye className="w-3.5 h-3.5" />
+                            )}
+                          </button>
                         </div>
 
                         {authError && (
@@ -460,10 +556,14 @@ export function CartDrawer({ outletSlug, campaignSlug }: CartDrawerProps) {
                           className="w-full py-2.5 bg-[#1C1917] hover:bg-stone-800 text-white rounded-xl text-xs font-semibold uppercase tracking-wider flex items-center justify-center gap-1.5 transition cursor-pointer disabled:opacity-60"
                         >
                           {isLoggingIn ? (
-                            <span>Verifying Phone...</span>
+                            <span>Signing In...</span>
                           ) : (
                             <>
-                              <span>Verify Phone &amp; Continue</span>
+                              <span>
+                                {authMode === 'LOGIN'
+                                  ? 'Sign In & Continue'
+                                  : 'Create Account & Continue'}
+                              </span>
                               <ArrowRight className="w-3.5 h-3.5" />
                             </>
                           )}
@@ -475,7 +575,7 @@ export function CartDrawer({ outletSlug, campaignSlug }: CartDrawerProps) {
                             onClick={openCustomerLogin}
                             className="text-[11px] text-stone-500 hover:text-stone-900 underline transition cursor-pointer"
                           >
-                            Or sign in with 4-digit WhatsApp OTP
+                            Or open customer sign-in page
                           </button>
                         </div>
                       </div>
@@ -688,7 +788,7 @@ export function CartDrawer({ outletSlug, campaignSlug }: CartDrawerProps) {
                 <button
                   type="button"
                   onClick={() => {
-                    if (authPhone.replace(/\D/g, '').length >= 10) {
+                    if (authPhone.replace(/\D/g, '').length >= 10 && authPassword.trim()) {
                       handleInlineLogin();
                     } else {
                       openCustomerLogin();
@@ -697,8 +797,8 @@ export function CartDrawer({ outletSlug, campaignSlug }: CartDrawerProps) {
                   disabled={isLoggingIn}
                   className="w-full py-3 bg-[#1C1917] hover:bg-stone-800 text-white rounded-full font-medium text-xs uppercase tracking-wider transition shadow-sm flex items-center justify-center gap-2 disabled:opacity-60 cursor-pointer"
                 >
-                  <Phone className="w-3.5 h-3.5 text-amber-400" />
-                  <span>Verify Phone to Checkout • ₹{total}</span>
+                  <Lock className="w-3.5 h-3.5 text-amber-400" />
+                  <span>Sign In to Checkout • ₹{total}</span>
                   <ArrowRight className="w-3.5 h-3.5" />
                 </button>
               ) : (

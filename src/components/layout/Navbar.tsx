@@ -4,10 +4,11 @@ import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
-import { OUTLETS } from '@/lib/data/mock-data';
-import { Outlet } from '@/types';
 import { useCart } from '@/context/CartContext';
 import { useAuth } from '@/context/AuthContext';
+import { useLocation } from '@/context/LocationContext';
+import { Outlet } from '@/types';
+import { OUTLETS } from '@/lib/data/mock-data';
 import {
   ShoppingBag,
   MapPin,
@@ -17,10 +18,11 @@ import {
   X,
   Phone,
   Store,
+  Sparkles,
   ChevronRight,
   ShieldCheck,
-  UtensilsCrossed,
-  Sparkles,
+  Compass,
+  Navigation,
 } from 'lucide-react';
 
 interface NavbarProps {
@@ -32,20 +34,11 @@ export function Navbar({ currentOutletSlug, currentCampaignSlug }: NavbarProps) 
   const router = useRouter();
   const { itemCount, setIsCartOpen } = useCart();
   const { user, isCustomer, openCustomerLogin } = useAuth();
-  const [outlets, setOutlets] = useState<Outlet[]>(OUTLETS);
+  const { nearestOutlet, openLocationModal, distanceKm } = useLocation();
   const [categories, setCategories] = useState<{ id: string; name: string }[]>([]);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
 
   useEffect(() => {
-    fetch('/api/outlets')
-      .then((res) => res.json())
-      .then((data) => {
-        if (data.success && data.outlets) {
-          setOutlets(data.outlets);
-        }
-      })
-      .catch(() => {});
-
     fetch('/api/categories')
       .then((res) => res.json())
       .then((data) => {
@@ -56,26 +49,16 @@ export function Navbar({ currentOutletSlug, currentCampaignSlug }: NavbarProps) 
       .catch(() => {});
   }, []);
 
-  const handleOutletChange = (newSlug: string) => {
-    setIsDrawerOpen(false);
-    if (newSlug) {
-      if (currentCampaignSlug) {
-        router.push(`/${newSlug}/${currentCampaignSlug}`);
-      } else {
-        router.push(`/${newSlug}`);
-      }
-    } else {
-      router.push('/');
-    }
-  };
-
-  const currentOutlet = outlets.find((o) => o.slug === currentOutletSlug);
+  // Authoritative outlet for this customer is their nearest bakery
+  const effectiveOutlet =
+    (currentOutletSlug && OUTLETS.find((o) => o.slug === currentOutletSlug)) ||
+    nearestOutlet;
 
   return (
     <>
       <header className="sticky top-0 z-40 bg-[#FDFCFB]/95 backdrop-blur-md border-b border-stone-200/80 transition-all w-full">
         {/* Top subtle announcement bar */}
-        <div className="bg-[#1C1917] text-stone-300 text-[10px] sm:text-[11px] py-1 px-3 text-center tracking-wider uppercase font-medium truncate w-full">
+        <div className="bg-[#1C1917] text-stone-300 text-[10px] sm:text-[11px] py-1 px-3 text-center tracking-wider uppercase font-medium truncate w-full flex items-center justify-center gap-2">
           <span>Baking Excellence Since 2001 • Handcrafted in Nashik</span>
         </div>
 
@@ -106,47 +89,50 @@ export function Navbar({ currentOutletSlug, currentCampaignSlug }: NavbarProps) 
             </Link>
           </div>
 
-          {/* Center-Left: Luxury Outlet Switcher */}
-          <div className="flex items-center max-w-[130px] sm:max-w-xs shrink min-w-0">
-            <div className="relative flex items-center bg-white border border-stone-200 rounded-full px-2.5 py-1 text-xs text-stone-700 hover:border-stone-400 transition shadow-xs w-full">
-              <MapPin className="w-3 h-3 text-stone-600 mr-1 shrink-0" />
-              <select
-                value={currentOutletSlug || ''}
-                onChange={(e) => handleOutletChange(e.target.value)}
-                className="appearance-none bg-transparent font-medium text-stone-800 text-[10px] sm:text-xs pr-4 focus:outline-none cursor-pointer truncate w-full"
-              >
-                <option value="">All Outlets</option>
-                {outlets.map((outlet) => (
-                  <option key={outlet.slug} value={outlet.slug}>
-                    {outlet.name.replace("Puffs 'n' Rolls - ", '')}
-                  </option>
-                ))}
-              </select>
-              <ChevronDown className="w-3 h-3 text-stone-400 absolute right-1.5 pointer-events-none shrink-0" />
-            </div>
+          {/* Center-Left: Nearest Bakery Indicator (No other outlets exposed) */}
+          <div className="flex items-center max-w-[170px] sm:max-w-xs shrink min-w-0">
+            <button
+              type="button"
+              onClick={openLocationModal}
+              className="relative flex items-center bg-white border border-stone-200/90 hover:border-stone-400 rounded-full px-2.5 sm:px-3 py-1 text-xs text-stone-700 transition shadow-xs cursor-pointer group truncate"
+              title="Your assigned nearest bakery based on location. Click to update location."
+            >
+              <MapPin className="w-3.5 h-3.5 text-amber-700 mr-1.5 shrink-0 group-hover:scale-110 transition-transform" />
+              <div className="truncate text-left">
+                <span className="font-semibold text-[10px] sm:text-xs text-stone-900 block truncate">
+                  {effectiveOutlet.name.replace("Puffs 'n' Rolls - ", '')}
+                </span>
+                <span className="text-[9px] text-stone-400 font-mono hidden sm:block">
+                  {distanceKm ? `${distanceKm} km • ` : ''}Nearest Bakery
+                </span>
+              </div>
+              <ChevronDown className="w-3 h-3 text-stone-400 ml-1.5 shrink-0" />
+            </button>
           </div>
 
           {/* Desktop Direct Navigation (Hidden on Mobile, Visible on Desktop) */}
           <nav className="hidden md:flex items-center gap-6 text-xs font-medium text-stone-600">
             <Link
-              href="/"
-              className="hover:text-stone-950 transition"
+              href={`/${effectiveOutlet.slug}`}
+              className="hover:text-stone-950 transition font-semibold"
             >
-              Our Outlets
+              Bakery Menu
             </Link>
-            <Link
-              href={currentOutletSlug ? `/${currentOutletSlug}` : '/college-road'}
-              className="hover:text-stone-950 transition"
+            <button
+              type="button"
+              onClick={openLocationModal}
+              className="hover:text-stone-950 transition flex items-center gap-1 cursor-pointer"
             >
-              Fresh Menu
-            </Link>
+              <Navigation className="w-3 h-3 text-amber-700" />
+              <span>Change Location</span>
+            </button>
             <a
-              href="tel:+919822011223"
+              href={`tel:${effectiveOutlet.phone}`}
               className="hover:text-stone-950 transition flex items-center gap-1 font-mono text-[11px]"
-              title="Call Bakery Helpline"
+              title="Call Bakery Kitchen"
             >
-              <Phone className="w-3 h-3 text-amber-600" />
-              <span>+91 98220 11223</span>
+              <Phone className="w-3 h-3 text-amber-700" />
+              <span>{effectiveOutlet.phone}</span>
             </a>
           </nav>
 
@@ -230,67 +216,72 @@ export function Navbar({ currentOutletSlug, currentCampaignSlug }: NavbarProps) 
 
               {/* Scrollable Nav Content */}
               <div className="flex-1 overflow-y-auto p-4 sm:p-5 space-y-5 text-stone-800 text-xs">
-                {/* Active Outlet Quick Card */}
-                {currentOutlet && (
-                  <div className="p-3 bg-white rounded-2xl border border-stone-200/90 shadow-2xs space-y-1">
-                    <span className="text-[10px] uppercase font-mono text-stone-400 font-semibold block">
-                      Current Outlet
-                    </span>
-                    <p className="font-serif font-bold text-stone-900 text-sm">
-                      {currentOutlet.name}
-                    </p>
-                    <p className="text-[11px] text-stone-500">
-                      {currentOutlet.address}
-                    </p>
-                    <div className="pt-2 flex items-center justify-between text-[11px]">
-                      <span className="text-emerald-700 font-medium">● Open Now</span>
-                      <span className="text-stone-400 font-mono">
-                        {currentOutlet.deliveryTimeEstimate}
-                      </span>
-                    </div>
-                  </div>
-                )}
-
-                {/* Section 1: Nashik Bakery Outlets */}
-                <div className="space-y-2">
+                {/* Nearest Outlet Exclusive Card (Zero other outlets exposed) */}
+                <div className="p-3.5 bg-white rounded-2xl border border-stone-200/90 shadow-2xs space-y-2">
                   <div className="flex items-center justify-between">
-                    <p className="text-[10px] font-bold uppercase tracking-wider text-stone-400">
-                      Our Nashik Outlets
-                    </p>
-                    <Link
-                      href="/"
-                      onClick={() => setIsDrawerOpen(false)}
-                      className="text-[10px] text-stone-600 hover:text-stone-900 font-semibold underline"
-                    >
-                      View All
-                    </Link>
+                    <span className="text-[10px] uppercase font-mono text-amber-800 font-bold tracking-wider flex items-center gap-1">
+                      <MapPin className="w-3 h-3 text-amber-700" />
+                      Nearest Bakery Kitchen
+                    </span>
+                    <span className="text-[10px] font-medium text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full">
+                      ● Open Now
+                    </span>
                   </div>
-
-                  <div className="space-y-1">
-                    {outlets.map((outlet) => {
-                      const isCurrent = currentOutletSlug === outlet.slug;
-                      return (
-                        <button
-                          key={outlet.slug}
-                          onClick={() => handleOutletChange(outlet.slug)}
-                          className={`w-full p-2.5 rounded-xl border text-left transition flex items-center justify-between cursor-pointer ${
-                            isCurrent
-                              ? 'bg-stone-900 text-white border-stone-900 font-medium shadow-xs'
-                              : 'bg-white hover:bg-stone-100 text-stone-700 border-stone-200'
-                          }`}
-                        >
-                          <div className="flex items-center gap-2">
-                            <Store className={`w-3.5 h-3.5 ${isCurrent ? 'text-amber-400' : 'text-stone-400'}`} />
-                            <span className="font-semibold">{outlet.name.replace("Puffs 'n' Rolls - ", '')}</span>
-                          </div>
-                          <ChevronRight className={`w-3.5 h-3.5 ${isCurrent ? 'text-stone-300' : 'text-stone-400'}`} />
-                        </button>
-                      );
-                    })}
+                  <div>
+                    <p className="font-serif font-bold text-stone-900 text-sm">
+                      {effectiveOutlet.name}
+                    </p>
+                    <p className="text-[11px] text-stone-500 mt-0.5">
+                      {effectiveOutlet.address}
+                    </p>
+                  </div>
+                  <div className="pt-1 flex items-center justify-between text-[11px] border-t border-stone-100">
+                    <span className="text-stone-500 font-mono">
+                      {effectiveOutlet.deliveryTimeEstimate}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setIsDrawerOpen(false);
+                        openLocationModal();
+                      }}
+                      className="text-stone-800 hover:text-stone-950 font-semibold underline cursor-pointer"
+                    >
+                      Update Location
+                    </button>
                   </div>
                 </div>
 
-                {/* Section 2: Bakery Menu Categories */}
+                {/* Section: Quick Links */}
+                <div className="space-y-1">
+                  <Link
+                    href={`/${effectiveOutlet.slug}`}
+                    onClick={() => setIsDrawerOpen(false)}
+                    className="w-full p-2.5 rounded-xl bg-stone-900 text-white font-medium flex items-center justify-between shadow-xs"
+                  >
+                    <div className="flex items-center gap-2">
+                      <Store className="w-3.5 h-3.5 text-amber-400" />
+                      <span>Order from {effectiveOutlet.name.replace("Puffs 'n' Rolls - ", '')}</span>
+                    </div>
+                    <ChevronRight className="w-3.5 h-3.5 text-stone-400" />
+                  </Link>
+
+                  <button
+                    onClick={() => {
+                      setIsDrawerOpen(false);
+                      openLocationModal();
+                    }}
+                    className="w-full p-2.5 rounded-xl bg-white hover:bg-stone-100 border border-stone-200 text-stone-700 font-medium flex items-center justify-between cursor-pointer"
+                  >
+                    <div className="flex items-center gap-2">
+                      <Navigation className="w-3.5 h-3.5 text-amber-700" />
+                      <span>Detect Nearest Bakery</span>
+                    </div>
+                    <span className="text-[10px] text-stone-400 font-mono">GPS</span>
+                  </button>
+                </div>
+
+                {/* Section: Bakery Menu Categories */}
                 <div className="space-y-2">
                   <p className="text-[10px] font-bold uppercase tracking-wider text-stone-400">
                     Artisanal Categories
@@ -311,8 +302,7 @@ export function Navbar({ currentOutletSlug, currentCampaignSlug }: NavbarProps) 
                         key={cat}
                         onClick={() => {
                           setIsDrawerOpen(false);
-                          const target = currentOutletSlug ? `/${currentOutletSlug}` : '/';
-                          router.push(target);
+                          router.push(`/${effectiveOutlet.slug}`);
                         }}
                         className="p-2 rounded-xl bg-white border border-stone-200/80 text-[11px] font-medium text-stone-700 hover:border-stone-400 hover:bg-stone-50 transition text-left cursor-pointer truncate"
                       >
@@ -322,55 +312,47 @@ export function Navbar({ currentOutletSlug, currentCampaignSlug }: NavbarProps) 
                   </div>
                 </div>
 
-                {/* Section 3: Customer Shortcuts */}
-                <div className="space-y-2 pt-2 border-t border-stone-200/80">
-                  <p className="text-[10px] font-bold uppercase tracking-wider text-stone-400">
-                    Your Account
-                  </p>
-
-                  <Link
-                    href="/account"
-                    onClick={() => setIsDrawerOpen(false)}
-                    className="p-2.5 rounded-xl bg-white border border-stone-200 flex items-center justify-between hover:bg-stone-50 transition"
+                {/* Section: Direct Bakery Hotline */}
+                <div className="p-3 bg-amber-50/60 rounded-2xl border border-amber-200/70 space-y-1">
+                  <span className="text-[10px] uppercase font-mono text-amber-900 font-bold block">
+                    Direct Kitchen Hotline
+                  </span>
+                  <a
+                    href={`tel:${effectiveOutlet.phone}`}
+                    className="font-mono text-xs font-bold text-stone-900 flex items-center gap-1.5 hover:underline"
                   >
-                    <div className="flex items-center gap-2">
-                      <User className="w-3.5 h-3.5 text-stone-600" />
-                      <span className="font-medium">My Orders &amp; Addresses</span>
-                    </div>
-                    <ChevronRight className="w-3.5 h-3.5 text-stone-400" />
-                  </Link>
+                    <Phone className="w-3.5 h-3.5 text-amber-800" />
+                    <span>{effectiveOutlet.phone}</span>
+                  </a>
+                  <p className="text-[10px] text-stone-500">
+                    Live from {effectiveOutlet.openingHours}
+                  </p>
                 </div>
               </div>
 
               {/* Drawer Footer */}
               <div className="p-4 border-t border-stone-200 bg-white space-y-2">
-                <a
-                  href="tel:+919822011223"
-                  className="w-full py-2.5 px-3 bg-stone-900 text-white rounded-xl text-xs font-semibold flex items-center justify-center gap-2 hover:bg-stone-800 transition"
-                >
-                  <Phone className="w-3.5 h-3.5 text-amber-400" />
-                  <span>Call Bakery Helpline</span>
-                </a>
-                <p className="text-[10px] text-stone-400 text-center">
-                  Baking Fresh in Nashik Since 2001
-                </p>
-                <div className="flex items-center justify-center gap-3 text-[10px] text-stone-500 pt-1">
+                {user && isCustomer ? (
                   <Link
-                    href="/privacy"
+                    href="/account"
                     onClick={() => setIsDrawerOpen(false)}
-                    className="hover:text-stone-800 transition"
+                    className="w-full py-2.5 px-3 bg-stone-100 hover:bg-stone-200 text-stone-900 rounded-xl font-medium text-xs flex items-center justify-center gap-2 transition"
                   >
-                    Privacy Policy
+                    <User className="w-3.5 h-3.5" />
+                    <span>My Account ({user.name.split(' ')[0]})</span>
                   </Link>
-                  <span>•</span>
-                  <Link
-                    href="/terms"
-                    onClick={() => setIsDrawerOpen(false)}
-                    className="hover:text-stone-800 transition"
+                ) : (
+                  <button
+                    onClick={() => {
+                      setIsDrawerOpen(false);
+                      openCustomerLogin();
+                    }}
+                    className="w-full py-2.5 px-3 bg-[#1C1917] hover:bg-stone-800 text-white rounded-xl font-medium text-xs flex items-center justify-center gap-2 transition cursor-pointer"
                   >
-                    Terms of Service
-                  </Link>
-                </div>
+                    <User className="w-3.5 h-3.5" />
+                    <span>Customer Sign In</span>
+                  </button>
+                )}
               </div>
             </div>
           </div>

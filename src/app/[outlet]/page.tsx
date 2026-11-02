@@ -176,7 +176,7 @@ export default async function OutletPage({
                   href="/"
                   className="px-4 py-2 bg-[#1C1917] text-white rounded-full text-xs font-semibold hover:bg-stone-800 transition"
                 >
-                  Explore Other Outlets
+                  Back to Bakery Menu
                 </Link>
               </div>
             </div>

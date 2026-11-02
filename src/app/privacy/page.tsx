@@ -37,7 +37,7 @@ export default function PrivacyPolicyPage() {
           </p>
           <ul className="list-disc pl-5 space-y-1.5 text-stone-600">
             <li>
-              <strong>Customer Identity &amp; Contact:</strong> Your full name, mobile phone number, and optional email address for order receipts and OTP verification.
+              <strong>Customer Identity &amp; Contact:</strong> Your full name, mobile phone number, and optional email address for order receipts and delivery updates.
             </li>
             <li>
               <strong>Doorstep Delivery Address:</strong> Flat/house number, apartment/building name, street, landmark, area in Nashik (e.g., College Road, Nashik Road, Indira Nagar, Gangapur Road), pincode, and specific delivery instructions (e.g., doorbell instructions).

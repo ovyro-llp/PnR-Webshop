@@ -1,0 +1,198 @@
+'use client';
+
+import React from 'react';
+import { useLocation } from '@/context/LocationContext';
+import { MapPin, Navigation, X, Check, Building2, Sparkles, Loader2, AlertCircle } from 'lucide-react';
+import Image from 'next/image';
+
+const LOCALITY_OPTIONS = [
+  {
+    slug: 'college-road',
+    name: 'College Road / Thatte Nagar',
+    areas: 'Gangapur Road, Canada Corner, KTHM, BYK Circle',
+    badge: 'Flagship Outlet',
+  },
+  {
+    slug: 'nashik-road',
+    name: 'Nashik Road / Bytco Point',
+    areas: 'Opp. Railway Station, Jail Road, Deolali Gaon',
+    badge: 'Celebration Cakes',
+  },
+  {
+    slug: 'indira-nagar',
+    name: 'Indira Nagar / Govind Nagar',
+    areas: 'Ring Road, Mumbai Naka, Pathardi Phata',
+    badge: 'Artisanal Bakes',
+  },
+];
+
+export function LocationPromptModal() {
+  const {
+    nearestOutlet,
+    isLocationModalOpen,
+    closeLocationModal,
+    requestLocation,
+    setManualOutlet,
+    isDetecting,
+    locationError,
+    distanceKm,
+    hasSetLocation,
+  } = useLocation();
+
+  if (!isLocationModalOpen) return null;
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in duration-200">
+      <div className="bg-[#FAF8F5] border border-stone-200 rounded-3xl max-w-md w-full p-6 sm:p-8 relative shadow-2xl space-y-6">
+        {/* Close Button */}
+        <button
+          onClick={closeLocationModal}
+          className="absolute top-5 right-5 text-stone-400 hover:text-stone-800 p-1.5 rounded-full hover:bg-stone-200/50 transition cursor-pointer"
+          aria-label="Close"
+        >
+          <X className="w-5 h-5" />
+        </button>
+
+        {/* Brand Header */}
+        <div className="text-center space-y-2">
+          <div className="relative h-11 w-36 mx-auto">
+            <Image
+              src="https://puffsnrolls.com/wp-content/uploads/2025/12/banner-logo.png"
+              alt="Puffs 'n' Rolls"
+              fill
+              sizes="144px"
+              className="object-contain"
+            />
+          </div>
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-semibold tracking-widest uppercase bg-amber-100/70 text-amber-900 border border-amber-200/60">
+            <Sparkles className="w-3 h-3 text-amber-700" />
+            <span>Fast Fresh Delivery</span>
+          </div>
+          <h3 className="text-xl font-serif font-bold text-stone-900 tracking-tight pt-1">
+            Find Your Nearest Bakery
+          </h3>
+          <p className="text-xs text-stone-600 max-w-xs mx-auto leading-relaxed">
+            Allow location access to connect with your local Puffs &apos;n&apos; Rolls kitchen for live counter availability and fast 25-minute delivery.
+          </p>
+        </div>
+
+        {/* Current / Detected Summary if already resolved */}
+        {hasSetLocation && nearestOutlet && (
+          <div className="bg-emerald-50 border border-emerald-200 rounded-2xl p-3.5 flex items-center gap-3">
+            <div className="w-9 h-9 rounded-xl bg-emerald-600 text-white flex items-center justify-center shrink-0">
+              <Check className="w-5 h-5" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-800">
+                Your Nearest Bakery
+              </span>
+              <p className="font-serif font-bold text-stone-900 text-sm truncate">
+                {nearestOutlet.name.replace("Puffs 'n' Rolls - ", '')}
+              </p>
+              <p className="text-[11px] text-stone-500 truncate">
+                {distanceKm ? `${distanceKm} km away • ` : ''}
+                {nearestOutlet.area}
+              </p>
+            </div>
+          </div>
+        )}
+
+        {/* Error Alert if Permission Denied or Failed */}
+        {locationError && (
+          <div className="bg-rose-50 border border-rose-200 rounded-2xl p-3 flex items-start gap-2.5 text-xs text-rose-800">
+            <AlertCircle className="w-4 h-4 text-rose-600 shrink-0 mt-0.5" />
+            <p className="leading-snug">{locationError}</p>
+          </div>
+        )}
+
+        {/* Primary Action: Request GPS Location */}
+        <div className="space-y-2">
+          <button
+            onClick={requestLocation}
+            disabled={isDetecting}
+            className="w-full py-3.5 bg-[#1C1917] hover:bg-stone-800 active:scale-[0.99] text-white rounded-2xl text-xs font-bold tracking-wide transition shadow-sm flex items-center justify-center gap-2 cursor-pointer disabled:opacity-60"
+          >
+            {isDetecting ? (
+              <>
+                <Loader2 className="w-4 h-4 animate-spin text-amber-400" />
+                <span>Detecting Nearest Bakery...</span>
+              </>
+            ) : (
+              <>
+                <Navigation className="w-4 h-4 text-amber-400 fill-amber-400" />
+                <span>Use Current Location</span>
+              </>
+            )}
+          </button>
+          <p className="text-[10px] text-stone-400 text-center">
+            Requires location permission from your browser
+          </p>
+        </div>
+
+        {/* Divider */}
+        <div className="relative flex items-center justify-center">
+          <div className="border-t border-stone-200 w-full" />
+          <span className="bg-[#FAF8F5] px-3 text-[10px] uppercase font-bold tracking-wider text-stone-400 shrink-0">
+            Or Choose Your Area
+          </span>
+          <div className="border-t border-stone-200 w-full" />
+        </div>
+
+        {/* Manual Locality Picker */}
+        <div className="space-y-2">
+          {LOCALITY_OPTIONS.map((loc) => {
+            const isSelected = nearestOutlet?.slug === loc.slug;
+            return (
+              <button
+                key={loc.slug}
+                onClick={() => setManualOutlet(loc.slug)}
+                className={`w-full p-3 rounded-2xl border text-left transition flex items-center justify-between cursor-pointer ${
+                  isSelected
+                    ? 'bg-white border-stone-900 ring-1 ring-stone-900 shadow-xs'
+                    : 'bg-white/70 hover:bg-white border-stone-200 hover:border-stone-300'
+                }`}
+              >
+                <div className="flex items-start gap-3 min-w-0">
+                  <div
+                    className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 mt-0.5 ${
+                      isSelected
+                        ? 'bg-stone-900 text-amber-400'
+                        : 'bg-stone-100 text-stone-500'
+                    }`}
+                  >
+                    <Building2 className="w-4 h-4" />
+                  </div>
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-2">
+                      <p className="font-semibold text-xs text-stone-900 truncate">
+                        {loc.name}
+                      </p>
+                      <span className="text-[9px] uppercase tracking-wider font-bold px-1.5 py-0.2 rounded-md bg-stone-100 text-stone-600 shrink-0">
+                        {loc.badge}
+                      </span>
+                    </div>
+                    <p className="text-[11px] text-stone-500 truncate mt-0.5">
+                      {loc.areas}
+                    </p>
+                  </div>
+                </div>
+
+                {isSelected && (
+                  <div className="w-5 h-5 rounded-full bg-stone-900 text-white flex items-center justify-center shrink-0 ml-2">
+                    <Check className="w-3 h-3" />
+                  </div>
+                )}
+              </button>
+            );
+          })}
+        </div>
+
+        <div className="pt-2 text-center border-t border-stone-200/70">
+          <p className="text-[10px] text-stone-400">
+            Only fresh menu items from your nearest kitchen are shown for prompt delivery.
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+}

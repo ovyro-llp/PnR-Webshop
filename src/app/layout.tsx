@@ -3,7 +3,9 @@ import { Geist, Geist_Mono, Playfair_Display } from 'next/font/google';
 import './globals.css';
 import { AuthProvider } from '@/context/AuthContext';
 import { CartProvider } from '@/context/CartContext';
+import { LocationProvider } from '@/context/LocationContext';
 import { CustomerLoginModal } from '@/components/auth/CustomerLoginModal';
+import { LocationPromptModal } from '@/components/location/LocationPromptModal';
 
 const geistSans = Geist({
   variable: '--font-geist-sans',
@@ -24,7 +26,7 @@ const playfair = Playfair_Display({
 export const metadata: Metadata = {
   title: "Puffs 'n' Rolls | Where Every Bite Unrolls Happiness | Nashik",
   description:
-    "Artisanal bakery in Nashik since 2001. Fresh oven-baked puffs, loaded savory rolls, celebration cakes & handcrafted pastries across College Road, Nashik Road, and Indira Nagar.",
+    "Artisanal bakery in Nashik since 2001. Fresh oven-baked puffs, loaded savory rolls, celebration cakes & handcrafted pastries delivered fresh from your nearest bakery kitchen.",
 };
 
 export const viewport: Viewport = {
@@ -45,10 +47,13 @@ export default function RootLayout({
     >
       <body className="min-h-full flex flex-col bg-[#FDFCFB] text-stone-900 font-sans selection:bg-stone-200 overflow-x-hidden w-full">
         <AuthProvider>
-          <CartProvider>
-            {children}
-            <CustomerLoginModal />
-          </CartProvider>
+          <LocationProvider>
+            <CartProvider>
+              {children}
+              <CustomerLoginModal />
+              <LocationPromptModal />
+            </CartProvider>
+          </LocationProvider>
         </AuthProvider>
       </body>
     </html>
