@@ -25,6 +25,15 @@ export const OUTLETS: Outlet[] = [
       lat: 20.0063,
       lng: 73.7634,
     },
+    mangwaleConfig: {
+      apiKey: 'mw_live_cr_7731_pnr',
+      apiSecret: 'sk_live_cr_sec_9921_pnr',
+      merchantId: 'MNG-MKT-CR-01',
+      environment: 'live',
+      isEnabled: true,
+      lastTestedAt: '2026-11-02T12:00:00Z',
+      lastTestStatus: 'SUCCESS',
+    },
   },
   {
     id: 'out-2',
@@ -50,6 +59,15 @@ export const OUTLETS: Outlet[] = [
       lat: 19.9576,
       lng: 73.8329,
     },
+    mangwaleConfig: {
+      apiKey: 'mw_live_nr_8842_pnr',
+      apiSecret: 'sk_live_nr_sec_8842_pnr',
+      merchantId: 'MNG-MKT-NR-02',
+      environment: 'live',
+      isEnabled: true,
+      lastTestedAt: '2026-11-02T11:45:00Z',
+      lastTestStatus: 'SUCCESS',
+    },
   },
   {
     id: 'out-3',
@@ -74,6 +92,15 @@ export const OUTLETS: Outlet[] = [
     coordinates: {
       lat: 19.9723,
       lng: 73.7745,
+    },
+    mangwaleConfig: {
+      apiKey: 'mw_live_in_9953_pnr',
+      apiSecret: 'sk_live_in_sec_9953_pnr',
+      merchantId: 'MNG-MKT-IN-03',
+      environment: 'live',
+      isEnabled: true,
+      lastTestedAt: '2026-11-02T10:30:00Z',
+      lastTestStatus: 'SUCCESS',
     },
   },
 ];

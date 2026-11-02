@@ -1,4 +1,47 @@
-export type EmployeeRole = 'SUPER_ADMIN' | 'OUTLET_MANAGER' | 'KITCHEN_STAFF';
+export type EmployeeRole =
+  | 'SUPER_ADMIN'
+  | 'OUTLET_MANAGER'
+  | 'KITCHEN_STAFF'
+  | 'MARKETING_MANAGER'
+  | 'DISPATCH_RIDER';
+
+export type Permission =
+  // Orders & Dispatch
+  | 'orders:view'
+  | 'orders:manage_status'
+  | 'orders:dispatch'
+  | 'orders:cancel'
+  // Inventory & Catalog
+  | 'inventory:view'
+  | 'inventory:toggle_stock'
+  | 'inventory:manage_quantities'
+  | 'inventory:manage_master_catalog'
+  // Outlets & Logistics Configuration
+  | 'outlets:view'
+  | 'outlets:manage'
+  | 'outlets:manage_mangwale_api'
+  // Performance Marketing & Tracking
+  | 'marketing:view'
+  | 'marketing:manage_campaigns'
+  | 'marketing:manage_pixels'
+  // Staff Directory & RBAC Security
+  | 'staff:view'
+  | 'staff:manage_employees'
+  | 'staff:manage_roles'
+  // Financials & Analytics
+  | 'analytics:view_outlet'
+  | 'analytics:view_financials';
+
+export interface MangwaleOutletConfig {
+  apiKey: string;
+  apiSecret: string;
+  merchantId?: string;
+  environment: 'live' | 'sandbox';
+  isEnabled: boolean;
+  webhookSecret?: string;
+  lastTestedAt?: string;
+  lastTestStatus?: 'SUCCESS' | 'FAILED';
+}
 
 export interface Employee {
   id: string;
@@ -51,6 +94,7 @@ export interface Outlet {
     lat: number;
     lng: number;
   };
+  mangwaleConfig?: MangwaleOutletConfig;
 }
 
 export interface Campaign {

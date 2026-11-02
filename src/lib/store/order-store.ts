@@ -143,7 +143,7 @@ if (!globalThis.__PNR_EMPLOYEES__) {
       name: 'Vikram Joshi',
       email: 'marketing@puffsnrolls.com',
       phone: '+91 98220 77881',
-      role: 'SUPER_ADMIN', // Performance Marketer with full campaign/tag access
+      role: 'MARKETING_MANAGER', // Performance Marketer with full campaign/tag access
       outletSlug: 'all',
       designation: 'Lead Performance Marketer (Meta & Google Ads)',
       status: 'ACTIVE',
@@ -196,6 +196,17 @@ if (!globalThis.__PNR_EMPLOYEES__) {
       designation: 'Head Baker & Kitchen Lead',
       status: 'ACTIVE',
       createdAt: '2026-02-10T10:00:00Z',
+    },
+    {
+      id: 'emp-7',
+      name: 'Rohit Shinde',
+      email: 'rider.rohit@puffsnrolls.com',
+      phone: '+91 98231 44512',
+      role: 'DISPATCH_RIDER',
+      outletSlug: 'college-road',
+      designation: 'Express Fleet Dispatch Rider',
+      status: 'ACTIVE',
+      createdAt: '2026-02-15T10:00:00Z',
     },
   ];
 }

@@ -1,8 +1,10 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
-import { useAuth } from '@/context/AuthContext';
+import { useAuth, AdminUser } from '@/context/AuthContext';
+import { EmployeeRole, Permission } from '@/types';
+import { hasPermission, getRoleDefinition } from '@/lib/auth/rbac';
 import Link from 'next/link';
 import {
   ShoppingBag,
@@ -16,6 +18,8 @@ import {
   Menu,
   X,
   ChevronRight,
+  Shield,
+  Truck,
 } from 'lucide-react';
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
@@ -24,6 +28,65 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const { user, isHydrated, logout } = useAuth();
   const [isChecking, setIsChecking] = useState(true);
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
+
+  const adminUser = user && user.role === 'ADMIN' ? (user as AdminUser) : null;
+  const userRole: EmployeeRole =
+    adminUser?.employeeRole ||
+    (adminUser?.outletAccess && !adminUser.outletAccess.includes('all')
+      ? 'OUTLET_MANAGER'
+      : 'SUPER_ADMIN');
+  const roleDef = getRoleDefinition(userRole);
+
+  const allNavItems = [
+    {
+      label: 'Orders & Dispatch',
+      shortLabel: 'Orders',
+      href: '/admin',
+      icon: ShoppingBag,
+      permission: 'orders:view' as Permission,
+      exact: true,
+    },
+    {
+      label: 'Outlets & Fleet API',
+      shortLabel: 'Outlets',
+      href: '/admin/outlets',
+      icon: Store,
+      permission: 'outlets:view' as Permission,
+    },
+    {
+      label: 'Inventory & Stock 86',
+      shortLabel: 'Stock',
+      href: '/admin/inventory',
+      icon: Package,
+      permission: 'inventory:view' as Permission,
+    },
+    {
+      label: 'Performance Marketing',
+      shortLabel: 'Marketing',
+      href: '/admin/marketing',
+      icon: SlidersHorizontal,
+      permission: 'marketing:view' as Permission,
+    },
+    {
+      label: 'Staff & RBAC Matrix',
+      shortLabel: 'Staff',
+      href: '/admin/employees',
+      icon: Users,
+      permission: 'staff:view' as Permission,
+    },
+    {
+      label: 'FOCO Analytics',
+      shortLabel: 'Analytics',
+      href: '/admin/analytics',
+      icon: BarChart3,
+      permission: 'analytics:view_outlet' as Permission,
+    },
+  ];
+
+  const navItems = useMemo(
+    () => allNavItems.filter((item) => hasPermission(userRole, item.permission)),
+    [userRole]
+  );
 
   useEffect(() => {
     if (!isHydrated) return;
@@ -38,18 +101,30 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       return;
     }
 
-    // RBAC: Lock outlet managers out of HQ-only modules
-    const isManager = user.outletAccess && !user.outletAccess.includes('all');
-    if (
-      isManager &&
-      (pathname.startsWith('/admin/outlets') || pathname.startsWith('/admin/marketing'))
-    ) {
-      router.push('/admin/inventory');
+    // Enterprise RBAC: Route guarding based on explicit permissions
+    if (pathname.startsWith('/admin/outlets') && !hasPermission(userRole, 'outlets:view')) {
+      router.push('/admin');
+      return;
+    }
+    if (pathname.startsWith('/admin/marketing') && !hasPermission(userRole, 'marketing:view')) {
+      router.push('/admin');
+      return;
+    }
+    if (pathname.startsWith('/admin/employees') && !hasPermission(userRole, 'staff:view')) {
+      router.push('/admin');
+      return;
+    }
+    if (pathname.startsWith('/admin/inventory') && !hasPermission(userRole, 'inventory:view')) {
+      router.push('/admin');
+      return;
+    }
+    if (pathname.startsWith('/admin/analytics') && !hasPermission(userRole, 'analytics:view_outlet')) {
+      router.push('/admin');
       return;
     }
 
     setIsChecking(false);
-  }, [user, isHydrated, pathname, router]);
+  }, [user, isHydrated, pathname, router, userRole]);
 
   // Close sidebar automatically when route changes
   useEffect(() => {
@@ -71,79 +146,10 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     );
   }
 
-  const isOutletManager = user?.role === 'ADMIN' && user?.outletAccess && !user.outletAccess.includes('all');
-
-  const navItems = isOutletManager
-    ? [
-        {
-          label: 'Orders & Dispatch',
-          shortLabel: 'Orders',
-          href: '/admin',
-          icon: ShoppingBag,
-          exact: true,
-        },
-        {
-          label: 'Outlet Stock & 86',
-          shortLabel: 'Stock',
-          href: '/admin/inventory',
-          icon: Package,
-        },
-        {
-          label: 'Kitchen Staff',
-          shortLabel: 'Staff',
-          href: '/admin/employees',
-          icon: Users,
-        },
-        {
-          label: 'Outlet Analytics',
-          shortLabel: 'Analytics',
-          href: '/admin/analytics',
-          icon: BarChart3,
-        },
-      ]
-    : [
-        {
-          label: 'Orders & Dispatch',
-          shortLabel: 'Orders',
-          href: '/admin',
-          icon: ShoppingBag,
-          exact: true,
-        },
-        {
-          label: 'Outlets Directory',
-          shortLabel: 'Outlets',
-          href: '/admin/outlets',
-          icon: Store,
-        },
-        {
-          label: 'Inventory & Catalog',
-          shortLabel: 'Catalog',
-          href: '/admin/inventory',
-          icon: Package,
-        },
-        {
-          label: 'Performance Marketing',
-          shortLabel: 'Marketing',
-          href: '/admin/marketing',
-          icon: SlidersHorizontal,
-        },
-        {
-          label: 'Staff & Roles',
-          shortLabel: 'Staff',
-          href: '/admin/employees',
-          icon: Users,
-        },
-        {
-          label: 'FOCO Analytics',
-          shortLabel: 'Analytics',
-          href: '/admin/analytics',
-          icon: BarChart3,
-        },
-      ];
-
-  const currentTab = navItems.find((item) =>
-    item.exact ? pathname === item.href : pathname.startsWith(item.href)
-  ) || navItems[0];
+  const currentTab =
+    navItems.find((item) =>
+      item.exact ? pathname === item.href : pathname.startsWith(item.href)
+    ) || navItems[0] || allNavItems[0];
 
   return (
     <div className="min-h-screen bg-[#FAF8F5] text-stone-900 flex flex-col md:flex-row font-sans selection:bg-stone-200">
@@ -161,9 +167,16 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
               <span className="font-serif font-bold text-stone-900 text-sm tracking-tight block">
                 Puffs &apos;n&apos; Rolls
               </span>
-              <span className="text-[10px] uppercase font-mono tracking-wider font-semibold text-stone-500">
-                {isOutletManager ? 'Outlet Kitchen Partner' : 'HQ Operations Admin'}
-              </span>
+              <div className="flex items-center gap-1.5 mt-0.5">
+                <span
+                  className={`text-[9px] uppercase font-mono tracking-wider font-semibold px-2 py-0.2 rounded-full border ${roleDef.badge.bg} ${roleDef.badge.text} ${roleDef.badge.border}`}
+                >
+                  {roleDef.shortName}
+                </span>
+                <span className="text-[9px] text-stone-400 font-mono">
+                  {roleDef.scope === 'ALL_OUTLETS' ? 'HQ' : 'Store'}
+                </span>
+              </div>
             </div>
           </Link>
 
@@ -179,17 +192,23 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                 <Link
                   key={item.href}
                   href={item.href}
-                  className={`flex items-center justify-between px-3.5 py-2.5 rounded-2xl font-medium transition ${
+                  className={`flex items-center justify-between px-3.5 py-2.5 rounded-2xl font-medium transition cursor-pointer ${
                     isActive
                       ? 'bg-[#1C1917] text-white shadow-xs font-semibold'
                       : 'text-stone-600 hover:text-stone-900 hover:bg-stone-100/70'
                   }`}
                 >
                   <div className="flex items-center gap-3">
-                    <Icon className={`w-4 h-4 ${isActive ? 'text-amber-400' : 'text-stone-400'}`} />
+                    <Icon
+                      className={`w-4 h-4 ${
+                        isActive ? 'text-amber-400' : 'text-stone-400'
+                      }`}
+                    />
                     <span>{item.label}</span>
                   </div>
-                  {isActive && <span className="w-1.5 h-1.5 rounded-full bg-amber-400" />}
+                  {isActive && (
+                    <span className="w-1.5 h-1.5 rounded-full bg-amber-400" />
+                  )}
                 </Link>
               );
             })}
@@ -207,8 +226,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                 <span className="text-xs font-semibold text-stone-900 block truncate">
                   {user?.name || 'Administrator'}
                 </span>
-                <span className="text-[10px] text-stone-400 font-mono block">
-                  {isOutletManager ? user.title : 'Brand HQ'}
+                <span className="text-[10px] text-stone-400 font-mono block truncate">
+                  {adminUser?.title || roleDef.name}
                 </span>
               </div>
             </div>
@@ -218,7 +237,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                 logout();
                 router.push('/admin/login');
               }}
-              className="p-1.5 rounded-lg text-stone-400 hover:text-rose-600 hover:bg-rose-50 transition"
+              className="p-1.5 rounded-lg text-stone-400 hover:text-rose-600 hover:bg-rose-50 transition cursor-pointer"
               title="Sign Out"
             >
               <LogOut className="w-4 h-4" />
@@ -228,7 +247,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           <Link
             href="/"
             target="_blank"
-            className="w-full py-2 px-3 rounded-xl bg-white hover:bg-stone-100 text-stone-700 border border-stone-200 text-xs font-medium flex items-center justify-center gap-1.5 transition"
+            className="w-full py-2 px-3 rounded-xl bg-white hover:bg-stone-100 text-stone-700 border border-stone-200 text-xs font-medium flex items-center justify-center gap-1.5 transition cursor-pointer"
           >
             <span>View Live Storefront</span>
             <ExternalLink className="w-3 h-3 text-stone-400" />
@@ -243,7 +262,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         {/* Hamburger Toggle Button */}
         <button
           onClick={() => setIsMobileSidebarOpen(true)}
-          className="p-2 -ml-2 rounded-xl text-stone-800 hover:bg-stone-100 transition active:scale-95"
+          className="p-2 -ml-2 rounded-xl text-stone-800 hover:bg-stone-100 transition active:scale-95 cursor-pointer"
           aria-label="Open Admin Menu"
         >
           <Menu className="w-5 h-5 stroke-[2.2]" />
@@ -255,7 +274,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             {currentTab.label}
           </span>
           <span className="text-[9px] uppercase font-mono tracking-wider font-semibold text-stone-400 block -mt-0.5">
-            P&amp;R Operations
+            {roleDef.shortName} • P&amp;R Operations
           </span>
         </div>
 
@@ -263,7 +282,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         <Link
           href="/"
           target="_blank"
-          className="p-2 -mr-2 rounded-xl text-stone-600 hover:bg-stone-100 transition"
+          className="p-2 -mr-2 rounded-xl text-stone-600 hover:bg-stone-100 transition cursor-pointer"
           title="Storefront"
         >
           <ExternalLink className="w-4 h-4 text-stone-500" />
@@ -295,22 +314,21 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                       Puffs &apos;n&apos; Rolls
                     </span>
                     <span className="text-[10px] text-stone-400 font-mono">
-                      Operations Admin
+                      {roleDef.shortName} ({roleDef.scope === 'ALL_OUTLETS' ? 'HQ' : 'Store'})
                     </span>
                   </div>
                 </div>
 
                 <button
                   onClick={() => setIsMobileSidebarOpen(false)}
-                  className="p-1.5 rounded-full text-stone-400 hover:text-stone-900 hover:bg-stone-100 transition cursor-pointer"
-                  aria-label="Close Menu"
+                  className="p-1 rounded-lg text-stone-400 hover:text-stone-900 cursor-pointer"
                 >
                   <X className="w-5 h-5" />
                 </button>
               </div>
 
-              {/* Navigation Items (Thumb-friendly touch targets) */}
-              <div className="space-y-1 text-xs">
+              {/* Drawer Links */}
+              <nav className="space-y-1 text-xs">
                 {navItems.map((item) => {
                   const isActive = item.exact
                     ? pathname === item.href
@@ -321,84 +339,75 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                     <Link
                       key={item.href}
                       href={item.href}
-                      onClick={() => setIsMobileSidebarOpen(false)}
-                      className={`flex items-center justify-between px-4 py-3 rounded-2xl font-medium transition active:scale-98 ${
+                      className={`flex items-center justify-between px-3.5 py-2.5 rounded-2xl font-medium transition cursor-pointer ${
                         isActive
-                          ? 'bg-[#1C1917] text-white font-semibold shadow-xs'
-                          : 'text-stone-700 hover:bg-stone-100/80'
+                          ? 'bg-[#1C1917] text-white shadow-xs font-semibold'
+                          : 'text-stone-600 hover:text-stone-900 hover:bg-stone-100/70'
                       }`}
                     >
                       <div className="flex items-center gap-3">
-                        <Icon className={`w-4 h-4 ${isActive ? 'text-amber-400' : 'text-stone-400'}`} />
-                        <span className="text-sm">{item.label}</span>
+                        <Icon
+                          className={`w-4 h-4 ${
+                            isActive ? 'text-amber-400' : 'text-stone-400'
+                          }`}
+                        />
+                        <span>{item.label}</span>
                       </div>
-                      <ChevronRight className={`w-4 h-4 ${isActive ? 'text-amber-400' : 'text-stone-300'}`} />
+                      <ChevronRight
+                        className={`w-3.5 h-3.5 ${
+                          isActive ? 'text-white' : 'text-stone-300'
+                        }`}
+                      />
                     </Link>
                   );
                 })}
-              </div>
+              </nav>
             </div>
 
-            {/* Drawer Footer */}
-            <div className="pt-4 border-t border-stone-100 space-y-3">
+            {/* Mobile Drawer Footer */}
+            <div className="border-t border-stone-100 pt-4 space-y-3">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <div className="w-7 h-7 rounded-full bg-stone-200 flex items-center justify-center font-serif font-bold text-xs text-stone-700">
+                    {user?.name?.charAt(0) || 'A'}
+                  </div>
+                  <div className="min-w-0">
+                    <span className="text-xs font-semibold text-stone-900 block truncate">
+                      {user?.name || 'Administrator'}
+                    </span>
+                    <span className="text-[10px] text-stone-400 font-mono block truncate">
+                      {adminUser?.title || roleDef.name}
+                    </span>
+                  </div>
+                </div>
+
+                <button
+                  onClick={() => {
+                    logout();
+                    router.push('/admin/login');
+                  }}
+                  className="p-1.5 text-stone-400 hover:text-rose-600 cursor-pointer"
+                  title="Sign Out"
+                >
+                  <LogOut className="w-4 h-4" />
+                </button>
+              </div>
+
               <Link
                 href="/"
                 target="_blank"
-                className="w-full py-2.5 px-4 rounded-xl bg-stone-50 hover:bg-stone-100 text-stone-800 border border-stone-200 text-xs font-medium flex items-center justify-center gap-1.5 transition"
+                className="w-full py-2 px-3 rounded-xl bg-stone-100 text-stone-700 text-xs font-medium flex items-center justify-center gap-1.5 cursor-pointer"
               >
                 <span>View Storefront</span>
-                <ExternalLink className="w-3 h-3 text-stone-500" />
+                <ExternalLink className="w-3 h-3 text-stone-400" />
               </Link>
-
-              <button
-                onClick={() => {
-                  logout();
-                  router.push('/admin/login');
-                }}
-                className="w-full py-2.5 px-4 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-700 text-xs font-semibold flex items-center justify-center gap-2 transition cursor-pointer"
-              >
-                <LogOut className="w-4 h-4" />
-                <span>Sign Out</span>
-              </button>
             </div>
           </div>
         </div>
       )}
 
-      {/* =========================================================================
-          MAIN ADMIN CONTENT VIEWPORT
-         ========================================================================= */}
-      <main className="flex-1 min-w-0 overflow-y-auto">
-        {/* Desktop Sticky Header Bar (Zero redundant hamburger button; sidebar is permanently on left) */}
-        <div className="hidden md:flex items-center justify-between px-6 py-3.5 bg-white/90 backdrop-blur-md border-b border-stone-200/80 sticky top-0 z-20">
-          <div className="flex items-center gap-3">
-            <span className="font-serif font-bold text-base text-stone-900 tracking-tight">
-              {currentTab.label}
-            </span>
-            <span className="text-[10px] uppercase font-mono px-2.5 py-0.5 rounded-full bg-stone-100 text-stone-600 font-semibold border border-stone-200">
-              {isOutletManager ? 'Kitchen Partner' : 'HQ Operations'}
-            </span>
-          </div>
-
-          <div className="flex items-center gap-4">
-            <div className="flex items-center gap-2 text-xs text-stone-500 font-mono">
-              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-              <span>{user?.name}</span>
-            </div>
-
-            <Link
-              href="/"
-              target="_blank"
-              className="px-3 py-1.5 rounded-xl bg-stone-50 hover:bg-stone-100 text-stone-700 border border-stone-200 text-xs font-medium flex items-center gap-1.5 transition"
-            >
-              <span>Live Storefront</span>
-              <ExternalLink className="w-3 h-3 text-stone-400" />
-            </Link>
-          </div>
-        </div>
-
-        <div className="w-full max-w-7xl mx-auto">{children}</div>
-      </main>
+      {/* Main Page Area */}
+      <main className="flex-1 min-w-0 overflow-y-auto">{children}</main>
     </div>
   );
 }

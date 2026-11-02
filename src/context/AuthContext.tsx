@@ -1,6 +1,7 @@
 'use client';
 
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import { EmployeeRole } from '@/types';
 
 export type UserRole = 'CUSTOMER' | 'ADMIN';
 
@@ -24,6 +25,7 @@ export interface AdminUser {
   name: string;
   email: string;
   role: 'ADMIN';
+  employeeRole?: EmployeeRole;
   outletAccess: string[]; // ['all'] or ['college-road', etc.]
   title: string;
 }
@@ -269,8 +271,27 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         name: 'Headquarters Operations',
         email: 'admin@puffsnrolls.com',
         role: 'ADMIN',
+        employeeRole: 'SUPER_ADMIN',
         outletAccess: ['all'],
         title: 'Master Brand Administrator',
+      };
+      setUser(admin);
+      localStorage.setItem('pnr_auth_user', JSON.stringify(admin));
+      return { success: true };
+    }
+
+    if (
+      cleanEmail === 'marketing@puffsnrolls.com' &&
+      (password === 'pnr@marketing2026' || password === 'admin' || password === 'pnr123')
+    ) {
+      const admin: AdminUser = {
+        id: 'admin-mkt',
+        name: 'Vikram Joshi (Marketing)',
+        email: cleanEmail,
+        role: 'ADMIN',
+        employeeRole: 'MARKETING_MANAGER',
+        outletAccess: ['all'],
+        title: 'Lead Performance Marketer',
       };
       setUser(admin);
       localStorage.setItem('pnr_auth_user', JSON.stringify(admin));
@@ -286,6 +307,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         name: 'College Road Outlet Manager',
         email: cleanEmail,
         role: 'ADMIN',
+        employeeRole: 'OUTLET_MANAGER',
         outletAccess: ['college-road'],
         title: 'Franchise Partner (College Road)',
       };
@@ -303,6 +325,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         name: 'Nashik Road Outlet Manager',
         email: cleanEmail,
         role: 'ADMIN',
+        employeeRole: 'OUTLET_MANAGER',
         outletAccess: ['nashik-road'],
         title: 'Franchise Partner (Nashik Road)',
       };
@@ -320,8 +343,45 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         name: 'Indira Nagar Outlet Manager',
         email: cleanEmail,
         role: 'ADMIN',
+        employeeRole: 'OUTLET_MANAGER',
         outletAccess: ['indira-nagar'],
         title: 'Franchise Partner (Indira Nagar)',
+      };
+      setUser(admin);
+      localStorage.setItem('pnr_auth_user', JSON.stringify(admin));
+      return { success: true };
+    }
+
+    if (
+      cleanEmail === 'kitchen.cr@puffsnrolls.com' &&
+      (password === 'kitchen2026' || password === 'admin' || password === 'pnr123')
+    ) {
+      const admin: AdminUser = {
+        id: 'admin-kitchen',
+        name: 'Ramesh Pawar (Kitchen Lead)',
+        email: cleanEmail,
+        role: 'ADMIN',
+        employeeRole: 'KITCHEN_STAFF',
+        outletAccess: ['college-road'],
+        title: 'Head Baker (College Road)',
+      };
+      setUser(admin);
+      localStorage.setItem('pnr_auth_user', JSON.stringify(admin));
+      return { success: true };
+    }
+
+    if (
+      cleanEmail === 'rider.rohit@puffsnrolls.com' &&
+      (password === 'rider2026' || password === 'admin' || password === 'pnr123')
+    ) {
+      const admin: AdminUser = {
+        id: 'admin-rider',
+        name: 'Rohit Shinde (Fleet Rider)',
+        email: cleanEmail,
+        role: 'ADMIN',
+        employeeRole: 'DISPATCH_RIDER',
+        outletAccess: ['college-road'],
+        title: 'Express Fleet Dispatch Rider',
       };
       setUser(admin);
       localStorage.setItem('pnr_auth_user', JSON.stringify(admin));
