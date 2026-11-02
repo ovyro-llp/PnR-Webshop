@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { useCart } from '@/context/CartContext';
 import { useAuth } from '@/context/AuthContext';
+import { useLocation } from '@/context/LocationContext';
 import { useRouter } from 'next/navigation';
 import {
   X,
@@ -19,8 +20,8 @@ import {
   CheckCircle2,
   Eye,
   EyeOff,
-  KeyRound,
   User,
+  MapPin,
 } from 'lucide-react';
 import { CustomerDetails, PaymentMethod } from '@/types';
 
@@ -31,7 +32,8 @@ interface CartDrawerProps {
 
 export function CartDrawer({ outletSlug, campaignSlug }: CartDrawerProps) {
   const router = useRouter();
-  const { user, isCustomer, loginCustomer, registerCustomer, openCustomerLogin, logout } = useAuth();
+  const { user, isCustomer, loginCustomer, registerCustomer, logout } = useAuth();
+  const { deliveryAddress, deliveryArea, nearestOutlet } = useLocation();
   const {
     items,
     cartOutletSlug,
@@ -47,33 +49,31 @@ export function CartDrawer({ outletSlug, campaignSlug }: CartDrawerProps) {
     verifyRazorpayPayment,
   } = useCart();
 
-  const effectiveOutletSlug = cartOutletSlug || outletSlug;
+  const effectiveOutletSlug = cartOutletSlug || outletSlug || nearestOutlet?.slug || 'college-road';
   const isCustomerLoggedIn = Boolean(user && isCustomer);
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState('');
 
-  // Inline auth state for unauthenticated users
-  const [authMode, setAuthMode] = useState<'LOGIN' | 'REGISTER'>('LOGIN');
+  // Unauthenticated customer contact state
+  const [authMode, setAuthMode] = useState<'REGISTER' | 'LOGIN'>('REGISTER');
   const [authName, setAuthName] = useState('');
   const [authPhone, setAuthPhone] = useState('');
   const [authPassword, setAuthPassword] = useState('');
   const [showAuthPassword, setShowAuthPassword] = useState(false);
-  const [authError, setAuthError] = useState('');
-  const [isLoggingIn, setIsLoggingIn] = useState(false);
 
-  // Customer Form State with initial values derived from user
+  // Customer Delivery State (Pre-filled from user saved addresses or location context)
   const defaultAddr = user?.role === 'CUSTOMER' ? user.savedAddresses?.[0] : undefined;
   const [customer, setCustomer] = useState<CustomerDetails>(() => ({
     name: user?.role === 'CUSTOMER' ? user.name : '',
     phone: user?.role === 'CUSTOMER' ? user.phone : '',
-    address: defaultAddr?.address || 'Flat 402, Shrinath Heights, Near BYK Circle',
-    area: defaultAddr?.area || 'College Road',
+    address: defaultAddr?.address || deliveryAddress || '',
+    area: defaultAddr?.area || deliveryArea || 'College Road',
     pincode: defaultAddr?.pincode || '422005',
     specialInstructions: '',
   }));
 
-  // Sync customer details when user logs in or updates
+  // Sync customer details when user logs in or location updates
   useEffect(() => {
     if (user && user.role === 'CUSTOMER') {
       const addr = user.savedAddresses?.[0];
@@ -81,56 +81,22 @@ export function CartDrawer({ outletSlug, campaignSlug }: CartDrawerProps) {
         ...prev,
         name: user.name || prev.name,
         phone: user.phone || prev.phone,
-        address: prev.address || addr?.address || 'Flat 402, Shrinath Heights, Near BYK Circle',
-        area: prev.area || addr?.area || 'College Road',
+        address: prev.address || addr?.address || deliveryAddress || '',
+        area: prev.area || addr?.area || deliveryArea || 'College Road',
         pincode: prev.pincode || addr?.pincode || '422005',
       }));
+    } else if (deliveryAddress) {
+      setCustomer((prev) => ({
+        ...prev,
+        address: prev.address || deliveryAddress,
+        area: prev.area || deliveryArea || 'College Road',
+      }));
     }
-  }, [user]);
+  }, [user, deliveryAddress, deliveryArea]);
 
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('UPI');
 
   if (!isCartOpen) return null;
-
-  const handleInlineLogin = async (e?: React.FormEvent) => {
-    if (e) e.preventDefault();
-    setAuthError('');
-    const cleanPhone = authPhone.replace(/\D/g, '').slice(-10);
-    if (cleanPhone.length < 10) {
-      setAuthError('Please enter a valid 10-digit mobile number');
-      return;
-    }
-    if (!authPassword.trim()) {
-      setAuthError('Please enter your account password');
-      return;
-    }
-
-    setIsLoggingIn(true);
-    try {
-      if (authMode === 'LOGIN') {
-        const res = await loginCustomer(cleanPhone, authPassword);
-        if (!res.success) {
-          setAuthError(res.error || 'Incorrect password. Try pnr@customer123');
-        }
-      } else {
-        const res = await registerCustomer(authName || 'Valued Customer', cleanPhone, authPassword);
-        if (!res.success) {
-          setAuthError(res.error || 'Registration failed');
-        }
-      }
-    } catch {
-      setAuthError('Failed to sign in. Please try again.');
-    } finally {
-      setIsLoggingIn(false);
-    }
-  };
-
-  const handleQuickFillCartTest = () => {
-    setAuthMode('LOGIN');
-    setAuthPhone('9822344556');
-    setAuthPassword('pnr@customer123');
-    setAuthError('');
-  };
 
   const loadRazorpayScript = () => {
     return new Promise<boolean>((resolve) => {
@@ -150,29 +116,60 @@ export function CartDrawer({ outletSlug, campaignSlug }: CartDrawerProps) {
     e.preventDefault();
     setSubmitError('');
 
-    if (!isCustomerLoggedIn) {
-      setSubmitError('Please sign in with your mobile number and password before proceeding to payment');
+    // 1. Validate Delivery Address
+    if (!customer.address.trim()) {
+      setSubmitError('Please enter your delivery address (Flat / House No., Society, Landmark) in Nashik');
+      return;
+    }
+    if (!customer.pincode.trim() || customer.pincode.length < 6) {
+      setSubmitError('Please enter a valid 6-digit Nashik pincode (e.g. 422005)');
       return;
     }
 
-    if (!customer.name.trim()) {
-      setSubmitError('Please enter your full name');
-      return;
-    }
-    if (!customer.phone.trim() || customer.phone.replace(/\D/g, '').length < 10) {
-      setSubmitError('Please enter a valid 10-digit mobile phone number');
-      return;
-    }
-    if (!customer.address.trim()) {
-      setSubmitError('Please enter your delivery address in Nashik');
-      return;
+    // 2. Validate / Authenticate Customer
+    let activeCustomer = { ...customer };
+
+    if (!isCustomerLoggedIn) {
+      const cleanPhone = authPhone.replace(/\D/g, '').slice(-10);
+      if (cleanPhone.length < 10) {
+        setSubmitError('Please enter a valid 10-digit mobile phone number');
+        return;
+      }
+      if (!authPassword.trim()) {
+        setSubmitError('Please enter a password for your customer account');
+        return;
+      }
+      if (authMode === 'REGISTER' && !authName.trim()) {
+        setSubmitError('Please enter your full name');
+        return;
+      }
+
+      setIsSubmitting(true);
+      let authRes;
+      if (authMode === 'REGISTER') {
+        authRes = await registerCustomer(authName.trim(), cleanPhone, authPassword);
+      } else {
+        authRes = await loginCustomer(cleanPhone, authPassword);
+      }
+
+      if (!authRes.success) {
+        setIsSubmitting(false);
+        setSubmitError(authRes.error || 'Account authentication failed. Please check your credentials.');
+        return;
+      }
+
+      activeCustomer.name = authName.trim() || customer.name || 'Valued Customer';
+      activeCustomer.phone = cleanPhone;
+    } else {
+      if (!activeCustomer.name.trim()) activeCustomer.name = user?.name || 'Valued Customer';
+      if (!activeCustomer.phone.trim() && user && 'phone' in user) activeCustomer.phone = user.phone;
     }
 
     setIsSubmitting(true);
 
     // Flow 1: Cash on Delivery
     if (paymentMethod === 'COD') {
-      const res = await submitOrder(effectiveOutletSlug, campaignSlug, customer, 'COD');
+      const res = await submitOrder(effectiveOutletSlug, campaignSlug, activeCustomer, 'COD');
       setIsSubmitting(false);
 
       if (res.success && res.order) {
@@ -192,7 +189,7 @@ export function CartDrawer({ outletSlug, campaignSlug }: CartDrawerProps) {
           amount: total,
           outletSlug: effectiveOutletSlug,
           campaignSlug,
-          customer,
+          customer: activeCustomer,
           items: items.map((i) => ({
             itemId: i.item.id,
             name: i.item.name,
@@ -205,54 +202,37 @@ export function CartDrawer({ outletSlug, campaignSlug }: CartDrawerProps) {
       const orderData = await createRes.json();
       if (!createRes.ok || !orderData.success) {
         setIsSubmitting(false);
-        setSubmitError(orderData.message || 'Unable to initialize secure payment. Please try again or select Cash on Delivery.');
+        setSubmitError(orderData.error || 'Failed to initialize payment gateway');
         return;
       }
 
       const scriptLoaded = await loadRazorpayScript();
-
-      // Graceful fallback for demo keys or environments without external script access
-      if (
-        orderData.isDemoMode ||
-        !scriptLoaded ||
-        typeof (window as unknown as { Razorpay?: unknown }).Razorpay === 'undefined'
-      ) {
-        console.warn('Sandbox / demo mode active, executing verified sandbox transaction');
-        const verifyRes = await verifyRazorpayPayment(
-          orderData.orderId,
-          `pay_sandbox_${Date.now()}`,
-          'mock_signature',
-          effectiveOutletSlug,
-          campaignSlug,
-          customer
-        );
+      if (!scriptLoaded) {
         setIsSubmitting(false);
-        if (verifyRes.success && verifyRes.order) {
-          router.push(`/${effectiveOutletSlug}/order/${verifyRes.order.id}`);
-        } else {
-          setSubmitError(verifyRes.error || 'Payment verification failed');
-        }
+        setSubmitError('Payment gateway script failed to load. Please check your connection.');
         return;
       }
 
-      // Initialize Payment Standard Modal
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const RazorpayConstructor = (window as unknown as { Razorpay: any }).Razorpay;
+      const RazorpayConstructor = (window as any).Razorpay;
+      if (!RazorpayConstructor) {
+        setIsSubmitting(false);
+        setSubmitError('Payment provider not available');
+        return;
+      }
+
       const options = {
         key: orderData.keyId,
         amount: orderData.amount,
         currency: orderData.currency || 'INR',
-        name: orderData.businessName || "Puffs 'n' Rolls Nashik",
-        description: orderData.description || `Artisanal Bakery Order (${customer.area || 'Nashik'})`,
-        image: 'https://puffsnrolls.com/wp-content/uploads/2021/04/pnr-logo.png',
+        name: "Puffs 'n' Rolls Bakery",
+        description: `Order from ${orderData.outletName || 'Nashik Bakery'}`,
+        image: 'https://puffsnrolls.com/wp-content/uploads/2025/12/banner-logo.png',
         order_id: orderData.orderId,
         prefill: {
-          name: customer.name,
-          contact: customer.phone,
-        },
-        notes: {
-          outletSlug: effectiveOutletSlug,
-          area: customer.area,
+          name: activeCustomer.name,
+          contact: activeCustomer.phone,
+          email: `${activeCustomer.phone.replace(/\D/g, '')}@puffsnrolls.com`,
         },
         theme: {
           color: '#1C1917',
@@ -274,7 +254,7 @@ export function CartDrawer({ outletSlug, campaignSlug }: CartDrawerProps) {
               response.razorpay_signature,
               effectiveOutletSlug,
               campaignSlug,
-              customer
+              activeCustomer
             );
             setIsSubmitting(false);
             if (verifyRes.success && verifyRes.order) {
@@ -332,7 +312,7 @@ export function CartDrawer({ outletSlug, campaignSlug }: CartDrawerProps) {
             </div>
             <button
               onClick={() => setIsCartOpen(false)}
-              className="p-1.5 text-stone-400 hover:text-stone-800 rounded-full hover:bg-stone-100 transition"
+              className="p-1.5 text-stone-400 hover:text-stone-800 rounded-full hover:bg-stone-100 transition cursor-pointer"
             >
               <X className="w-5 h-5" />
             </button>
@@ -351,7 +331,7 @@ export function CartDrawer({ outletSlug, campaignSlug }: CartDrawerProps) {
                 </p>
                 <button
                   onClick={() => setIsCartOpen(false)}
-                  className="px-5 py-2 bg-[#1C1917] text-white rounded-full text-xs font-semibold hover:bg-stone-800 transition"
+                  className="px-5 py-2 bg-[#1C1917] text-white rounded-full text-xs font-semibold hover:bg-stone-800 transition cursor-pointer"
                 >
                   Explore Menu
                 </button>
@@ -385,7 +365,7 @@ export function CartDrawer({ outletSlug, campaignSlug }: CartDrawerProps) {
                       <div className="flex items-center gap-2 bg-stone-50 px-2 py-1 rounded-full border border-stone-200">
                         <button
                           onClick={() => updateQuantity(cartItem.item.id, cartItem.quantity - 1)}
-                          className="text-stone-500 hover:text-stone-800 p-0.5"
+                          className="text-stone-500 hover:text-stone-800 p-0.5 cursor-pointer"
                         >
                           <Minus className="w-3 h-3" />
                         </button>
@@ -394,7 +374,7 @@ export function CartDrawer({ outletSlug, campaignSlug }: CartDrawerProps) {
                         </span>
                         <button
                           onClick={() => updateQuantity(cartItem.item.id, cartItem.quantity + 1)}
-                          className="text-stone-500 hover:text-stone-800 p-0.5"
+                          className="text-stone-500 hover:text-stone-800 p-0.5 cursor-pointer"
                         >
                           <Plus className="w-3 h-3" />
                         </button>
@@ -406,7 +386,7 @@ export function CartDrawer({ outletSlug, campaignSlug }: CartDrawerProps) {
                         </p>
                         <button
                           onClick={() => removeItem(cartItem.item.id)}
-                          className="text-stone-300 hover:text-rose-600 mt-0.5"
+                          className="text-stone-300 hover:text-rose-600 mt-0.5 cursor-pointer"
                         >
                           <Trash2 className="w-3.5 h-3.5" />
                         </button>
@@ -415,7 +395,7 @@ export function CartDrawer({ outletSlug, campaignSlug }: CartDrawerProps) {
                   ))}
                 </div>
 
-                {/* Express Bakery Delivery Notice (Zero mention of partner) */}
+                {/* Express Bakery Delivery Notice */}
                 <div className="p-3 bg-white rounded-2xl border border-stone-200/80 flex items-start gap-2.5 shadow-xs">
                   <Truck className="w-4 h-4 text-stone-700 shrink-0 mt-0.5" />
                   <div>
@@ -423,114 +403,210 @@ export function CartDrawer({ outletSlug, campaignSlug }: CartDrawerProps) {
                       Express Doorstep Delivery
                     </p>
                     <p className="text-[11px] text-stone-500 mt-0.5">
-                      Dispatched straight from our ovens to your address in 25 minutes.
+                      Dispatched straight from our nearest ovens to your address in 25 minutes.
                     </p>
                   </div>
                 </div>
 
-                {/* Customer Verification & Delivery Form */}
-                <div className="space-y-3 pt-2 border-t border-stone-200">
-                  {!isCustomerLoggedIn ? (
-                    /* Step 1: Customer Authentication (Mandatory before Payment) */
-                    <div className="bg-stone-50 border border-stone-200/90 rounded-2xl p-4 space-y-3">
-                      <div className="flex items-start gap-2.5">
-                        <div className="w-8 h-8 rounded-xl bg-amber-100 text-amber-900 flex items-center justify-center shrink-0">
-                          <Lock className="w-4 h-4 text-amber-800" />
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <h4 className="text-xs font-bold text-stone-900">
-                            Customer Sign In Required
-                          </h4>
-                          <p className="text-[11px] text-stone-500 leading-relaxed mt-0.5">
-                            Sign in with your phone number and password to track delivery and access rewards.
-                          </p>
-                        </div>
+                {/* =========================================================================
+                    SECTION 1: DELIVERY ADDRESS (ALWAYS VISIBLE - WHERE SHOULD WE DELIVER?)
+                   ========================================================================= */}
+                <div className="bg-white rounded-2xl border border-stone-200 p-4 space-y-3 shadow-xs">
+                  <div className="flex items-center justify-between">
+                    <h4 className="text-[11px] font-bold uppercase tracking-wider text-stone-900 flex items-center gap-1.5">
+                      <MapPin className="w-3.5 h-3.5 text-amber-700" />
+                      <span>Where Should We Deliver?</span>
+                    </h4>
+                    <span className="text-[10px] text-emerald-800 font-semibold bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
+                      Nashik Delivery
+                    </span>
+                  </div>
+
+                  <div className="space-y-2">
+                    <div>
+                      <label className="block text-[10px] font-bold text-stone-600 uppercase tracking-wider mb-1">
+                        House / Flat No., Society / Building, Landmark *
+                      </label>
+                      <textarea
+                        required
+                        rows={2}
+                        placeholder="e.g. Flat 402, Shrinath Heights, Opp. BYK Circle"
+                        value={customer.address}
+                        onChange={(e) => setCustomer({ ...customer, address: e.target.value })}
+                        className="w-full px-3 py-2 bg-stone-50 border border-stone-200 rounded-xl text-xs focus:bg-white focus:ring-1 focus:ring-stone-900 focus:outline-none resize-none"
+                      />
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-2">
+                      <div>
+                        <label className="block text-[10px] font-bold text-stone-600 uppercase tracking-wider mb-1">
+                          Nashik Locality *
+                        </label>
+                        <select
+                          value={customer.area}
+                          onChange={(e) => setCustomer({ ...customer, area: e.target.value })}
+                          className="w-full px-3 py-2 bg-stone-50 border border-stone-200 rounded-xl text-xs text-stone-800 focus:bg-white focus:outline-none"
+                        >
+                          <option value="College Road">College Road</option>
+                          <option value="Thatte Nagar">Thatte Nagar</option>
+                          <option value="Gangapur Road">Gangapur Road</option>
+                          <option value="Nashik Road">Nashik Road</option>
+                          <option value="Bytco Point">Bytco Point</option>
+                          <option value="Indira Nagar">Indira Nagar</option>
+                          <option value="Govind Nagar">Govind Nagar</option>
+                          <option value="Panchavati">Panchavati</option>
+                        </select>
                       </div>
 
-                      {/* Test Customer Badge */}
-                      <div className="bg-white/80 border border-amber-200/70 rounded-xl p-2 text-xs flex items-center justify-between">
-                        <div className="flex items-center gap-1.5 min-w-0">
-                          <KeyRound className="w-3.5 h-3.5 text-amber-700 shrink-0" />
-                          <span className="text-[10px] text-amber-900 font-mono truncate">
-                            Test: 9822344556 / pnr@customer123
-                          </span>
-                        </div>
-                        <button
-                          type="button"
-                          onClick={handleQuickFillCartTest}
-                          className="text-[10px] font-bold uppercase text-amber-800 hover:text-amber-950 underline shrink-0 cursor-pointer ml-1"
-                        >
-                          Auto Fill
-                        </button>
+                      <div>
+                        <label className="block text-[10px] font-bold text-stone-600 uppercase tracking-wider mb-1">
+                          Pincode *
+                        </label>
+                        <input
+                          type="text"
+                          maxLength={6}
+                          placeholder="422005"
+                          value={customer.pincode}
+                          onChange={(e) => setCustomer({ ...customer, pincode: e.target.value })}
+                          className="w-full px-3 py-2 bg-stone-50 border border-stone-200 rounded-xl text-xs font-mono focus:bg-white focus:ring-1 focus:ring-stone-900 focus:outline-none"
+                        />
                       </div>
+                    </div>
 
-                      {/* Mode Toggle */}
-                      <div className="flex rounded-lg bg-stone-200/70 p-0.5">
+                    <div>
+                      <input
+                        type="text"
+                        placeholder="Delivery instructions (e.g. Ring doorbell, leave at door)"
+                        value={customer.specialInstructions || ''}
+                        onChange={(e) =>
+                          setCustomer({ ...customer, specialInstructions: e.target.value })
+                        }
+                        className="w-full px-3 py-1.5 bg-stone-50 border border-stone-200 rounded-xl text-[11px] text-stone-700 focus:bg-white focus:outline-none"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* =========================================================================
+                    SECTION 2: CUSTOMER CONTACT & ACCOUNT
+                   ========================================================================= */}
+                {isCustomerLoggedIn ? (
+                  <div className="bg-emerald-50/80 border border-emerald-200 rounded-2xl p-3 flex items-center justify-between">
+                    <div className="flex items-center gap-2.5 min-w-0">
+                      <div className="w-8 h-8 rounded-xl bg-emerald-600 text-white flex items-center justify-center shrink-0">
+                        <CheckCircle2 className="w-4.5 h-4.5" />
+                      </div>
+                      <div className="min-w-0">
+                        <p className="text-xs font-bold text-emerald-950 truncate">
+                          {user?.name || customer.name || 'Verified Customer'}
+                        </p>
+                        <p className="text-[11px] text-emerald-700 font-mono">
+                          +91 {user && 'phone' in user ? user.phone : customer.phone}
+                        </p>
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => logout()}
+                      className="text-[11px] font-semibold text-emerald-800 hover:text-emerald-950 underline px-2 py-1 rounded-lg hover:bg-emerald-100/50 transition cursor-pointer"
+                    >
+                      Change
+                    </button>
+                  </div>
+                ) : (
+                  <div className="bg-white rounded-2xl border border-stone-200 p-4 space-y-3 shadow-xs">
+                    <div className="flex items-center justify-between">
+                      <h4 className="text-[11px] font-bold uppercase tracking-wider text-stone-900 flex items-center gap-1.5">
+                        <User className="w-3.5 h-3.5 text-stone-600" />
+                        <span>Customer Details</span>
+                      </h4>
+                      <div className="flex rounded-md bg-stone-100 p-0.5">
                         <button
                           type="button"
-                          onClick={() => {
-                            setAuthMode('LOGIN');
-                            setAuthError('');
-                          }}
-                          className={`flex-1 py-1 text-[11px] font-semibold rounded-md transition cursor-pointer ${
-                            authMode === 'LOGIN'
-                              ? 'bg-white text-stone-900 shadow-2xs'
-                              : 'text-stone-600 hover:text-stone-900'
-                          }`}
-                        >
-                          Sign In
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setAuthMode('REGISTER');
-                            setAuthError('');
-                          }}
-                          className={`flex-1 py-1 text-[11px] font-semibold rounded-md transition cursor-pointer ${
+                          onClick={() => setAuthMode('REGISTER')}
+                          className={`px-2 py-0.5 text-[10px] font-semibold rounded transition cursor-pointer ${
                             authMode === 'REGISTER'
                               ? 'bg-white text-stone-900 shadow-2xs'
-                              : 'text-stone-600 hover:text-stone-900'
+                              : 'text-stone-500'
                           }`}
                         >
                           New Customer
                         </button>
+                        <button
+                          type="button"
+                          onClick={() => setAuthMode('LOGIN')}
+                          className={`px-2 py-0.5 text-[10px] font-semibold rounded transition cursor-pointer ${
+                            authMode === 'LOGIN'
+                              ? 'bg-white text-stone-900 shadow-2xs'
+                              : 'text-stone-500'
+                          }`}
+                        >
+                          Sign In
+                        </button>
                       </div>
+                    </div>
 
-                      <div className="space-y-2 pt-0.5">
-                        {authMode === 'REGISTER' && (
+                    <div className="space-y-2">
+                      {authMode === 'REGISTER' && (
+                        <div>
+                          <label className="block text-[10px] font-bold text-stone-600 uppercase tracking-wider mb-1">
+                            Your Full Name *
+                          </label>
                           <input
                             type="text"
-                            placeholder="Your Full Name (e.g. Rahul Deshmukh) *"
+                            required
+                            placeholder="e.g. Rahul Deshmukh"
                             value={authName}
-                            onChange={(e) => setAuthName(e.target.value)}
-                            className="w-full px-3 py-2 bg-white border border-stone-200 rounded-xl text-xs focus:ring-1 focus:ring-stone-900 focus:outline-none"
+                            onChange={(e) => {
+                              setAuthName(e.target.value);
+                              setCustomer((prev) => ({ ...prev, name: e.target.value }));
+                            }}
+                            className="w-full px-3 py-2 bg-stone-50 border border-stone-200 rounded-xl text-xs focus:bg-white focus:ring-1 focus:ring-stone-900 focus:outline-none"
                           />
-                        )}
+                        </div>
+                      )}
 
+                      <div>
+                        <label className="block text-[10px] font-bold text-stone-600 uppercase tracking-wider mb-1">
+                          Mobile Phone Number *
+                        </label>
                         <div className="relative">
                           <span className="absolute left-3 top-2 text-xs font-bold text-stone-400 font-mono">
                             +91
                           </span>
                           <input
                             type="tel"
+                            required
                             inputMode="tel"
                             maxLength={10}
-                            placeholder="10-digit Mobile Number *"
+                            placeholder="98220 00000"
                             value={authPhone}
-                            onChange={(e) =>
-                              setAuthPhone(e.target.value.replace(/\D/g, '').slice(0, 10))
-                            }
-                            className="w-full pl-10 pr-3 py-2 bg-white border border-stone-200 rounded-xl text-xs font-mono focus:ring-1 focus:ring-stone-900 focus:outline-none"
+                            onChange={(e) => {
+                              const clean = e.target.value.replace(/\D/g, '').slice(0, 10);
+                              setAuthPhone(clean);
+                              setCustomer((prev) => ({ ...prev, phone: clean }));
+                            }}
+                            className="w-full pl-10 pr-3 py-2 bg-stone-50 border border-stone-200 rounded-xl text-xs font-mono focus:bg-white focus:ring-1 focus:ring-stone-900 focus:outline-none"
                           />
                         </div>
+                      </div>
 
+                      <div>
+                        <label className="block text-[10px] font-bold text-stone-600 uppercase tracking-wider mb-1">
+                          Password *
+                        </label>
                         <div className="relative">
                           <input
                             type={showAuthPassword ? 'text' : 'password'}
-                            placeholder="Password *"
+                            required
+                            placeholder={
+                              authMode === 'REGISTER'
+                                ? 'Create a password (min 4 characters)'
+                                : 'Enter your password'
+                            }
                             value={authPassword}
                             onChange={(e) => setAuthPassword(e.target.value)}
-                            className="w-full px-3 pr-9 py-2 bg-white border border-stone-200 rounded-xl text-xs focus:ring-1 focus:ring-stone-900 focus:outline-none"
+                            className="w-full px-3 pr-9 py-2 bg-stone-50 border border-stone-200 rounded-xl text-xs focus:bg-white focus:ring-1 focus:ring-stone-900 focus:outline-none"
                           />
                           <button
                             type="button"
@@ -544,229 +620,105 @@ export function CartDrawer({ outletSlug, campaignSlug }: CartDrawerProps) {
                             )}
                           </button>
                         </div>
-
-                        {authError && (
-                          <p className="text-[11px] text-rose-600 font-medium">{authError}</p>
-                        )}
-
-                        <button
-                          type="button"
-                          disabled={isLoggingIn}
-                          onClick={handleInlineLogin}
-                          className="w-full py-2.5 bg-[#1C1917] hover:bg-stone-800 text-white rounded-xl text-xs font-semibold uppercase tracking-wider flex items-center justify-center gap-1.5 transition cursor-pointer disabled:opacity-60"
-                        >
-                          {isLoggingIn ? (
-                            <span>Signing In...</span>
-                          ) : (
-                            <>
-                              <span>
-                                {authMode === 'LOGIN'
-                                  ? 'Sign In & Continue'
-                                  : 'Create Account & Continue'}
-                              </span>
-                              <ArrowRight className="w-3.5 h-3.5" />
-                            </>
-                          )}
-                        </button>
-
-                        <div className="text-center pt-1">
-                          <button
-                            type="button"
-                            onClick={openCustomerLogin}
-                            className="text-[11px] text-stone-500 hover:text-stone-900 underline transition cursor-pointer"
-                          >
-                            Or open customer sign-in page
-                          </button>
-                        </div>
                       </div>
                     </div>
-                  ) : (
-                    /* Step 2: Customer Authenticated -> Display Verified Badge & Address */
-                    <div className="space-y-3">
-                      <div className="bg-emerald-50/80 border border-emerald-200/90 rounded-2xl p-3 flex items-center justify-between">
-                        <div className="flex items-center gap-2.5 min-w-0">
-                          <div className="w-8 h-8 rounded-xl bg-emerald-600 text-white flex items-center justify-center shrink-0">
-                            <CheckCircle2 className="w-4.5 h-4.5" />
-                          </div>
-                          <div className="min-w-0">
-                            <p className="text-xs font-bold text-emerald-950 truncate">
-                              {user?.name || 'Verified Customer'}
-                            </p>
-                            <p className="text-[11px] text-emerald-700 font-mono">
-                              +91 {user && 'phone' in user ? user.phone : customer.phone}
-                            </p>
-                          </div>
-                        </div>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            logout();
-                            setCustomer({
-                              name: '',
-                              phone: '',
-                              address: '',
-                              area: 'College Road',
-                              pincode: '422005',
-                              specialInstructions: '',
-                            });
-                          }}
-                          className="text-[11px] font-semibold text-emerald-800 hover:text-emerald-950 underline px-2 py-1 rounded-lg hover:bg-emerald-100/50 transition cursor-pointer"
-                        >
-                          Change
-                        </button>
+                  </div>
+                )}
+
+                {/* =========================================================================
+                    SECTION 3: PAYMENT METHOD
+                   ========================================================================= */}
+                <div className="space-y-2 pt-1">
+                  <div className="flex items-center justify-between">
+                    <p className="text-[11px] font-bold uppercase tracking-wider text-stone-800">
+                      Payment Method
+                    </p>
+                    <span className="inline-flex items-center gap-1 text-[10px] text-stone-500 font-medium">
+                      <Lock className="w-2.5 h-2.5 text-emerald-600" />
+                      100% Encrypted
+                    </span>
+                  </div>
+
+                  <div className="space-y-2">
+                    {/* Instant Online Payment Option */}
+                    <button
+                      type="button"
+                      onClick={() => setPaymentMethod('UPI')}
+                      className={`w-full p-3 rounded-2xl border text-left transition relative flex items-start gap-3 cursor-pointer ${
+                        paymentMethod === 'UPI'
+                          ? 'border-stone-900 bg-white ring-1 ring-stone-900 shadow-xs'
+                          : 'border-stone-200 bg-white/60 hover:bg-white text-stone-700'
+                      }`}
+                    >
+                      <div
+                        className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 mt-0.5 ${
+                          paymentMethod === 'UPI'
+                            ? 'bg-[#1C1917] text-white'
+                            : 'bg-stone-100 text-stone-500'
+                        }`}
+                      >
+                        <CreditCard className="w-4 h-4" />
                       </div>
-
-                      <div>
-                        <h4 className="text-[11px] font-bold uppercase tracking-wider text-stone-700 mb-2">
-                          Delivery Address (Nashik)
-                        </h4>
-
-                        <div className="space-y-2">
-                          <input
-                            type="text"
-                            required
-                            placeholder="Your Full Name *"
-                            value={customer.name}
-                            onChange={(e) => setCustomer({ ...customer, name: e.target.value })}
-                            className="w-full px-3 py-2 bg-white border border-stone-200 rounded-xl text-xs focus:ring-1 focus:ring-stone-900 focus:outline-none"
-                          />
-
-                          <textarea
-                            required
-                            rows={2}
-                            placeholder="House / Flat No., Building, Landmark *"
-                            value={customer.address}
-                            onChange={(e) => setCustomer({ ...customer, address: e.target.value })}
-                            className="w-full px-3 py-2 bg-white border border-stone-200 rounded-xl text-xs focus:ring-1 focus:ring-stone-900 focus:outline-none resize-none"
-                          />
-
-                          <div className="grid grid-cols-2 gap-2">
-                            <select
-                              value={customer.area}
-                              onChange={(e) => setCustomer({ ...customer, area: e.target.value })}
-                              className="px-3 py-2 bg-white border border-stone-200 rounded-xl text-xs text-stone-700 focus:outline-none"
-                            >
-                              <option value="College Road">College Road</option>
-                              <option value="Thatte Nagar">Thatte Nagar</option>
-                              <option value="Gangapur Road">Gangapur Road</option>
-                              <option value="Nashik Road">Nashik Road</option>
-                              <option value="Bytco Point">Bytco Point</option>
-                              <option value="Indira Nagar">Indira Nagar</option>
-                              <option value="Govind Nagar">Govind Nagar</option>
-                              <option value="Panchavati">Panchavati</option>
-                            </select>
-
-                            <input
-                              type="text"
-                              inputMode="numeric"
-                              placeholder="Pincode"
-                              value={customer.pincode}
-                              onChange={(e) => setCustomer({ ...customer, pincode: e.target.value })}
-                              className="px-3 py-2 bg-white border border-stone-200 rounded-xl text-xs font-mono focus:outline-none"
-                            />
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Payment Method */}
-                      <div className="pt-2">
-                        <div className="flex items-center justify-between mb-2">
-                          <p className="text-[11px] font-bold uppercase tracking-wider text-stone-700">
-                            Payment Method
-                          </p>
-                          <span className="inline-flex items-center gap-1 text-[10px] text-stone-500 font-medium">
-                            <Lock className="w-2.5 h-2.5 text-emerald-600" />
-                            100% Encrypted
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center justify-between">
+                          <span className="text-xs font-bold text-stone-900">
+                            Instant Online Payment
+                          </span>
+                          <span className="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
+                            Instant
                           </span>
                         </div>
-
-                        <div className="space-y-2">
-                          {/* Instant Online Payment Option */}
-                          <button
-                            type="button"
-                            onClick={() => setPaymentMethod('UPI')}
-                            className={`w-full p-3 rounded-2xl border text-left transition relative flex items-start gap-3 ${
-                              paymentMethod === 'UPI'
-                                ? 'border-stone-900 bg-white ring-1 ring-stone-900 shadow-xs'
-                                : 'border-stone-200 bg-white/60 hover:bg-white text-stone-700'
-                            }`}
-                          >
-                            <div
-                              className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 mt-0.5 ${
-                                paymentMethod === 'UPI'
-                                  ? 'bg-[#1C1917] text-white'
-                                  : 'bg-stone-100 text-stone-500'
-                              }`}
-                            >
-                              <CreditCard className="w-4 h-4" />
-                            </div>
-                            <div className="flex-1 min-w-0">
-                              <div className="flex items-center justify-between">
-                                <span className="text-xs font-bold text-stone-900">
-                                  Instant Online Payment
-                                </span>
-                                <span className="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
-                                  Instant
-                                </span>
-                              </div>
-                              <p className="text-[11px] text-stone-500 mt-0.5">
-                                UPI (Google Pay, PhonePe, Paytm), Credit/Debit Cards, NetBanking
-                              </p>
-                            </div>
-                          </button>
-
-                          {/* Cash on Delivery Option */}
-                          <button
-                            type="button"
-                            onClick={() => setPaymentMethod('COD')}
-                            className={`w-full p-3 rounded-2xl border text-left transition relative flex items-start gap-3 ${
-                              paymentMethod === 'COD'
-                                ? 'border-stone-900 bg-white ring-1 ring-stone-900 shadow-xs'
-                                : 'border-stone-200 bg-white/60 hover:bg-white text-stone-700'
-                            }`}
-                          >
-                            <div
-                              className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 mt-0.5 ${
-                                paymentMethod === 'COD'
-                                  ? 'bg-[#1C1917] text-white'
-                                  : 'bg-stone-100 text-stone-500'
-                              }`}
-                            >
-                              <Truck className="w-4 h-4" />
-                            </div>
-                            <div className="flex-1 min-w-0">
-                              <div className="flex items-center justify-between">
-                                <span className="text-xs font-bold text-stone-900">
-                                  Cash on Delivery
-                                </span>
-                              </div>
-                              <p className="text-[11px] text-stone-500 mt-0.5">
-                                Pay via Cash or UPI QR scan upon doorstep delivery
-                              </p>
-                            </div>
-                          </button>
-                        </div>
-
-                        <p className="text-[10px] text-stone-400 text-center mt-2 flex items-center justify-center gap-1.5">
-                          <ShieldCheck className="w-3.5 h-3.5 text-stone-500" />
-                          100% Safe &amp; Secure 256-bit Encrypted Checkout
+                        <p className="text-[11px] text-stone-500 mt-0.5">
+                          UPI (Google Pay, PhonePe, Paytm), Credit/Debit Cards, NetBanking
                         </p>
                       </div>
-                    </div>
-                  )}
+                    </button>
+
+                    {/* Cash on Delivery Option */}
+                    <button
+                      type="button"
+                      onClick={() => setPaymentMethod('COD')}
+                      className={`w-full p-3 rounded-2xl border text-left transition relative flex items-start gap-3 cursor-pointer ${
+                        paymentMethod === 'COD'
+                          ? 'border-stone-900 bg-white ring-1 ring-stone-900 shadow-xs'
+                          : 'border-stone-200 bg-white/60 hover:bg-white text-stone-700'
+                      }`}
+                    >
+                      <div
+                        className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 mt-0.5 ${
+                          paymentMethod === 'COD'
+                            ? 'bg-[#1C1917] text-white'
+                            : 'bg-stone-100 text-stone-500'
+                        }`}
+                      >
+                        <Truck className="w-4 h-4" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center justify-between">
+                          <span className="text-xs font-bold text-stone-900">Cash on Delivery</span>
+                          <span className="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full bg-stone-100 text-stone-600">
+                            Cash
+                          </span>
+                        </div>
+                        <p className="text-[11px] text-stone-500 mt-0.5">
+                          Pay cash or UPI scan directly to our delivery rider upon doorstep arrival
+                        </p>
+                      </div>
+                    </button>
+                  </div>
                 </div>
 
-                {/* Bill Breakdown */}
-                <div className="pt-3 border-t border-stone-200 space-y-1.5 text-xs text-stone-600">
-                  <div className="flex justify-between">
-                    <span>Item Subtotal</span>
+                {/* Price Breakdown */}
+                <div className="p-3.5 bg-white rounded-2xl border border-stone-200/80 space-y-2 text-xs">
+                  <div className="flex justify-between text-stone-500">
+                    <span>Items Subtotal</span>
                     <span>₹{subtotal}</span>
                   </div>
-                  <div className="flex justify-between">
-                    <span>Delivery</span>
-                    <span>{deliveryFee === 0 ? <strong className="text-emerald-700">FREE</strong> : `₹${deliveryFee}`}</span>
+                  <div className="flex justify-between text-stone-500">
+                    <span>Express Delivery Fee</span>
+                    <span>₹{deliveryFee}</span>
                   </div>
-                  <div className="flex justify-between text-stone-900 font-bold text-sm pt-2 border-t border-stone-200">
+                  <div className="pt-2 border-t border-stone-100 flex justify-between font-bold text-sm text-stone-900">
                     <span>Total Amount</span>
                     <span>₹{total}</span>
                   </div>
@@ -784,50 +736,32 @@ export function CartDrawer({ outletSlug, campaignSlug }: CartDrawerProps) {
           {/* Checkout Footer */}
           {items.length > 0 && (
             <div className="p-4 sm:p-5 border-t border-stone-200 bg-white space-y-2">
-              {!isCustomerLoggedIn ? (
-                <button
-                  type="button"
-                  onClick={() => {
-                    if (authPhone.replace(/\D/g, '').length >= 10 && authPassword.trim()) {
-                      handleInlineLogin();
-                    } else {
-                      openCustomerLogin();
-                    }
-                  }}
-                  disabled={isLoggingIn}
-                  className="w-full py-3 bg-[#1C1917] hover:bg-stone-800 text-white rounded-full font-medium text-xs uppercase tracking-wider transition shadow-sm flex items-center justify-center gap-2 disabled:opacity-60 cursor-pointer"
-                >
-                  <Lock className="w-3.5 h-3.5 text-amber-400" />
-                  <span>Sign In to Checkout • ₹{total}</span>
-                  <ArrowRight className="w-3.5 h-3.5" />
-                </button>
-              ) : (
-                <button
-                  type="button"
-                  onClick={handleCheckout}
-                  disabled={isSubmitting}
-                  className="w-full py-3 bg-[#1C1917] hover:bg-stone-800 text-white rounded-full font-medium text-xs uppercase tracking-wider transition shadow-sm flex items-center justify-center gap-2 disabled:opacity-60 cursor-pointer"
-                >
-                  {isSubmitting ? (
-                    <span>Connecting Secure Payment...</span>
-                  ) : paymentMethod === 'UPI' ? (
-                    <>
-                      <Lock className="w-3.5 h-3.5 text-emerald-400" />
-                      <span>Pay Online • ₹{total}</span>
-                      <ArrowRight className="w-3.5 h-3.5" />
-                    </>
-                  ) : (
-                    <>
-                      <span>Place Cash Order • ₹{total}</span>
-                      <ArrowRight className="w-3.5 h-3.5" />
-                    </>
-                  )}
-                </button>
-              )}
+              <button
+                type="button"
+                onClick={handleCheckout}
+                disabled={isSubmitting}
+                className="w-full py-3.5 bg-[#1C1917] hover:bg-stone-800 active:scale-[0.99] text-white rounded-full font-bold text-xs uppercase tracking-wider transition shadow-sm flex items-center justify-center gap-2 disabled:opacity-60 cursor-pointer"
+              >
+                {isSubmitting ? (
+                  <span>Processing Order...</span>
+                ) : paymentMethod === 'UPI' ? (
+                  <>
+                    <Lock className="w-3.5 h-3.5 text-emerald-400" />
+                    <span>Pay Online • ₹{total}</span>
+                    <ArrowRight className="w-3.5 h-3.5" />
+                  </>
+                ) : (
+                  <>
+                    <span>Place Cash Order • ₹{total}</span>
+                    <ArrowRight className="w-3.5 h-3.5" />
+                  </>
+                )}
+              </button>
 
-              <p className="text-[10px] text-stone-400 text-center">
-                100% Quality Guaranteed • Fresh Oven Bakes
-              </p>
+              <div className="flex items-center justify-center gap-1.5 text-[10px] text-stone-400 text-center">
+                <ShieldCheck className="w-3 h-3 text-stone-400" />
+                <span>100% Quality Guaranteed • Fresh Oven Bakes</span>
+              </div>
             </div>
           )}
         </div>

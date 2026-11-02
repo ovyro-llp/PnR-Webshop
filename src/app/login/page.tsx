@@ -17,7 +17,6 @@ import {
   Sparkles,
   CheckCircle2,
   AlertCircle,
-  KeyRound,
 } from 'lucide-react';
 
 export default function CustomerLoginPage() {
@@ -38,13 +37,6 @@ export default function CustomerLoginPage() {
       router.push('/account');
     }
   }, [isAuthenticated, isCustomer, router]);
-
-  const handleQuickFillTest = () => {
-    setMode('LOGIN');
-    setPhone('9822344556');
-    setPassword('pnr@customer123');
-    setErrorMessage('');
-  };
 
   const handleLoginSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -106,33 +98,6 @@ export default function CustomerLoginPage() {
                   ? 'Sign in with your registered phone number and password to view active orders.'
                   : 'Join Puffs &apos;n&apos; Rolls to save delivery addresses and enjoy bakery loyalty benefits.'}
               </p>
-            </div>
-          </div>
-
-          {/* Test User Credentials Box */}
-          <div className="bg-amber-50/80 border border-amber-200/80 rounded-2xl p-3.5 space-y-2 text-xs">
-            <div className="flex items-center justify-between">
-              <span className="text-[10px] uppercase font-bold tracking-wider text-amber-900 flex items-center gap-1.5">
-                <KeyRound className="w-3.5 h-3.5 text-amber-700" />
-                Test Customer Account
-              </span>
-              <button
-                type="button"
-                onClick={handleQuickFillTest}
-                className="text-[10px] font-bold uppercase tracking-wider text-amber-800 hover:text-amber-950 underline cursor-pointer"
-              >
-                1-Tap Auto Fill
-              </button>
-            </div>
-            <div className="grid grid-cols-2 gap-2 text-[11px] font-mono text-stone-700 bg-white/70 p-2 rounded-xl border border-amber-200/50">
-              <div>
-                <span className="text-stone-400 block text-[9px] uppercase font-sans">Phone</span>
-                <span className="font-bold">9822344556</span>
-              </div>
-              <div>
-                <span className="text-stone-400 block text-[9px] uppercase font-sans">Password</span>
-                <span className="font-bold">pnr@customer123</span>
-              </div>
             </div>
           </div>
 

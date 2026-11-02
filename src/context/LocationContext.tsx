@@ -8,12 +8,16 @@ export interface LocationContextType {
   nearestOutlet: Outlet;
   allOutlets: Outlet[];
   distanceKm: number | null;
+  deliveryAddress: string;
+  deliveryArea: string;
   isDetecting: boolean;
   locationError: string | null;
   hasSetLocation: boolean;
   isLocationModalOpen: boolean;
+  setDeliveryAddress: (address: string) => void;
+  setDeliveryArea: (area: string) => void;
   requestLocation: () => Promise<void>;
-  setManualOutlet: (slug: string) => void;
+  setManualOutlet: (slug: string, address?: string) => void;
   openLocationModal: () => void;
   closeLocationModal: () => void;
 }
@@ -43,22 +47,31 @@ const LocationContext = createContext<LocationContextType | undefined>(undefined
 const STORAGE_KEY_OUTLET = 'pnr_customer_assigned_outlet';
 const STORAGE_KEY_DISTANCE = 'pnr_customer_distance_km';
 const STORAGE_KEY_PROMPTED = 'pnr_location_prompted';
+const STORAGE_KEY_ADDRESS = 'pnr_customer_delivery_address';
+const STORAGE_KEY_AREA = 'pnr_customer_delivery_area';
 
 export function LocationProvider({ children }: { children: React.ReactNode }) {
   // Default to College Road (flagship outlet) if not yet resolved
   const [nearestOutlet, setNearestOutlet] = useState<Outlet>(() => OUTLETS[0]);
   const [distanceKm, setDistanceKm] = useState<number | null>(null);
+  const [deliveryAddress, setDeliveryAddressState] = useState('');
+  const [deliveryArea, setDeliveryAreaState] = useState('College Road');
   const [isDetecting, setIsDetecting] = useState(false);
   const [locationError, setLocationError] = useState<string | null>(null);
   const [hasSetLocation, setHasSetLocation] = useState(false);
   const [isLocationModalOpen, setIsLocationModalOpen] = useState(false);
 
-  // Restore stored outlet on mount or prompt if first time
+  // Restore stored outlet and address on mount
   useEffect(() => {
     try {
       const storedSlug = localStorage.getItem(STORAGE_KEY_OUTLET);
       const storedDist = localStorage.getItem(STORAGE_KEY_DISTANCE);
+      const storedAddr = localStorage.getItem(STORAGE_KEY_ADDRESS);
+      const storedArea = localStorage.getItem(STORAGE_KEY_AREA);
       const prompted = localStorage.getItem(STORAGE_KEY_PROMPTED);
+
+      if (storedAddr) setDeliveryAddressState(storedAddr);
+      if (storedArea) setDeliveryAreaState(storedArea);
 
       if (storedSlug) {
         const found = OUTLETS.find((o) => o.slug === storedSlug);
@@ -87,6 +100,20 @@ export function LocationProvider({ children }: { children: React.ReactNode }) {
     } catch (e) {
       console.warn('Failed to load location preference', e);
     }
+  }, []);
+
+  const setDeliveryAddress = useCallback((address: string) => {
+    setDeliveryAddressState(address);
+    try {
+      localStorage.setItem(STORAGE_KEY_ADDRESS, address);
+    } catch {}
+  }, []);
+
+  const setDeliveryArea = useCallback((area: string) => {
+    setDeliveryAreaState(area);
+    try {
+      localStorage.setItem(STORAGE_KEY_AREA, area);
+    } catch {}
   }, []);
 
   const findNearestOutletFromCoords = useCallback((lat: number, lng: number) => {
@@ -128,7 +155,7 @@ export function LocationProvider({ children }: { children: React.ReactNode }) {
 
     if (typeof window === 'undefined' || !('geolocation' in navigator)) {
       setIsDetecting(false);
-      setLocationError('Geolocation is not supported by your browser. Please select your area below.');
+      setLocationError('Geolocation is not supported by your browser. Please enter your address below.');
       return;
     }
 
@@ -149,7 +176,7 @@ export function LocationProvider({ children }: { children: React.ReactNode }) {
         if (error.code === error.PERMISSION_DENIED) {
           msg = 'Location permission was denied. Please select your Nashik neighborhood below.';
         } else if (error.code === error.TIMEOUT) {
-          msg = 'Location request timed out. Please pick your area below.';
+          msg = 'Location request timed out. Please enter your address or area below.';
         }
         setLocationError(msg);
       },
@@ -161,7 +188,7 @@ export function LocationProvider({ children }: { children: React.ReactNode }) {
     );
   }, [findNearestOutletFromCoords]);
 
-  const setManualOutlet = useCallback((slug: string) => {
+  const setManualOutlet = useCallback((slug: string, address?: string) => {
     const found = OUTLETS.find((o) => o.slug === slug);
     if (found) {
       setNearestOutlet(found);
@@ -169,6 +196,13 @@ export function LocationProvider({ children }: { children: React.ReactNode }) {
       setHasSetLocation(true);
       setLocationError(null);
       setIsLocationModalOpen(false);
+
+      if (address) {
+        setDeliveryAddressState(address);
+        try {
+          localStorage.setItem(STORAGE_KEY_ADDRESS, address);
+        } catch {}
+      }
 
       try {
         localStorage.setItem(STORAGE_KEY_OUTLET, found.slug);
@@ -192,6 +226,10 @@ export function LocationProvider({ children }: { children: React.ReactNode }) {
         nearestOutlet,
         allOutlets: OUTLETS,
         distanceKm,
+        deliveryAddress,
+        deliveryArea,
+        setDeliveryAddress,
+        setDeliveryArea,
         isDetecting,
         locationError,
         hasSetLocation,

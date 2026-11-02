@@ -12,7 +12,6 @@ import {
   Eye,
   EyeOff,
   AlertCircle,
-  KeyRound,
   ShieldCheck,
 } from 'lucide-react';
 
@@ -29,13 +28,6 @@ export function CustomerLoginModal() {
   const [errorMessage, setErrorMessage] = useState('');
 
   if (!isCustomerLoginModalOpen) return null;
-
-  const handleQuickFillTest = () => {
-    setMode('LOGIN');
-    setPhone('9822344556');
-    setPassword('pnr@customer123');
-    setErrorMessage('');
-  };
 
   const handleLoginSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -93,23 +85,6 @@ export function CustomerLoginModal() {
               ? 'Access saved addresses, track fresh orders, and unlock member rewards.'
               : 'Register your mobile number to checkout quickly.'}
           </p>
-        </div>
-
-        {/* Test User Badge with 1-Tap Fill */}
-        <div className="bg-amber-50 border border-amber-200/80 rounded-2xl p-2.5 text-xs flex items-center justify-between">
-          <div className="flex items-center gap-1.5 min-w-0">
-            <KeyRound className="w-3.5 h-3.5 text-amber-700 shrink-0" />
-            <span className="text-[11px] text-amber-900 font-mono truncate">
-              Test: 9822344556 / pnr@customer123
-            </span>
-          </div>
-          <button
-            type="button"
-            onClick={handleQuickFillTest}
-            className="text-[10px] font-bold uppercase text-amber-800 hover:text-amber-950 underline shrink-0 cursor-pointer ml-2"
-          >
-            Fill
-          </button>
         </div>
 
         {/* Tabs */}
