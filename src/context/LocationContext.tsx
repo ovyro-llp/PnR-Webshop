@@ -55,7 +55,7 @@ export function LocationProvider({ children }: { children: React.ReactNode }) {
   const [nearestOutlet, setNearestOutlet] = useState<Outlet>(() => OUTLETS[0]);
   const [distanceKm, setDistanceKm] = useState<number | null>(null);
   const [deliveryAddress, setDeliveryAddressState] = useState('');
-  const [deliveryArea, setDeliveryAreaState] = useState('College Road');
+  const [deliveryArea, setDeliveryAreaState] = useState('');
   const [isDetecting, setIsDetecting] = useState(false);
   const [locationError, setLocationError] = useState<string | null>(null);
   const [hasSetLocation, setHasSetLocation] = useState(false);

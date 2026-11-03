@@ -36,7 +36,7 @@ export interface MangwaleOutletConfig {
   apiKey: string;
   apiSecret: string;
   merchantId?: string;
-  environment: 'live' | 'sandbox';
+  environment: 'live' | 'sandbox' | 'test';
   isEnabled: boolean;
   webhookSecret?: string;
   lastTestedAt?: string;

@@ -119,21 +119,21 @@ export default function OutletInventoryPage() {
   const [isAddProductModalOpen, setIsAddProductModalOpen] = useState<boolean>(false);
   const [editingProduct, setEditingProduct] = useState<MenuItem | null>(null);
 
-  // New Product Form State
+  // New Product Form State (Not pre-filled)
   const [newProductForm, setNewProductForm] = useState({
     name: '',
     description: '',
-    category: 'Puffs & Patties' as MenuCategory,
+    category: '' as unknown as MenuCategory,
     subCategory: '',
     subCategoryId: '',
     price: '',
     originalPrice: '',
-    image: PRESET_IMAGES[0].url,
+    image: '',
     isVeg: true,
     isBestseller: false,
     isSpicy: false,
-    preparationTimeMinutes: 15,
-    initialStock: 25,
+    preparationTimeMinutes: '' as unknown as number,
+    initialStock: '' as unknown as number,
     availableOutlets: ['college-road', 'nd-patel-road', 'gangapur-road'],
   });
 
@@ -631,12 +631,12 @@ export default function OutletInventoryPage() {
           subCategoryId: '',
           price: '',
           originalPrice: '',
-          image: PRESET_IMAGES[0].url,
+          image: '',
           isVeg: true,
           isBestseller: false,
           isSpicy: false,
-          preparationTimeMinutes: 15,
-          initialStock: 25,
+          preparationTimeMinutes: '' as unknown as number,
+          initialStock: '' as unknown as number,
           availableOutlets: ['college-road', 'nd-patel-road', 'gangapur-road'],
         });
         fetchMasterProducts();

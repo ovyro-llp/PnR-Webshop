@@ -9,61 +9,10 @@ import { Lock, Mail, ArrowRight, ShieldCheck, KeyRound } from 'lucide-react';
 export default function AdminLoginPage() {
   const router = useRouter();
   const { loginAdmin } = useAuth();
-  const [email, setEmail] = useState('admin@puffsnrolls.com');
-  const [password, setPassword] = useState('pnr@admin2026');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const hasTriggeredAutoLogin = useRef(false);
-
-  // Auto-login if query parameter is provided (e.g. ?auto=manager or ?auto=admin)
-  useEffect(() => {
-    if (typeof window === 'undefined' || hasTriggeredAutoLogin.current) return;
-
-    const params = new URLSearchParams(window.location.search);
-    const auto = params.get('auto');
-    if (!auto) return;
-
-    hasTriggeredAutoLogin.current = true;
-
-    if (
-      auto === 'manager' ||
-      auto === 'cafe' ||
-      auto === 'collegeroad' ||
-      auto === 'college-road'
-    ) {
-      setIsLoading(true);
-      loginAdmin('collegeroad@puffsnrolls.com', 'college2026').then((res) => {
-        setIsLoading(false);
-        if (res.success) {
-          router.push('/admin/inventory');
-        }
-      });
-    } else if (auto === 'ndpatel' || auto === 'nd-patel' || auto === 'nd-patel-road') {
-      setIsLoading(true);
-      loginAdmin('ndpatel@puffsnrolls.com', 'ndpatel2026').then((res) => {
-        setIsLoading(false);
-        if (res.success) {
-          router.push('/admin/inventory');
-        }
-      });
-    } else if (auto === 'gangapur' || auto === 'gangapur-road' || auto === 'sahdev-nagar') {
-      setIsLoading(true);
-      loginAdmin('gangapur@puffsnrolls.com', 'gangapur2026').then((res) => {
-        setIsLoading(false);
-        if (res.success) {
-          router.push('/admin/inventory');
-        }
-      });
-    } else if (auto === 'admin' || auto === 'super') {
-      setIsLoading(true);
-      loginAdmin('admin@puffsnrolls.com', 'pnr@admin2026').then((res) => {
-        setIsLoading(false);
-        if (res.success) {
-          router.push('/admin/inventory');
-        }
-      });
-    }
-  }, [loginAdmin, router]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -114,9 +63,10 @@ export default function AdminLoginPage() {
               <input
                 type="email"
                 required
+                autoComplete="off"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="admin@puffsnrolls.com"
+                placeholder="Enter staff email"
                 className="w-full pl-10 pr-3.5 py-2.5 bg-stone-50 border border-stone-200 rounded-xl text-xs text-stone-900 placeholder-stone-400 focus:outline-none focus:border-stone-500"
               />
             </div>
@@ -131,9 +81,10 @@ export default function AdminLoginPage() {
               <input
                 type="password"
                 required
+                autoComplete="new-password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                placeholder="••••••••••••"
+                placeholder="Enter password"
                 className="w-full pl-10 pr-3.5 py-2.5 bg-stone-50 border border-stone-200 rounded-xl text-xs text-stone-900 placeholder-stone-400 focus:outline-none focus:border-stone-500 font-mono"
               />
             </div>

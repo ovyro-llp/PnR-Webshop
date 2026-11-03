@@ -84,6 +84,7 @@ interface AuthContextType {
   loginCustomer: (phone: string, password: string) => Promise<{ success: boolean; error?: string }>;
   registerCustomer: (name: string, phone: string, password: string) => Promise<{ success: boolean; error?: string }>;
   loginAdmin: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
+  updateCustomerProfile: (updates: { name?: string; phone?: string; savedAddresses?: CustomerUser['savedAddresses'] }) => Promise<{ success: boolean; error?: string }>;
   logout: () => void;
   openCustomerLogin: () => void;
   isCustomerLoginModalOpen: boolean;
@@ -394,6 +395,42 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     };
   }, []);
 
+  const updateCustomerProfile = useCallback(
+    async (updates: { name?: string; phone?: string; savedAddresses?: CustomerUser['savedAddresses'] }) => {
+      if (!user || user.role !== 'CUSTOMER') {
+        return { success: false, error: 'Not authenticated as customer' };
+      }
+
+      const updatedUser: CustomerUser = {
+        ...user,
+        name: updates.name || user.name,
+        phone: updates.phone || user.phone,
+        savedAddresses: updates.savedAddresses || user.savedAddresses,
+      };
+
+      setUser(updatedUser);
+      try {
+        localStorage.setItem('pnr_auth_user', JSON.stringify(updatedUser));
+        const raw = localStorage.getItem('pnr_registered_customers');
+        if (raw) {
+          const accounts: RegisteredCustomerRecord[] = JSON.parse(raw);
+          const idx = accounts.findIndex((a) => a.id === user.id || a.phone === user.phone);
+          if (idx !== -1) {
+            accounts[idx] = {
+              ...accounts[idx],
+              name: updatedUser.name,
+              phone: updatedUser.phone,
+              savedAddresses: updatedUser.savedAddresses || [],
+            };
+            localStorage.setItem('pnr_registered_customers', JSON.stringify(accounts));
+          }
+        }
+      } catch {}
+      return { success: true };
+    },
+    [user]
+  );
+
   const logout = useCallback(() => {
     setUser(null);
     localStorage.removeItem('pnr_auth_user');
@@ -413,6 +450,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         loginCustomer,
         registerCustomer,
         loginAdmin,
+        updateCustomerProfile,
         logout,
         openCustomerLogin,
         isCustomerLoginModalOpen,

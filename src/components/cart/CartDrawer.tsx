@@ -62,37 +62,30 @@ export function CartDrawer({ outletSlug, campaignSlug }: CartDrawerProps) {
   const [authPassword, setAuthPassword] = useState('');
   const [showAuthPassword, setShowAuthPassword] = useState(false);
 
-  // Customer Delivery State (Pre-filled from user saved addresses or location context)
-  const defaultAddr = user?.role === 'CUSTOMER' ? user.savedAddresses?.[0] : undefined;
+  // Customer Delivery State (Strictly not pre-filled)
   const [customer, setCustomer] = useState<CustomerDetails>(() => ({
     name: user?.role === 'CUSTOMER' ? user.name : '',
     phone: user?.role === 'CUSTOMER' ? user.phone : '',
-    address: defaultAddr?.address || deliveryAddress || '',
-    area: defaultAddr?.area || deliveryArea || 'College Road',
-    pincode: defaultAddr?.pincode || '422005',
+    address: '',
+    area: '',
+    pincode: '',
     specialInstructions: '',
   }));
 
-  // Sync customer details when user logs in or location updates
+  // Sync customer details when user logs in
   useEffect(() => {
     if (user && user.role === 'CUSTOMER') {
       const addr = user.savedAddresses?.[0];
       setCustomer((prev) => ({
         ...prev,
-        name: user.name || prev.name,
-        phone: user.phone || prev.phone,
-        address: prev.address || addr?.address || deliveryAddress || '',
-        area: prev.area || addr?.area || deliveryArea || 'College Road',
-        pincode: prev.pincode || addr?.pincode || '422005',
-      }));
-    } else if (deliveryAddress) {
-      setCustomer((prev) => ({
-        ...prev,
-        address: prev.address || deliveryAddress,
-        area: prev.area || deliveryArea || 'College Road',
+        name: prev.name || user.name || '',
+        phone: prev.phone || user.phone || '',
+        address: prev.address || addr?.address || '',
+        area: prev.area || addr?.area || '',
+        pincode: prev.pincode || addr?.pincode || '',
       }));
     }
-  }, [user, deliveryAddress, deliveryArea]);
+  }, [user]);
 
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('UPI');
 
@@ -447,6 +440,7 @@ export function CartDrawer({ outletSlug, campaignSlug }: CartDrawerProps) {
                           onChange={(e) => setCustomer({ ...customer, area: e.target.value })}
                           className="w-full px-3 py-2 bg-stone-50 border border-stone-200 rounded-xl text-xs text-stone-800 focus:bg-white focus:outline-none"
                         >
+                          <option value="">Select Locality...</option>
                           <option value="Cycle Circle / College Road">Cycle Circle / College Road</option>
                           <option value="Krishi Nagar / Thatte Nagar">Krishi Nagar / Thatte Nagar</option>
                           <option value="Gangapur Road / Sahdev Nagar">Gangapur Road / Sahdev Nagar</option>

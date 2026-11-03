@@ -7,13 +7,22 @@ import { useAuth } from '@/context/AuthContext';
 import { Navbar } from '@/components/layout/Navbar';
 import { Footer } from '@/components/layout/Footer';
 import { Order } from '@/types';
-import { User, MapPin, Phone, LogOut, ShoppingBag, Clock, ArrowRight } from 'lucide-react';
+import { User, MapPin, Phone, LogOut, ShoppingBag, Clock, ArrowRight, Edit3, Plus, Trash2, X, CheckCircle2 } from 'lucide-react';
 
 export default function AccountPage() {
   const router = useRouter();
-  const { user, isCustomer, logout } = useAuth();
+  const { user, isCustomer, logout, updateCustomerProfile } = useAuth();
   const [orders, setOrders] = useState<Order[]>([]);
   const [loadingOrders, setLoadingOrders] = useState<boolean>(true);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [editName, setEditName] = useState('');
+  const [editPhone, setEditPhone] = useState('');
+  const [isAddingAddress, setIsAddingAddress] = useState(false);
+  const [addrLabel, setAddrLabel] = useState('');
+  const [addrLine, setAddrLine] = useState('');
+  const [addrArea, setAddrArea] = useState('');
+  const [addrPincode, setAddrPincode] = useState('');
+  const [statusMessage, setStatusMessage] = useState('');
 
   useEffect(() => {
     if (!user || !isCustomer) {
@@ -87,17 +96,38 @@ export default function AccountPage() {
             </div>
           </div>
 
-          <button
-            onClick={() => {
-              logout();
-              router.push('/');
-            }}
-            className="px-4 py-2 border border-stone-200 hover:border-stone-400 text-stone-600 hover:text-stone-900 rounded-full text-xs font-semibold flex items-center gap-1.5 transition"
-          >
-            <LogOut className="w-3.5 h-3.5" />
-            <span>Sign Out</span>
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => {
+                setEditName(customerUser.name);
+                setEditPhone(customerUser.phone);
+                setIsEditModalOpen(true);
+              }}
+              className="px-4 py-2 bg-stone-100 hover:bg-stone-200 text-stone-800 rounded-full text-xs font-semibold flex items-center gap-1.5 transition cursor-pointer"
+            >
+              <Edit3 className="w-3.5 h-3.5" />
+              <span>Edit Profile</span>
+            </button>
+
+            <button
+              onClick={() => {
+                logout();
+                router.push('/');
+              }}
+              className="px-4 py-2 border border-stone-200 hover:border-stone-400 text-stone-600 hover:text-stone-900 rounded-full text-xs font-semibold flex items-center gap-1.5 transition cursor-pointer"
+            >
+              <LogOut className="w-3.5 h-3.5" />
+              <span>Sign Out</span>
+            </button>
+          </div>
         </div>
+
+        {statusMessage && (
+          <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-2xl text-xs font-medium text-emerald-800 flex items-center gap-2">
+            <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+            <span>{statusMessage}</span>
+          </div>
+        )}
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {/* Saved Addresses */}
@@ -105,20 +135,51 @@ export default function AccountPage() {
             <div className="flex items-center justify-between">
               <h3 className="text-sm font-bold text-stone-900 flex items-center gap-2">
                 <MapPin className="w-4 h-4 text-stone-700" />
-                Saved Delivery Addresses
+                <span>Saved Addresses</span>
               </h3>
+              <button
+                onClick={() => {
+                  setAddrLabel('');
+                  setAddrLine('');
+                  setAddrArea('');
+                  setAddrPincode('');
+                  setIsAddingAddress(true);
+                }}
+                className="text-[11px] font-semibold text-stone-700 hover:text-stone-950 flex items-center gap-1 cursor-pointer bg-stone-100 px-2.5 py-1 rounded-lg"
+              >
+                <Plus className="w-3 h-3" />
+                <span>Add</span>
+              </button>
             </div>
 
             <div className="space-y-3">
-              {(customerUser.savedAddresses || []).map((addr) => (
-                <div key={addr.id} className="p-3.5 bg-stone-50 rounded-2xl border border-stone-200/60 text-xs space-y-1">
-                  <span className="font-bold text-stone-800 uppercase tracking-wider text-[10px] bg-white px-2 py-0.5 rounded border border-stone-200">
-                    {addr.label}
-                  </span>
-                  <p className="text-stone-700 pt-1">{addr.address}</p>
-                  <p className="text-stone-500 font-medium">{addr.area}, Nashik - {addr.pincode}</p>
-                </div>
-              ))}
+              {(customerUser.savedAddresses || []).length === 0 ? (
+                <p className="text-xs text-stone-400 py-3 text-center">No addresses saved yet.</p>
+              ) : (
+                (customerUser.savedAddresses || []).map((addr) => (
+                  <div key={addr.id} className="p-3.5 bg-stone-50 rounded-2xl border border-stone-200/60 text-xs space-y-1 relative group">
+                    <div className="flex items-center justify-between">
+                      <span className="font-bold text-stone-800 uppercase tracking-wider text-[10px] bg-white px-2 py-0.5 rounded border border-stone-200">
+                        {addr.label}
+                      </span>
+                      <button
+                        onClick={async () => {
+                          const updated = (customerUser.savedAddresses || []).filter((a) => a.id !== addr.id);
+                          await updateCustomerProfile({ savedAddresses: updated });
+                          setStatusMessage('Address removed');
+                          setTimeout(() => setStatusMessage(''), 3000);
+                        }}
+                        className="text-stone-400 hover:text-rose-600 p-1 cursor-pointer"
+                        title="Remove address"
+                      >
+                        <Trash2 className="w-3 h-3" />
+                      </button>
+                    </div>
+                    <p className="text-stone-700 pt-1">{addr.address}</p>
+                    <p className="text-stone-500 font-medium">{addr.area}, Nashik - {addr.pincode}</p>
+                  </div>
+                ))
+              )}
             </div>
           </div>
 
@@ -165,6 +226,180 @@ export default function AccountPage() {
             )}
           </div>
         </div>
+
+        {/* Edit Customer Profile Modal */}
+        {isEditModalOpen && (
+          <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-xs flex items-center justify-center p-4">
+            <div className="bg-white rounded-3xl p-6 sm:p-7 max-w-sm w-full space-y-4 shadow-xl border border-stone-200">
+              <div className="flex items-center justify-between border-b border-stone-100 pb-3">
+                <h3 className="font-serif font-bold text-stone-900 text-base">Edit Profile</h3>
+                <button onClick={() => setIsEditModalOpen(false)} className="text-stone-400 hover:text-stone-700">
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              <form
+                onSubmit={async (e) => {
+                  e.preventDefault();
+                  if (!editName.trim() || !editPhone.trim()) return;
+                  await updateCustomerProfile({ name: editName.trim(), phone: editPhone.trim() });
+                  setIsEditModalOpen(false);
+                  setStatusMessage('Profile updated successfully');
+                  setTimeout(() => setStatusMessage(''), 3000);
+                }}
+                className="space-y-3 text-xs"
+              >
+                <div>
+                  <label className="block font-semibold text-stone-700 mb-1">Full Name</label>
+                  <input
+                    type="text"
+                    required
+                    value={editName}
+                    onChange={(e) => setEditName(e.target.value)}
+                    placeholder="Full Name"
+                    className="w-full px-3 py-2 bg-stone-50 border border-stone-200 rounded-xl focus:bg-white focus:outline-none"
+                  />
+                </div>
+
+                <div>
+                  <label className="block font-semibold text-stone-700 mb-1">Mobile Phone</label>
+                  <input
+                    type="tel"
+                    required
+                    maxLength={10}
+                    value={editPhone}
+                    onChange={(e) => setEditPhone(e.target.value.replace(/\D/g, '').slice(0, 10))}
+                    placeholder="10-digit mobile number"
+                    className="w-full px-3 py-2 bg-stone-50 border border-stone-200 rounded-xl focus:bg-white focus:outline-none font-mono"
+                  />
+                </div>
+
+                <div className="pt-2 flex justify-end gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setIsEditModalOpen(false)}
+                    className="px-4 py-2 text-stone-600 hover:text-stone-900"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    className="px-5 py-2 bg-[#1C1917] hover:bg-stone-800 text-white rounded-full font-semibold"
+                  >
+                    Save Changes
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
+
+        {/* Add Saved Address Modal (Zero pre-fill) */}
+        {isAddingAddress && (
+          <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-xs flex items-center justify-center p-4">
+            <div className="bg-white rounded-3xl p-6 sm:p-7 max-w-sm w-full space-y-4 shadow-xl border border-stone-200">
+              <div className="flex items-center justify-between border-b border-stone-100 pb-3">
+                <h3 className="font-serif font-bold text-stone-900 text-base">Add Delivery Address</h3>
+                <button onClick={() => setIsAddingAddress(false)} className="text-stone-400 hover:text-stone-700">
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              <form
+                onSubmit={async (e) => {
+                  e.preventDefault();
+                  if (!addrLine.trim() || !addrArea.trim() || !addrPincode.trim()) return;
+                  const newAddr = {
+                    id: `addr-${Date.now()}`,
+                    label: addrLabel.trim() || 'Home',
+                    address: addrLine.trim(),
+                    area: addrArea.trim(),
+                    pincode: addrPincode.trim(),
+                  };
+                  const currentAddresses = customerUser.savedAddresses || [];
+                  await updateCustomerProfile({ savedAddresses: [...currentAddresses, newAddr] });
+                  setIsAddingAddress(false);
+                  setStatusMessage('Delivery address saved');
+                  setTimeout(() => setStatusMessage(''), 3000);
+                }}
+                className="space-y-3 text-xs"
+              >
+                <div>
+                  <label className="block font-semibold text-stone-700 mb-1">Label</label>
+                  <input
+                    type="text"
+                    value={addrLabel}
+                    onChange={(e) => setAddrLabel(e.target.value)}
+                    placeholder="e.g. Home, Office, Studio"
+                    className="w-full px-3 py-2 bg-stone-50 border border-stone-200 rounded-xl focus:bg-white focus:outline-none"
+                  />
+                </div>
+
+                <div>
+                  <label className="block font-semibold text-stone-700 mb-1">House / Flat / Street *</label>
+                  <textarea
+                    rows={2}
+                    required
+                    value={addrLine}
+                    onChange={(e) => setAddrLine(e.target.value)}
+                    placeholder="Building name, flat number, street"
+                    className="w-full px-3 py-2 bg-stone-50 border border-stone-200 rounded-xl focus:bg-white focus:outline-none resize-none"
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <label className="block font-semibold text-stone-700 mb-1">Nashik Area *</label>
+                    <select
+                      required
+                      value={addrArea}
+                      onChange={(e) => setAddrArea(e.target.value)}
+                      className="w-full px-3 py-2 bg-stone-50 border border-stone-200 rounded-xl text-stone-800 focus:bg-white focus:outline-none"
+                    >
+                      <option value="">Select Area...</option>
+                      <option value="Cycle Circle / College Road">Cycle Circle / College Road</option>
+                      <option value="Krishi Nagar / Thatte Nagar">Krishi Nagar / Thatte Nagar</option>
+                      <option value="Gangapur Road / Sahdev Nagar">Gangapur Road / Sahdev Nagar</option>
+                      <option value="Datta Chowk / Serene Meadows">Datta Chowk / Serene Meadows</option>
+                      <option value="ND Patel Road / Shalimar">ND Patel Road / Shalimar</option>
+                      <option value="CBS / Old Nashik">CBS / Old Nashik</option>
+                      <option value="Panchavati">Panchavati</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block font-semibold text-stone-700 mb-1">Pincode *</label>
+                    <input
+                      type="text"
+                      required
+                      maxLength={6}
+                      value={addrPincode}
+                      onChange={(e) => setAddrPincode(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                      placeholder="e.g. 422005"
+                      className="w-full px-3 py-2 bg-stone-50 border border-stone-200 rounded-xl font-mono focus:bg-white focus:outline-none"
+                    />
+                  </div>
+                </div>
+
+                <div className="pt-2 flex justify-end gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setIsAddingAddress(false)}
+                    className="px-4 py-2 text-stone-600 hover:text-stone-900"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    className="px-5 py-2 bg-[#1C1917] hover:bg-stone-800 text-white rounded-full font-semibold"
+                  >
+                    Save Address
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
       </main>
 
       <Footer />

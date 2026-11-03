@@ -35,6 +35,7 @@ import {
   Sparkles,
   ArrowRight,
   Eye,
+  Edit3,
 } from 'lucide-react';
 
 export default function EmployeesManagementPage() {
@@ -60,19 +61,46 @@ export default function EmployeesManagementPage() {
   // RBAC Matrix Filter
   const [highlightedRole, setHighlightedRole] = useState<EmployeeRole | 'ALL'>('ALL');
 
-  // New Employee Form State
+  // New Employee Form State (Not pre-filled)
   const [newName, setNewName] = useState('');
   const [newEmail, setNewEmail] = useState('');
   const [newPhone, setNewPhone] = useState('');
-  const [newRole, setNewRole] = useState<EmployeeRole>(
-    isOutletManager ? 'KITCHEN_STAFF' : 'OUTLET_MANAGER'
-  );
-  const [newOutlet, setNewOutlet] = useState(
-    adminUser?.outletAccess && !adminUser.outletAccess.includes('all')
-      ? adminUser.outletAccess[0]
-      : 'college-road'
-  );
+  const [newRole, setNewRole] = useState<EmployeeRole | ''>('');
+  const [newOutlet, setNewOutlet] = useState('');
   const [newDesignation, setNewDesignation] = useState('');
+
+  // Edit Employee Form State
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [editingEmployee, setEditingEmployee] = useState<Employee | null>(null);
+  const [editName, setEditName] = useState('');
+  const [editEmail, setEditEmail] = useState('');
+  const [editPhone, setEditPhone] = useState('');
+  const [editRole, setEditRole] = useState<EmployeeRole>('KITCHEN_STAFF');
+  const [editOutlet, setEditOutlet] = useState('college-road');
+  const [editDesignation, setEditDesignation] = useState('');
+  const [editStatus, setEditStatus] = useState<'ACTIVE' | 'INACTIVE'>('ACTIVE');
+
+  const handleOpenAddModal = () => {
+    setNewName('');
+    setNewEmail('');
+    setNewPhone('');
+    setNewRole(isOutletManager ? 'KITCHEN_STAFF' : '');
+    setNewOutlet(isOutletManager && adminUser?.outletAccess?.[0] ? adminUser.outletAccess[0] : '');
+    setNewDesignation('');
+    setIsModalOpen(true);
+  };
+
+  const handleOpenEditModal = (emp: Employee) => {
+    setEditingEmployee(emp);
+    setEditName(emp.name);
+    setEditEmail(emp.email);
+    setEditPhone(emp.phone || '');
+    setEditRole(emp.role);
+    setEditOutlet(emp.outletSlug);
+    setEditDesignation(emp.designation);
+    setEditStatus(emp.status);
+    setIsEditModalOpen(true);
+  };
 
   useEffect(() => {
     if (isOutletManager && adminUser?.outletAccess?.[0]) {
@@ -215,6 +243,47 @@ export default function EmployeesManagementPage() {
     }
   };
 
+  const handleUpdateEmployee = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingEmployee || !editName || !editEmail) return;
+
+    try {
+      const res = await fetch('/api/employees', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'UPDATE',
+          employeeId: editingEmployee.id,
+          updates: {
+            name: editName,
+            email: editEmail,
+            phone: editPhone,
+            role: editRole,
+            outletSlug:
+              editRole === 'SUPER_ADMIN' || editRole === 'MARKETING_MANAGER'
+                ? 'all'
+                : editOutlet,
+            designation: editDesignation,
+            status: editStatus,
+          },
+        }),
+      });
+
+      const data = await res.json();
+      if (data.success) {
+        setStatusMessage(`✓ User ${editName} updated successfully`);
+        setIsEditModalOpen(false);
+        setEditingEmployee(null);
+        fetchEmployees();
+        setTimeout(() => setStatusMessage(''), 3000);
+      } else {
+        alert(data.error || 'Failed to update employee');
+      }
+    } catch (err) {
+      console.error('Update employee error', err);
+    }
+  };
+
   const filteredEmployees = employees.filter((emp) => {
     const matchesSearch =
       emp.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -303,7 +372,7 @@ export default function EmployeesManagementPage() {
 
           {activeTab === 'roster' && (
             <button
-              onClick={() => setIsModalOpen(true)}
+              onClick={handleOpenAddModal}
               className="px-4 py-2 rounded-full bg-[#1C1917] hover:bg-stone-800 text-white font-medium text-xs transition flex items-center gap-2 shrink-0 shadow-xs cursor-pointer"
             >
               <UserPlus className="w-4 h-4" />
@@ -437,13 +506,24 @@ export default function EmployeesManagementPage() {
                         : 'Invited'}
                     </span>
 
-                    <button
-                      onClick={() => handleDeleteEmployee(emp.id, emp.name)}
-                      className="p-1 text-stone-400 hover:text-rose-600 transition cursor-pointer"
-                      title="Remove Employee"
-                    >
-                      <Trash2 className="w-3.5 h-3.5" />
-                    </button>
+                    <div className="flex items-center gap-1">
+                      <button
+                        onClick={() => handleOpenEditModal(emp)}
+                        className="px-2 py-1 text-stone-600 hover:text-stone-900 hover:bg-stone-100 rounded-lg transition cursor-pointer flex items-center gap-1 font-semibold text-[11px]"
+                        title="Edit User Details & Access"
+                      >
+                        <Edit3 className="w-3 h-3 text-stone-500" />
+                        <span>Edit</span>
+                      </button>
+
+                      <button
+                        onClick={() => handleDeleteEmployee(emp.id, emp.name)}
+                        className="p-1 text-stone-400 hover:text-rose-600 transition cursor-pointer"
+                        title="Remove Employee"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
                   </div>
                 </div>
               );
@@ -729,9 +809,11 @@ export default function EmployeesManagementPage() {
                   ) : (
                     <select
                       value={newRole}
+                      required
                       onChange={(e) => setNewRole(e.target.value as EmployeeRole)}
                       className="w-full bg-stone-50 border border-stone-200 rounded-xl px-3 py-2 text-stone-900 focus:outline-none focus:border-stone-500 cursor-pointer"
                     >
+                      <option value="">Select Role...</option>
                       <option value="OUTLET_MANAGER">Store Manager</option>
                       <option value="KITCHEN_STAFF">Kitchen Staff</option>
                       <option value="MARKETING_MANAGER">Marketing Manager</option>
@@ -764,6 +846,7 @@ export default function EmployeesManagementPage() {
                       onChange={(e) => setNewOutlet(e.target.value)}
                       className="w-full bg-stone-50 border border-stone-200 rounded-xl px-3 py-2 text-stone-900 focus:outline-none focus:border-stone-500 disabled:opacity-50 cursor-pointer"
                     >
+                      <option value="">Select Store Scope...</option>
                       {(newRole === 'SUPER_ADMIN' ||
                         newRole === 'MARKETING_MANAGER') && (
                         <option value="all">All Outlets (HQ Global)</option>
@@ -804,6 +887,179 @@ export default function EmployeesManagementPage() {
                   className="px-5 py-2 rounded-full bg-[#1C1917] hover:bg-stone-800 text-white font-medium cursor-pointer"
                 >
                   Save &amp; Grant Access
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Employee Modal Dialog */}
+      {isEditModalOpen && editingEmployee && (
+        <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in">
+          <div className="bg-white border border-stone-200 rounded-3xl w-full max-w-md p-6 sm:p-7 space-y-5 shadow-2xl">
+            <div className="flex items-center justify-between border-b border-stone-100 pb-3">
+              <h3 className="text-base font-serif font-bold text-stone-900 flex items-center gap-2">
+                <Edit3 className="w-4 h-4 text-stone-700" />
+                <span>Edit Staff Member: {editingEmployee.name}</span>
+              </h3>
+              <button
+                onClick={() => {
+                  setIsEditModalOpen(false);
+                  setEditingEmployee(null);
+                }}
+                className="text-stone-400 hover:text-stone-900 cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <form onSubmit={handleUpdateEmployee} className="space-y-3.5 text-xs">
+              <div>
+                <label className="text-stone-700 block font-semibold mb-1">
+                  Full Name *
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={editName}
+                  onChange={(e) => setEditName(e.target.value)}
+                  placeholder="Full Name"
+                  className="w-full bg-stone-50 border border-stone-200 rounded-xl px-3.5 py-2 text-stone-900 focus:outline-none focus:border-stone-500"
+                />
+              </div>
+
+              <div>
+                <label className="text-stone-700 block font-semibold mb-1">
+                  Email Address *
+                </label>
+                <input
+                  type="email"
+                  required
+                  value={editEmail}
+                  onChange={(e) => setEditEmail(e.target.value)}
+                  placeholder="Email Address"
+                  className="w-full bg-stone-50 border border-stone-200 rounded-xl px-3.5 py-2 text-stone-900 focus:outline-none focus:border-stone-500"
+                />
+              </div>
+
+              <div>
+                <label className="text-stone-700 block font-semibold mb-1">
+                  Phone Number
+                </label>
+                <input
+                  type="tel"
+                  value={editPhone}
+                  onChange={(e) => setEditPhone(e.target.value)}
+                  placeholder="Mobile Phone"
+                  className="w-full bg-stone-50 border border-stone-200 rounded-xl px-3.5 py-2 text-stone-900 focus:outline-none focus:border-stone-500"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="text-stone-700 block font-semibold mb-1">
+                    Access Role *
+                  </label>
+                  {isOutletManager ? (
+                    <div className="w-full bg-stone-100 border border-stone-200 rounded-xl px-3 py-2 text-stone-700 font-medium">
+                      {editRole.replace('_', ' ')}
+                    </div>
+                  ) : (
+                    <select
+                      value={editRole}
+                      onChange={(e) => setEditRole(e.target.value as EmployeeRole)}
+                      className="w-full bg-stone-50 border border-stone-200 rounded-xl px-3 py-2 text-stone-900 focus:outline-none focus:border-stone-500 cursor-pointer"
+                    >
+                      <option value="OUTLET_MANAGER">Store Manager</option>
+                      <option value="KITCHEN_STAFF">Kitchen Staff</option>
+                      <option value="MARKETING_MANAGER">Marketing Manager</option>
+                      <option value="DISPATCH_RIDER">Dispatch Rider</option>
+                      <option value="SUPER_ADMIN">HQ Super Admin</option>
+                    </select>
+                  )}
+                </div>
+
+                <div>
+                  <label className="text-stone-700 block font-semibold mb-1">
+                    Assigned Store Scope
+                  </label>
+                  {isOutletManager ? (
+                    <div className="w-full bg-stone-100 border border-stone-200 rounded-xl px-3 py-2 text-stone-700 font-medium truncate">
+                      {outlets
+                        .find((o) => o.slug === editOutlet)
+                        ?.name.replace("Puffs 'n' Rolls - ", '') || editOutlet}
+                    </div>
+                  ) : (
+                    <select
+                      value={
+                        editRole === 'SUPER_ADMIN' || editRole === 'MARKETING_MANAGER'
+                          ? 'all'
+                          : editOutlet
+                      }
+                      disabled={
+                        editRole === 'SUPER_ADMIN' || editRole === 'MARKETING_MANAGER'
+                      }
+                      onChange={(e) => setEditOutlet(e.target.value)}
+                      className="w-full bg-stone-50 border border-stone-200 rounded-xl px-3 py-2 text-stone-900 focus:outline-none focus:border-stone-500 disabled:opacity-50 cursor-pointer"
+                    >
+                      {(editRole === 'SUPER_ADMIN' ||
+                        editRole === 'MARKETING_MANAGER') && (
+                        <option value="all">All Outlets (HQ Global)</option>
+                      )}
+                      {outlets.map((o) => (
+                        <option key={o.slug} value={o.slug}>
+                          {o.name.replace("Puffs 'n' Rolls - ", '')}
+                        </option>
+                      ))}
+                    </select>
+                  )}
+                </div>
+              </div>
+
+              <div>
+                <label className="text-stone-700 block font-semibold mb-1">
+                  Designation Title
+                </label>
+                <input
+                  type="text"
+                  value={editDesignation}
+                  onChange={(e) => setEditDesignation(e.target.value)}
+                  placeholder="e.g. Senior Shift Manager"
+                  className="w-full bg-stone-50 border border-stone-200 rounded-xl px-3.5 py-2 text-stone-900 focus:outline-none focus:border-stone-500"
+                />
+              </div>
+
+              <div>
+                <label className="text-stone-700 block font-semibold mb-1">
+                  Account Status
+                </label>
+                <select
+                  value={editStatus}
+                  onChange={(e) => setEditStatus(e.target.value as 'ACTIVE' | 'INACTIVE')}
+                  className="w-full bg-stone-50 border border-stone-200 rounded-xl px-3.5 py-2 text-stone-900 focus:outline-none focus:border-stone-500 cursor-pointer"
+                >
+                  <option value="ACTIVE">ACTIVE (Authorized Access)</option>
+                  <option value="INACTIVE">INACTIVE (Revoked / Suspended)</option>
+                </select>
+              </div>
+
+              <div className="pt-2 flex items-center justify-end gap-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsEditModalOpen(false);
+                    setEditingEmployee(null);
+                  }}
+                  className="px-4 py-2 rounded-full text-stone-600 hover:text-stone-900 cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="px-5 py-2 rounded-full bg-[#1C1917] hover:bg-stone-800 text-white font-medium cursor-pointer"
+                >
+                  Update &amp; Save Changes
                 </button>
               </div>
             </form>

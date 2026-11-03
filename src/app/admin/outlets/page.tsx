@@ -38,7 +38,7 @@ export default function AdminOutletsPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingOutlet, setEditingOutlet] = useState<Outlet | null>(null);
 
-  // Form Fields
+  // Form Fields (Not pre-filled)
   const [formData, setFormData] = useState({
     name: '',
     slug: '',
@@ -47,11 +47,11 @@ export default function AdminOutletsPage() {
     googleMapsUrl: '',
     address: '',
     area: '',
-    city: 'Nashik',
-    pincode: '422005',
-    openingHours: '9:00 AM - 10:30 PM',
-    minOrderAmount: '149',
-    deliveryTimeEstimate: '20-30 mins',
+    city: '',
+    pincode: '',
+    openingHours: '',
+    minOrderAmount: '',
+    deliveryTimeEstimate: '',
   });
 
   // Mangwale Per-Outlet Configuration Fields
@@ -98,16 +98,16 @@ export default function AdminOutletsPage() {
     setFormData({
       name: '',
       slug: '',
-      tagline: 'Fresh artisanal bakes & cakes in Nashik',
-      phone: '+91 94236 39911',
+      tagline: '',
+      phone: '',
       googleMapsUrl: '',
       address: '',
       area: '',
-      city: 'Nashik',
-      pincode: '422005',
-      openingHours: '9:00 AM - 10:30 PM',
-      minOrderAmount: '149',
-      deliveryTimeEstimate: '20-30 mins',
+      city: '',
+      pincode: '',
+      openingHours: '',
+      minOrderAmount: '',
+      deliveryTimeEstimate: '',
     });
     setMangwaleData({
       apiKey: '',
@@ -769,13 +769,14 @@ export default function AdminOutletsPage() {
                         onChange={(e) =>
                           setMangwaleData({
                             ...mangwaleData,
-                            environment: e.target.value as 'live' | 'sandbox',
+                            environment: e.target.value as 'live' | 'sandbox' | 'test',
                           })
                         }
                         className="w-full bg-white border border-stone-200 rounded-xl px-3 py-2 text-stone-900 focus:outline-none"
                       >
-                        <option value="live">Live (Production Fleet)</option>
-                        <option value="sandbox">Sandbox (Testing / Staging)</option>
+                        <option value="test">Test (Sandbox / mw_test_)</option>
+                        <option value="live">Live (Production Fleet / mw_live_)</option>
+                        <option value="sandbox">Sandbox (Staging)</option>
                       </select>
                     </div>
 

@@ -19,21 +19,21 @@ import {
 export default function MarketingViewPage() {
   const [activeTab, setActiveTab] = useState<'tags' | 'payments' | 'analytics'>('tags');
   const [tags, setTags] = useState({
-    globalMetaPixelId: '999888777666555',
-    globalGoogleAdsId: 'AW-987654300',
-    globalGtmId: 'GTM-PNR2026',
+    globalMetaPixelId: '',
+    globalGoogleAdsId: '',
+    globalGtmId: '',
     tiktokPixelId: '',
     snapchatPixelId: '',
-    metaCapiEnabled: true,
-    metaCapiAccessToken: 'EAABw...[ENCRYPTED_SERVER_TOKEN]',
-    customHeaderScript: '<!-- P&R Universal Analytics Engine Active -->',
+    metaCapiEnabled: false,
+    metaCapiAccessToken: '',
+    customHeaderScript: '',
   });
 
   const [paymentConfig, setPaymentConfig] = useState({
-    razorpayKeyId: 'rzp_test_pnr_demo',
+    razorpayKeyId: '',
     razorpayKeySecret: '',
     razorpayWebhookSecret: '',
-    testKeyId: 'rzp_test_pnr_demo',
+    testKeyId: '',
     testKeySecret: '',
     testWebhookSecret: '',
     liveKeyId: '',
@@ -41,7 +41,7 @@ export default function MarketingViewPage() {
     liveWebhookSecret: '',
     isEnabled: true,
     testMode: true,
-    businessName: "Puffs 'n' Rolls Nashik",
+    businessName: '',
   });
   const [isSavingPayment, setIsSavingPayment] = useState(false);
   const [copiedWebhookUrl, setCopiedWebhookUrl] = useState(false);
