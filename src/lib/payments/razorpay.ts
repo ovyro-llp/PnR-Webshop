@@ -52,6 +52,12 @@ export function getRazorpayClient() {
   const activeKeyId = isLive ? liveKey : testKey;
   const activeKeySecret = isLive ? liveSecret : testSecret;
 
+  if (config.testMode === false && !hasValidLiveCreds) {
+    console.warn(
+      '[Razorpay Warning] Live Production Mode is activated in settings, but Live Key ID (rzp_live_...) or Secret is missing. Falling back to test credentials until live keys are configured.'
+    );
+  }
+
   const isDemoMode =
     activeKeyId === 'rzp_test_pnr_demo' ||
     activeKeySecret === 'rzp_sec_demo_secret_key' ||
@@ -75,7 +81,9 @@ export function getRazorpayClient() {
     keyId: activeKeyId,
     keySecret: activeKeySecret,
     isDemoMode,
-    testMode: !isLive,
+    testMode: config.testMode,
+    isLive,
+    hasValidLiveCreds,
   };
 }
 

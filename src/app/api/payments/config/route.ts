@@ -4,6 +4,11 @@ import { orderStore } from '@/lib/store/order-store';
 export async function GET() {
   try {
     const config = orderStore.getPaymentConfig();
+    const hasLiveCreds = Boolean(
+      config.liveKeyId?.startsWith('rzp_live_') && config.liveKeySecret
+    );
+    const isLiveReady = !config.testMode && hasLiveCreds;
+
     return NextResponse.json({
       success: true,
       config: {
@@ -31,6 +36,8 @@ export async function GET() {
         hasLiveSecret: Boolean(config.liveKeySecret),
         hasLiveWebhookSecret: Boolean(config.liveWebhookSecret),
 
+        hasLiveCreds,
+        isLiveReady,
         isEnabled: config.isEnabled,
         testMode: config.testMode,
         businessName: config.businessName,
@@ -64,7 +71,7 @@ export async function POST(req: NextRequest) {
     } = body;
 
     const updates: Record<string, unknown> = {};
-    if (razorpayKeyId !== undefined && razorpayKeyId.trim()) updates.razorpayKeyId = razorpayKeyId.trim();
+    if (razorpayKeyId !== undefined) updates.razorpayKeyId = razorpayKeyId.trim();
     if (razorpayKeySecret && !razorpayKeySecret.includes('••••')) {
       updates.razorpayKeySecret = razorpayKeySecret.trim();
     }
@@ -73,20 +80,20 @@ export async function POST(req: NextRequest) {
     }
 
     // Test credentials
-    if (testKeyId !== undefined && testKeyId.trim()) updates.testKeyId = testKeyId.trim();
-    if (testKeySecret && !testKeySecret.includes('••••')) {
+    if (testKeyId !== undefined) updates.testKeyId = testKeyId.trim();
+    if (testKeySecret !== undefined && !testKeySecret.includes('••••')) {
       updates.testKeySecret = testKeySecret.trim();
     }
-    if (testWebhookSecret && !testWebhookSecret.includes('••••')) {
+    if (testWebhookSecret !== undefined && !testWebhookSecret.includes('••••')) {
       updates.testWebhookSecret = testWebhookSecret.trim();
     }
 
     // Live credentials
-    if (liveKeyId !== undefined && liveKeyId.trim()) updates.liveKeyId = liveKeyId.trim();
-    if (liveKeySecret && !liveKeySecret.includes('••••')) {
+    if (liveKeyId !== undefined) updates.liveKeyId = liveKeyId.trim();
+    if (liveKeySecret !== undefined && !liveKeySecret.includes('••••')) {
       updates.liveKeySecret = liveKeySecret.trim();
     }
-    if (liveWebhookSecret && !liveWebhookSecret.includes('••••')) {
+    if (liveWebhookSecret !== undefined && !liveWebhookSecret.includes('••••')) {
       updates.liveWebhookSecret = liveWebhookSecret.trim();
     }
 
@@ -95,15 +102,20 @@ export async function POST(req: NextRequest) {
     if (businessName !== undefined) updates.businessName = businessName;
 
     const updated = orderStore.updatePaymentConfig(updates);
+    const hasLiveCreds = Boolean(
+      updated.liveKeyId?.startsWith('rzp_live_') && updated.liveKeySecret
+    );
 
     return NextResponse.json({
       success: true,
-      message: 'Payment Gateway settings updated successfully',
+      message: 'Payment Gateway settings updated and persisted successfully',
       config: {
         razorpayKeyId: updated.razorpayKeyId,
         testMode: updated.testMode,
         isEnabled: updated.isEnabled,
         hasSecret: Boolean(updated.razorpayKeySecret),
+        hasLiveCreds,
+        isLiveReady: !updated.testMode && hasLiveCreds,
       },
     });
   } catch (error) {

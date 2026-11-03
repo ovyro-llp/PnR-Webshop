@@ -17,6 +17,7 @@ import { OUTLETS, CAMPAIGNS, MENU_ITEMS, INITIAL_ORDERS } from '@/lib/data/mock-
 import { dispatchToMangwale } from '@/lib/logistics/mangwale';
 import { sendMetaCAPI } from '@/lib/tracking/meta-capi';
 import { orderRepository } from '@/lib/db/order-repository';
+import { getPersistedPaymentConfig, savePersistedPaymentConfig } from '@/lib/payments/payment-config-storage';
 
 export const DEFAULT_CATEGORIES: Category[] = [
   {
@@ -247,50 +248,7 @@ if (!globalThis.__PNR_MARKETING_TAGS__) {
 }
 
 if (!globalThis.__PNR_PAYMENT_CONFIG__) {
-  const isLiveEnv =
-    process.env.RAZORPAY_ENV === 'live' ||
-    Boolean(process.env.RAZORPAY_KEY_ID?.startsWith('rzp_live_')) ||
-    Boolean(process.env.RAZORPAY_LIVE_KEY_ID?.startsWith('rzp_live_'));
-  const testKeyId =
-    process.env.RAZORPAY_TEST_KEY_ID ||
-    process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID ||
-    process.env.RAZORPAY_KEY_ID ||
-    'rzp_test_Tu3J2xHanphLOy';
-  const testKeySecret =
-    process.env.RAZORPAY_TEST_KEY_SECRET ||
-    process.env.RAZORPAY_KEY_SECRET ||
-    'wQKVEbjQupqQMEZeqjA2eeju';
-  const testWebhookSecret =
-    process.env.RAZORPAY_TEST_WEBHOOK_SECRET ||
-    process.env.RAZORPAY_WEBHOOK_SECRET ||
-    'rzp_whsec_demo';
-
-  const liveKeyId =
-    process.env.RAZORPAY_LIVE_KEY_ID ||
-    (process.env.RAZORPAY_KEY_ID?.startsWith('rzp_live_') ? process.env.RAZORPAY_KEY_ID : '') ||
-    '';
-  const liveKeySecret =
-    process.env.RAZORPAY_LIVE_KEY_SECRET ||
-    (process.env.RAZORPAY_KEY_ID?.startsWith('rzp_live_') ? process.env.RAZORPAY_KEY_SECRET : '') ||
-    '';
-  const liveWebhookSecret = process.env.RAZORPAY_LIVE_WEBHOOK_SECRET || '';
-
-  const activeTestMode = !isLiveEnv;
-
-  globalThis.__PNR_PAYMENT_CONFIG__ = {
-    testMode: activeTestMode,
-    isEnabled: true,
-    businessName: "Puffs 'n' Rolls Nashik",
-    testKeyId,
-    testKeySecret,
-    testWebhookSecret,
-    liveKeyId,
-    liveKeySecret,
-    liveWebhookSecret,
-    razorpayKeyId: activeTestMode ? testKeyId : (liveKeyId || testKeyId),
-    razorpayKeySecret: activeTestMode ? testKeySecret : (liveKeySecret || testKeySecret),
-    razorpayWebhookSecret: activeTestMode ? testWebhookSecret : (liveWebhookSecret || testWebhookSecret),
-  };
+  globalThis.__PNR_PAYMENT_CONFIG__ = getPersistedPaymentConfig();
 }
 
 export const orderStore = {
@@ -656,76 +614,15 @@ export const orderStore = {
   // Payment Gateway (Razorpay) Configuration & Status
   getPaymentConfig: (): PaymentGatewayConfig => {
     if (!globalThis.__PNR_PAYMENT_CONFIG__) {
-      const isLiveEnv =
-        process.env.RAZORPAY_ENV === 'live' ||
-        Boolean(process.env.RAZORPAY_KEY_ID?.startsWith('rzp_live_')) ||
-        Boolean(process.env.RAZORPAY_LIVE_KEY_ID?.startsWith('rzp_live_'));
-      const testKeyId =
-        process.env.RAZORPAY_TEST_KEY_ID ||
-        process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID ||
-        process.env.RAZORPAY_KEY_ID ||
-        'rzp_test_Tu3J2xHanphLOy';
-      const testKeySecret =
-        process.env.RAZORPAY_TEST_KEY_SECRET ||
-        process.env.RAZORPAY_KEY_SECRET ||
-        'wQKVEbjQupqQMEZeqjA2eeju';
-      const testWebhookSecret =
-        process.env.RAZORPAY_TEST_WEBHOOK_SECRET ||
-        process.env.RAZORPAY_WEBHOOK_SECRET ||
-        'rzp_whsec_demo';
-
-      const liveKeyId =
-        process.env.RAZORPAY_LIVE_KEY_ID ||
-        (process.env.RAZORPAY_KEY_ID?.startsWith('rzp_live_') ? process.env.RAZORPAY_KEY_ID : '') ||
-        '';
-      const liveKeySecret =
-        process.env.RAZORPAY_LIVE_KEY_SECRET ||
-        (process.env.RAZORPAY_KEY_ID?.startsWith('rzp_live_') ? process.env.RAZORPAY_KEY_SECRET : '') ||
-        '';
-      const liveWebhookSecret = process.env.RAZORPAY_LIVE_WEBHOOK_SECRET || '';
-
-      const activeTestMode = !isLiveEnv;
-
-      globalThis.__PNR_PAYMENT_CONFIG__ = {
-        testMode: activeTestMode,
-        isEnabled: true,
-        businessName: "Puffs 'n' Rolls Nashik",
-        testKeyId,
-        testKeySecret,
-        testWebhookSecret,
-        liveKeyId,
-        liveKeySecret,
-        liveWebhookSecret,
-        razorpayKeyId: activeTestMode ? testKeyId : (liveKeyId || testKeyId),
-        razorpayKeySecret: activeTestMode ? testKeySecret : (liveKeySecret || testKeySecret),
-        razorpayWebhookSecret: activeTestMode ? testWebhookSecret : (liveWebhookSecret || testWebhookSecret),
-      };
+      globalThis.__PNR_PAYMENT_CONFIG__ = getPersistedPaymentConfig();
     }
     return globalThis.__PNR_PAYMENT_CONFIG__;
   },
 
   updatePaymentConfig: (config: Partial<PaymentGatewayConfig>): PaymentGatewayConfig => {
-    const current = orderStore.getPaymentConfig();
-    const merged = {
-      ...current,
-      ...config,
-    };
-
-    // If testMode is toggled, sync active credentials
-    if (config.testMode !== undefined) {
-      if (config.testMode) {
-        merged.razorpayKeyId = merged.testKeyId || merged.razorpayKeyId;
-        merged.razorpayKeySecret = merged.testKeySecret || merged.razorpayKeySecret;
-        merged.razorpayWebhookSecret = merged.testWebhookSecret || merged.razorpayWebhookSecret;
-      } else {
-        merged.razorpayKeyId = merged.liveKeyId || merged.razorpayKeyId;
-        merged.razorpayKeySecret = merged.liveKeySecret || merged.razorpayKeySecret;
-        merged.razorpayWebhookSecret = merged.liveWebhookSecret || merged.razorpayWebhookSecret;
-      }
-    }
-
-    globalThis.__PNR_PAYMENT_CONFIG__ = merged;
-    return globalThis.__PNR_PAYMENT_CONFIG__;
+    const updated = savePersistedPaymentConfig(config);
+    globalThis.__PNR_PAYMENT_CONFIG__ = updated;
+    return updated;
   },
 
   updatePaymentStatus: (

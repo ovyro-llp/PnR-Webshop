@@ -14,6 +14,7 @@ import {
   CreditCard,
   Lock,
   ShieldCheck,
+  AlertTriangle,
 } from 'lucide-react';
 
 export default function MarketingViewPage() {
@@ -79,12 +80,36 @@ export default function MarketingViewPage() {
           testKeyId: data.config.testKeyId || prev.testKeyId,
           liveKeyId: data.config.liveKeyId || prev.liveKeyId,
           isEnabled: data.config.isEnabled ?? true,
-          testMode: data.config.testMode ?? true,
+          testMode: typeof data.config.testMode === 'boolean' ? data.config.testMode : true,
           businessName: data.config.businessName || "Puffs 'n' Rolls Nashik",
         }));
       }
     } catch (e) {
       console.error('Failed to fetch payment config', e);
+    }
+  };
+
+  const handleToggleMode = async (newTestMode: boolean) => {
+    setPaymentConfig((prev) => ({ ...prev, testMode: newTestMode }));
+    setStatusMessage(newTestMode ? 'Switching to Sandbox Test Mode...' : 'Activating Live Production Mode...');
+    try {
+      const res = await fetch('/api/payments/config', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ testMode: newTestMode }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setStatusMessage(
+          newTestMode
+            ? '✓ Sandbox Test Mode activated and saved permanently!'
+            : '✓ Live Production Mode activated and saved permanently!'
+        );
+        fetchPaymentConfig();
+        setTimeout(() => setStatusMessage(''), 4000);
+      }
+    } catch (err) {
+      console.error('Failed to toggle mode:', err);
     }
   };
 
@@ -111,7 +136,7 @@ export default function MarketingViewPage() {
             testKeyId: pData.config.testKeyId || prev.testKeyId,
             liveKeyId: pData.config.liveKeyId || prev.liveKeyId,
             isEnabled: pData.config.isEnabled ?? true,
-            testMode: pData.config.testMode ?? true,
+            testMode: typeof pData.config.testMode === 'boolean' ? pData.config.testMode : true,
             businessName: pData.config.businessName || "Puffs 'n' Rolls Nashik",
           }));
         }
@@ -537,13 +562,13 @@ export default function MarketingViewPage() {
                       Enterprise Online Payment Gateway
                     </h2>
                     <span
-                      className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${
-                        paymentConfig.isEnabled
-                          ? 'bg-emerald-50 text-emerald-800 border border-emerald-200'
-                          : 'bg-stone-100 text-stone-600 border border-stone-200'
+                      className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${
+                        !paymentConfig.testMode
+                          ? 'bg-emerald-50 text-emerald-800 border border-emerald-300'
+                          : 'bg-amber-50 text-amber-800 border border-amber-300'
                       }`}
                     >
-                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-600" />
+                      <span className={`w-1.5 h-1.5 rounded-full ${!paymentConfig.testMode ? 'bg-emerald-600' : 'bg-amber-600'}`} />
                       {paymentConfig.testMode ? 'Sandbox / Test Mode' : 'Live Production'}
                     </span>
                   </div>
@@ -585,8 +610,8 @@ export default function MarketingViewPage() {
                   <div className="flex items-center p-1 rounded-full bg-stone-100 border border-stone-200">
                     <button
                       type="button"
-                      onClick={() => setPaymentConfig({ ...paymentConfig, testMode: true })}
-                      className={`px-3 py-1 rounded-full text-xs font-semibold transition ${
+                      onClick={() => handleToggleMode(true)}
+                      className={`px-3 py-1 rounded-full text-xs font-semibold transition cursor-pointer ${
                         paymentConfig.testMode
                           ? 'bg-amber-600 text-white shadow-2xs'
                           : 'text-stone-600 hover:text-stone-900'
@@ -596,8 +621,8 @@ export default function MarketingViewPage() {
                     </button>
                     <button
                       type="button"
-                      onClick={() => setPaymentConfig({ ...paymentConfig, testMode: false })}
-                      className={`px-3 py-1 rounded-full text-xs font-semibold transition ${
+                      onClick={() => handleToggleMode(false)}
+                      className={`px-3 py-1 rounded-full text-xs font-semibold transition cursor-pointer ${
                         !paymentConfig.testMode
                           ? 'bg-emerald-600 text-white shadow-2xs'
                           : 'text-stone-600 hover:text-stone-900'
@@ -608,14 +633,44 @@ export default function MarketingViewPage() {
                   </div>
                 </div>
 
-                <div className="p-3 bg-[#FAF8F5] rounded-xl border border-stone-200/80 flex items-center justify-between text-xs">
-                  <span className="text-stone-600">Currently Active in Storefront Checkout:</span>
-                  <span className="font-mono font-bold text-stone-900">
-                    {paymentConfig.testMode
-                      ? paymentConfig.testKeyId || paymentConfig.razorpayKeyId || 'rzp_test_pnr_demo'
-                      : paymentConfig.liveKeyId || 'Pending Live Configuration (Using Test Mode)'}
-                  </span>
-                </div>
+                {/* Status Box */}
+                {!paymentConfig.testMode ? (
+                  paymentConfig.liveKeyId && paymentConfig.liveKeyId.startsWith('rzp_live_') ? (
+                    <div className="p-3.5 bg-emerald-50 rounded-xl border border-emerald-300 flex items-center justify-between text-xs">
+                      <div className="flex items-center gap-2">
+                        <span className="w-2.5 h-2.5 rounded-full bg-emerald-600 animate-pulse" />
+                        <div>
+                          <span className="font-bold text-emerald-950">Live Production Mode Active: </span>
+                          <span className="font-mono font-bold text-emerald-800">{paymentConfig.liveKeyId}</span>
+                        </div>
+                      </div>
+                      <span className="text-[11px] font-semibold text-emerald-700 bg-emerald-100 px-2.5 py-1 rounded-lg">
+                        Accepting Real Customer Payments
+                      </span>
+                    </div>
+                  ) : (
+                    <div className="p-3.5 bg-amber-50 rounded-xl border border-amber-300 space-y-1.5 text-xs">
+                      <div className="flex items-center gap-2 font-bold text-amber-900">
+                        <AlertTriangle className="w-4 h-4 text-amber-700" />
+                        <span>Live Production Mode is Activated (Pending Live API Keys)</span>
+                      </div>
+                      <p className="text-[11px] text-amber-800 leading-relaxed">
+                        Live mode is permanently saved. To accept real customer payments on Razorpay, please enter your Live Key ID (<code className="font-mono bg-amber-100/80 px-1 py-0.5 rounded text-amber-900 font-semibold">rzp_live_...</code>) and Live Key Secret below, then click <strong>Save Payment Settings</strong>.
+                      </p>
+                    </div>
+                  )
+                ) : (
+                  <div className="p-3 bg-stone-100/80 rounded-xl border border-stone-200/80 flex items-center justify-between text-xs">
+                    <div className="flex items-center gap-2 text-stone-700">
+                      <span className="w-2 h-2 rounded-full bg-amber-500" />
+                      <span className="text-stone-600">Active in Storefront:</span>
+                      <span className="font-mono font-bold text-stone-900">{paymentConfig.testKeyId || 'rzp_test_Tu3J2xHanphLOy'}</span>
+                    </div>
+                    <span className="text-[11px] font-semibold text-amber-800 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded-md">
+                      Sandbox Test Environment
+                    </span>
+                  </div>
+                )}
               </div>
 
               {/* Test Mode Credentials Card */}
@@ -922,10 +977,8 @@ export default function MarketingViewPage() {
                     <input
                       type="checkbox"
                       checked={paymentConfig.testMode}
-                      onChange={(e) =>
-                        setPaymentConfig({ ...paymentConfig, testMode: e.target.checked })
-                      }
-                      className="w-4 h-4 rounded text-stone-900 focus:ring-stone-900"
+                      onChange={(e) => handleToggleMode(e.target.checked)}
+                      className="w-4 h-4 rounded text-stone-900 focus:ring-stone-900 cursor-pointer"
                     />
                   </label>
                 </div>
