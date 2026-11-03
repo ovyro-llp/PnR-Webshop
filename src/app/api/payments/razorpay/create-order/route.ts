@@ -21,7 +21,8 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const outlet = orderStore.getOutletBySlug(outletSlug);
+    const normalizedSlug = orderStore.normalizeOutletSlug(outletSlug);
+    const outlet = orderStore.getOutletBySlug(normalizedSlug);
     if (!outlet) {
       return NextResponse.json(
         { success: false, message: `Outlet not found: ${outletSlug}` },
@@ -38,7 +39,7 @@ export async function POST(req: NextRequest) {
 
     // Validate items in outlet stock
     if (items && Array.isArray(items)) {
-      const stockList = orderStore.getOutletStock(outletSlug);
+      const stockList = orderStore.getOutletStock(normalizedSlug);
       for (const item of items) {
         const stock = stockList.find((s) => s.itemId === item.itemId);
         if (!stock || !stock.isAvailable || stock.stockQuantity < (item.quantity || 1)) {
@@ -53,9 +54,10 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    const receipt = `rcpt_${outletSlug}_${Date.now()}`;
+    const receipt = `rcpt_${normalizedSlug}_${Date.now()}`;
     const notes: Record<string, string> = {
-      outletSlug,
+      outletSlug: normalizedSlug,
+      originalOutletSlug: outletSlug,
       campaignSlug: campaignSlug || 'direct',
       customerName: customer?.name || 'Guest',
       customerPhone: customer?.phone || '',
@@ -66,7 +68,7 @@ export async function POST(req: NextRequest) {
       amount: Number(amount),
       receipt,
       notes,
-      outletSlug,
+      outletSlug: normalizedSlug,
     });
 
     const { keyId, isDemoMode } = getRazorpayClient();
@@ -82,6 +84,7 @@ export async function POST(req: NextRequest) {
       key_id: keyId,
       isDemoMode,
       businessName: "Puffs 'n' Rolls Nashik",
+      outletName: outlet.name,
       description: `Artisanal Bakery Order • ${outlet.name}`,
     });
   } catch (error) {

@@ -195,7 +195,7 @@ export function CartDrawer({ outletSlug, campaignSlug }: CartDrawerProps) {
       const orderData = await createRes.json();
       if (!createRes.ok || !orderData.success) {
         setIsSubmitting(false);
-        setSubmitError(orderData.error || 'Failed to initialize payment gateway');
+        setSubmitError(orderData.message || orderData.error || 'Failed to initialize payment gateway');
         return;
       }
 
@@ -247,7 +247,8 @@ export function CartDrawer({ outletSlug, campaignSlug }: CartDrawerProps) {
               response.razorpay_signature,
               effectiveOutletSlug,
               campaignSlug,
-              activeCustomer
+              activeCustomer,
+              paymentMethod
             );
             setIsSubmitting(false);
             if (verifyRes.success && verifyRes.order) {

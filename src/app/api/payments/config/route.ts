@@ -64,30 +64,30 @@ export async function POST(req: NextRequest) {
     } = body;
 
     const updates: Record<string, unknown> = {};
-    if (razorpayKeyId !== undefined) updates.razorpayKeyId = razorpayKeyId;
+    if (razorpayKeyId !== undefined && razorpayKeyId.trim()) updates.razorpayKeyId = razorpayKeyId.trim();
     if (razorpayKeySecret && !razorpayKeySecret.includes('••••')) {
-      updates.razorpayKeySecret = razorpayKeySecret;
+      updates.razorpayKeySecret = razorpayKeySecret.trim();
     }
     if (razorpayWebhookSecret && !razorpayWebhookSecret.includes('••••')) {
-      updates.razorpayWebhookSecret = razorpayWebhookSecret;
+      updates.razorpayWebhookSecret = razorpayWebhookSecret.trim();
     }
 
     // Test credentials
-    if (testKeyId !== undefined) updates.testKeyId = testKeyId;
+    if (testKeyId !== undefined && testKeyId.trim()) updates.testKeyId = testKeyId.trim();
     if (testKeySecret && !testKeySecret.includes('••••')) {
-      updates.testKeySecret = testKeySecret;
+      updates.testKeySecret = testKeySecret.trim();
     }
     if (testWebhookSecret && !testWebhookSecret.includes('••••')) {
-      updates.testWebhookSecret = testWebhookSecret;
+      updates.testWebhookSecret = testWebhookSecret.trim();
     }
 
     // Live credentials
-    if (liveKeyId !== undefined) updates.liveKeyId = liveKeyId;
+    if (liveKeyId !== undefined && liveKeyId.trim()) updates.liveKeyId = liveKeyId.trim();
     if (liveKeySecret && !liveKeySecret.includes('••••')) {
-      updates.liveKeySecret = liveKeySecret;
+      updates.liveKeySecret = liveKeySecret.trim();
     }
     if (liveWebhookSecret && !liveWebhookSecret.includes('••••')) {
-      updates.liveWebhookSecret = liveWebhookSecret;
+      updates.liveWebhookSecret = liveWebhookSecret.trim();
     }
 
     if (isEnabled !== undefined) updates.isEnabled = Boolean(isEnabled);

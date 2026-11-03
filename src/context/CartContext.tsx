@@ -33,7 +33,8 @@ interface CartContextType {
     razorpay_signature: string,
     outletSlug: string,
     campaignSlug: string | undefined,
-    customer: CustomerDetails
+    customer: CustomerDetails,
+    paymentMethod?: PaymentMethod
   ) => Promise<{ success: boolean; order?: Order; error?: string }>;
 }
 
@@ -219,7 +220,8 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     razorpay_signature: string,
     outletSlug: string,
     campaignSlug: string | undefined,
-    customer: CustomerDetails
+    customer: CustomerDetails,
+    paymentMethod: PaymentMethod = 'UPI'
   ) => {
     try {
       const orderPayload = {
@@ -237,7 +239,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         discount,
         deliveryFee,
         total,
-        paymentMethod: 'UPI' as PaymentMethod,
+        paymentMethod,
       };
 
       const res = await fetch('/api/payments/razorpay/verify', {

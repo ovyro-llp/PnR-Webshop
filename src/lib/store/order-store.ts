@@ -299,8 +299,9 @@ export const orderStore = {
   },
 
   getOrdersByOutlet: (outletSlug: string): Order[] => {
+    const normalized = orderStore.normalizeOutletSlug(outletSlug);
     return (globalThis.__PNR_ORDERS__ || []).filter(
-      (o) => o.outletSlug === outletSlug
+      (o) => orderStore.normalizeOutletSlug(o.outletSlug) === normalized
     );
   },
 
@@ -321,7 +322,8 @@ export const orderStore = {
       razorpaySignature?: string;
     }
   ): Promise<Order> => {
-    const outlet = orderStore.getOutletBySlug(orderData.outletSlug);
+    const normalizedSlug = orderStore.normalizeOutletSlug(orderData.outletSlug);
+    const outlet = orderStore.getOutletBySlug(normalizedSlug);
     if (!outlet) {
       throw new Error(`Outlet not found: ${orderData.outletSlug}`);
     }
@@ -334,7 +336,9 @@ export const orderStore = {
     const stockList = globalThis.__PNR_OUTLET_STOCK__ || [];
     for (const item of orderData.items) {
       const stock = stockList.find(
-        (s) => s.outletSlug === orderData.outletSlug && s.itemId === item.itemId
+        (s) =>
+          orderStore.normalizeOutletSlug(s.outletSlug) === normalizedSlug &&
+          s.itemId === item.itemId
       );
       if (stock && (!stock.isAvailable || stock.stockQuantity < item.quantity)) {
         throw new Error(
@@ -346,6 +350,7 @@ export const orderStore = {
     const orderNumber = `PNR-${Math.floor(10000 + Math.random() * 90000)}`;
     const newOrder: Order = {
       ...orderData,
+      outletSlug: normalizedSlug,
       id: `ord-${Date.now()}`,
       orderNumber,
       orderStatus: 'RECEIVED',
@@ -365,7 +370,7 @@ export const orderStore = {
 
     // Decrement stock in this outlet's inventory
     orderData.items.forEach((item) => {
-      orderStore.decrementStock(orderData.outletSlug, item.itemId, item.quantity);
+      orderStore.decrementStock(normalizedSlug, item.itemId, item.quantity);
     });
 
     // 1. Dispatch automatically to Mangwale Logistics
@@ -453,14 +458,45 @@ export const orderStore = {
   },
 
   // Outlets & Campaigns
+  normalizeOutletSlug: (slug?: string): string => {
+    if (!slug) return 'college-road';
+    const clean = slug.toLowerCase().trim();
+    if (
+      clean === 'cycle-circle' ||
+      clean === 'college-road' ||
+      clean === 'cycle-circle-college-road' ||
+      clean === 'out-1'
+    ) {
+      return 'college-road';
+    }
+    if (
+      clean === 'sahdev-nagar' ||
+      clean === 'gangapur-road' ||
+      clean === 'gangapur' ||
+      clean === 'out-gangapur'
+    ) {
+      return 'gangapur-road';
+    }
+    if (
+      clean === 'nd-patel' ||
+      clean === 'nd-patel-road' ||
+      clean === 'out-nd-patel'
+    ) {
+      return 'nd-patel-road';
+    }
+    return clean;
+  },
+
   getOutlets: (): Outlet[] => {
     return globalThis.__PNR_OUTLETS__ || [];
   },
 
   getOutletBySlug: (slug: string): Outlet | undefined => {
     const outlets = globalThis.__PNR_OUTLETS__ || [];
+    const normalized = orderStore.normalizeOutletSlug(slug);
     return outlets.find(
       (o) =>
+        o.slug === normalized ||
         o.slug === slug ||
         o.id === slug ||
         (slug === 'cycle-circle' && o.slug === 'college-road') ||
@@ -1007,15 +1043,20 @@ export const orderStore = {
       (p) => !p.isArchived
     );
     if (!outletSlug) return master;
+    const normalizedSlug = orderStore.normalizeOutletSlug(outletSlug);
 
     // Look up this outlet's stock items
     const stockMap = new Map<string, OutletStockItem>();
     (globalThis.__PNR_OUTLET_STOCK__ || [])
-      .filter((s) => s.outletSlug === outletSlug)
+      .filter((s) => orderStore.normalizeOutletSlug(s.outletSlug) === normalizedSlug)
       .forEach((s) => stockMap.set(s.itemId, s));
 
     return master
-      .filter((item) => item.availableOutlets.includes(outletSlug))
+      .filter((item) =>
+        item.availableOutlets.some(
+          (oSlug) => orderStore.normalizeOutletSlug(oSlug) === normalizedSlug
+        )
+      )
       .map((item) => {
         const stock = stockMap.get(item.id);
         return {
@@ -1029,15 +1070,24 @@ export const orderStore = {
 
   // Outlet Stock Management (For Store Managers) - strictly scoped to assigned products
   getOutletStock: (outletSlug: string): OutletStockItem[] => {
+    const normalizedSlug = orderStore.normalizeOutletSlug(outletSlug);
     const products = globalThis.__PNR_MASTER_PRODUCTS__ || MENU_ITEMS;
     const assignedItemIds = new Set(
       products
-        .filter((p) => !p.isArchived && p.availableOutlets.includes(outletSlug))
+        .filter(
+          (p) =>
+            !p.isArchived &&
+            p.availableOutlets.some(
+              (oSlug) => orderStore.normalizeOutletSlug(oSlug) === normalizedSlug
+            )
+        )
         .map((p) => p.id)
     );
 
     return (globalThis.__PNR_OUTLET_STOCK__ || []).filter(
-      (s) => s.outletSlug === outletSlug && assignedItemIds.has(s.itemId)
+      (s) =>
+        orderStore.normalizeOutletSlug(s.outletSlug) === normalizedSlug &&
+        assignedItemIds.has(s.itemId)
     );
   },
 
@@ -1046,9 +1096,10 @@ export const orderStore = {
     itemId: string,
     updates: { isAvailable?: boolean; stockQuantity?: number; customPrice?: number; updatedBy?: string }
   ): OutletStockItem | undefined => {
+    const normalizedSlug = orderStore.normalizeOutletSlug(outletSlug);
     const list = globalThis.__PNR_OUTLET_STOCK__ || [];
     const idx = list.findIndex(
-      (s) => s.outletSlug === outletSlug && s.itemId === itemId
+      (s) => orderStore.normalizeOutletSlug(s.outletSlug) === normalizedSlug && s.itemId === itemId
     );
     if (idx !== -1) {
       list[idx] = {
@@ -1063,9 +1114,10 @@ export const orderStore = {
   },
 
   decrementStock: (outletSlug: string, itemId: string, quantity: number) => {
+    const normalizedSlug = orderStore.normalizeOutletSlug(outletSlug);
     const list = globalThis.__PNR_OUTLET_STOCK__ || [];
     const idx = list.findIndex(
-      (s) => s.outletSlug === outletSlug && s.itemId === itemId
+      (s) => orderStore.normalizeOutletSlug(s.outletSlug) === normalizedSlug && s.itemId === itemId
     );
     if (idx !== -1) {
       const newQty = Math.max(0, list[idx].stockQuantity - quantity);
@@ -1080,8 +1132,11 @@ export const orderStore = {
   getEmployees: (outletSlug?: string): Employee[] => {
     const employees = globalThis.__PNR_EMPLOYEES__ || [];
     if (!outletSlug || outletSlug === 'all') return employees;
+    const normalizedSlug = orderStore.normalizeOutletSlug(outletSlug);
     return employees.filter(
-      (e) => e.outletSlug === outletSlug || e.outletSlug === 'all'
+      (e) =>
+        e.outletSlug === 'all' ||
+        orderStore.normalizeOutletSlug(e.outletSlug) === normalizedSlug
     );
   },
 

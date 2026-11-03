@@ -11,55 +11,59 @@ export interface CreateOrderParams {
 
 export function getRazorpayClient() {
   const config = orderStore.getPaymentConfig();
-  
-  // Auto-detect live mode if key starts with rzp_live_ or RAZORPAY_ENV === 'live'
-  const isKeyLive =
-    Boolean(config.razorpayKeyId?.startsWith('rzp_live_')) ||
-    Boolean(config.liveKeyId?.startsWith('rzp_live_')) ||
-    Boolean(process.env.RAZORPAY_KEY_ID?.startsWith('rzp_live_')) ||
-    Boolean(process.env.RAZORPAY_LIVE_KEY_ID?.startsWith('rzp_live_')) ||
-    process.env.RAZORPAY_ENV === 'live';
 
-  const isLive = Boolean(isKeyLive || !config.testMode);
+  // 1. Resolve test keys with fallbacks
+  const testKey = (
+    config.testKeyId ||
+    process.env.RAZORPAY_TEST_KEY_ID ||
+    process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID ||
+    process.env.RAZORPAY_KEY_ID ||
+    'rzp_test_Tu3J2xHanphLOy'
+  ).trim();
 
-  const key_id = isLive
-    ? config.liveKeyId ||
-      process.env.RAZORPAY_LIVE_KEY_ID?.trim() ||
-      (process.env.RAZORPAY_KEY_ID?.startsWith('rzp_live_') ? process.env.RAZORPAY_KEY_ID.trim() : '') ||
-      config.razorpayKeyId ||
-      process.env.RAZORPAY_KEY_ID ||
-      ''
-    : config.testKeyId ||
-      config.razorpayKeyId ||
-      process.env.RAZORPAY_TEST_KEY_ID ||
-      process.env.RAZORPAY_KEY_ID ||
-      'rzp_test_Tu3J2xHanphLOy';
+  const testSecret = (
+    config.testKeySecret ||
+    process.env.RAZORPAY_TEST_KEY_SECRET ||
+    process.env.RAZORPAY_KEY_SECRET ||
+    'wQKVEbjQupqQMEZeqjA2eeju'
+  ).trim();
 
-  const key_secret = isLive
-    ? config.liveKeySecret ||
-      process.env.RAZORPAY_LIVE_KEY_SECRET?.trim() ||
-      (process.env.RAZORPAY_KEY_ID?.startsWith('rzp_live_') ? process.env.RAZORPAY_KEY_SECRET?.trim() : '') ||
-      config.razorpayKeySecret ||
-      process.env.RAZORPAY_KEY_SECRET ||
-      ''
-    : config.testKeySecret ||
-      config.razorpayKeySecret ||
-      process.env.RAZORPAY_TEST_KEY_SECRET ||
-      process.env.RAZORPAY_KEY_SECRET ||
-      'wQKVEbjQupqQMEZeqjA2eeju';
+  // 2. Resolve live keys if provided
+  const liveKey = (
+    config.liveKeyId ||
+    process.env.RAZORPAY_LIVE_KEY_ID ||
+    (config.razorpayKeyId?.startsWith('rzp_live_') ? config.razorpayKeyId : '') ||
+    (process.env.RAZORPAY_KEY_ID?.startsWith('rzp_live_') ? process.env.RAZORPAY_KEY_ID : '') ||
+    ''
+  ).trim();
+
+  const liveSecret = (
+    config.liveKeySecret ||
+    process.env.RAZORPAY_LIVE_KEY_SECRET ||
+    (config.razorpayKeyId?.startsWith('rzp_live_') ? config.razorpayKeySecret : '') ||
+    (process.env.RAZORPAY_KEY_ID?.startsWith('rzp_live_') ? process.env.RAZORPAY_KEY_SECRET : '') ||
+    ''
+  ).trim();
+
+  // Only run in Live mode if valid live credentials exist AND test mode is false or RAZORPAY_ENV === 'live'
+  const hasValidLiveCreds = liveKey.startsWith('rzp_live_') && Boolean(liveSecret);
+  const isLive = Boolean(hasValidLiveCreds && (config.testMode === false || process.env.RAZORPAY_ENV === 'live'));
+
+  const activeKeyId = isLive ? liveKey : testKey;
+  const activeKeySecret = isLive ? liveSecret : testSecret;
 
   const isDemoMode =
-    key_id === 'rzp_test_pnr_demo' ||
-    key_secret === 'rzp_sec_demo_secret_key' ||
-    !key_id ||
-    !key_secret;
+    activeKeyId === 'rzp_test_pnr_demo' ||
+    activeKeySecret === 'rzp_sec_demo_secret_key' ||
+    !activeKeyId ||
+    !activeKeySecret;
 
   let instance: Razorpay | null = null;
-  if (!isDemoMode && key_id && key_secret) {
+  if (!isDemoMode && activeKeyId && activeKeySecret) {
     try {
       instance = new Razorpay({
-        key_id,
-        key_secret,
+        key_id: activeKeyId,
+        key_secret: activeKeySecret,
       });
     } catch (err) {
       console.warn('Failed to initialize Razorpay SDK instance:', err);
@@ -68,8 +72,8 @@ export function getRazorpayClient() {
 
   return {
     instance,
-    keyId: key_id,
-    keySecret: key_secret,
+    keyId: activeKeyId,
+    keySecret: activeKeySecret,
     isDemoMode,
     testMode: !isLive,
   };
@@ -172,7 +176,11 @@ export function verifyRazorpaySignature({
       .update(body.toString())
       .digest('hex');
 
-    return expectedSignature === razorpay_signature;
+    return (
+      expectedSignature === razorpay_signature ||
+      (expectedSignature.length === razorpay_signature.length &&
+        crypto.timingSafeEqual(Buffer.from(expectedSignature, 'utf8'), Buffer.from(razorpay_signature, 'utf8')))
+    );
   } catch (err) {
     console.error('Signature verification error:', err);
     return false;

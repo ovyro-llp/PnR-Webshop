@@ -36,9 +36,11 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    const normalizedSlug = orderStore.normalizeOutletSlug(orderPayload.outletSlug);
+
     // Create the order with verified payment status
     const order = await orderStore.createOrder({
-      outletSlug: orderPayload.outletSlug,
+      outletSlug: normalizedSlug,
       campaignSlug: orderPayload.campaignSlug,
       customer: orderPayload.customer,
       items: orderPayload.items,
