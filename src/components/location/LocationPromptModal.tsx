@@ -19,9 +19,21 @@ import Image from 'next/image';
 const LOCALITY_OPTIONS = [
   {
     slug: 'college-road',
-    name: 'College Road / Thatte Nagar',
-    areas: 'Gangapur Road, Canada Corner, KTHM, BYK Circle',
+    name: 'Cycle Circle / College Road',
+    areas: 'Near Cycle Circle, Krishi Nagar, Thatte Nagar, BYK Circle, Canada Corner',
     badge: 'Flagship Kitchen',
+  },
+  {
+    slug: 'gangapur-road',
+    name: 'Gangapur Road / Sahdev Nagar',
+    areas: 'Near Datta Chowk, Sahdev Nagar, Serene Meadows, Someshwar, Anandwalli',
+    badge: 'Artisanal Bakes',
+  },
+  {
+    slug: 'nd-patel-road',
+    name: 'ND Patel Road / Shalimar',
+    areas: 'Patel Plaza, Opp. BSNL Office, Mohan Nagar, CBS, Old Nashik, Panchavati',
+    badge: 'Heritage Kitchen',
   },
   {
     slug: 'nashik-road',
@@ -33,7 +45,7 @@ const LOCALITY_OPTIONS = [
     slug: 'indira-nagar',
     name: 'Indira Nagar / Govind Nagar',
     areas: 'Ring Road, Mumbai Naka, Pathardi Phata',
-    badge: 'Artisanal Bakes',
+    badge: 'Specialty Bakes',
   },
 ];
 

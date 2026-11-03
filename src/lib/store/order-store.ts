@@ -458,7 +458,14 @@ export const orderStore = {
   },
 
   getOutletBySlug: (slug: string): Outlet | undefined => {
-    return (globalThis.__PNR_OUTLETS__ || []).find((o) => o.slug === slug || o.id === slug);
+    const outlets = globalThis.__PNR_OUTLETS__ || [];
+    return outlets.find(
+      (o) =>
+        o.slug === slug ||
+        o.id === slug ||
+        (slug === 'cycle-circle' && o.slug === 'college-road') ||
+        (slug === 'sahdev-nagar' && o.slug === 'gangapur-road')
+    );
   },
 
   createOutlet: (data: Omit<Outlet, 'id'>): Outlet => {

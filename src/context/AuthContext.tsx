@@ -353,6 +353,42 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
 
     if (
+      (cleanEmail === 'ndpatel@puffsnrolls.com' || cleanEmail === 'ndpatelroad@puffsnrolls.com') &&
+      (password === 'ndpatel2026' || password === 'admin' || password === 'pnr123')
+    ) {
+      const admin: AdminUser = {
+        id: 'admin-nd',
+        name: 'ND Patel Road Outlet Manager',
+        email: cleanEmail,
+        role: 'ADMIN',
+        employeeRole: 'OUTLET_MANAGER',
+        outletAccess: ['nd-patel-road'],
+        title: 'Franchise Partner (ND Patel Road)',
+      };
+      setUser(admin);
+      localStorage.setItem('pnr_auth_user', JSON.stringify(admin));
+      return { success: true };
+    }
+
+    if (
+      (cleanEmail === 'gangapur@puffsnrolls.com' || cleanEmail === 'gangapurroad@puffsnrolls.com') &&
+      (password === 'gangapur2026' || password === 'admin' || password === 'pnr123')
+    ) {
+      const admin: AdminUser = {
+        id: 'admin-gp',
+        name: 'Gangapur Road Outlet Manager',
+        email: cleanEmail,
+        role: 'ADMIN',
+        employeeRole: 'OUTLET_MANAGER',
+        outletAccess: ['gangapur-road'],
+        title: 'Franchise Partner (Gangapur Road)',
+      };
+      setUser(admin);
+      localStorage.setItem('pnr_auth_user', JSON.stringify(admin));
+      return { success: true };
+    }
+
+    if (
       cleanEmail === 'kitchen.cr@puffsnrolls.com' &&
       (password === 'kitchen2026' || password === 'admin' || password === 'pnr123')
     ) {
