@@ -134,7 +134,7 @@ export default function OutletInventoryPage() {
     isSpicy: false,
     preparationTimeMinutes: 15,
     initialStock: 25,
-    availableOutlets: ['college-road', 'nashik-road', 'indira-nagar'],
+    availableOutlets: ['college-road', 'nd-patel-road', 'gangapur-road'],
   });
 
   const fetchOutlets = async () => {
@@ -637,7 +637,7 @@ export default function OutletInventoryPage() {
           isSpicy: false,
           preparationTimeMinutes: 15,
           initialStock: 25,
-          availableOutlets: ['college-road', 'nashik-road', 'indira-nagar'],
+          availableOutlets: ['college-road', 'nd-patel-road', 'gangapur-road'],
         });
         fetchMasterProducts();
         fetchInventory(selectedOutlet);

@@ -162,16 +162,16 @@ export default async function CampaignLandingPage({
 
               <div className="p-3.5 bg-stone-50 rounded-2xl border border-stone-100 space-y-1.5">
                 <p className="text-stone-700 italic">
-                  &ldquo;Best chocolate truffle cake in Nashik Road. We ordered through their Instagram campaign and the offer coupon worked smoothly.&rdquo;
+                  &ldquo;Best chocolate truffle cake in Old Nashik. We ordered for our family celebration and the delivery arrived right on schedule.&rdquo;
                 </p>
-                <p className="font-semibold text-stone-900">— Rahul Gaikwad, Nashik Road</p>
+                <p className="font-semibold text-stone-900">— Rahul Gaikwad, ND Patel Road</p>
               </div>
 
               <div className="p-3.5 bg-stone-50 rounded-2xl border border-stone-100 space-y-1.5">
                 <p className="text-stone-700 italic">
                   &ldquo;Fresh crispy puffs every single evening. The WhatsApp live rider tracking was super convenient.&rdquo;
                 </p>
-                <p className="font-semibold text-stone-900">— Snehal Shirole, Indira Nagar</p>
+                <p className="font-semibold text-stone-900">— Snehal Shirole, College Road</p>
               </div>
             </div>
           </section>

@@ -76,7 +76,7 @@ async function runVerification() {
   });
   console.log('📸 Captured: admin-outlet-selector-dropdown-open.png');
 
-  // Click an outlet in the dropdown (e.g. Nashik Road)
+  // Click an outlet in the dropdown (e.g. ND Patel Road)
   const dropdownItems = await page.$$('div[role="listbox"] button');
   if (dropdownItems.length >= 2) {
     await dropdownItems[1].click();

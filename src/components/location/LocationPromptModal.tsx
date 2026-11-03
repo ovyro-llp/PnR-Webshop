@@ -35,18 +35,6 @@ const LOCALITY_OPTIONS = [
     areas: 'Patel Plaza, Opp. BSNL Office, Mohan Nagar, CBS, Old Nashik, Panchavati',
     badge: 'Heritage Kitchen',
   },
-  {
-    slug: 'nashik-road',
-    name: 'Nashik Road / Bytco Point',
-    areas: 'Opp. Railway Station, Jail Road, Deolali Gaon',
-    badge: 'Celebration Cakes',
-  },
-  {
-    slug: 'indira-nagar',
-    name: 'Indira Nagar / Govind Nagar',
-    areas: 'Ring Road, Mumbai Naka, Pathardi Phata',
-    badge: 'Specialty Bakes',
-  },
 ];
 
 export function LocationPromptModal() {

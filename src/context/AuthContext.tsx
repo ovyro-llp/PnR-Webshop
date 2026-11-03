@@ -317,42 +317,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
 
     if (
-      cleanEmail === 'nashikroad@puffsnrolls.com' &&
-      (password === 'nashik2026' || password === 'admin' || password === 'pnr123')
-    ) {
-      const admin: AdminUser = {
-        id: 'admin-nr',
-        name: 'Nashik Road Outlet Manager',
-        email: cleanEmail,
-        role: 'ADMIN',
-        employeeRole: 'OUTLET_MANAGER',
-        outletAccess: ['nashik-road'],
-        title: 'Franchise Partner (Nashik Road)',
-      };
-      setUser(admin);
-      localStorage.setItem('pnr_auth_user', JSON.stringify(admin));
-      return { success: true };
-    }
-
-    if (
-      cleanEmail === 'indiranagar@puffsnrolls.com' &&
-      (password === 'indira2026' || password === 'admin' || password === 'pnr123')
-    ) {
-      const admin: AdminUser = {
-        id: 'admin-in',
-        name: 'Indira Nagar Outlet Manager',
-        email: cleanEmail,
-        role: 'ADMIN',
-        employeeRole: 'OUTLET_MANAGER',
-        outletAccess: ['indira-nagar'],
-        title: 'Franchise Partner (Indira Nagar)',
-      };
-      setUser(admin);
-      localStorage.setItem('pnr_auth_user', JSON.stringify(admin));
-      return { success: true };
-    }
-
-    if (
       (cleanEmail === 'ndpatel@puffsnrolls.com' || cleanEmail === 'ndpatelroad@puffsnrolls.com') &&
       (password === 'ndpatel2026' || password === 'admin' || password === 'pnr123')
     ) {

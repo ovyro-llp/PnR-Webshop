@@ -227,7 +227,7 @@ export default function AdminPage() {
           <span className="text-2xl font-serif font-bold text-stone-900 block mt-1">
             {outlets.length} Outlets
           </span>
-          <span className="text-[11px] text-stone-500">College Rd, Nashik Rd, Indira Nagar</span>
+          <span className="text-[11px] text-stone-500">Cycle Circle, ND Patel Rd, Gangapur Rd</span>
         </div>
 
         <div className="bg-white p-5 rounded-3xl border border-stone-200/90 shadow-[0_2px_8px_rgba(0,0,0,0.02)] space-y-1">

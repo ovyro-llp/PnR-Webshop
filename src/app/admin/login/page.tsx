@@ -38,17 +38,17 @@ export default function AdminLoginPage() {
           router.push('/admin/inventory');
         }
       });
-    } else if (auto === 'nashikroad' || auto === 'nashik-road') {
+    } else if (auto === 'ndpatel' || auto === 'nd-patel' || auto === 'nd-patel-road') {
       setIsLoading(true);
-      loginAdmin('nashikroad@puffsnrolls.com', 'nashik2026').then((res) => {
+      loginAdmin('ndpatel@puffsnrolls.com', 'ndpatel2026').then((res) => {
         setIsLoading(false);
         if (res.success) {
           router.push('/admin/inventory');
         }
       });
-    } else if (auto === 'indiranagar' || auto === 'indira-nagar') {
+    } else if (auto === 'gangapur' || auto === 'gangapur-road' || auto === 'sahdev-nagar') {
       setIsLoading(true);
-      loginAdmin('indiranagar@puffsnrolls.com', 'indira2026').then((res) => {
+      loginAdmin('gangapur@puffsnrolls.com', 'gangapur2026').then((res) => {
         setIsLoading(false);
         if (res.success) {
           router.push('/admin/inventory');

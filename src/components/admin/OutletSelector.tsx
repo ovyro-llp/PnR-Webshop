@@ -63,8 +63,10 @@ export function OutletSelector({
     ? 'HQ Matrix'
     : activeOutlet?.slug === 'college-road'
     ? 'Flagship'
-    : activeOutlet?.slug === 'nashik-road'
-    ? 'Station Hub'
+    : activeOutlet?.slug === 'nd-patel-road'
+    ? 'Heritage'
+    : activeOutlet?.slug === 'gangapur-road'
+    ? 'Artisanal'
     : 'Express Kitchen';
 
   return (
@@ -168,10 +170,12 @@ export function OutletSelector({
               const shortName = outlet.name.replace("Puffs 'n' Rolls - ", '');
               const tag =
                 outlet.slug === 'college-road'
-                  ? 'Flagship Outlet'
-                  : outlet.slug === 'nashik-road'
-                  ? 'Station Hub'
-                  : 'Express Kitchen';
+                  ? 'Flagship Kitchen'
+                  : outlet.slug === 'nd-patel-road'
+                  ? 'Heritage Kitchen'
+                  : outlet.slug === 'gangapur-road'
+                  ? 'Artisanal Kitchen'
+                  : 'Kitchen';
 
               return (
                 <button

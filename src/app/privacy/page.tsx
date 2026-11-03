@@ -40,7 +40,7 @@ export default function PrivacyPolicyPage() {
               <strong>Customer Identity &amp; Contact:</strong> Your full name, mobile phone number, and optional email address for order receipts and delivery updates.
             </li>
             <li>
-              <strong>Doorstep Delivery Address:</strong> Flat/house number, apartment/building name, street, landmark, area in Nashik (e.g., College Road, Nashik Road, Indira Nagar, Gangapur Road), pincode, and specific delivery instructions (e.g., doorbell instructions).
+              <strong>Doorstep Delivery Address:</strong> Flat/house number, apartment/building name, street, landmark, area in Nashik (e.g., Cycle Circle, College Road, ND Patel Road, Gangapur Road), pincode, and specific delivery instructions (e.g., doorbell instructions).
             </li>
             <li>
               <strong>Order &amp; Dietary Preferences:</strong> Items ordered, customized baking instructions (e.g., eggless preference, birthday cake inscription), and order history.
@@ -137,7 +137,7 @@ export default function PrivacyPolicyPage() {
               <strong>Cart Persistence:</strong> Retains your selected bakery items in your basket even if you refresh or switch pages.
             </li>
             <li>
-              <strong>Outlet Preference:</strong> Remembers your chosen Nashik outlet (College Road, Nashik Road, or Indira Nagar) so you see accurate local kitchen availability and stock.
+              <strong>Outlet Preference:</strong> Remembers your chosen Nashik outlet (Cycle Circle / College Road, ND Patel Road, or Gangapur Road) so you see accurate local kitchen availability and stock.
             </li>
             <li>
               <strong>Authentication State:</strong> Keeps you logged into your customer profile so you do not have to re-enter your delivery address for repeat orders.

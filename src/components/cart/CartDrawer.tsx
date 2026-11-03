@@ -447,13 +447,12 @@ export function CartDrawer({ outletSlug, campaignSlug }: CartDrawerProps) {
                           onChange={(e) => setCustomer({ ...customer, area: e.target.value })}
                           className="w-full px-3 py-2 bg-stone-50 border border-stone-200 rounded-xl text-xs text-stone-800 focus:bg-white focus:outline-none"
                         >
-                          <option value="College Road">College Road</option>
-                          <option value="Thatte Nagar">Thatte Nagar</option>
-                          <option value="Gangapur Road">Gangapur Road</option>
-                          <option value="Nashik Road">Nashik Road</option>
-                          <option value="Bytco Point">Bytco Point</option>
-                          <option value="Indira Nagar">Indira Nagar</option>
-                          <option value="Govind Nagar">Govind Nagar</option>
+                          <option value="Cycle Circle / College Road">Cycle Circle / College Road</option>
+                          <option value="Krishi Nagar / Thatte Nagar">Krishi Nagar / Thatte Nagar</option>
+                          <option value="Gangapur Road / Sahdev Nagar">Gangapur Road / Sahdev Nagar</option>
+                          <option value="Datta Chowk / Serene Meadows">Datta Chowk / Serene Meadows</option>
+                          <option value="ND Patel Road / Shalimar">ND Patel Road / Shalimar</option>
+                          <option value="CBS / Old Nashik">CBS / Old Nashik</option>
                           <option value="Panchavati">Panchavati</option>
                         </select>
                       </div>
