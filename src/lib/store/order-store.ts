@@ -153,11 +153,11 @@ if (!globalThis.__PNR_EMPLOYEES__) {
     {
       id: 'emp-3',
       name: 'Suhas Deshmukh',
-      email: 'collegeroad@puffsnrolls.com',
+      email: 'cyclecircle@puffsnrolls.com',
       phone: '+91 98220 11234',
       role: 'OUTLET_MANAGER',
-      outletSlug: 'college-road',
-      designation: 'Outlet Store Manager (College Road)',
+      outletSlug: 'cycle-circle',
+      designation: 'Outlet Store Manager (Cycle Circle)',
       status: 'ACTIVE',
       lastLogin: '2026-10-29T16:15:00Z',
       createdAt: '2026-01-20T10:00:00Z',
@@ -192,7 +192,7 @@ if (!globalThis.__PNR_EMPLOYEES__) {
       email: 'kitchen.cr@puffsnrolls.com',
       phone: '+91 98221 33445',
       role: 'KITCHEN_STAFF',
-      outletSlug: 'college-road',
+      outletSlug: 'cycle-circle',
       designation: 'Head Baker & Kitchen Lead',
       status: 'ACTIVE',
       createdAt: '2026-02-10T10:00:00Z',
@@ -203,7 +203,7 @@ if (!globalThis.__PNR_EMPLOYEES__) {
       email: 'rider.rohit@puffsnrolls.com',
       phone: '+91 98231 44512',
       role: 'DISPATCH_RIDER',
-      outletSlug: 'college-road',
+      outletSlug: 'cycle-circle',
       designation: 'Express Fleet Dispatch Rider',
       status: 'ACTIVE',
       createdAt: '2026-02-15T10:00:00Z',
@@ -459,7 +459,7 @@ export const orderStore = {
 
   // Outlets & Campaigns
   normalizeOutletSlug: (slug?: string): string => {
-    if (!slug) return 'college-road';
+    if (!slug) return 'cycle-circle';
     const clean = slug.toLowerCase().trim();
     if (
       clean === 'cycle-circle' ||
@@ -467,7 +467,7 @@ export const orderStore = {
       clean === 'cycle-circle-college-road' ||
       clean === 'out-1'
     ) {
-      return 'college-road';
+      return 'cycle-circle';
     }
     if (
       clean === 'sahdev-nagar' ||
@@ -495,12 +495,7 @@ export const orderStore = {
     const outlets = globalThis.__PNR_OUTLETS__ || [];
     const normalized = orderStore.normalizeOutletSlug(slug);
     return outlets.find(
-      (o) =>
-        o.slug === normalized ||
-        o.slug === slug ||
-        o.id === slug ||
-        (slug === 'cycle-circle' && o.slug === 'college-road') ||
-        (slug === 'sahdev-nagar' && o.slug === 'gangapur-road')
+      (o) => o.slug === normalized || o.slug === slug || o.id === slug
     );
   },
 

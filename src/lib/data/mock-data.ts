@@ -3,15 +3,15 @@ import { Outlet, Campaign, MenuItem, Order } from '@/types';
 export const OUTLETS: Outlet[] = [
   {
     id: 'out-1',
-    slug: 'college-road',
-    name: "Puffs 'n' Rolls - Cycle Circle (College Road)",
+    slug: 'cycle-circle',
+    name: "Puffs 'n' Rolls - Cycle Circle",
     tagline: 'Fresh oven-baked puffs, loaded savory rolls & handcrafted desserts',
     address: 'Shop no 1, Alampat Business Center, near Cycle Circle, Krishi Nagar, Nashik, Maharashtra 422005',
-    area: 'Cycle Circle / College Road',
+    area: 'Cycle Circle',
     city: 'Nashik',
     pincode: '422005',
     phone: '+91 94236 39911',
-    email: 'collegeroad@puffsnrolls.com',
+    email: 'cyclecircle@puffsnrolls.com',
     googleMapsUrl: 'https://www.google.com/maps/place/Puffs+%E2%80%98n%E2%80%99+Rolls/@20.0043996,73.7198896,14z/data=!3m1!5s0x3bddeb8431bccedd:0xf11ab910db49c4f9!4m10!1m2!2m1!1spuffs+n+rolls!3m6!1s0x3bddeba049de63c7:0xbeaf84c3667d0a85!8m2!3d20.0043996!4d73.7579984!15sCg1wdWZmcyBuIHJvbGxzIgOIAQFaDyINcHVmZnMgbiByb2xsc5IBBmJha2VyeeABAA!16s%2Fg%2F1tdnjl1j',
     openingHours: '9:00 AM - 10:30 PM',
     rating: 4.8,
@@ -72,10 +72,10 @@ export const OUTLETS: Outlet[] = [
   {
     id: 'out-gangapur',
     slug: 'gangapur-road',
-    name: "Puffs 'n' Rolls - Gangapur Road (Sahdev Nagar)",
-    tagline: 'Fresh oven-baked rolls, flaky patties & celebration pastries in Sahdev Nagar',
+    name: "Puffs 'n' Rolls - Gangapur Road",
+    tagline: 'Fresh oven-baked rolls, flaky patties & celebration pastries',
     address: "Shop No.1, Mahalaxmi's Ridgewood, near Datta Chowk, Sahdev Nagar, Nashik, Maharashtra 422013",
-    area: 'Gangapur Road / Sahdev Nagar',
+    area: 'Gangapur Road',
     city: 'Nashik',
     pincode: '422013',
     phone: '+91 94236 39911',
@@ -108,12 +108,12 @@ export const OUTLETS: Outlet[] = [
 export const CAMPAIGNS: Campaign[] = [
   {
     id: 'camp-1',
-    slug: 'college-special',
-    outletSlug: 'college-road',
-    title: 'College Road Signature: Handcrafted Rolls & Fresh Puffs',
+    slug: 'cycle-circle-special',
+    outletSlug: 'cycle-circle',
+    title: 'Cycle Circle Signature: Handcrafted Rolls & Fresh Puffs',
     headline: 'Fresh From Our Ovens To Your Door in 25 Minutes',
     subheadline: 'Baked fresh every 45 minutes using 100% pure ingredients and traditional artisan recipes.',
-    badge: 'COLLEGE ROAD SIGNATURE',
+    badge: 'CYCLE CIRCLE SIGNATURE',
     offerCode: '',
     discountPercentage: 0,
     minOrderValue: 150,
@@ -148,10 +148,10 @@ export const CAMPAIGNS: Campaign[] = [
     id: 'camp-5',
     slug: 'gangapur-artisan-bakes',
     outletSlug: 'gangapur-road',
-    title: 'Gangapur Road Special: Sahdev Nagar Fresh Oven Bakes',
+    title: 'Gangapur Road Special: Fresh Oven Bakes & Rolls',
     headline: 'Handcrafted Rolls, Gourmet Puffs & Dutch Truffle Cakes',
     subheadline: 'Direct delivery across Gangapur Road, Datta Chowk, Serene Meadows & Someshwar.',
-    badge: 'SAHDEV NAGAR SIGNATURE',
+    badge: 'GANGAPUR ROAD SIGNATURE',
     offerCode: '',
     discountPercentage: 0,
     minOrderValue: 149,
@@ -178,7 +178,7 @@ export const MENU_ITEMS: MenuItem[] = [
     isBestseller: true,
     isSpicy: true,
     preparationTimeMinutes: 10,
-    availableOutlets: ['college-road', 'nd-patel-road', 'gangapur-road'],
+    availableOutlets: ['cycle-circle', 'nd-patel-road', 'gangapur-road'],
   },
   {
     id: 'item-2',
@@ -192,7 +192,7 @@ export const MENU_ITEMS: MenuItem[] = [
     isBestseller: true,
     isSpicy: true,
     preparationTimeMinutes: 12,
-    availableOutlets: ['college-road', 'nd-patel-road', 'gangapur-road'],
+    availableOutlets: ['cycle-circle', 'nd-patel-road', 'gangapur-road'],
   },
   {
     id: 'item-3',
@@ -206,7 +206,7 @@ export const MENU_ITEMS: MenuItem[] = [
     isBestseller: false,
     isSpicy: false,
     preparationTimeMinutes: 8,
-    availableOutlets: ['college-road', 'nd-patel-road', 'gangapur-road'],
+    availableOutlets: ['cycle-circle', 'nd-patel-road', 'gangapur-road'],
   },
   {
     id: 'item-4',
@@ -220,7 +220,7 @@ export const MENU_ITEMS: MenuItem[] = [
     isBestseller: true,
     isSpicy: false,
     preparationTimeMinutes: 15,
-    availableOutlets: ['college-road', 'nd-patel-road', 'gangapur-road'],
+    availableOutlets: ['cycle-circle', 'nd-patel-road', 'gangapur-road'],
   },
   {
     id: 'item-5',
@@ -234,7 +234,7 @@ export const MENU_ITEMS: MenuItem[] = [
     isBestseller: true,
     isSpicy: false,
     preparationTimeMinutes: 20,
-    availableOutlets: ['college-road', 'nd-patel-road', 'gangapur-road'],
+    availableOutlets: ['cycle-circle', 'nd-patel-road', 'gangapur-road'],
   },
   {
     id: 'item-6',
@@ -248,7 +248,7 @@ export const MENU_ITEMS: MenuItem[] = [
     isBestseller: true,
     isSpicy: false,
     preparationTimeMinutes: 5,
-    availableOutlets: ['college-road', 'nd-patel-road', 'gangapur-road'],
+    availableOutlets: ['cycle-circle', 'nd-patel-road', 'gangapur-road'],
   },
   {
     id: 'item-7',
@@ -262,7 +262,7 @@ export const MENU_ITEMS: MenuItem[] = [
     isBestseller: false,
     isSpicy: false,
     preparationTimeMinutes: 20,
-    availableOutlets: ['college-road', 'nd-patel-road', 'gangapur-road'],
+    availableOutlets: ['cycle-circle', 'nd-patel-road', 'gangapur-road'],
   },
   {
     id: 'item-8',
@@ -276,7 +276,7 @@ export const MENU_ITEMS: MenuItem[] = [
     isBestseller: false,
     isSpicy: false,
     preparationTimeMinutes: 5,
-    availableOutlets: ['college-road', 'nd-patel-road', 'gangapur-road'],
+    availableOutlets: ['cycle-circle', 'nd-patel-road', 'gangapur-road'],
   },
 ];
 
@@ -284,8 +284,8 @@ export const INITIAL_ORDERS: Order[] = [
   {
     id: 'ord-101',
     orderNumber: 'PNR-26101',
-    outletSlug: 'college-road',
-    campaignSlug: 'college-special',
+    outletSlug: 'cycle-circle',
+    campaignSlug: 'cycle-circle-special',
     customer: {
       name: 'Aditya Deshmukh',
       phone: '+91 98223 44556',

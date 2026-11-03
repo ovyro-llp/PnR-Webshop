@@ -49,7 +49,7 @@ export interface Employee {
   email: string;
   phone: string;
   role: EmployeeRole;
-  outletSlug: string; // 'all' for SUPER_ADMIN or specific outlet slug like 'college-road'
+  outletSlug: string; // 'all' for SUPER_ADMIN or specific outlet slug like 'cycle-circle'
   designation: string;
   status: 'ACTIVE' | 'INACTIVE';
   lastLogin?: string;

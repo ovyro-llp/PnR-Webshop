@@ -4,7 +4,7 @@ import { orderStore } from '@/lib/store/order-store';
 export async function GET(req: NextRequest) {
   try {
     const { searchParams } = new URL(req.url);
-    const outletSlug = searchParams.get('outlet') || 'college-road';
+    const outletSlug = searchParams.get('outlet') || 'cycle-circle';
 
     const stock = orderStore.getOutletStock(outletSlug);
     const outlet = orderStore.getOutletBySlug(outletSlug);

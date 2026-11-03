@@ -26,7 +26,7 @@ export interface AdminUser {
   email: string;
   role: 'ADMIN';
   employeeRole?: EmployeeRole;
-  outletAccess: string[]; // ['all'] or ['college-road', etc.]
+  outletAccess: string[]; // ['all'] or ['cycle-circle', etc.]
   title: string;
 }
 
@@ -300,17 +300,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
 
     if (
-      cleanEmail === 'collegeroad@puffsnrolls.com' &&
-      (password === 'college2026' || password === 'admin' || password === 'pnr123')
+      (cleanEmail === 'cyclecircle@puffsnrolls.com' || cleanEmail === 'collegeroad@puffsnrolls.com') &&
+      (password === 'cycle2026' || password === 'college2026' || password === 'admin' || password === 'pnr123')
     ) {
       const admin: AdminUser = {
         id: 'admin-cr',
-        name: 'College Road Outlet Manager',
+        name: 'Cycle Circle Outlet Manager',
         email: cleanEmail,
         role: 'ADMIN',
         employeeRole: 'OUTLET_MANAGER',
-        outletAccess: ['college-road'],
-        title: 'Franchise Partner (College Road)',
+        outletAccess: ['cycle-circle'],
+        title: 'Franchise Partner (Cycle Circle)',
       };
       setUser(admin);
       localStorage.setItem('pnr_auth_user', JSON.stringify(admin));
@@ -363,8 +363,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         email: cleanEmail,
         role: 'ADMIN',
         employeeRole: 'KITCHEN_STAFF',
-        outletAccess: ['college-road'],
-        title: 'Head Baker (College Road)',
+        outletAccess: ['cycle-circle'],
+        title: 'Head Baker (Cycle Circle)',
       };
       setUser(admin);
       localStorage.setItem('pnr_auth_user', JSON.stringify(admin));
@@ -381,7 +381,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         email: cleanEmail,
         role: 'ADMIN',
         employeeRole: 'DISPATCH_RIDER',
-        outletAccess: ['college-road'],
+        outletAccess: ['cycle-circle'],
         title: 'Express Fleet Dispatch Rider',
       };
       setUser(admin);

@@ -49,7 +49,7 @@ export function CartDrawer({ outletSlug, campaignSlug }: CartDrawerProps) {
     verifyRazorpayPayment,
   } = useCart();
 
-  const effectiveOutletSlug = cartOutletSlug || outletSlug || nearestOutlet?.slug || 'college-road';
+  const effectiveOutletSlug = cartOutletSlug || outletSlug || nearestOutlet?.slug || 'cycle-circle';
   const isCustomerLoggedIn = Boolean(user && isCustomer);
 
   const [isSubmitting, setIsSubmitting] = useState(false);

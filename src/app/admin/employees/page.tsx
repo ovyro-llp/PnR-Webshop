@@ -76,7 +76,7 @@ export default function EmployeesManagementPage() {
   const [editEmail, setEditEmail] = useState('');
   const [editPhone, setEditPhone] = useState('');
   const [editRole, setEditRole] = useState<EmployeeRole>('KITCHEN_STAFF');
-  const [editOutlet, setEditOutlet] = useState('college-road');
+  const [editOutlet, setEditOutlet] = useState('cycle-circle');
   const [editDesignation, setEditDesignation] = useState('');
   const [editStatus, setEditStatus] = useState<'ACTIVE' | 'INACTIVE'>('ACTIVE');
 

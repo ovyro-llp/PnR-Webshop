@@ -61,7 +61,7 @@ export function OutletSelector({
 
   const badgeText = isAllSelected
     ? 'HQ Matrix'
-    : activeOutlet?.slug === 'college-road'
+    : activeOutlet?.slug === 'cycle-circle'
     ? 'Flagship'
     : activeOutlet?.slug === 'nd-patel-road'
     ? 'Heritage'
@@ -169,7 +169,7 @@ export function OutletSelector({
               const isSelected = selectedOutlet === outlet.slug;
               const shortName = outlet.name.replace("Puffs 'n' Rolls - ", '');
               const tag =
-                outlet.slug === 'college-road'
+                outlet.slug === 'cycle-circle'
                   ? 'Flagship Kitchen'
                   : outlet.slug === 'nd-patel-road'
                   ? 'Heritage Kitchen'

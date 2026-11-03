@@ -79,7 +79,7 @@ export default function OutletInventoryPage() {
   const [activeTab, setActiveTab] = useState<'outlet' | 'catalog'>('outlet');
   const [outlets, setOutlets] = useState<Outlet[]>(OUTLETS);
   const [selectedOutlet, setSelectedOutlet] = useState<string>(
-    adminUser?.outletAccess && !adminUser.outletAccess.includes('all') ? adminUser.outletAccess[0] : 'college-road'
+    adminUser?.outletAccess && !adminUser.outletAccess.includes('all') ? adminUser.outletAccess[0] : 'cycle-circle'
   );
   const [stockItems, setStockItems] = useState<OutletStockItem[]>([]);
   const [masterProducts, setMasterProducts] = useState<MenuItem[]>([]);
@@ -134,7 +134,7 @@ export default function OutletInventoryPage() {
     isSpicy: false,
     preparationTimeMinutes: '' as unknown as number,
     initialStock: '' as unknown as number,
-    availableOutlets: ['college-road', 'nd-patel-road', 'gangapur-road'],
+    availableOutlets: ['cycle-circle', 'nd-patel-road', 'gangapur-road'],
   });
 
   const fetchOutlets = async () => {
@@ -637,7 +637,7 @@ export default function OutletInventoryPage() {
           isSpicy: false,
           preparationTimeMinutes: '' as unknown as number,
           initialStock: '' as unknown as number,
-          availableOutlets: ['college-road', 'nd-patel-road', 'gangapur-road'],
+          availableOutlets: ['cycle-circle', 'nd-patel-road', 'gangapur-road'],
         });
         fetchMasterProducts();
         fetchInventory(selectedOutlet);
