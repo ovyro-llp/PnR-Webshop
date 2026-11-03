@@ -1,6 +1,6 @@
 import { getDbPool } from '@/lib/db';
 import { ensureCoreTables } from '@/lib/db/init-schema';
-import { Order, MangwaleLogisticsInfo } from '@/types';
+import { Order, MangwaleLogisticsInfo, Outlet, OutletStockItem } from '@/types';
 
 function rowToOrder(row: any, deliveryRow?: any): Order {
   const customer = {
@@ -105,6 +105,17 @@ export const orderRepository = {
           ON CONFLICT (id) DO UPDATE SET
             payment_status = EXCLUDED.payment_status,
             order_status = EXCLUDED.order_status,
+            items = EXCLUDED.items,
+            subtotal = EXCLUDED.subtotal,
+            discount = EXCLUDED.discount,
+            delivery_fee = EXCLUDED.delivery_fee,
+            total = EXCLUDED.total,
+            delivery_address = EXCLUDED.delivery_address,
+            delivery_area = EXCLUDED.delivery_area,
+            delivery_pincode = EXCLUDED.delivery_pincode,
+            delivery_instructions = EXCLUDED.delivery_instructions,
+            delivery_lat = EXCLUDED.delivery_lat,
+            delivery_lng = EXCLUDED.delivery_lng,
             razorpay_order_id = COALESCE(EXCLUDED.razorpay_order_id, public.orders.razorpay_order_id),
             razorpay_payment_id = COALESCE(EXCLUDED.razorpay_payment_id, public.orders.razorpay_payment_id),
             razorpay_signature = COALESCE(EXCLUDED.razorpay_signature, public.orders.razorpay_signature),
@@ -142,7 +153,19 @@ export const orderRepository = {
         const res = await client.query(orderSql, values);
         const savedRow = res.rows[0];
 
-        // 2. Insert or update Mangwale delivery if present
+        // 2. Synchronize normalized items table for relational integrity
+        if (order.items && Array.isArray(order.items) && order.items.length > 0) {
+          await client.query('DELETE FROM public.order_items WHERE order_id = $1;', [order.id]);
+          for (const it of order.items) {
+            await client.query(
+              `INSERT INTO public.order_items (order_id, item_id, name, quantity, price, created_at)
+               VALUES ($1, $2, $3, $4, $5, NOW());`,
+              [order.id, it.itemId, it.name, it.quantity, it.price]
+            );
+          }
+        }
+
+        // 3. Upsert Mangwale delivery (strictly 1:1 on order_id to prevent duplicates)
         if (order.mangwale && order.mangwale.taskId) {
           const deliverySql = `
             INSERT INTO public.deliveries (
@@ -158,7 +181,17 @@ export const orderRepository = {
               $9, $10, $11,
               NOW(), $12, NOW(), NOW()
             )
-            ON CONFLICT (id) DO NOTHING;
+            ON CONFLICT (order_id) DO UPDATE SET
+              task_id = EXCLUDED.task_id,
+              status = EXCLUDED.status,
+              rider_name = COALESCE(EXCLUDED.rider_name, public.deliveries.rider_name),
+              rider_phone = COALESCE(EXCLUDED.rider_phone, public.deliveries.rider_phone),
+              rider_vehicle_no = COALESCE(EXCLUDED.rider_vehicle_no, public.deliveries.rider_vehicle_no),
+              tracking_url = COALESCE(EXCLUDED.tracking_url, public.deliveries.tracking_url),
+              estimated_delivery_minutes = COALESCE(EXCLUDED.estimated_delivery_minutes, public.deliveries.estimated_delivery_minutes),
+              notes = COALESCE(EXCLUDED.notes, public.deliveries.notes),
+              delivered_at = CASE WHEN EXCLUDED.status = 'DELIVERED' THEN NOW() ELSE public.deliveries.delivered_at END,
+              updated_at = NOW();
           `;
           await client.query(deliverySql, [
             order.id,
@@ -176,14 +209,14 @@ export const orderRepository = {
           ]);
         }
 
-        // 3. Upsert Customer record
+        // 4. Upsert Customer directory record without duplicate lifetime metric inflation
+        const isNewlyCompleted = order.paymentStatus === 'COMPLETED';
         const custSql = `
           INSERT INTO public.customers (phone, name, email, saved_addresses, total_orders, total_spent, created_at, updated_at)
-          VALUES ($1, $2, $3, $4, 1, $5, NOW(), NOW())
+          VALUES ($1, $2, $3, $4, CASE WHEN $5::boolean THEN 1 ELSE 0 END, CASE WHEN $5::boolean THEN $6 ELSE 0.00 END, NOW(), NOW())
           ON CONFLICT (phone) DO UPDATE SET
-            name = EXCLUDED.name,
-            total_orders = public.customers.total_orders + 1,
-            total_spent = public.customers.total_spent + EXCLUDED.total_spent,
+            name = COALESCE(EXCLUDED.name, public.customers.name),
+            email = COALESCE(EXCLUDED.email, public.customers.email),
             updated_at = NOW();
         `;
         const addressObj = {
@@ -197,6 +230,7 @@ export const orderRepository = {
           order.customer.name,
           order.customer.email || null,
           JSON.stringify([addressObj]),
+          isNewlyCompleted,
           order.total,
         ]);
 
@@ -571,6 +605,169 @@ export const orderRepository = {
     } catch (err: any) {
       console.warn('[orderRepository.recordMarketingEvent DB Warning]:', err.message);
       return false;
+    }
+  },
+
+  /**
+   * Save or update an outlet in PostgreSQL
+   */
+  saveOutlet: async (outlet: Outlet): Promise<Outlet> => {
+    if (!process.env.DATABASE_URL?.trim()) return outlet;
+    await ensureCoreTables();
+    const pool = getDbPool();
+    try {
+      await pool.query(
+        `INSERT INTO public.outlets (
+          id, slug, name, tagline, address, area, city, pincode,
+          phone, email, is_open, is_busy, google_maps_url,
+          coordinates, mangwale_config, default_meta_pixel_id,
+          created_at, updated_at
+        ) VALUES (
+          $1, $2, $3, $4, $5, $6, $7, $8,
+          $9, $10, $11, $12, $13,
+          $14, $15, $16,
+          NOW(), NOW()
+        )
+        ON CONFLICT (slug) DO UPDATE SET
+          name = EXCLUDED.name,
+          tagline = EXCLUDED.tagline,
+          address = EXCLUDED.address,
+          area = EXCLUDED.area,
+          phone = EXCLUDED.phone,
+          email = EXCLUDED.email,
+          is_open = EXCLUDED.is_open,
+          google_maps_url = EXCLUDED.google_maps_url,
+          coordinates = EXCLUDED.coordinates,
+          mangwale_config = EXCLUDED.mangwale_config,
+          default_meta_pixel_id = EXCLUDED.default_meta_pixel_id,
+          updated_at = NOW();`,
+        [
+          outlet.id,
+          outlet.slug,
+          outlet.name,
+          outlet.tagline || '',
+          outlet.address,
+          outlet.area,
+          outlet.city || 'Nashik',
+          outlet.pincode || '422005',
+          outlet.phone,
+          outlet.email || null,
+          outlet.isOpen ?? true,
+          false,
+          outlet.googleMapsUrl || null,
+          outlet.coordinates ? JSON.stringify(outlet.coordinates) : null,
+          outlet.mangwaleConfig ? JSON.stringify(outlet.mangwaleConfig) : null,
+          outlet.defaultMetaPixelId || null,
+        ]
+      );
+      return outlet;
+    } catch (err: any) {
+      console.warn('[orderRepository.saveOutlet DB Warning]:', err.message);
+      return outlet;
+    }
+  },
+
+  /**
+   * Fetch all outlets from PostgreSQL
+   */
+  getOutlets: async (): Promise<Outlet[]> => {
+    if (!process.env.DATABASE_URL?.trim()) return [];
+    await ensureCoreTables();
+    const pool = getDbPool();
+    try {
+      const res = await pool.query('SELECT * FROM public.outlets ORDER BY name ASC;');
+      return res.rows.map((r: any) => ({
+        id: r.id,
+        slug: r.slug,
+        name: r.name,
+        tagline: r.tagline || 'Fresh artisanal bakes & cakes in Nashik',
+        address: r.address,
+        area: r.area,
+        city: r.city || 'Nashik',
+        pincode: r.pincode || '422005',
+        phone: r.phone,
+        email: r.email || `${r.slug}@puffsnrolls.com`,
+        openingHours: r.opening_hours || '8:00 AM - 11:00 PM',
+        rating: 4.8,
+        reviewCount: 420,
+        isOpen: r.is_open ?? true,
+        minOrderAmount: 99,
+        deliveryTimeEstimate: '20-30 mins',
+        googleMapsUrl: r.google_maps_url || undefined,
+        coordinates: r.coordinates || { lat: 20.0043996, lng: 73.7579984 },
+        mangwaleConfig: r.mangwale_config || undefined,
+        defaultMetaPixelId: r.default_meta_pixel_id || undefined,
+      }));
+    } catch (err: any) {
+      console.warn('[orderRepository.getOutlets DB Warning]:', err.message);
+      return [];
+    }
+  },
+
+  /**
+   * Save or update stock matrix item in PostgreSQL
+   */
+  updateOutletStockItem: async (
+    outletSlug: string,
+    itemId: string,
+    updates: { isAvailable?: boolean; stockQuantity?: number; customPrice?: number; updatedBy?: string }
+  ): Promise<boolean> => {
+    if (!process.env.DATABASE_URL?.trim()) return true;
+    await ensureCoreTables();
+    const pool = getDbPool();
+    try {
+      await pool.query(
+        `INSERT INTO public.outlet_stock (
+          outlet_slug, item_id, is_available, stock_quantity,
+          custom_price, updated_by, updated_at
+        ) VALUES (
+          $1, $2, $3, $4, $5, $6, NOW()
+        )
+        ON CONFLICT (outlet_slug, item_id) DO UPDATE SET
+          is_available = COALESCE($3, public.outlet_stock.is_available),
+          stock_quantity = COALESCE($4, public.outlet_stock.stock_quantity),
+          custom_price = COALESCE($5, public.outlet_stock.custom_price),
+          updated_by = COALESCE($6, public.outlet_stock.updated_by),
+          updated_at = NOW();`,
+        [
+          outletSlug,
+          itemId,
+          updates.isAvailable ?? null,
+          updates.stockQuantity ?? null,
+          updates.customPrice ?? null,
+          updates.updatedBy || null,
+        ]
+      );
+      return true;
+    } catch (err: any) {
+      console.warn('[orderRepository.updateOutletStockItem DB Warning]:', err.message);
+      return false;
+    }
+  },
+
+  /**
+   * Fetch outlet stock matrix from PostgreSQL
+   */
+  getOutletStock: async (
+    outletSlug: string
+  ): Promise<Array<{ itemId: string; isAvailable: boolean; stockQuantity: number; customPrice?: number }>> => {
+    if (!process.env.DATABASE_URL?.trim()) return [];
+    await ensureCoreTables();
+    const pool = getDbPool();
+    try {
+      const res = await pool.query(
+        'SELECT item_id, is_available, stock_quantity, custom_price FROM public.outlet_stock WHERE outlet_slug = $1;',
+        [outletSlug]
+      );
+      return res.rows.map((r: any) => ({
+        itemId: r.item_id,
+        isAvailable: r.is_available,
+        stockQuantity: r.stock_quantity,
+        customPrice: r.custom_price ? Number(r.custom_price) : undefined,
+      }));
+    } catch (err: any) {
+      console.warn('[orderRepository.getOutletStock DB Warning]:', err.message);
+      return [];
     }
   },
 };

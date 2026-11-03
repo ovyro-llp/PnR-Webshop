@@ -466,6 +466,26 @@ export const orderStore = {
     return globalThis.__PNR_OUTLETS__ || [];
   },
 
+  getOutletsAsync: async (): Promise<Outlet[]> => {
+    const memoryOutlets = globalThis.__PNR_OUTLETS__ || [];
+    try {
+      const dbOutlets = await orderRepository.getOutlets();
+      if (dbOutlets && dbOutlets.length > 0) {
+        dbOutlets.forEach((dbo) => {
+          const idx = memoryOutlets.findIndex((m) => m.slug === dbo.slug);
+          if (idx !== -1) {
+            memoryOutlets[idx] = { ...memoryOutlets[idx], ...dbo };
+          } else {
+            memoryOutlets.push(dbo);
+          }
+        });
+      }
+    } catch {
+      // Fallback to memory
+    }
+    return memoryOutlets;
+  },
+
   getOutletBySlug: (slug: string): Outlet | undefined => {
     const outlets = globalThis.__PNR_OUTLETS__ || [];
     const normalized = orderStore.normalizeOutletSlug(slug);
@@ -502,6 +522,7 @@ export const orderStore = {
       });
     }
 
+    orderRepository.saveOutlet(newOutlet).catch(() => {});
     return newOutlet;
   },
 
@@ -513,6 +534,7 @@ export const orderStore = {
         ...outlets[idx],
         ...updates,
       };
+      orderRepository.saveOutlet(outlets[idx]).catch(() => {});
       return outlets[idx];
     }
     return undefined;
@@ -530,6 +552,7 @@ export const orderStore = {
     const idx = outlets.findIndex((o) => o.slug === slug);
     if (idx !== -1) {
       outlets[idx] = { ...outlets[idx], isOpen };
+      orderRepository.saveOutlet(outlets[idx]).catch(() => {});
       return outlets[idx];
     }
     return undefined;
@@ -1001,6 +1024,26 @@ export const orderStore = {
     );
   },
 
+  getOutletStockAsync: async (outletSlug: string): Promise<OutletStockItem[]> => {
+    const memoryStock = orderStore.getOutletStock(outletSlug);
+    try {
+      const dbStock = await orderRepository.getOutletStock(outletSlug);
+      if (dbStock && dbStock.length > 0) {
+        dbStock.forEach((dbItem) => {
+          const found = memoryStock.find((m) => m.itemId === dbItem.itemId);
+          if (found) {
+            found.isAvailable = dbItem.isAvailable;
+            found.stockQuantity = dbItem.stockQuantity;
+            if (dbItem.customPrice !== undefined) found.customPrice = dbItem.customPrice;
+          }
+        });
+      }
+    } catch {
+      // Fallback to memoryStock
+    }
+    return memoryStock;
+  },
+
   updateOutletStockItem: (
     outletSlug: string,
     itemId: string,
@@ -1018,6 +1061,9 @@ export const orderStore = {
         lastUpdated: new Date().toISOString(),
         updatedBy: updates.updatedBy || 'Outlet Manager',
       };
+      orderRepository
+        .updateOutletStockItem(normalizedSlug, itemId, updates)
+        .catch(() => {});
       return list[idx];
     }
     return undefined;
@@ -1035,6 +1081,13 @@ export const orderStore = {
       if (newQty === 0) {
         list[idx].isAvailable = false;
       }
+      orderRepository
+        .updateOutletStockItem(normalizedSlug, itemId, {
+          stockQuantity: newQty,
+          isAvailable: list[idx].isAvailable,
+          updatedBy: 'Order Stock Decrement',
+        })
+        .catch(() => {});
     }
   },
 

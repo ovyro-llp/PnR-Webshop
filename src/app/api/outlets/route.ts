@@ -5,7 +5,7 @@ import { Outlet, MangwaleOutletConfig } from '@/types';
 
 export async function GET() {
   try {
-    const outlets = orderStore.getOutlets();
+    const outlets = (await orderStore.getOutletsAsync()) || orderStore.getOutlets();
     return NextResponse.json({
       success: true,
       outlets,

@@ -222,7 +222,6 @@ export const paymentService = {
         razorpayPaymentId: razorpay_payment_id,
         razorpaySignature: razorpay_signature,
       });
-      return settledOrder;
     } else {
       throw new Error(`Order not found for Razorpay ID: ${razorpay_order_id}`);
     }
@@ -343,6 +342,13 @@ export const paymentService = {
         order.orderStatus = 'RECEIVED';
         order.razorpayPaymentId = rzpPaymentId;
         order.updatedAt = new Date().toISOString();
+
+        // Decrement outlet stock
+        if (order.items && Array.isArray(order.items)) {
+          order.items.forEach((item) => {
+            orderStore.decrementStock(order.outletSlug, item.itemId, item.quantity);
+          });
+        }
 
         const outlet = orderStore.getOutletBySlug(order.outletSlug);
         if (outlet) {

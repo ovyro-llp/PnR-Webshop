@@ -6,7 +6,9 @@ export async function GET(req: NextRequest) {
     const { searchParams } = new URL(req.url);
     const outletSlug = searchParams.get('outlet') || 'cycle-circle';
 
-    const stock = orderStore.getOutletStock(outletSlug);
+    const stock =
+      (await orderStore.getOutletStockAsync(outletSlug)) ||
+      orderStore.getOutletStock(outletSlug);
     const outlet = orderStore.getOutletBySlug(outletSlug);
 
     return NextResponse.json({
