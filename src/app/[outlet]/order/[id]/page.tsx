@@ -13,7 +13,7 @@ export default async function OrderConfirmationPage({
 }) {
   const { outlet: outletSlug, id } = await params;
   const outlet = orderStore.getOutletBySlug(outletSlug);
-  const order = orderStore.getOrderById(id);
+  const order = (await orderStore.getOrderByIdAsync(id)) || orderStore.getOrderById(id);
 
   if (!order) {
     notFound();

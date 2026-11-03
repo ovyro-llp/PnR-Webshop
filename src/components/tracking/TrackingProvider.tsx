@@ -79,14 +79,19 @@ export function TrackingProvider({
   };
 
   const trackPurchase = (orderId: string, value: number, items: unknown[]) => {
-    fireClientPixel('Purchase', {
-      order_id: orderId,
-      value,
-      currency: 'INR',
-      items,
-      outlet: outletSlug,
-      campaign: campaignSlug,
-    }, pixelId);
+    fireClientPixel(
+      'Purchase',
+      {
+        order_id: orderId,
+        value,
+        currency: 'INR',
+        items,
+        outlet: outletSlug,
+        campaign: campaignSlug,
+      },
+      pixelId,
+      orderId // Shared eventID for exact Meta Pixel & CAPI deduplication
+    );
   };
 
   return (

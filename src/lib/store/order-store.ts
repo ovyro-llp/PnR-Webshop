@@ -15,7 +15,8 @@ import {
 } from '@/types';
 import { OUTLETS, CAMPAIGNS, MENU_ITEMS, INITIAL_ORDERS } from '@/lib/data/mock-data';
 import { dispatchToMangwale } from '@/lib/logistics/mangwale';
-import { sendMetaCAPI } from '@/lib/tracking/pixel-tracker';
+import { sendMetaCAPI } from '@/lib/tracking/meta-capi';
+import { orderRepository } from '@/lib/db/order-repository';
 
 export const DEFAULT_CATEGORIES: Category[] = [
   {
@@ -307,8 +308,23 @@ export const orderStore = {
 
   getOrderById: (orderId: string): Order | undefined => {
     return (globalThis.__PNR_ORDERS__ || []).find(
-      (o) => o.id === orderId || o.orderNumber === orderId
+      (o) => o.id === orderId || o.orderNumber === orderId || o.razorpayOrderId === orderId
     );
+  },
+
+  getOrderByIdAsync: async (orderId: string): Promise<Order | undefined> => {
+    const memoryOrder = (globalThis.__PNR_ORDERS__ || []).find(
+      (o) => o.id === orderId || o.orderNumber === orderId || o.razorpayOrderId === orderId
+    );
+    if (memoryOrder) return memoryOrder;
+
+    const dbOrder = await orderRepository.getOrderById(orderId);
+    if (dbOrder) {
+      if (!globalThis.__PNR_ORDERS__) globalThis.__PNR_ORDERS__ = [];
+      globalThis.__PNR_ORDERS__.unshift(dbOrder);
+      return dbOrder;
+    }
+    return undefined;
   },
 
   createOrder: async (
@@ -416,6 +432,14 @@ export const orderStore = {
     }
 
     globalThis.__PNR_ORDERS__?.unshift(newOrder);
+
+    // 3. Persist to Railway PostgreSQL Database
+    try {
+      await orderRepository.saveOrder(newOrder);
+    } catch (dbErr: any) {
+      console.warn('[orderStore.createOrder DB save warning]:', dbErr.message);
+    }
+
     return newOrder;
   },
 
@@ -428,8 +452,10 @@ export const orderStore = {
         orderStatus: status,
         updatedAt: new Date().toISOString(),
       };
+      orderRepository.updateOrderStatus(orderId, status).catch(() => {});
       return orders[index];
     }
+    orderRepository.updateOrderStatus(orderId, status).catch(() => {});
     return undefined;
   },
 
@@ -452,8 +478,10 @@ export const orderStore = {
         orderStatus: update.orderStatus || current.orderStatus,
         updatedAt: new Date().toISOString(),
       };
+      orderRepository.updateMangwaleStatus(taskId, update).catch(() => {});
       return orders[index];
     }
+    orderRepository.updateMangwaleStatus(taskId, update).catch(() => {});
     return undefined;
   },
 
@@ -705,6 +733,7 @@ export const orderStore = {
     status: Order['paymentStatus'],
     paymentId?: string
   ): Order | undefined => {
+    orderRepository.updatePaymentStatus(orderId, status, paymentId).catch(() => {});
     const orders = globalThis.__PNR_ORDERS__ || [];
     const index = orders.findIndex(
       (o) => o.id === orderId || o.orderNumber === orderId || o.razorpayOrderId === orderId

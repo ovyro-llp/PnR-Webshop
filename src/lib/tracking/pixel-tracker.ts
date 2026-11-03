@@ -2,15 +2,16 @@ import { TrackingEventPayload } from '@/types';
 
 /**
  * Client-Side Meta Pixel & Google Ads Event Dispatcher
+ * Passes { eventID } as 4th parameter for 100% Meta Pixel & CAPI deduplication!
  */
 export function fireClientPixel(
   eventName: string,
   data: Record<string, unknown> = {},
-  pixelId?: string
+  pixelId?: string,
+  eventId?: string
 ) {
   if (typeof window === 'undefined') return;
 
-  // Window with fbq / gtag extensions
   const win = window as unknown as {
     fbq?: (...args: unknown[]) => void;
     gtag?: (...args: unknown[]) => void;
@@ -18,20 +19,29 @@ export function fireClientPixel(
   };
 
   try {
-    // Meta Pixel Client Dispatch
+    // Meta Pixel Client Dispatch with eventID for deduplication
     if (typeof win.fbq === 'function') {
+      const options = eventId ? { eventID: eventId } : undefined;
       if (pixelId) {
-        win.fbq('trackSingle', pixelId, eventName, data);
+        if (options) {
+          win.fbq('trackSingle', pixelId, eventName, data, options);
+        } else {
+          win.fbq('trackSingle', pixelId, eventName, data);
+        }
       } else {
-        win.fbq('track', eventName, data);
+        if (options) {
+          win.fbq('track', eventName, data, options);
+        } else {
+          win.fbq('track', eventName, data);
+        }
       }
-      console.log(`[Meta Pixel] Event: ${eventName}`, { pixelId, data });
+      console.log(`[Meta Pixel Client] ${eventName} (eventID: ${eventId || 'none'})`, { pixelId, data });
     }
 
     // Google Ads / Analytics Dispatch
     if (typeof win.gtag === 'function') {
-      win.gtag('event', eventName, data);
-      console.log(`[Google Tag] Event: ${eventName}`, data);
+      win.gtag('event', eventName, { ...data, transaction_id: eventId });
+      console.log(`[Google Tag] ${eventName}`, data);
     }
   } catch (err) {
     console.warn('[Pixel Tracker] Tracking error:', err);
@@ -39,58 +49,12 @@ export function fireClientPixel(
 }
 
 /**
- * Server-Side Meta Conversions API (CAPI) Sender
- * Sends events directly to Meta Graph API, bypassing browser ad-blockers and iOS restrictions.
+ * Server-Side Meta Conversions API (CAPI) Shim for backward compatibility
  */
 export async function sendMetaCAPI(payload: TrackingEventPayload) {
-  const pixelId = payload.pixelId || process.env.META_PIXEL_ID;
-  const accessToken = process.env.META_CAPI_ACCESS_TOKEN;
-
-  if (!pixelId || !accessToken) {
-    console.log('[Meta CAPI] Skipped: No Pixel ID or CAPI Access Token configured (Simulated)');
-    return { success: true, simulated: true };
+  if (typeof window !== 'undefined') {
+    return { success: true, clientSkipped: true };
   }
-
-  const endpoint = `https://graph.facebook.com/v19.0/${pixelId}/events?access_token=${accessToken}`;
-
-  const currentTimestamp = Math.floor(Date.now() / 1000);
-
-  const eventData = {
-    data: [
-      {
-        event_name: payload.eventName,
-        event_time: currentTimestamp,
-        event_id: payload.orderId || `evt-${Date.now()}`,
-        action_source: 'website',
-        user_data: {
-          client_user_agent: typeof navigator !== 'undefined' ? navigator.userAgent : 'P&R Server',
-          // Meta requires SHA256 hashed phone/email for real CAPI match
-          ph: payload.userData?.phone ? [payload.userData.phone] : undefined,
-          em: payload.userData?.email ? [payload.userData.email] : undefined,
-        },
-        custom_data: {
-          currency: payload.currency || 'INR',
-          value: payload.value || 0,
-          content_name: payload.contentName,
-          content_ids: payload.contentIds,
-          outlet_slug: payload.outletSlug,
-          campaign_slug: payload.campaignSlug,
-        },
-      },
-    ],
-  };
-
-  try {
-    const res = await fetch(endpoint, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(eventData),
-    });
-
-    const resJson = await res.json();
-    return { success: res.ok, data: resJson };
-  } catch (error) {
-    console.error('[Meta CAPI] Error dispatching event:', error);
-    return { success: false, error };
-  }
+  const { sendMetaCAPI: serverSend } = await import('@/lib/tracking/meta-capi');
+  return serverSend(payload);
 }

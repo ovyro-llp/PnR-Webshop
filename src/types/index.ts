@@ -216,6 +216,7 @@ export interface CartItem {
 export interface CustomerDetails {
   name: string;
   phone: string;
+  email?: string;
   address: string;
   landmark?: string;
   area: string;
@@ -229,7 +230,15 @@ export interface CustomerDetails {
 
 export type PaymentMethod = 'UPI' | 'COD' | 'CARD';
 export type PaymentStatus = 'PENDING' | 'COMPLETED' | 'COD_CONFIRMED' | 'FAILED';
-export type OrderStatus = 'RECEIVED' | 'CONFIRMED' | 'PREPARING' | 'DISPATCHED' | 'OUT_FOR_DELIVERY' | 'DELIVERED' | 'CANCELLED';
+export type OrderStatus =
+  | 'AWAITING_PAYMENT'
+  | 'RECEIVED'
+  | 'CONFIRMED'
+  | 'PREPARING'
+  | 'DISPATCHED'
+  | 'OUT_FOR_DELIVERY'
+  | 'DELIVERED'
+  | 'CANCELLED';
 
 export interface MangwaleLogisticsInfo {
   taskId?: string;

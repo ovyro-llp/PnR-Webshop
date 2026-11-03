@@ -230,11 +230,11 @@ export async function dispatchToMangwale(
   const dropLat =
     order.customer.coordinates?.lat && typeof order.customer.coordinates.lat === 'number'
       ? order.customer.coordinates.lat
-      : outletCoords.lat + (Math.random() * 0.01 - 0.005);
+      : outletCoords.lat;
   const dropLng =
     order.customer.coordinates?.lng && typeof order.customer.coordinates.lng === 'number'
       ? order.customer.coordinates.lng
-      : outletCoords.lng + (Math.random() * 0.01 - 0.005);
+      : outletCoords.lng;
 
   const payload = {
     external_order_id: order.orderNumber,

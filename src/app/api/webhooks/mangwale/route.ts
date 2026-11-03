@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { orderStore } from '@/lib/store/order-store';
+import { orderRepository } from '@/lib/db/order-repository';
 import { parseMangwaleWebhook, verifyMangwaleWebhookSignature } from '@/lib/logistics/mangwale';
 import { OrderStatus } from '@/types';
 
@@ -107,13 +108,23 @@ export async function POST(req: NextRequest) {
     if (logisticsUpdate.status === 'DELIVERED') mappedOrderStatus = 'DELIVERED';
     if (logisticsUpdate.status === 'FAILED') mappedOrderStatus = 'CANCELLED';
 
-    const updatedOrder = orderStore.updateMangwaleStatus(identifier, {
+    let updatedOrder = orderStore.updateMangwaleStatus(identifier, {
       ...logisticsUpdate,
       orderStatus: mappedOrderStatus,
     });
 
     if (!updatedOrder) {
-      console.warn(`[Mangwale Webhook] Order matching "${identifier}" not found in local store`);
+      const dbOrder = await orderRepository.updateMangwaleStatus(identifier, {
+        ...logisticsUpdate,
+        orderStatus: mappedOrderStatus,
+      });
+      if (dbOrder) {
+        updatedOrder = dbOrder;
+      }
+    }
+
+    if (!updatedOrder) {
+      console.warn(`[Mangwale Webhook] Order matching "${identifier}" not found in database or local store`);
       // Return 200 with notice so Mangwale retry queue is not needlessly exhausted for sandbox tests
       return NextResponse.json(
         {
