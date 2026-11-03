@@ -5,6 +5,7 @@ import { useCart } from '@/context/CartContext';
 import { useAuth } from '@/context/AuthContext';
 import { useLocation } from '@/context/LocationContext';
 import { useRouter } from 'next/navigation';
+import { DeliveryMapPicker } from '@/components/location/DeliveryMapPicker';
 import {
   X,
   Trash2,
@@ -22,6 +23,8 @@ import {
   EyeOff,
   User,
   MapPin,
+  Map,
+  Sparkles,
 } from 'lucide-react';
 import { CustomerDetails, PaymentMethod } from '@/types';
 
@@ -32,8 +35,8 @@ interface CartDrawerProps {
 
 export function CartDrawer({ outletSlug, campaignSlug }: CartDrawerProps) {
   const router = useRouter();
-  const { user, isCustomer, loginCustomer, registerCustomer, logout } = useAuth();
-  const { deliveryAddress, deliveryArea, nearestOutlet } = useLocation();
+  const { user, isCustomer, loginCustomer, registerCustomer, autoRegisterOrLoginCustomer, logout } = useAuth();
+  const { deliveryAddress, deliveryArea, deliveryCoordinates, setDeliveryCoordinates, nearestOutlet } = useLocation();
   const {
     items,
     cartOutletSlug,
@@ -54,6 +57,7 @@ export function CartDrawer({ outletSlug, campaignSlug }: CartDrawerProps) {
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState('');
+  const [isMapModalOpen, setIsMapModalOpen] = useState(false);
 
   // Unauthenticated customer contact state
   const [authMode, setAuthMode] = useState<'REGISTER' | 'LOGIN'>('REGISTER');
@@ -66,11 +70,18 @@ export function CartDrawer({ outletSlug, campaignSlug }: CartDrawerProps) {
   const [customer, setCustomer] = useState<CustomerDetails>(() => ({
     name: user?.role === 'CUSTOMER' ? user.name : '',
     phone: user?.role === 'CUSTOMER' ? user.phone : '',
-    address: '',
-    area: '',
-    pincode: '',
+    address: deliveryAddress || '',
+    area: deliveryArea || '',
+    pincode: '422005',
     specialInstructions: '',
+    coordinates: deliveryCoordinates || undefined,
   }));
+
+  useEffect(() => {
+    if (deliveryCoordinates && !customer.coordinates) {
+      setCustomer((prev) => ({ ...prev, coordinates: deliveryCoordinates }));
+    }
+  }, [deliveryCoordinates]);
 
   // Sync customer details when user logs in
   useEffect(() => {
@@ -123,39 +134,53 @@ export function CartDrawer({ outletSlug, campaignSlug }: CartDrawerProps) {
     let activeCustomer = { ...customer };
 
     if (!isCustomerLoggedIn) {
-      const cleanPhone = authPhone.replace(/\D/g, '').slice(-10);
+      const cleanPhone = (authPhone || customer.phone).replace(/\D/g, '').slice(-10);
+      const cleanName = (authName || customer.name).trim();
+
       if (cleanPhone.length < 10) {
         setSubmitError('Please enter a valid 10-digit mobile phone number');
         return;
       }
-      if (!authPassword.trim()) {
-        setSubmitError('Please enter a password for your customer account');
-        return;
-      }
-      if (authMode === 'REGISTER' && !authName.trim()) {
+      if (!cleanName) {
         setSubmitError('Please enter your full name');
         return;
       }
 
       setIsSubmitting(true);
-      let authRes;
-      if (authMode === 'REGISTER') {
-        authRes = await registerCustomer(authName.trim(), cleanPhone, authPassword);
+
+      // If user chose explicit LOGIN mode with password
+      if (authMode === 'LOGIN' && authPassword.trim()) {
+        const loginRes = await loginCustomer(cleanPhone, authPassword.trim());
+        if (!loginRes.success) {
+          setIsSubmitting(false);
+          setSubmitError(loginRes.error || 'Invalid phone or password');
+          return;
+        }
       } else {
-        authRes = await loginCustomer(cleanPhone, authPassword);
+        // Seamless account creation on order confirmation
+        const authRes = await autoRegisterOrLoginCustomer(
+          cleanName,
+          cleanPhone,
+          customer.address,
+          customer.area,
+          customer.pincode,
+          customer.coordinates || deliveryCoordinates || undefined
+        );
+
+        if (!authRes.success) {
+          setIsSubmitting(false);
+          setSubmitError(authRes.error || 'Failed to initialize customer account');
+          return;
+        }
       }
 
-      if (!authRes.success) {
-        setIsSubmitting(false);
-        setSubmitError(authRes.error || 'Account authentication failed. Please check your credentials.');
-        return;
-      }
-
-      activeCustomer.name = authName.trim() || customer.name || 'Valued Customer';
+      activeCustomer.name = cleanName;
       activeCustomer.phone = cleanPhone;
+      activeCustomer.coordinates = customer.coordinates || deliveryCoordinates || undefined;
     } else {
       if (!activeCustomer.name.trim()) activeCustomer.name = user?.name || 'Valued Customer';
       if (!activeCustomer.phone.trim() && user && 'phone' in user) activeCustomer.phone = user.phone;
+      activeCustomer.coordinates = customer.coordinates || deliveryCoordinates || undefined;
     }
 
     setIsSubmitting(true);
@@ -417,6 +442,38 @@ export function CartDrawer({ outletSlug, campaignSlug }: CartDrawerProps) {
                   </div>
 
                   <div className="space-y-2">
+                    {/* Interactive Map Pin Selector Trigger */}
+                    <div className="flex items-center justify-between pb-1">
+                      <span className="text-[10px] font-bold text-stone-600 uppercase tracking-wider">
+                        Map Pin Location
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => setIsMapModalOpen(true)}
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-stone-900 hover:bg-stone-800 text-white text-xs font-semibold transition cursor-pointer shadow-xs"
+                      >
+                        <Map className="w-3.5 h-3.5 text-amber-400" />
+                        <span>{customer.coordinates ? 'Edit Map Pin' : 'Select Location on Map'}</span>
+                      </button>
+                    </div>
+
+                    {customer.coordinates && (
+                      <div className="bg-emerald-50 border border-emerald-200/90 rounded-xl px-3 py-2 flex items-center justify-between text-xs text-emerald-950">
+                        <div className="flex items-center gap-2">
+                          <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                          <div>
+                            <span className="font-semibold block leading-none">Map Location Locked</span>
+                            <span className="text-[10px] font-mono text-emerald-700">
+                              Lat: {customer.coordinates.lat.toFixed(5)}, Lng: {customer.coordinates.lng.toFixed(5)}
+                            </span>
+                          </div>
+                        </div>
+                        <span className="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800">
+                          GPS Confirmed
+                        </span>
+                      </div>
+                    )}
+
                     <div>
                       <label className="block text-[10px] font-bold text-stone-600 uppercase tracking-wider mb-1">
                         House / Flat No., Society / Building, Landmark *
@@ -482,7 +539,7 @@ export function CartDrawer({ outletSlug, campaignSlug }: CartDrawerProps) {
                 </div>
 
                 {/* =========================================================================
-                    SECTION 2: CUSTOMER CONTACT & ACCOUNT
+                    SECTION 2: CUSTOMER CONTACT & ACCOUNT CREATION
                    ========================================================================= */}
                 {isCustomerLoggedIn ? (
                   <div className="bg-emerald-50/80 border border-emerald-200 rounded-2xl p-3 flex items-center justify-between">
@@ -512,7 +569,7 @@ export function CartDrawer({ outletSlug, campaignSlug }: CartDrawerProps) {
                     <div className="flex items-center justify-between">
                       <h4 className="text-[11px] font-bold uppercase tracking-wider text-stone-900 flex items-center gap-1.5">
                         <User className="w-3.5 h-3.5 text-stone-600" />
-                        <span>Customer Details</span>
+                        <span>Customer Account</span>
                       </h4>
                       <div className="flex rounded-md bg-stone-100 p-0.5">
                         <button
@@ -524,7 +581,7 @@ export function CartDrawer({ outletSlug, campaignSlug }: CartDrawerProps) {
                               : 'text-stone-500'
                           }`}
                         >
-                          New Customer
+                          Express Checkout
                         </button>
                         <button
                           type="button"
@@ -541,24 +598,22 @@ export function CartDrawer({ outletSlug, campaignSlug }: CartDrawerProps) {
                     </div>
 
                     <div className="space-y-2">
-                      {authMode === 'REGISTER' && (
-                        <div>
-                          <label className="block text-[10px] font-bold text-stone-600 uppercase tracking-wider mb-1">
-                            Your Full Name *
-                          </label>
-                          <input
-                            type="text"
-                            required
-                            placeholder="e.g. Rahul Deshmukh"
-                            value={authName}
-                            onChange={(e) => {
-                              setAuthName(e.target.value);
-                              setCustomer((prev) => ({ ...prev, name: e.target.value }));
-                            }}
-                            className="w-full px-3 py-2 bg-stone-50 border border-stone-200 rounded-xl text-xs focus:bg-white focus:ring-1 focus:ring-stone-900 focus:outline-none"
-                          />
-                        </div>
-                      )}
+                      <div>
+                        <label className="block text-[10px] font-bold text-stone-600 uppercase tracking-wider mb-1">
+                          Your Full Name *
+                        </label>
+                        <input
+                          type="text"
+                          required
+                          placeholder="e.g. Rahul Deshmukh"
+                          value={authName}
+                          onChange={(e) => {
+                            setAuthName(e.target.value);
+                            setCustomer((prev) => ({ ...prev, name: e.target.value }));
+                          }}
+                          className="w-full px-3 py-2 bg-stone-50 border border-stone-200 rounded-xl text-xs focus:bg-white focus:ring-1 focus:ring-stone-900 focus:outline-none"
+                        />
+                      </div>
 
                       <div>
                         <label className="block text-[10px] font-bold text-stone-600 uppercase tracking-wider mb-1">
@@ -585,36 +640,41 @@ export function CartDrawer({ outletSlug, campaignSlug }: CartDrawerProps) {
                         </div>
                       </div>
 
-                      <div>
-                        <label className="block text-[10px] font-bold text-stone-600 uppercase tracking-wider mb-1">
-                          Password *
-                        </label>
-                        <div className="relative">
-                          <input
-                            type={showAuthPassword ? 'text' : 'password'}
-                            required
-                            placeholder={
-                              authMode === 'REGISTER'
-                                ? 'Create a password (min 4 characters)'
-                                : 'Enter your password'
-                            }
-                            value={authPassword}
-                            onChange={(e) => setAuthPassword(e.target.value)}
-                            className="w-full px-3 pr-9 py-2 bg-stone-50 border border-stone-200 rounded-xl text-xs focus:bg-white focus:ring-1 focus:ring-stone-900 focus:outline-none"
-                          />
-                          <button
-                            type="button"
-                            onClick={() => setShowAuthPassword(!showAuthPassword)}
-                            className="absolute right-2.5 top-2.5 text-stone-400 hover:text-stone-700 cursor-pointer"
-                          >
-                            {showAuthPassword ? (
-                              <EyeOff className="w-3.5 h-3.5" />
-                            ) : (
-                              <Eye className="w-3.5 h-3.5" />
-                            )}
-                          </button>
+                      {authMode === 'LOGIN' ? (
+                        <div>
+                          <label className="block text-[10px] font-bold text-stone-600 uppercase tracking-wider mb-1">
+                            Password *
+                          </label>
+                          <div className="relative">
+                            <input
+                              type={showAuthPassword ? 'text' : 'password'}
+                              required
+                              placeholder="Enter your password"
+                              value={authPassword}
+                              onChange={(e) => setAuthPassword(e.target.value)}
+                              className="w-full pl-3 pr-9 py-2 bg-stone-50 border border-stone-200 rounded-xl text-xs focus:bg-white focus:ring-1 focus:ring-stone-900 focus:outline-none"
+                            />
+                            <button
+                              type="button"
+                              onClick={() => setShowAuthPassword(!showAuthPassword)}
+                              className="absolute right-2.5 top-2 text-stone-400 hover:text-stone-600 cursor-pointer"
+                            >
+                              {showAuthPassword ? (
+                                <EyeOff className="w-4 h-4" />
+                              ) : (
+                                <Eye className="w-4 h-4" />
+                              )}
+                            </button>
+                          </div>
                         </div>
-                      </div>
+                      ) : (
+                        <div className="p-2.5 bg-amber-50/70 border border-amber-200/60 rounded-xl flex items-center gap-2 text-[11px] text-amber-900">
+                          <Sparkles className="w-3.5 h-3.5 text-amber-600 shrink-0" />
+                          <span>
+                            Account created automatically upon confirming this order.
+                          </span>
+                        </div>
+                      )}
                     </div>
                   </div>
                 )}
@@ -760,6 +820,42 @@ export function CartDrawer({ outletSlug, campaignSlug }: CartDrawerProps) {
           )}
         </div>
       </div>
+
+      {/* Map Picker Modal */}
+      {isMapModalOpen && (
+        <div className="fixed inset-0 z-60 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in duration-200">
+          <div className="bg-[#FAF8F5] border border-stone-200 rounded-3xl max-w-md w-full p-5 relative shadow-2xl space-y-3 max-h-[92vh] overflow-y-auto">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <MapPin className="w-4 h-4 text-amber-600" />
+                <h3 className="font-serif font-bold text-stone-900 text-sm">
+                  Pinpoint Delivery Location on Map
+                </h3>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsMapModalOpen(false)}
+                className="p-1 rounded-full text-stone-400 hover:text-stone-800 hover:bg-stone-200/50 transition cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+            <DeliveryMapPicker
+              initialCoords={customer.coordinates || deliveryCoordinates || undefined}
+              onConfirmLocation={(data) => {
+                setCustomer((prev) => ({
+                  ...prev,
+                  coordinates: { lat: data.lat, lng: data.lng },
+                  area: prev.area || data.nearestOutlet.area,
+                }));
+                setDeliveryCoordinates({ lat: data.lat, lng: data.lng });
+                setIsMapModalOpen(false);
+              }}
+              onClose={() => setIsMapModalOpen(false)}
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 }

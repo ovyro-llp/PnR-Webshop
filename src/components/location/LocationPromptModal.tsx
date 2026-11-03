@@ -2,6 +2,8 @@
 
 import React, { useState } from 'react';
 import { useLocation } from '@/context/LocationContext';
+import { DeliveryMapPicker } from './DeliveryMapPicker';
+import { Outlet } from '@/types';
 import {
   MapPin,
   Navigation,
@@ -13,6 +15,7 @@ import {
   AlertCircle,
   Home,
   ArrowRight,
+  Map,
 } from 'lucide-react';
 import Image from 'next/image';
 
@@ -50,9 +53,12 @@ export function LocationPromptModal() {
     hasSetLocation,
     deliveryAddress,
     setDeliveryAddress,
+    deliveryCoordinates,
+    setDeliveryCoordinates,
   } = useLocation();
 
   const [addressInput, setAddressInput] = useState(deliveryAddress || '');
+  const [activeTab, setActiveTab] = useState<'MAP' | 'LIST'>('MAP');
 
   if (!isLocationModalOpen) return null;
 
@@ -61,6 +67,20 @@ export function LocationPromptModal() {
       setDeliveryAddress(addressInput.trim());
     }
     setManualOutlet(slug, addressInput.trim());
+  };
+
+  const handleMapConfirm = (data: {
+    lat: number;
+    lng: number;
+    nearestOutlet: Outlet;
+    distanceKm: number;
+  }) => {
+    setDeliveryCoordinates({ lat: data.lat, lng: data.lng });
+    setManualOutlet(data.nearestOutlet.slug, addressInput.trim(), {
+      lat: data.lat,
+      lng: data.lng,
+    });
+    closeLocationModal();
   };
 
   return (
@@ -127,6 +147,34 @@ export function LocationPromptModal() {
           </div>
         )}
 
+        {/* Selection Mode Switcher */}
+        <div className="flex bg-stone-200/80 p-1 rounded-xl text-xs font-semibold">
+          <button
+            type="button"
+            onClick={() => setActiveTab('MAP')}
+            className={`flex-1 py-1.5 rounded-lg flex items-center justify-center gap-1.5 transition cursor-pointer ${
+              activeTab === 'MAP'
+                ? 'bg-white text-stone-900 shadow-xs'
+                : 'text-stone-600 hover:text-stone-900'
+            }`}
+          >
+            <Map className="w-3.5 h-3.5 text-emerald-600" />
+            <span>Interactive Map Pin</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => setActiveTab('LIST')}
+            className={`flex-1 py-1.5 rounded-lg flex items-center justify-center gap-1.5 transition cursor-pointer ${
+              activeTab === 'LIST'
+                ? 'bg-white text-stone-900 shadow-xs'
+                : 'text-stone-600 hover:text-stone-900'
+            }`}
+          >
+            <Building2 className="w-3.5 h-3.5 text-stone-600" />
+            <span>Select Locality</span>
+          </button>
+        </div>
+
         {/* Delivery Address Input */}
         <div className="space-y-1.5">
           <label className="block text-[11px] font-bold uppercase tracking-wider text-stone-700">
@@ -144,84 +192,95 @@ export function LocationPromptModal() {
           </div>
         </div>
 
-        {/* Primary Action: Request GPS Location */}
-        <div className="space-y-1">
-          <button
-            onClick={requestLocation}
-            disabled={isDetecting}
-            className="w-full py-3 bg-[#1C1917] hover:bg-stone-800 active:scale-[0.99] text-white rounded-xl text-xs font-bold tracking-wide transition shadow-sm flex items-center justify-center gap-2 cursor-pointer disabled:opacity-60"
-          >
-            {isDetecting ? (
-              <>
-                <Loader2 className="w-4 h-4 animate-spin text-amber-400" />
-                <span>Detecting Nearest Bakery...</span>
-              </>
-            ) : (
-              <>
-                <Navigation className="w-4 h-4 text-amber-400 fill-amber-400" />
-                <span>Use Current Location (GPS)</span>
-              </>
-            )}
-          </button>
-        </div>
-
-        {/* Divider */}
-        <div className="relative flex items-center justify-center pt-1">
-          <div className="border-t border-stone-200 w-full" />
-          <span className="bg-[#FAF8F5] px-3 text-[10px] uppercase font-bold tracking-wider text-stone-400 shrink-0">
-            Or Choose Your Nashik Area
-          </span>
-          <div className="border-t border-stone-200 w-full" />
-        </div>
-
-        {/* Manual Locality Picker */}
-        <div className="space-y-2">
-          {LOCALITY_OPTIONS.map((loc) => {
-            const isSelected = nearestOutlet?.slug === loc.slug;
-            return (
+        {activeTab === 'MAP' ? (
+          <div className="pt-1">
+            <DeliveryMapPicker
+              initialCoords={deliveryCoordinates || undefined}
+              onConfirmLocation={handleMapConfirm}
+            />
+          </div>
+        ) : (
+          <>
+            {/* Primary Action: Request GPS Location */}
+            <div className="space-y-1">
               <button
-                key={loc.slug}
-                onClick={() => handleConfirmAddress(loc.slug)}
-                className={`w-full p-2.5 rounded-2xl border text-left transition flex items-center justify-between cursor-pointer ${
-                  isSelected
-                    ? 'bg-white border-stone-900 ring-1 ring-stone-900 shadow-xs'
-                    : 'bg-white/70 hover:bg-white border-stone-200 hover:border-stone-300'
-                }`}
+                onClick={requestLocation}
+                disabled={isDetecting}
+                className="w-full py-3 bg-[#1C1917] hover:bg-stone-800 active:scale-[0.99] text-white rounded-xl text-xs font-bold tracking-wide transition shadow-sm flex items-center justify-center gap-2 cursor-pointer disabled:opacity-60"
               >
-                <div className="flex items-start gap-2.5 min-w-0">
-                  <div
-                    className={`w-7 h-7 rounded-lg flex items-center justify-center shrink-0 mt-0.5 ${
-                      isSelected
-                        ? 'bg-stone-900 text-amber-400'
-                        : 'bg-stone-100 text-stone-500'
-                    }`}
-                  >
-                    <Building2 className="w-3.5 h-3.5" />
-                  </div>
-                  <div className="min-w-0">
-                    <div className="flex items-center gap-2">
-                      <p className="font-semibold text-xs text-stone-900 truncate">
-                        {loc.name}
-                      </p>
-                      <span className="text-[9px] uppercase tracking-wider font-bold px-1.5 py-0.2 rounded-md bg-stone-100 text-stone-600 shrink-0">
-                        {loc.badge}
-                      </span>
-                    </div>
-                    <p className="text-[11px] text-stone-500 truncate mt-0.5">
-                      {loc.areas}
-                    </p>
-                  </div>
-                </div>
-
-                {isSelected && (
-                  <div className="w-4 h-4 rounded-full bg-stone-900 text-white flex items-center justify-center shrink-0 ml-2">
-                    <Check className="w-2.5 h-2.5" />
-                  </div>
+                {isDetecting ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin text-amber-400" />
+                    <span>Detecting Nearest Bakery...</span>
+                  </>
+                ) : (
+                  <>
+                    <Navigation className="w-4 h-4 text-amber-400 fill-amber-400" />
+                    <span>Use Current Location (GPS)</span>
+                  </>
                 )}
               </button>
-            );
-          })}
-        </div>
+            </div>
+
+            {/* Divider */}
+            <div className="relative flex items-center justify-center pt-1">
+              <div className="border-t border-stone-200 w-full" />
+              <span className="bg-[#FAF8F5] px-3 text-[10px] uppercase font-bold tracking-wider text-stone-400 shrink-0">
+                Or Choose Your Nashik Area
+              </span>
+              <div className="border-t border-stone-200 w-full" />
+            </div>
+
+            {/* Manual Locality Picker */}
+            <div className="space-y-2">
+              {LOCALITY_OPTIONS.map((loc) => {
+                const isSelected = nearestOutlet?.slug === loc.slug;
+                return (
+                  <button
+                    key={loc.slug}
+                    onClick={() => handleConfirmAddress(loc.slug)}
+                    className={`w-full p-2.5 rounded-2xl border text-left transition flex items-center justify-between cursor-pointer ${
+                      isSelected
+                        ? 'bg-white border-stone-900 ring-1 ring-stone-900 shadow-xs'
+                        : 'bg-white/70 hover:bg-white border-stone-200 hover:border-stone-300'
+                    }`}
+                  >
+                    <div className="flex items-start gap-2.5 min-w-0">
+                      <div
+                        className={`w-7 h-7 rounded-lg flex items-center justify-center shrink-0 mt-0.5 ${
+                          isSelected
+                            ? 'bg-stone-900 text-amber-400'
+                            : 'bg-stone-100 text-stone-500'
+                        }`}
+                      >
+                        <Building2 className="w-3.5 h-3.5" />
+                      </div>
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-2">
+                          <p className="font-semibold text-xs text-stone-900 truncate">
+                            {loc.name}
+                          </p>
+                          <span className="text-[9px] uppercase tracking-wider font-bold px-1.5 py-0.2 rounded-md bg-stone-100 text-stone-600 shrink-0">
+                            {loc.badge}
+                          </span>
+                        </div>
+                        <p className="text-[11px] text-stone-500 truncate mt-0.5">
+                          {loc.areas}
+                        </p>
+                      </div>
+                    </div>
+
+                    {isSelected && (
+                      <div className="w-4 h-4 rounded-full bg-stone-900 text-white flex items-center justify-center shrink-0 ml-2">
+                        <Check className="w-2.5 h-2.5" />
+                      </div>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+          </>
+        )}
 
         <div className="pt-2 text-center border-t border-stone-200/70">
           <p className="text-[10px] text-stone-400">

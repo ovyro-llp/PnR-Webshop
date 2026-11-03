@@ -221,6 +221,10 @@ export interface CustomerDetails {
   area: string;
   pincode: string;
   specialInstructions?: string;
+  coordinates?: {
+    lat: number;
+    lng: number;
+  };
 }
 
 export type PaymentMethod = 'UPI' | 'COD' | 'CARD';

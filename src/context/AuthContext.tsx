@@ -83,6 +83,14 @@ interface AuthContextType {
   isHydrated: boolean;
   loginCustomer: (phone: string, password: string) => Promise<{ success: boolean; error?: string }>;
   registerCustomer: (name: string, phone: string, password: string) => Promise<{ success: boolean; error?: string }>;
+  autoRegisterOrLoginCustomer: (
+    name: string,
+    phone: string,
+    address?: string,
+    area?: string,
+    pincode?: string,
+    coords?: { lat: number; lng: number }
+  ) => Promise<{ success: boolean; customer?: CustomerUser; error?: string }>;
   loginAdmin: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
   updateCustomerProfile: (updates: { name?: string; phone?: string; savedAddresses?: CustomerUser['savedAddresses'] }) => Promise<{ success: boolean; error?: string }>;
   logout: () => void;
@@ -185,6 +193,103 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       } catch {}
       setIsCustomerLoginModalOpen(false);
       return { success: true };
+    },
+    []
+  );
+
+  const autoRegisterOrLoginCustomer = useCallback(
+    async (
+      name: string,
+      rawPhone: string,
+      address?: string,
+      area?: string,
+      pincode?: string,
+      coords?: { lat: number; lng: number }
+    ): Promise<{ success: boolean; customer?: CustomerUser; error?: string }> => {
+      const cleanName = name.trim();
+      const cleanPhone = rawPhone.replace(/\D/g, '').slice(-10);
+
+      if (!cleanPhone || cleanPhone.length < 10) {
+        return { success: false, error: 'Please enter a valid 10-digit mobile number' };
+      }
+
+      const defaultAddress = address?.trim() || 'Nashik Delivery Location';
+      const defaultArea = area?.trim() || 'Nashik City';
+      const defaultPincode = pincode?.trim() || '422005';
+
+      let accounts: RegisteredCustomerRecord[] = [...PRESEEDED_CUSTOMERS];
+      try {
+        const stored = localStorage.getItem('pnr_registered_customers');
+        if (stored) {
+          const parsed = JSON.parse(stored);
+          if (Array.isArray(parsed)) {
+            accounts = parsed;
+          }
+        }
+      } catch {}
+
+      let existing = accounts.find((a) => a.phone === cleanPhone);
+      let customerUser: CustomerUser;
+
+      if (existing) {
+        if (cleanName && cleanName !== existing.name) {
+          existing.name = cleanName;
+        }
+        existing.savedAddresses = existing.savedAddresses || [];
+        if (address) {
+          const hasAddr = existing.savedAddresses.some((a) => a.address === defaultAddress);
+          if (!hasAddr) {
+            existing.savedAddresses.unshift({
+              id: `addr-${Date.now()}`,
+              label: 'Recent Delivery',
+              address: defaultAddress,
+              area: defaultArea,
+              pincode: defaultPincode,
+            });
+          }
+        }
+        customerUser = {
+          id: existing.id,
+          name: existing.name,
+          phone: existing.phone,
+          role: 'CUSTOMER',
+          savedAddresses: existing.savedAddresses,
+        };
+      } else {
+        const newRecord: RegisteredCustomerRecord = {
+          id: `cust-${Date.now()}`,
+          name: cleanName || `Customer ${cleanPhone.slice(-4)}`,
+          phone: cleanPhone,
+          password: 'pnr@customer', // Default generated password
+          savedAddresses: [
+            {
+              id: `addr-${Date.now()}`,
+              label: 'Delivery Location',
+              address: defaultAddress,
+              area: defaultArea,
+              pincode: defaultPincode,
+            },
+          ],
+        };
+        accounts.push(newRecord);
+        customerUser = {
+          id: newRecord.id,
+          name: newRecord.name,
+          phone: newRecord.phone,
+          role: 'CUSTOMER',
+          savedAddresses: newRecord.savedAddresses,
+        };
+      }
+
+      try {
+        localStorage.setItem('pnr_registered_customers', JSON.stringify(accounts));
+        localStorage.setItem('pnr_auth_user', JSON.stringify(customerUser));
+      } catch (e) {
+        console.warn('Failed to save auto-registered account', e);
+      }
+
+      setUser(customerUser);
+      return { success: true, customer: customerUser };
     },
     []
   );
@@ -449,6 +554,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         isHydrated,
         loginCustomer,
         registerCustomer,
+        autoRegisterOrLoginCustomer,
         loginAdmin,
         updateCustomerProfile,
         logout,

@@ -227,8 +227,14 @@ export async function dispatchToMangwale(
     : 'live';
 
   const outletCoords = outlet.coordinates || { lat: 20.0043996, lng: 73.7579984 };
-  const dropLat = outletCoords.lat + (Math.random() * 0.01 - 0.005);
-  const dropLng = outletCoords.lng + (Math.random() * 0.01 - 0.005);
+  const dropLat =
+    order.customer.coordinates?.lat && typeof order.customer.coordinates.lat === 'number'
+      ? order.customer.coordinates.lat
+      : outletCoords.lat + (Math.random() * 0.01 - 0.005);
+  const dropLng =
+    order.customer.coordinates?.lng && typeof order.customer.coordinates.lng === 'number'
+      ? order.customer.coordinates.lng
+      : outletCoords.lng + (Math.random() * 0.01 - 0.005);
 
   const payload = {
     external_order_id: order.orderNumber,
