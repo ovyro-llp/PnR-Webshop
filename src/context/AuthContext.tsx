@@ -476,24 +476,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       return { success: true };
     }
 
-    if (
-      cleanEmail === 'rider.rohit@puffsnrolls.com' &&
-      (password === 'rider2026' || password === 'admin' || password === 'pnr123')
-    ) {
-      const admin: AdminUser = {
-        id: 'admin-rider',
-        name: 'Rohit Shinde (Fleet Rider)',
-        email: cleanEmail,
-        role: 'ADMIN',
-        employeeRole: 'DISPATCH_RIDER',
-        outletAccess: ['cycle-circle'],
-        title: 'Express Fleet Dispatch Rider',
-      };
-      setUser(admin);
-      localStorage.setItem('pnr_auth_user', JSON.stringify(admin));
-      return { success: true };
-    }
-
     return {
       success: false,
       error: 'Invalid administrator credentials. Try admin@puffsnrolls.com / pnr@admin2026',

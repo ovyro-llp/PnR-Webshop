@@ -199,17 +199,6 @@ if (!globalThis.__PNR_EMPLOYEES__) {
       status: 'ACTIVE',
       createdAt: '2026-02-10T10:00:00Z',
     },
-    {
-      id: 'emp-7',
-      name: 'Rohit Shinde',
-      email: 'rider.rohit@puffsnrolls.com',
-      phone: '+91 98231 44512',
-      role: 'DISPATCH_RIDER',
-      outletSlug: 'cycle-circle',
-      designation: 'Express Fleet Dispatch Rider',
-      status: 'ACTIVE',
-      createdAt: '2026-02-15T10:00:00Z',
-    },
   ];
 }
 

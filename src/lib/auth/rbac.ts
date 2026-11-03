@@ -278,23 +278,6 @@ export const ROLE_DEFINITIONS: Record<EmployeeRole, RoleDefinition> = {
       'outlets:view',
     ],
   },
-  DISPATCH_RIDER: {
-    id: 'DISPATCH_RIDER',
-    name: 'Logistics Rider / Fleet Lead',
-    shortName: 'Dispatch Rider',
-    description: 'Field delivery interface for viewing assigned deliveries, pickup confirmation, and updating customer delivery progress.',
-    typicalStaff: 'In-house Fleet Delivery Rider, Logistics Expeditor',
-    scope: 'ASSIGNED_OUTLET',
-    badge: {
-      bg: 'bg-sky-50',
-      text: 'text-sky-800',
-      border: 'border-sky-200',
-    },
-    permissions: [
-      'orders:view',
-      'orders:dispatch',
-    ],
-  },
 };
 
 /**

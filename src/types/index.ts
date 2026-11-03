@@ -2,8 +2,7 @@ export type EmployeeRole =
   | 'SUPER_ADMIN'
   | 'OUTLET_MANAGER'
   | 'KITCHEN_STAFF'
-  | 'MARKETING_MANAGER'
-  | 'DISPATCH_RIDER';
+  | 'MARKETING_MANAGER';
 
 export type Permission =
   // Orders & Dispatch

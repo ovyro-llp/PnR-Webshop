@@ -220,8 +220,6 @@ export default function EmployeesManagementPage() {
                 ? 'Outlet Store Manager'
                 : newRole === 'MARKETING_MANAGER'
                 ? 'Lead Performance Marketer'
-                : newRole === 'DISPATCH_RIDER'
-                ? 'Fleet Delivery Rider'
                 : 'Kitchen Specialist'),
           },
         }),
@@ -306,8 +304,6 @@ export default function EmployeesManagementPage() {
         return <ChefHat className="w-3.5 h-3.5" />;
       case 'MARKETING_MANAGER':
         return <SlidersHorizontal className="w-3.5 h-3.5" />;
-      case 'DISPATCH_RIDER':
-        return <Truck className="w-3.5 h-3.5" />;
     }
   };
 
@@ -817,7 +813,6 @@ export default function EmployeesManagementPage() {
                       <option value="OUTLET_MANAGER">Store Manager</option>
                       <option value="KITCHEN_STAFF">Kitchen Staff</option>
                       <option value="MARKETING_MANAGER">Marketing Manager</option>
-                      <option value="DISPATCH_RIDER">Dispatch Rider</option>
                       <option value="SUPER_ADMIN">HQ Super Admin</option>
                     </select>
                   )}
@@ -974,7 +969,6 @@ export default function EmployeesManagementPage() {
                       <option value="OUTLET_MANAGER">Store Manager</option>
                       <option value="KITCHEN_STAFF">Kitchen Staff</option>
                       <option value="MARKETING_MANAGER">Marketing Manager</option>
-                      <option value="DISPATCH_RIDER">Dispatch Rider</option>
                       <option value="SUPER_ADMIN">HQ Super Admin</option>
                     </select>
                   )}

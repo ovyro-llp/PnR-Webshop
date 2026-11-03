@@ -81,7 +81,11 @@ export function OrderTrackingClient({
     },
     {
       label: 'Express Dispatch',
-      desc: order.mangwale?.riderName ? `Rider: ${order.mangwale.riderName}` : 'Assigning rider',
+      desc: order.mangwale?.riderName
+        ? `Rider: ${order.mangwale.riderName}`
+        : order.mangwale?.taskId
+        ? 'Dispatched to Mangwale'
+        : 'Awaiting dispatch',
       icon: Truck,
       completed: ['DISPATCHED', 'OUT_FOR_DELIVERY', 'DELIVERED'].includes(order.orderStatus),
       active: ['DISPATCHED', 'OUT_FOR_DELIVERY'].includes(order.orderStatus),
@@ -201,7 +205,7 @@ export function OrderTrackingClient({
           })}
         </div>
 
-        {/* Delivery Executive Info */}
+        {/* Delivery Partner Info */}
         {order.mangwale && (
           <div className="p-4 bg-white rounded-2xl border border-stone-200/80 flex flex-wrap items-center justify-between gap-3 text-xs">
             <div>
@@ -209,14 +213,25 @@ export function OrderTrackingClient({
                 Logistics Partner
               </span>
               <p className="font-bold text-stone-900">
-                {order.mangwale.riderName || 'Mangwale Logistics (Nashik)'}
+                Mangwale Express Delivery
               </p>
-              {order.mangwale.riderVehicleNo && (
-                <p className="text-[10px] text-stone-500 font-mono">{order.mangwale.riderVehicleNo}</p>
+              {order.mangwale.riderName ? (
+                <div className="mt-0.5">
+                  <p className="text-xs text-stone-700 font-medium">
+                    Assigned Executive: <strong className="text-stone-900">{order.mangwale.riderName}</strong>
+                  </p>
+                  {order.mangwale.riderVehicleNo && (
+                    <p className="text-[10px] text-stone-500 font-mono">{order.mangwale.riderVehicleNo}</p>
+                  )}
+                </div>
+              ) : (
+                <p className="text-[11px] text-stone-500 mt-0.5">
+                  Awaiting rider assignment from Mangwale
+                </p>
               )}
               {order.mangwale.taskId && (
                 <p className="text-[10px] text-stone-400 font-mono mt-0.5">
-                  Tracking ID: {order.mangwale.taskId}
+                  Mangwale Task ID: {order.mangwale.taskId}
                 </p>
               )}
             </div>

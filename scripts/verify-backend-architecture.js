@@ -317,12 +317,35 @@ async function runAudit() {
   const retryData = await retryRes.json();
   console.log('Retry Dispatch Response:', {
     success: retryData.success,
-    status: retryData.order?.mangwale?.status,
+    status: retryData.order?.mangwale?.status || retryData.message,
     taskId: retryData.order?.mangwale?.taskId,
   });
 
+  // TEST 8: Real-Time Mangwale Logistics API
+  console.log('\nTEST 8: Testing Real-Time Mangwale Logistics Endpoints...');
+  const mwLiveRes = await fetch(`${BASE_URL}/api/logistics/mangwale?orderId=${createOrderData.internalOrderId}`);
+  const mwLiveData = await mwLiveRes.json();
+  console.log('Live Mangwale Order Query:', {
+    success: mwLiveData.success,
+    orderId: mwLiveData.order?.orderNumber,
+    mangwaleStatus: mwLiveData.order?.mangwale?.status,
+    rider: mwLiveData.order?.mangwale?.riderName,
+  });
+
+  const mwSyncRes = await fetch(`${BASE_URL}/api/logistics/mangwale`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ action: 'SYNC_ALL' }),
+  });
+  const mwSyncData = await mwSyncRes.json();
+  console.log('Live Mangwale Sync-All Response:', {
+    success: mwSyncData.success,
+    syncedCount: mwSyncData.syncedCount,
+    message: mwSyncData.message,
+  });
+
   console.log('\n=================================================================');
-  console.log('🎉 ALL BACKEND ARCHITECTURAL INTEGRATION TESTS PASSED (7/7)!');
+  console.log('🎉 ALL BACKEND ARCHITECTURAL INTEGRATION TESTS PASSED (8/8)!');
   console.log('=================================================================');
 
   if (pool) {

@@ -241,13 +241,19 @@ export const paymentService = {
         if (mangwaleRes.success) {
           settledOrder.mangwale = {
             taskId: mangwaleRes.taskId,
-            status: 'ASSIGNED',
+            status: mangwaleRes.rider ? 'ASSIGNED' : 'PENDING',
             riderName: mangwaleRes.rider?.name,
             riderPhone: mangwaleRes.rider?.phone,
             riderVehicleNo: mangwaleRes.rider?.vehicleNo,
             trackingUrl: mangwaleRes.trackingUrl,
             estimatedDeliveryMinutes: mangwaleRes.estimatedDeliveryMinutes,
             dispatchedAt: new Date().toISOString(),
+            notes: mangwaleRes.message,
+          };
+          settledOrder.orderStatus = 'PREPARING';
+        } else {
+          settledOrder.mangwale = {
+            status: 'PENDING',
             notes: mangwaleRes.message,
           };
           settledOrder.orderStatus = 'PREPARING';
@@ -345,13 +351,19 @@ export const paymentService = {
             if (mangwaleRes.success) {
               order.mangwale = {
                 taskId: mangwaleRes.taskId,
-                status: 'ASSIGNED',
+                status: mangwaleRes.rider ? 'ASSIGNED' : 'PENDING',
                 riderName: mangwaleRes.rider?.name,
                 riderPhone: mangwaleRes.rider?.phone,
                 riderVehicleNo: mangwaleRes.rider?.vehicleNo,
                 trackingUrl: mangwaleRes.trackingUrl,
                 estimatedDeliveryMinutes: mangwaleRes.estimatedDeliveryMinutes,
                 dispatchedAt: new Date().toISOString(),
+                notes: mangwaleRes.message,
+              };
+              order.orderStatus = 'PREPARING';
+            } else {
+              order.mangwale = {
+                status: 'PENDING',
                 notes: mangwaleRes.message,
               };
               order.orderStatus = 'PREPARING';

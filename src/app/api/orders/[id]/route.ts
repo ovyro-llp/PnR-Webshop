@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { orderStore } from '@/lib/store/order-store';
+import { fetchMangwaleOrderStatus } from '@/lib/logistics/mangwale';
 import { Order } from '@/types';
 
 export async function GET(
@@ -8,13 +9,49 @@ export async function GET(
 ) {
   try {
     const { id } = await params;
-    const order = (await orderStore.getOrderByIdAsync(id)) || orderStore.getOrderById(id);
+    let order = (await orderStore.getOrderByIdAsync(id)) || orderStore.getOrderById(id);
 
     if (!order) {
       return NextResponse.json(
         { success: false, message: 'Order not found' },
         { status: 404 }
       );
+    }
+
+    // If order has an active Mangwale delivery task and is not finished, sync live status from Mangwale
+    if (
+      order.mangwale?.taskId &&
+      order.orderStatus !== 'DELIVERED' &&
+      order.orderStatus !== 'CANCELLED'
+    ) {
+      try {
+        const outlet = orderStore.getOutletBySlug(order.outletSlug);
+        const liveStatus = await fetchMangwaleOrderStatus(order.mangwale.taskId, outlet);
+        if (liveStatus.success) {
+          const updated = orderStore.updateMangwaleStatus(order.mangwale.taskId, {
+            status: liveStatus.status,
+            riderName: liveStatus.rider?.name,
+            riderPhone: liveStatus.rider?.phone,
+            riderVehicleNo: liveStatus.rider?.vehicleNo,
+            trackingUrl: liveStatus.trackingUrl || order.mangwale.trackingUrl,
+            estimatedDeliveryMinutes:
+              liveStatus.estimatedDeliveryMinutes || order.mangwale.estimatedDeliveryMinutes,
+            orderStatus:
+              liveStatus.status === 'DELIVERED'
+                ? 'DELIVERED'
+                : liveStatus.status === 'IN_TRANSIT'
+                ? 'OUT_FOR_DELIVERY'
+                : liveStatus.status === 'PICKED_UP'
+                ? 'DISPATCHED'
+                : order.orderStatus,
+          });
+          if (updated) {
+            order = updated;
+          }
+        }
+      } catch (err) {
+        // Continue with current order state if real-time Mangwale polling fails
+      }
     }
 
     return NextResponse.json({ success: true, order });

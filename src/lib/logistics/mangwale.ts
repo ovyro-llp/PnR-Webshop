@@ -92,14 +92,14 @@ export function resolveMangwaleCredentials(outlet?: Outlet): {
     };
   }
 
-  // Development / sandbox demo defaults
+  // Development / sandbox defaults: Unconfigured until admin keys are entered
   return {
-    apiKey: `mw_live_${outlet?.slug ? outlet.slug.replace(/[^a-z0-9]/g, '_') : 'pnr'}_7731`,
-    apiSecret: `sk_live_${outlet?.slug ? outlet.slug.replace(/[^a-z0-9]/g, '_') : 'pnr'}_sec_9921`,
+    apiKey: '',
+    apiSecret: '',
     merchantId: outlet ? `MNG-PNR-${outlet.slug.toUpperCase()}` : 'MNG-PNR-NASHIK',
     environment: 'live',
     endpoint: DEFAULT_MANGWALE_ENDPOINT,
-    isEnabled: true,
+    isEnabled: false,
     isConfigured: false,
   };
 }
@@ -183,10 +183,9 @@ export async function testMangwaleConnection(
       };
     }
 
-    // High fidelity simulator for sandbox & local validation
     return {
-      success: true,
-      message: `✓ Connected to Mangwale ${envMode.toUpperCase()} for ${outletName} (${latencyMs}ms)`,
+      success: false,
+      message: `Unable to connect to Mangwale endpoint (${endpoint})`,
       latencyMs,
     };
   } catch (err: unknown) {
@@ -266,67 +265,78 @@ export async function dispatchToMangwale(
     processing_time_minutes: 15,
   };
 
+  if (!creds.apiKey || !creds.apiSecret) {
+    return {
+      success: false,
+      taskId: '',
+      trackingUrl: '',
+      estimatedDeliveryMinutes: 0,
+      message: `Mangwale API credentials not configured for ${outlet.name}. Configure keys in Admin Settings.`,
+    };
+  }
+
   try {
-    // Attempt real live/test HTTP dispatch to Mangwale Enterprise API
-    if (creds.apiKey && creds.apiSecret) {
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 6000);
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 8000);
 
-      const res = await fetch(`${creds.endpoint}/orders`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-API-Key': creds.apiKey,
-          'X-API-Secret': creds.apiSecret,
-          'X-Environment': envMode,
-          'X-Request-ID': `req_${Date.now()}_${Math.random().toString(36).substring(7)}`,
-        },
-        body: JSON.stringify(payload),
-        signal: controller.signal,
-      }).catch(() => null);
+    const res = await fetch(`${creds.endpoint}/orders`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-API-Key': creds.apiKey,
+        'X-API-Secret': creds.apiSecret,
+        'X-Environment': envMode,
+        'X-Request-ID': `req_${Date.now()}_${Math.random().toString(36).substring(7)}`,
+      },
+      body: JSON.stringify(payload),
+      signal: controller.signal,
+    }).catch(() => null);
 
-      clearTimeout(timeoutId);
+    clearTimeout(timeoutId);
 
-      if (res && res.ok) {
-        const data = await res.json().catch(() => ({}));
-        if (data.success && data.order) {
-          return {
-            success: true,
-            taskId: data.order.order_id,
-            trackingUrl:
-              data.order.tracking_url ||
-              `https://track.mangwale.com/track/${data.order.order_id}/${payload.drops[0].phone}`,
-            estimatedDeliveryMinutes: data.order.estimated_time_minutes || 22,
-            rider: data.order.rider
-              ? {
-                  name: data.order.rider.name,
-                  phone: data.order.rider.phone,
-                  vehicleNo: data.order.rider.vehicle_number || data.order.rider.vehicleNo,
-                }
-              : undefined,
-            message: `Order successfully booked with Mangwale Enterprise (${data.order.order_id})`,
-          };
-        }
+    if (res && res.ok) {
+      const data = await res.json().catch(() => ({}));
+      const orderData = data.order || data;
+      const orderId = orderData.order_id || orderData.taskId || orderData.id;
+      if (orderId) {
+        return {
+          success: true,
+          taskId: String(orderId),
+          trackingUrl:
+            orderData.tracking_url ||
+            orderData.trackingUrl ||
+            `https://track.mangwale.com/track/${orderId}/${payload.drops[0].phone}`,
+          estimatedDeliveryMinutes: Number(orderData.estimated_time_minutes || orderData.estimatedDeliveryMinutes || 22),
+          rider: orderData.rider && orderData.rider.name
+            ? {
+                name: orderData.rider.name,
+                phone: orderData.rider.phone || '',
+                vehicleNo: orderData.rider.vehicle_number || orderData.rider.vehicleNo || '',
+              }
+            : undefined,
+          message: `Order successfully booked with Mangwale Enterprise (${orderId})`,
+        };
       }
     }
 
-    // High fidelity fallback simulator for Nashik city dispatch
-    const randomTaskId = `MNG-NSK-${Math.floor(1000 + Math.random() * 9000)}`;
-    const mockRiders = [
-      { name: 'Rohit Shinde', phone: '+91 98231 44512', vehicleNo: 'MH 15 AB 1024' },
-      { name: 'Sachin Patil', phone: '+91 99221 10099', vehicleNo: 'MH 15 EZ 4412' },
-      { name: 'Swapnil Bhalerao', phone: '+91 98904 77611', vehicleNo: 'MH 15 DF 8876' },
-      { name: 'Pravin Wagh', phone: '+91 97632 55432', vehicleNo: 'MH 15 CZ 9901' },
-    ];
-    const assignedRider = mockRiders[Math.floor(Math.random() * mockRiders.length)];
+    if (res && !res.ok) {
+      const errData = await res.json().catch(() => ({}));
+      const errDetails = errData.message || errData.error || `HTTP ${res.status}`;
+      return {
+        success: false,
+        taskId: '',
+        trackingUrl: '',
+        estimatedDeliveryMinutes: 0,
+        message: `Mangwale API dispatch rejected (${res.status}): ${errDetails}`,
+      };
+    }
 
     return {
-      success: true,
-      taskId: randomTaskId,
-      trackingUrl: `https://mangwale.in/track/${randomTaskId}`,
-      estimatedDeliveryMinutes: 20 + Math.floor(Math.random() * 10),
-      rider: assignedRider,
-      message: `Mangwale rider assigned for ${outlet.name} (Key: ${creds.apiKey.slice(0, 10)}...)`,
+      success: false,
+      taskId: '',
+      trackingUrl: '',
+      estimatedDeliveryMinutes: 0,
+      message: `Unable to connect to Mangwale dispatch endpoint (${creds.endpoint})`,
     };
   } catch (err: unknown) {
     const errorMsg = err instanceof Error ? err.message : 'Unknown Mangwale API error';
@@ -337,6 +347,262 @@ export async function dispatchToMangwale(
       trackingUrl: '',
       estimatedDeliveryMinutes: 0,
       message: `Failed to dispatch to Mangwale: ${errorMsg}`,
+    };
+  }
+}
+
+/**
+ * Fetches real-time status and delivery details directly from Mangwale Enterprise API
+ */
+export async function fetchMangwaleOrderStatus(
+  taskId: string,
+  outlet?: Outlet
+): Promise<{
+  success: boolean;
+  taskId: string;
+  status: MangwaleLogisticsInfo['status'];
+  rawStatus?: string;
+  rider?: {
+    name: string;
+    phone: string;
+    vehicleNo?: string;
+  };
+  trackingUrl?: string;
+  estimatedDeliveryMinutes?: number;
+  message?: string;
+}> {
+  if (!taskId || !taskId.trim()) {
+    return {
+      success: false,
+      taskId: '',
+      status: 'PENDING',
+      message: 'Task ID is required to fetch Mangwale status',
+    };
+  }
+
+  const creds = resolveMangwaleCredentials(outlet);
+  if (!creds.apiKey || !creds.apiSecret) {
+    return {
+      success: false,
+      taskId,
+      status: 'PENDING',
+      message: 'Mangwale API credentials not configured',
+    };
+  }
+
+  const envMode = creds.apiKey.startsWith('mw_test_')
+    ? 'test'
+    : creds.environment === 'sandbox'
+    ? 'test'
+    : 'live';
+
+  try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 6000);
+
+    const res = await fetch(`${creds.endpoint}/orders/${encodeURIComponent(taskId)}`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-API-Key': creds.apiKey,
+        'X-API-Secret': creds.apiSecret,
+        'X-Environment': envMode,
+      },
+      signal: controller.signal,
+    }).catch(() => null);
+
+    clearTimeout(timeoutId);
+
+    if (res && res.ok) {
+      const data = await res.json().catch(() => ({}));
+      const orderData = data.order || data;
+      const rawStatus = String(orderData.status || '').toUpperCase();
+      const statusMap: Record<string, MangwaleLogisticsInfo['status']> = {
+        'ORDER.CREATED': 'PENDING',
+        'ORDER.SEARCHING_RIDER': 'PENDING',
+        'ORDER.ASSIGNED': 'ASSIGNED',
+        'ORDER.ARRIVED_PICKUP': 'ASSIGNED',
+        'ORDER.PICKED_UP': 'PICKED_UP',
+        'ORDER.ARRIVED_DROP': 'IN_TRANSIT',
+        'ORDER.DELIVERED': 'DELIVERED',
+        'ORDER.CANCELLED': 'FAILED',
+        'ORDER.FAILED': 'FAILED',
+        'PENDING': 'PENDING',
+        'ASSIGNED': 'ASSIGNED',
+        'PICKED_UP': 'PICKED_UP',
+        'IN_TRANSIT': 'IN_TRANSIT',
+        'DELIVERED': 'DELIVERED',
+        'FAILED': 'FAILED',
+      };
+
+      const mappedStatus = statusMap[rawStatus] || 'PENDING';
+      const riderData = orderData.rider;
+
+      return {
+        success: true,
+        taskId,
+        status: mappedStatus,
+        rawStatus,
+        rider:
+          riderData && riderData.name
+            ? {
+                name: riderData.name,
+                phone: riderData.phone || '',
+                vehicleNo: riderData.vehicle_number || riderData.vehicleNo || '',
+              }
+            : undefined,
+        trackingUrl: orderData.tracking_url || undefined,
+        estimatedDeliveryMinutes: Number(
+          orderData.estimated_time_minutes || orderData.estimatedDeliveryMinutes || 0
+        ),
+        message: 'Status fetched in real time from Mangwale API',
+      };
+    }
+
+    return {
+      success: false,
+      taskId,
+      status: 'PENDING',
+      message: res ? `Mangwale API returned HTTP ${res.status}` : 'Unable to connect to Mangwale',
+    };
+  } catch (err: unknown) {
+    const errorMsg = err instanceof Error ? err.message : 'Unknown Mangwale status error';
+    return {
+      success: false,
+      taskId,
+      status: 'PENDING',
+      message: `Mangwale status fetch error: ${errorMsg}`,
+    };
+  }
+}
+
+/**
+ * Fetches active deliveries directly from Mangwale Enterprise API in real time
+ */
+export async function fetchMangwaleDeliveries(
+  outlet?: Outlet,
+  options?: { status?: string; limit?: number }
+): Promise<{
+  success: boolean;
+  deliveries: Array<{
+    taskId: string;
+    externalOrderId?: string;
+    status: MangwaleLogisticsInfo['status'];
+    rawStatus: string;
+    rider?: {
+      name: string;
+      phone: string;
+      vehicleNo?: string;
+    };
+    trackingUrl?: string;
+    estimatedDeliveryMinutes?: number;
+    createdAt?: string;
+  }>;
+  message?: string;
+}> {
+  const creds = resolveMangwaleCredentials(outlet);
+  if (!creds.apiKey || !creds.apiSecret) {
+    return {
+      success: false,
+      deliveries: [],
+      message: 'Mangwale API credentials not configured',
+    };
+  }
+
+  const envMode = creds.apiKey.startsWith('mw_test_')
+    ? 'test'
+    : creds.environment === 'sandbox'
+    ? 'test'
+    : 'live';
+
+  try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 6000);
+
+    const queryParams = new URLSearchParams();
+    if (options?.status) queryParams.set('status', options.status);
+    if (options?.limit) queryParams.set('limit', String(options.limit));
+    if (creds.merchantId) queryParams.set('merchant_id', creds.merchantId);
+
+    const res = await fetch(`${creds.endpoint}/orders?${queryParams.toString()}`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-API-Key': creds.apiKey,
+        'X-API-Secret': creds.apiSecret,
+        'X-Environment': envMode,
+      },
+      signal: controller.signal,
+    }).catch(() => null);
+
+    clearTimeout(timeoutId);
+
+    if (res && res.ok) {
+      const data = await res.json().catch(() => ({}));
+      const rawOrders = Array.isArray(data.orders)
+        ? data.orders
+        : Array.isArray(data.deliveries)
+        ? data.deliveries
+        : [];
+
+      const statusMap: Record<string, MangwaleLogisticsInfo['status']> = {
+        'ORDER.CREATED': 'PENDING',
+        'ORDER.SEARCHING_RIDER': 'PENDING',
+        'ORDER.ASSIGNED': 'ASSIGNED',
+        'ORDER.ARRIVED_PICKUP': 'ASSIGNED',
+        'ORDER.PICKED_UP': 'PICKED_UP',
+        'ORDER.ARRIVED_DROP': 'IN_TRANSIT',
+        'ORDER.DELIVERED': 'DELIVERED',
+        'ORDER.CANCELLED': 'FAILED',
+        'ORDER.FAILED': 'FAILED',
+        'PENDING': 'PENDING',
+        'ASSIGNED': 'ASSIGNED',
+        'PICKED_UP': 'PICKED_UP',
+        'IN_TRANSIT': 'IN_TRANSIT',
+        'DELIVERED': 'DELIVERED',
+        'FAILED': 'FAILED',
+      };
+
+      const deliveries = rawOrders.map((raw: any) => {
+        const rawStatus = String(raw.status || '').toUpperCase();
+        const rider = raw.rider;
+        return {
+          taskId: String(raw.order_id || raw.taskId || raw.id || ''),
+          externalOrderId: raw.external_order_id || raw.orderNumber,
+          status: statusMap[rawStatus] || 'PENDING',
+          rawStatus,
+          rider:
+            rider && rider.name
+              ? {
+                  name: rider.name,
+                  phone: rider.phone || '',
+                  vehicleNo: rider.vehicle_number || rider.vehicleNo || '',
+                }
+              : undefined,
+          trackingUrl: raw.tracking_url || undefined,
+          estimatedDeliveryMinutes: Number(raw.estimated_time_minutes || 0),
+          createdAt: raw.created_at || raw.createdAt,
+        };
+      });
+
+      return {
+        success: true,
+        deliveries,
+        message: `Fetched ${deliveries.length} real-time deliveries from Mangwale`,
+      };
+    }
+
+    return {
+      success: false,
+      deliveries: [],
+      message: res ? `Mangwale API returned HTTP ${res.status}` : 'Unable to reach Mangwale API',
+    };
+  } catch (err: unknown) {
+    const errorMsg = err instanceof Error ? err.message : 'Unknown error';
+    return {
+      success: false,
+      deliveries: [],
+      message: `Failed to fetch deliveries: ${errorMsg}`,
     };
   }
 }

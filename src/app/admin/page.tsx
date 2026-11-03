@@ -68,35 +68,68 @@ export default function AdminPage() {
     return () => clearInterval(interval);
   }, [selectedOutletFilter]);
 
-  // Dispatch Webhook Simulator
-  const handleSimulateStatus = async (
-    taskId: string,
-    eventStatus: 'RIDER_ASSIGNED' | 'PICKED' | 'OUT_FOR_DELIVERY' | 'DELIVERED'
-  ) => {
-    try {
-      const res = await fetch('/api/webhooks/mangwale', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          taskId,
-          event: eventStatus,
-          rider: {
-            name: 'Sachin Patil',
-            phone: '+91 99221 10099',
-            vehicleNo: 'MH 15 EZ 4412',
-          },
-          estimatedMinutes: eventStatus === 'DELIVERED' ? 0 : 12,
-        }),
-      });
+  const [isSyncingMangwale, setIsSyncingMangwale] = useState(false);
 
+  // Real-time synchronization with Mangwale Logistics API
+  const handleSyncMangwaleStatus = async (orderId?: string) => {
+    setIsSyncingMangwale(true);
+    try {
+      if (orderId) {
+        const res = await fetch(`/api/logistics/mangwale?orderId=${encodeURIComponent(orderId)}`);
+        const data = await res.json();
+        if (data.success) {
+          setStatusMessage(`✓ Real-time status synced with Mangwale for Order #${data.order?.orderNumber || orderId}`);
+          fetchOrders();
+        } else {
+          setStatusMessage(`⚠️ Mangwale sync: ${data.message || 'No update available'}`);
+        }
+      } else {
+        const res = await fetch('/api/logistics/mangwale', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'SYNC_ALL', outletSlug: selectedOutletFilter }),
+        });
+        const data = await res.json();
+        if (data.success) {
+          setStatusMessage(`✓ ${data.message}`);
+          fetchOrders();
+        } else {
+          setStatusMessage(`⚠️ Mangwale sync failed: ${data.message}`);
+        }
+      }
+      setTimeout(() => setStatusMessage(''), 4000);
+    } catch (e) {
+      console.error('Mangwale sync error', e);
+      setStatusMessage('⚠️ Could not connect to Mangwale sync service');
+      setTimeout(() => setStatusMessage(''), 4000);
+    } finally {
+      setIsSyncingMangwale(false);
+    }
+  };
+
+  // Dispatch order to Mangwale
+  const handleDispatchToMangwale = async (orderId: string) => {
+    setIsSyncingMangwale(true);
+    try {
+      const res = await fetch(`/api/orders/${orderId}/retry-dispatch`, {
+        method: 'POST',
+      });
       const data = await res.json();
       if (data.success) {
-        setStatusMessage(`✓ Delivery fleet status updated: ${eventStatus.replace(/_/g, ' ')}`);
+        setStatusMessage(
+          `✓ Order successfully dispatched to Mangwale (${data.order?.mangwale?.taskId || 'Task Created'})`
+        );
         fetchOrders();
-        setTimeout(() => setStatusMessage(''), 3500);
+      } else {
+        setStatusMessage(`⚠️ Mangwale Dispatch: ${data.message}`);
       }
+      setTimeout(() => setStatusMessage(''), 4500);
     } catch (e) {
-      console.error(e);
+      console.error('Mangwale dispatch error', e);
+      setStatusMessage('⚠️ Failed to dispatch to Mangwale');
+      setTimeout(() => setStatusMessage(''), 4000);
+    } finally {
+      setIsSyncingMangwale(false);
     }
   };
 
@@ -231,11 +264,11 @@ export default function AdminPage() {
         </div>
 
         <div className="bg-white p-5 rounded-3xl border border-stone-200/90 shadow-[0_2px_8px_rgba(0,0,0,0.02)] space-y-1">
-          <span className="text-xs text-stone-400 block font-medium">Fleet In Transit</span>
+          <span className="text-xs text-stone-400 block font-medium">Mangwale Deliveries</span>
           <span className="text-2xl font-serif font-bold text-stone-900 block mt-1">
             {filteredOrders.filter((o) => o.mangwale?.taskId && o.orderStatus !== 'DELIVERED').length} Active
           </span>
-          <span className="text-[11px] text-stone-500">Express Fleet Turnaround</span>
+          <span className="text-[11px] text-stone-500">Real-time Mangwale Logistics</span>
         </div>
       </div>
 
@@ -262,7 +295,7 @@ export default function AdminPage() {
           }`}
         >
           <Truck className="w-3.5 h-3.5" />
-          <span>Fleet Dispatch Operations</span>
+          <span>Mangwale Deliveries</span>
         </button>
       </div>
 
@@ -444,68 +477,140 @@ export default function AdminPage() {
         </div>
       )}
 
-      {/* Fleet Dispatch Operations */}
+      {/* Mangwale Real-Time Logistics & Deliveries */}
       {activeTab === 'dispatch' && (
         <div className="bg-white rounded-3xl border border-stone-200/90 p-6 space-y-6 shadow-[0_2px_8px_rgba(0,0,0,0.02)]">
-          <div>
-            <h2 className="text-base font-serif font-bold text-stone-900">
-              Fleet Dispatch &amp; Fulfillment Operations
-            </h2>
-            <p className="text-xs text-stone-500 mt-0.5">
-              Manage rider assignment, order pickup, transit dispatch, and doorstep delivery completion in real time.
-            </p>
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-stone-100 pb-5">
+            <div>
+              <div className="flex items-center gap-2">
+                <h2 className="text-base font-serif font-bold text-stone-900">
+                  Mangwale 3rd-Party Logistics &amp; Deliveries
+                </h2>
+                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-mono bg-emerald-50 text-emerald-800 border border-emerald-200">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                  Real-Time Sync
+                </span>
+              </div>
+              <p className="text-xs text-stone-500 mt-0.5">
+                Live delivery status, Mangwale task tracking, and rider allocations fetched in real time from Mangwale API.
+              </p>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => handleSyncMangwaleStatus()}
+                disabled={isSyncingMangwale}
+                className="px-3.5 py-1.5 bg-stone-900 hover:bg-stone-800 disabled:bg-stone-400 text-white text-xs font-semibold rounded-full flex items-center gap-1.5 transition cursor-pointer shadow-xs"
+              >
+                <RefreshCw className={`w-3.5 h-3.5 ${isSyncingMangwale ? 'animate-spin' : ''}`} />
+                <span>Sync with Mangwale</span>
+              </button>
+            </div>
           </div>
 
           <div className="divide-y divide-stone-100">
-            {filteredOrders.map((order) => {
-              const taskId = order.mangwale?.taskId || `task-${order.id}`;
+            {filteredOrders.length === 0 ? (
+              <p className="text-xs text-stone-400 py-6 text-center">No orders to display.</p>
+            ) : (
+              filteredOrders.map((order) => {
+                const isDispatched = Boolean(order.mangwale?.taskId);
+                const hasRider = Boolean(order.mangwale?.riderName);
 
-              return (
-                <div key={order.id} className="py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <span className="font-serif font-bold text-stone-900 text-sm">
-                        {order.orderNumber}
-                      </span>
-                      <span className="text-xs font-medium text-stone-600">
-                        ({order.customer.name})
-                      </span>
-                      {getStatusBadge(order.orderStatus)}
+                return (
+                  <div
+                    key={order.id}
+                    className="py-4 flex flex-col lg:flex-row lg:items-center justify-between gap-4"
+                  >
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-2">
+                        <span className="font-serif font-bold text-stone-900 text-sm">
+                          {order.orderNumber}
+                        </span>
+                        <span className="text-xs font-medium text-stone-600">
+                          ({order.customer.name})
+                        </span>
+                        {getStatusBadge(order.orderStatus)}
+                      </div>
+                      <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-stone-500">
+                        <span>Destination: {order.customer.area || 'Nashik'}</span>
+                        <span>•</span>
+                        <span>Outlet: {order.outletSlug}</span>
+                        <span>•</span>
+                        <span className="font-mono">
+                          Task ID: {order.mangwale?.taskId || 'Not Dispatched'}
+                        </span>
+                      </div>
+                      {order.mangwale?.notes && (
+                        <p className="text-[11px] text-stone-400 italic">
+                          {order.mangwale.notes}
+                        </p>
+                      )}
                     </div>
-                    <span className="text-[11px] text-stone-400 font-mono mt-0.5 block">
-                      Delivery Ref: #{order.orderNumber}
-                    </span>
-                  </div>
 
-                  <div className="flex flex-wrap items-center gap-1.5">
-                    <button
-                      onClick={() => handleSimulateStatus(taskId, 'RIDER_ASSIGNED')}
-                      className="px-2.5 py-1 bg-stone-100 hover:bg-stone-200 text-stone-800 text-[11px] font-medium rounded-full transition cursor-pointer"
-                    >
-                      Assign Rider
-                    </button>
-                    <button
-                      onClick={() => handleSimulateStatus(taskId, 'PICKED')}
-                      className="px-2.5 py-1 bg-stone-100 hover:bg-stone-200 text-stone-800 text-[11px] font-medium rounded-full transition cursor-pointer"
-                    >
-                      Mark Picked Up
-                    </button>
-                    <button
-                      onClick={() => handleSimulateStatus(taskId, 'OUT_FOR_DELIVERY')}
-                      className="px-2.5 py-1 bg-indigo-50 hover:bg-indigo-100 text-indigo-800 text-[11px] font-medium rounded-full transition cursor-pointer"
-                    >
-                      Out for Delivery
-                    </button>
-                    <button
-                      onClick={() => handleSimulateStatus(taskId, 'DELIVERED')}
-                      className="px-2.5 py-1 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 text-[11px] font-medium rounded-full transition cursor-pointer"
-                    >
-                      Mark Delivered
-                    </button>
+                    <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+                      {/* Rider / Status Info */}
+                      <div className="text-right sm:text-left text-xs bg-stone-50 px-3.5 py-2 rounded-2xl border border-stone-200/70 min-w-[200px]">
+                        <span className="text-[10px] uppercase tracking-wider text-stone-400 block font-medium">
+                          Mangwale Status
+                        </span>
+                        <div className="font-semibold text-stone-800">
+                          {order.mangwale?.status || 'PENDING'}
+                        </div>
+                        {hasRider ? (
+                          <div className="text-[11px] text-stone-600 mt-0.5">
+                            Rider: <strong className="text-stone-900">{order.mangwale?.riderName}</strong>
+                            {order.mangwale?.riderPhone && (
+                              <span className="ml-1 text-stone-400">({order.mangwale?.riderPhone})</span>
+                            )}
+                          </div>
+                        ) : (
+                          <div className="text-[10px] text-stone-400 mt-0.5">
+                            Awaiting rider assignment
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Real Actions */}
+                      <div className="flex items-center gap-1.5">
+                        {isDispatched ? (
+                          <>
+                            <button
+                              onClick={() => handleSyncMangwaleStatus(order.id)}
+                              disabled={isSyncingMangwale}
+                              title="Fetch real-time delivery status from Mangwale API"
+                              className="px-2.5 py-1 bg-stone-100 hover:bg-stone-200 text-stone-800 text-[11px] font-medium rounded-full transition flex items-center gap-1 cursor-pointer"
+                            >
+                              <RefreshCw className="w-3 h-3" />
+                              <span>Sync Status</span>
+                            </button>
+                            {order.mangwale?.trackingUrl && (
+                              <a
+                                href={order.mangwale.trackingUrl}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="px-2.5 py-1 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 text-[11px] font-medium rounded-full transition flex items-center gap-1"
+                              >
+                                <ExternalLink className="w-3 h-3" />
+                                <span>Track Live</span>
+                              </a>
+                            )}
+                          </>
+                        ) : (
+                          <button
+                            onClick={() => handleDispatchToMangwale(order.id)}
+                            disabled={isSyncingMangwale}
+                            className="px-3 py-1 bg-amber-600 hover:bg-amber-700 text-white text-[11px] font-medium rounded-full transition flex items-center gap-1 cursor-pointer"
+                          >
+                            <Send className="w-3 h-3" />
+                            <span>Dispatch to Mangwale</span>
+                          </button>
+                        )}
+                      </div>
+                    </div>
                   </div>
-                </div>
-              );
-            })}
+                );
+              })
+            )}
           </div>
         </div>
       )}
