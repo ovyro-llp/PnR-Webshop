@@ -36,7 +36,15 @@ interface CartDrawerProps {
 export function CartDrawer({ outletSlug, campaignSlug }: CartDrawerProps) {
   const router = useRouter();
   const { user, isCustomer, loginCustomer, registerCustomer, autoRegisterOrLoginCustomer, logout } = useAuth();
-  const { deliveryAddress, deliveryArea, deliveryCoordinates, setDeliveryCoordinates, nearestOutlet } = useLocation();
+  const {
+    deliveryAddress,
+    setDeliveryAddress,
+    deliveryArea,
+    setDeliveryArea,
+    deliveryCoordinates,
+    setDeliveryCoordinates,
+    nearestOutlet,
+  } = useLocation();
   const {
     items,
     cartOutletSlug,
@@ -78,10 +86,13 @@ export function CartDrawer({ outletSlug, campaignSlug }: CartDrawerProps) {
   }));
 
   useEffect(() => {
-    if (deliveryCoordinates && !customer.coordinates) {
-      setCustomer((prev) => ({ ...prev, coordinates: deliveryCoordinates }));
-    }
-  }, [deliveryCoordinates]);
+    setCustomer((prev) => ({
+      ...prev,
+      coordinates: deliveryCoordinates || prev.coordinates,
+      address: prev.address ? prev.address : (deliveryAddress || ''),
+      area: prev.area ? prev.area : (deliveryArea || ''),
+    }));
+  }, [deliveryCoordinates, deliveryAddress, deliveryArea]);
 
   // Sync customer details when user logs in
   useEffect(() => {
@@ -442,23 +453,33 @@ export function CartDrawer({ outletSlug, campaignSlug }: CartDrawerProps) {
                   </div>
 
                   <div className="space-y-2">
-                    {/* Interactive Map Pin Selector Trigger */}
-                    <div className="flex items-center justify-between pb-1">
-                      <span className="text-[10px] font-bold text-stone-600 uppercase tracking-wider">
-                        Map Pin Location
-                      </span>
-                      <button
-                        type="button"
-                        onClick={() => setIsMapModalOpen(true)}
-                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-stone-900 hover:bg-stone-800 text-white text-xs font-semibold transition cursor-pointer shadow-xs"
-                      >
-                        <Map className="w-3.5 h-3.5 text-amber-400" />
-                        <span>{customer.coordinates ? 'Edit Map Pin' : 'Select Location on Map'}</span>
-                      </button>
-                    </div>
-
-                    {customer.coordinates && (
-                      <div className="bg-emerald-50 border border-emerald-200/90 rounded-xl px-3 py-2 flex items-center justify-between text-xs text-emerald-950">
+                    {/* Map-First Location Selector */}
+                    {!customer.coordinates ? (
+                      <div className="bg-amber-50/80 border border-amber-200 rounded-2xl p-3 space-y-2">
+                        <div className="flex items-start justify-between gap-2">
+                          <div className="flex items-start gap-2">
+                            <Map className="w-4 h-4 text-amber-700 shrink-0 mt-0.5" />
+                            <div>
+                              <p className="text-xs font-bold text-amber-950">
+                                Step 1: Select Location on Map
+                              </p>
+                              <p className="text-[11px] text-amber-800 leading-tight">
+                                Pinpoint your doorstep to auto-fill street, area, and pincode.
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => setIsMapModalOpen(true)}
+                          className="w-full py-2 bg-stone-900 hover:bg-stone-800 text-white rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition cursor-pointer shadow-xs"
+                        >
+                          <MapPin className="w-3.5 h-3.5 text-amber-400" />
+                          <span>Choose on Map (Auto-Fills Address)</span>
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="bg-emerald-50 border border-emerald-200/90 rounded-2xl p-3 flex items-center justify-between text-xs text-emerald-950">
                         <div className="flex items-center gap-2">
                           <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
                           <div>
@@ -468,16 +489,28 @@ export function CartDrawer({ outletSlug, campaignSlug }: CartDrawerProps) {
                             </span>
                           </div>
                         </div>
-                        <span className="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800">
-                          GPS Confirmed
-                        </span>
+                        <button
+                          type="button"
+                          onClick={() => setIsMapModalOpen(true)}
+                          className="px-2.5 py-1 rounded-lg bg-emerald-100 hover:bg-emerald-200 text-emerald-900 text-[10px] font-bold tracking-wider uppercase transition cursor-pointer"
+                        >
+                          Change Pin
+                        </button>
                       </div>
                     )}
 
+                    {/* Step 2: Address Inputs (Auto-filled from map, editable by customer) */}
                     <div>
-                      <label className="block text-[10px] font-bold text-stone-600 uppercase tracking-wider mb-1">
-                        House / Flat No., Society / Building, Landmark *
-                      </label>
+                      <div className="flex items-center justify-between mb-1">
+                        <label className="block text-[10px] font-bold text-stone-600 uppercase tracking-wider">
+                          House / Flat No., Society / Building, Landmark *
+                        </label>
+                        {customer.coordinates && (
+                          <span className="text-[9px] font-semibold text-emerald-700">
+                            Auto-filled • Editable
+                          </span>
+                        )}
+                      </div>
                       <textarea
                         required
                         rows={2}
@@ -843,12 +876,23 @@ export function CartDrawer({ outletSlug, campaignSlug }: CartDrawerProps) {
             <DeliveryMapPicker
               initialCoords={customer.coordinates || deliveryCoordinates || undefined}
               onConfirmLocation={(data) => {
-                setCustomer((prev) => ({
-                  ...prev,
-                  coordinates: { lat: data.lat, lng: data.lng },
-                  area: prev.area || data.nearestOutlet.area,
-                }));
+                setCustomer((prev) => {
+                  let newAddr = data.street || data.formattedAddress;
+                  if (prev.address && prev.address.toLowerCase().includes('flat')) {
+                    const prefix = prev.address.split(',')[0];
+                    newAddr = `${prefix}, ${data.street || data.formattedAddress}`;
+                  }
+                  return {
+                    ...prev,
+                    coordinates: { lat: data.lat, lng: data.lng },
+                    address: newAddr,
+                    area: data.area || prev.area || data.nearestOutlet.area,
+                    pincode: data.pincode || prev.pincode || '422005',
+                  };
+                });
                 setDeliveryCoordinates({ lat: data.lat, lng: data.lng });
+                setDeliveryAddress(data.street || data.formattedAddress);
+                if (data.area) setDeliveryArea(data.area);
                 setIsMapModalOpen(false);
               }}
               onClose={() => setIsMapModalOpen(false)}
