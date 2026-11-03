@@ -202,26 +202,46 @@ export function OrderTrackingClient({
         </div>
 
         {/* Delivery Executive Info */}
-        {order.mangwale?.riderName && (
-          <div className="p-4 bg-white rounded-2xl border border-stone-200/80 flex items-center justify-between text-xs">
+        {order.mangwale && (
+          <div className="p-4 bg-white rounded-2xl border border-stone-200/80 flex flex-wrap items-center justify-between gap-3 text-xs">
             <div>
               <span className="text-[10px] uppercase tracking-wider text-stone-400 font-medium">
-                Delivery Executive
+                Logistics Partner
               </span>
-              <p className="font-bold text-stone-900">{order.mangwale.riderName}</p>
+              <p className="font-bold text-stone-900">
+                {order.mangwale.riderName || 'Mangwale Logistics (Nashik)'}
+              </p>
               {order.mangwale.riderVehicleNo && (
                 <p className="text-[10px] text-stone-500 font-mono">{order.mangwale.riderVehicleNo}</p>
               )}
+              {order.mangwale.taskId && (
+                <p className="text-[10px] text-stone-400 font-mono mt-0.5">
+                  Tracking ID: {order.mangwale.taskId}
+                </p>
+              )}
             </div>
-            {order.mangwale.riderPhone && (
-              <a
-                href={`tel:${order.mangwale.riderPhone}`}
-                className="px-3 py-1.5 rounded-full border border-stone-300 text-stone-700 hover:text-stone-900 font-semibold flex items-center gap-1.5 transition"
-              >
-                <Phone className="w-3.5 h-3.5" />
-                <span>Call Executive</span>
-              </a>
-            )}
+            <div className="flex items-center gap-2">
+              {order.mangwale.riderPhone && (
+                <a
+                  href={`tel:${order.mangwale.riderPhone}`}
+                  className="px-3 py-1.5 rounded-full border border-stone-300 text-stone-700 hover:text-stone-900 font-semibold flex items-center gap-1.5 transition"
+                >
+                  <Phone className="w-3.5 h-3.5" />
+                  <span>Call Executive</span>
+                </a>
+              )}
+              {order.mangwale.trackingUrl && (
+                <a
+                  href={order.mangwale.trackingUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="px-3.5 py-1.5 rounded-full bg-emerald-700 text-white hover:bg-emerald-800 font-semibold flex items-center gap-1.5 transition shadow-xs"
+                >
+                  <Truck className="w-3.5 h-3.5" />
+                  <span>Track Live</span>
+                </a>
+              )}
+            </div>
           </div>
         )}
       </div>
