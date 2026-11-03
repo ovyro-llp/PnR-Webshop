@@ -338,59 +338,130 @@ export async function dispatchToMangwale(
 /**
  * Handle incoming Mangwale delivery status webhooks
  */
-export function parseMangwaleWebhook(payload: Record<string, unknown>): Partial<MangwaleLogisticsInfo> {
+export function parseMangwaleWebhook(payload: Record<string, unknown>): Partial<MangwaleLogisticsInfo> & {
+  orderNumber?: string;
+  eventType?: string;
+} {
   const statusMap: Record<string, MangwaleLogisticsInfo['status']> = {
-    RIDER_ASSIGNED: 'ASSIGNED',
-    PICKED: 'PICKED_UP',
-    OUT_FOR_DELIVERY: 'IN_TRANSIT',
-    DELIVERED: 'DELIVERED',
-    FAILED: 'FAILED',
+    'ORDER.CREATED': 'PENDING',
+    'ORDER.SEARCHING_RIDER': 'PENDING',
+    'ORDER.ASSIGNED': 'ASSIGNED',
+    'ORDER.ARRIVED_PICKUP': 'ASSIGNED',
+    'ORDER.PICKED_UP': 'PICKED_UP',
+    'ORDER.ARRIVED_DROP': 'IN_TRANSIT',
+    'ORDER.DELIVERED': 'DELIVERED',
+    'ORDER.CANCELLED': 'FAILED',
+    'ORDER.FAILED': 'FAILED',
+    'ORDER.RETURNING': 'FAILED',
+    'ORDER.RETURNED': 'FAILED',
+    // Common / legacy keys
+    'RIDER_ASSIGNED': 'ASSIGNED',
+    'ASSIGNED': 'ASSIGNED',
+    'PICKED': 'PICKED_UP',
+    'PICKED_UP': 'PICKED_UP',
+    'OUT_FOR_DELIVERY': 'IN_TRANSIT',
+    'IN_TRANSIT': 'IN_TRANSIT',
+    'DELIVERED': 'DELIVERED',
+    'FAILED': 'FAILED',
+    'CANCELLED': 'FAILED',
   };
 
-  const statusKey = String(payload.event || payload.status || '').toUpperCase();
-  const rider = payload.rider as { name?: string; phone?: string; vehicleNo?: string } | undefined;
+  const eventType = String(payload.event || payload.event_type || payload.type || payload.status || '').toLowerCase();
+  const statusKey = eventType.toUpperCase();
+
+  const orderData = (payload.order && typeof payload.order === 'object' ? payload.order : {}) as Record<string, unknown>;
+  const riderData = ((orderData.rider && typeof orderData.rider === 'object' ? orderData.rider : payload.rider) || {}) as Record<string, unknown>;
+
+  const taskId = String(orderData.order_id || payload.order_id || orderData.taskId || payload.taskId || '');
+  const externalOrderId = String(orderData.external_order_id || payload.external_order_id || payload.orderNumber || payload.externalOrderId || '');
+  const trackingUrl = String(orderData.tracking_url || payload.tracking_url || payload.trackingUrl || '');
 
   return {
-    taskId: String(payload.taskId || ''),
+    taskId,
+    orderNumber: externalOrderId || undefined,
+    eventType,
     status: statusMap[statusKey] || 'ASSIGNED',
-    riderName: rider?.name,
-    riderPhone: rider?.phone,
-    riderVehicleNo: rider?.vehicleNo,
-    estimatedDeliveryMinutes: Number(payload.estimatedMinutes || 15),
+    riderName: (riderData.name as string) || undefined,
+    riderPhone: (riderData.phone as string) || undefined,
+    riderVehicleNo: (riderData.vehicle_number || riderData.vehicleNo) as string | undefined,
+    trackingUrl: trackingUrl || undefined,
+    estimatedDeliveryMinutes: Number(orderData.estimated_time_minutes || payload.estimated_minutes || payload.estimatedMinutes || 15),
   };
 }
 
+export interface MangwaleWebhookVerifyParams {
+  rawBody: string;
+  signature: string;
+  timestamp?: string | null;
+  eventId?: string | null;
+  customSecret?: string;
+}
+
 /**
- * Verify HMAC SHA256 signature sent by Mangwale in 'x-mangwale-signature' or 'x-signature'
+ * Verify HMAC SHA256 signature sent by Mangwale Enterprise:
+ * Format: HMAC-SHA256(secret, "v1." + timestamp + "." + eventId + "." + rawBody)
+ * Header: X-Webhook-Signature: v1=<hex digest>
  */
 export function verifyMangwaleWebhookSignature({
   rawBody,
   signature,
+  timestamp,
+  eventId,
   customSecret,
-}: {
-  rawBody: string;
-  signature: string;
-  customSecret?: string;
-}): boolean {
-  const secret = customSecret || process.env.MANGWALE_WEBHOOK_SECRET || 'mw_whsec_nashik_2026';
+}: MangwaleWebhookVerifyParams): boolean {
+  const secret =
+    customSecret ||
+    process.env.MANGWALE_WEBHOOK_SECRET ||
+    '74674008326d8f803ee968e532eaa66e01a1fc85c2f7409e744e10f2f0cc8ff1';
 
   // If simulation / local sandbox test without signature or matching mock
   if (
-    !signature ||
     signature === 'mock_webhook_signature' ||
     signature.startsWith('mock_') ||
-    process.env.NODE_ENV !== 'production'
+    (!signature && process.env.NODE_ENV !== 'production')
   ) {
     return true;
   }
 
+  if (!signature) {
+    return false;
+  }
+
+  // Strip "v1=" prefix if present: "X-Webhook-Signature: v1=<hex digest>"
+  const cleanSignature = signature.startsWith('v1=') ? signature.slice(3) : signature;
+
   try {
-    const expected = crypto
+    // 1. Primary official Mangwale Enterprise v1 algorithm:
+    // HMAC-SHA256(secret, "v1." + timestamp + "." + eventId + "." + rawBody)
+    if (timestamp && eventId) {
+      const payloadToSign = `v1.${timestamp}.${eventId}.${rawBody}`;
+      const expectedV1 = crypto
+        .createHmac('sha256', secret)
+        .update(payloadToSign)
+        .digest('hex');
+
+      if (
+        cleanSignature.length === expectedV1.length &&
+        crypto.timingSafeEqual(Buffer.from(cleanSignature, 'utf8'), Buffer.from(expectedV1, 'utf8'))
+      ) {
+        return true;
+      }
+    }
+
+    // 2. Direct rawBody HMAC fallback (for direct curl tests or legacy endpoints)
+    const expectedRaw = crypto
       .createHmac('sha256', secret)
       .update(rawBody)
       .digest('hex');
 
-    return expected === signature;
+    if (
+      cleanSignature.length === expectedRaw.length &&
+      crypto.timingSafeEqual(Buffer.from(cleanSignature, 'utf8'), Buffer.from(expectedRaw, 'utf8'))
+    ) {
+      return true;
+    }
+
+    return false;
   } catch (err) {
     console.error('Mangwale webhook signature verification error:', err);
     return false;
