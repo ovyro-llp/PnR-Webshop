@@ -38,6 +38,8 @@ export async function GET() {
 
         hasLiveCreds,
         isLiveReady,
+        activeMode: config.testMode ? 'SANDBOX' : 'LIVE',
+        isDatabaseConnected: Boolean(process.env.DATABASE_URL?.trim()),
         isEnabled: config.isEnabled,
         testMode: config.testMode,
         businessName: config.businessName,
@@ -93,7 +95,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Live credentials
-    if (liveKeyId !== undefined && liveKeyId.trim() !== '') {
+    if (liveKeyId !== undefined) {
       updates.liveKeyId = liveKeyId.trim();
     }
     if (liveKeySecret && liveKeySecret.trim() && !liveKeySecret.includes('••••')) {
@@ -104,7 +106,27 @@ export async function POST(req: NextRequest) {
     }
 
     if (isEnabled !== undefined) updates.isEnabled = Boolean(isEnabled);
-    if (testMode !== undefined) updates.testMode = Boolean(testMode);
+
+    // If live credentials are provided or present, automatically activate LIVE mode!
+    const isLiveInput = Boolean(
+      (typeof updates.liveKeyId === 'string' && updates.liveKeyId.startsWith('rzp_live_')) ||
+      (typeof updates.razorpayKeyId === 'string' && updates.razorpayKeyId.startsWith('rzp_live_')) ||
+      (typeof liveKeyId === 'string' && liveKeyId.startsWith('rzp_live_')) ||
+      (typeof razorpayKeyId === 'string' && razorpayKeyId.startsWith('rzp_live_'))
+    );
+
+    if (isLiveInput) {
+      updates.testMode = false;
+      if (updates.liveKeyId) {
+        updates.razorpayKeyId = updates.liveKeyId;
+      }
+      if (updates.liveKeySecret) {
+        updates.razorpayKeySecret = updates.liveKeySecret;
+      }
+    } else if (testMode !== undefined) {
+      updates.testMode = Boolean(testMode);
+    }
+
     if (businessName !== undefined && businessName.trim() !== '') {
       updates.businessName = businessName.trim();
     }
@@ -120,6 +142,8 @@ export async function POST(req: NextRequest) {
       config: {
         razorpayKeyId: updated.razorpayKeyId,
         testMode: updated.testMode,
+        activeMode: updated.testMode ? 'SANDBOX' : 'LIVE',
+        isDatabaseConnected: Boolean(process.env.DATABASE_URL?.trim()),
         isEnabled: updated.isEnabled,
         hasSecret: Boolean(updated.razorpayKeySecret),
         hasLiveSecret: Boolean(updated.liveKeySecret),

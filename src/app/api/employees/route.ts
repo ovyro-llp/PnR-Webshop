@@ -35,7 +35,7 @@ export async function POST(req: NextRequest) {
         );
       }
 
-      const newEmp = orderStore.createEmployee({
+      const newEmp = await orderStore.createEmployeeAsync({
         name,
         email,
         phone: phone || '',
@@ -48,7 +48,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({
         success: true,
         employee: newEmp,
-        message: `Employee ${name} created successfully`,
+        message: `Employee ${name} created and permanently saved to PostgreSQL`,
       });
     }
 
@@ -60,7 +60,7 @@ export async function POST(req: NextRequest) {
         );
       }
 
-      const updated = orderStore.updateEmployee(employeeId, updates);
+      const updated = await orderStore.updateEmployeeAsync(employeeId, updates);
       if (!updated) {
         return NextResponse.json(
           { success: false, error: 'Employee not found' },
@@ -71,7 +71,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({
         success: true,
         employee: updated,
-        message: 'Employee updated successfully',
+        message: 'Employee updated and permanently saved to PostgreSQL',
       });
     }
 
@@ -83,7 +83,8 @@ export async function POST(req: NextRequest) {
         );
       }
 
-      const existing = (orderStore.getEmployees() as Employee[]).find((e) => e.id === employeeId);
+      const existingEmployees = await orderStore.getEmployeesAsync();
+      const existing = existingEmployees.find((e) => e.id === employeeId);
       if (!existing) {
         return NextResponse.json(
           { success: false, error: 'Employee not found' },
@@ -92,12 +93,12 @@ export async function POST(req: NextRequest) {
       }
 
       const newStatus = existing.status === 'ACTIVE' ? 'INACTIVE' : 'ACTIVE';
-      const updated = orderStore.updateEmployee(employeeId, { status: newStatus });
+      const updated = await orderStore.updateEmployeeAsync(employeeId, { status: newStatus });
 
       return NextResponse.json({
         success: true,
         employee: updated,
-        message: `Status updated to ${newStatus}`,
+        message: `Status updated to ${newStatus} and permanently saved to PostgreSQL`,
       });
     }
 
@@ -109,10 +110,10 @@ export async function POST(req: NextRequest) {
         );
       }
 
-      const deleted = orderStore.deleteEmployee(employeeId);
+      const deleted = await orderStore.deleteEmployeeAsync(employeeId);
       return NextResponse.json({
         success: deleted,
-        message: deleted ? 'Employee removed' : 'Employee not found',
+        message: deleted ? 'Employee removed and synced to PostgreSQL' : 'Employee not found',
       });
     }
 

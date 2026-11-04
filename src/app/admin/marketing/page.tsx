@@ -50,6 +50,9 @@ export default function MarketingViewPage() {
     hasLiveWebhookSecret?: boolean;
     hasTestSecret?: boolean;
     hasLiveCreds?: boolean;
+    isLiveReady?: boolean;
+    activeMode?: 'LIVE' | 'SANDBOX';
+    isDatabaseConnected?: boolean;
   }>({});
   const [isSavingPayment, setIsSavingPayment] = useState(false);
   const [copiedWebhookUrl, setCopiedWebhookUrl] = useState(false);
@@ -95,6 +98,9 @@ export default function MarketingViewPage() {
           hasLiveWebhookSecret: data.config.hasLiveWebhookSecret,
           hasTestSecret: data.config.hasTestSecret,
           hasLiveCreds: data.config.hasLiveCreds,
+          isLiveReady: data.config.isLiveReady,
+          activeMode: data.config.activeMode,
+          isDatabaseConnected: data.config.isDatabaseConnected,
         });
       }
     } catch (e) {
@@ -106,10 +112,14 @@ export default function MarketingViewPage() {
     setPaymentConfig((prev) => ({ ...prev, testMode: newTestMode }));
     setStatusMessage(newTestMode ? 'Switching to Sandbox Test Mode...' : 'Activating Live Production Mode...');
     try {
+      const payload = {
+        ...paymentConfig,
+        testMode: newTestMode,
+      };
       const res = await fetch('/api/payments/config', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ testMode: newTestMode }),
+        body: JSON.stringify(payload),
       });
       const data = await res.json();
       if (data.success) {
@@ -200,10 +210,16 @@ export default function MarketingViewPage() {
     setIsSavingPayment(true);
     setStatusMessage('');
     try {
+      const isLiveKeyEntered = Boolean(paymentConfig.liveKeyId && paymentConfig.liveKeyId.startsWith('rzp_live_'));
+      const payload = {
+        ...paymentConfig,
+        // If live credentials are provided or entered, guarantee live mode is activated
+        testMode: isLiveKeyEntered ? false : paymentConfig.testMode,
+      };
       const res = await fetch('/api/payments/config', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(paymentConfig),
+        body: JSON.stringify(payload),
       });
       const data = await res.json();
       if (data.success) {
@@ -618,11 +634,21 @@ export default function MarketingViewPage() {
               {/* Environment Toggle Header */}
               <div className="p-6 bg-white rounded-2xl border border-stone-200/80 shadow-2xs space-y-4">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-stone-100">
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 flex-wrap">
                     <Lock className="w-4 h-4 text-stone-800" />
                     <h3 className="text-sm font-serif font-bold text-stone-900">
                       Gateway Credentials &amp; Environment
                     </h3>
+                    {serverConfigFlags.isDatabaseConnected !== undefined && (
+                      <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-semibold ${
+                        serverConfigFlags.isDatabaseConnected
+                          ? 'bg-emerald-50 text-emerald-800 border border-emerald-200'
+                          : 'bg-amber-50 text-amber-800 border border-amber-200'
+                      }`}>
+                        <span className={`w-1.5 h-1.5 rounded-full ${serverConfigFlags.isDatabaseConnected ? 'bg-emerald-500' : 'bg-amber-500'}`} />
+                        <span>{serverConfigFlags.isDatabaseConnected ? 'PostgreSQL Connected (Persistent)' : 'Memory Only (Set DATABASE_URL)'}</span>
+                      </span>
+                    )}
                   </div>
 
                   {/* Mode Pills */}
@@ -784,9 +810,14 @@ export default function MarketingViewPage() {
                     <input
                       type="text"
                       value={paymentConfig.liveKeyId}
-                      onChange={(e) =>
-                        setPaymentConfig({ ...paymentConfig, liveKeyId: e.target.value })
-                      }
+                      onChange={(e) => {
+                        const val = e.target.value.trim();
+                        setPaymentConfig({
+                          ...paymentConfig,
+                          liveKeyId: val,
+                          ...(val.startsWith('rzp_live_') ? { testMode: false } : {}),
+                        });
+                      }}
                       placeholder="rzp_live_..."
                       className="w-full px-3.5 py-2.5 bg-stone-50/50 border border-stone-200 rounded-xl text-xs font-mono text-stone-900 focus:bg-white focus:outline-none focus:ring-1 focus:ring-stone-900"
                     />

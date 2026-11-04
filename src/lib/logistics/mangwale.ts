@@ -695,11 +695,58 @@ export function parseMangwaleWebhook(payload: Record<string, unknown>): Partial<
   const eventType = String(payload.event || payload.event_type || payload.type || payload.status || '').toLowerCase();
   const statusKey = eventType.toUpperCase();
 
-  const orderData = (payload.order && typeof payload.order === 'object' ? payload.order : {}) as Record<string, unknown>;
-  const riderData = ((orderData.rider && typeof orderData.rider === 'object' ? orderData.rider : payload.rider) || {}) as Record<string, unknown>;
+  const dataObj = ((payload.data && typeof payload.data === 'object' ? payload.data : payload.result) || {}) as Record<string, unknown>;
+  const orderData = (
+    (payload.order && typeof payload.order === 'object' ? payload.order : undefined) ||
+    (dataObj.order && typeof dataObj.order === 'object' ? dataObj.order : undefined) ||
+    (payload.delivery && typeof payload.delivery === 'object' ? payload.delivery : undefined) ||
+    (dataObj.delivery && typeof dataObj.delivery === 'object' ? dataObj.delivery : undefined) ||
+    (payload.task && typeof payload.task === 'object' ? payload.task : undefined) ||
+    (dataObj.task && typeof dataObj.task === 'object' ? dataObj.task : undefined) ||
+    dataObj ||
+    {}
+  ) as Record<string, unknown>;
 
-  const taskId = String(orderData.order_id || payload.order_id || orderData.taskId || payload.taskId || '');
-  const externalOrderId = String(orderData.external_order_id || payload.external_order_id || payload.orderNumber || payload.externalOrderId || '');
+  const riderData = (
+    (orderData.rider && typeof orderData.rider === 'object' ? orderData.rider : undefined) ||
+    (payload.rider && typeof payload.rider === 'object' ? payload.rider : undefined) ||
+    (dataObj.rider && typeof dataObj.rider === 'object' ? dataObj.rider : undefined) ||
+    {}
+  ) as Record<string, unknown>;
+
+  const taskId = String(
+    orderData.order_id ||
+    orderData.taskId ||
+    orderData.task_id ||
+    orderData.id ||
+    orderData.delivery_id ||
+    payload.order_id ||
+    payload.taskId ||
+    payload.task_id ||
+    payload.delivery_id ||
+    payload.id ||
+    dataObj.order_id ||
+    dataObj.taskId ||
+    dataObj.task_id ||
+    dataObj.id ||
+    ''
+  ).trim();
+
+  const externalOrderId = String(
+    orderData.external_order_id ||
+    orderData.order_number ||
+    orderData.orderNumber ||
+    orderData.client_order_id ||
+    payload.external_order_id ||
+    payload.order_number ||
+    payload.orderNumber ||
+    payload.client_order_id ||
+    dataObj.external_order_id ||
+    dataObj.order_number ||
+    dataObj.orderNumber ||
+    ''
+  ).trim();
+
   const customerPhone = String(
     orderData.customer_phone ||
     orderData.drop_phone ||
@@ -707,9 +754,20 @@ export function parseMangwaleWebhook(payload: Record<string, unknown>): Partial<
     payload.customer_phone ||
     payload.drop_phone ||
     payload.phone ||
+    dataObj.customer_phone ||
+    dataObj.phone ||
     ''
-  );
-  const rawTrackingUrl = String(orderData.tracking_url || payload.tracking_url || payload.trackingUrl || '');
+  ).trim();
+
+  const rawTrackingUrl = String(
+    orderData.tracking_url ||
+    orderData.trackingUrl ||
+    payload.tracking_url ||
+    payload.trackingUrl ||
+    dataObj.tracking_url ||
+    dataObj.trackingUrl ||
+    ''
+  ).trim();
   const trackingUrl = rawTrackingUrl || (taskId && customerPhone ? getMangwaleTrackingUrl(taskId, customerPhone) : undefined);
 
   return {

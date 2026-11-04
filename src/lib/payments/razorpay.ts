@@ -11,38 +11,55 @@ export interface CreateOrderParams {
 }
 
 export function buildRazorpayClient(config: PaymentGatewayConfig) {
-  // 1. Resolve live keys if provided across any standard environment variable, DB config, or saved config
+  // 1. Resolve live keys across all environment variable variations and database/storage config
   const liveKey = (
     process.env.RAZORPAY_LIVE_KEY_ID ||
+    process.env.RAZORPAY_LIVE_KEY ||
     (process.env.RAZORPAY_KEY_ID?.startsWith('rzp_live_') ? process.env.RAZORPAY_KEY_ID : '') ||
-    (process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID?.startsWith('rzp_live_')
-      ? process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID
-      : '') ||
+    (process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID?.startsWith('rzp_live_') ? process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID : '') ||
+    (process.env.NEXT_PUBLIC_RAZORPAY_LIVE_KEY_ID?.startsWith('rzp_live_') ? process.env.NEXT_PUBLIC_RAZORPAY_LIVE_KEY_ID : '') ||
+    (process.env.RAZORPAY_API_KEY?.startsWith('rzp_live_') ? process.env.RAZORPAY_API_KEY : '') ||
+    (process.env.RZP_LIVE_KEY_ID?.startsWith('rzp_live_') ? process.env.RZP_LIVE_KEY_ID : '') ||
+    (process.env.RZP_LIVE_KEY?.startsWith('rzp_live_') ? process.env.RZP_LIVE_KEY : '') ||
+    (process.env.RZP_KEY_ID?.startsWith('rzp_live_') ? process.env.RZP_KEY_ID : '') ||
     config.liveKeyId ||
     (config.razorpayKeyId?.startsWith('rzp_live_') ? config.razorpayKeyId : '') ||
     ''
   ).trim();
 
-  const liveSecret = (
+  const envSecretFound = (
     process.env.RAZORPAY_LIVE_KEY_SECRET ||
-    (process.env.RAZORPAY_KEY_ID?.startsWith('rzp_live_') ? process.env.RAZORPAY_KEY_SECRET : '') ||
-    (process.env.RAZORPAY_LIVE_KEY_ID?.startsWith('rzp_live_') ? process.env.RAZORPAY_KEY_SECRET : '') ||
+    process.env.RAZORPAY_LIVE_SECRET ||
+    process.env.RZP_LIVE_KEY_SECRET ||
+    process.env.RZP_LIVE_SECRET ||
+    (liveKey.startsWith('rzp_live_') ? (
+      process.env.RAZORPAY_KEY_SECRET ||
+      process.env.RAZORPAY_SECRET ||
+      process.env.RAZORPAY_SECRET_KEY ||
+      process.env.RAZORPAY_API_SECRET ||
+      process.env.RZP_KEY_SECRET ||
+      process.env.RZP_SECRET ||
+      ''
+    ) : '')
+  ).trim();
+
+  const liveSecret = (
+    envSecretFound ||
     config.liveKeySecret ||
-    (config.razorpayKeySecret && (config.liveKeyId?.startsWith('rzp_live_') || config.razorpayKeyId?.startsWith('rzp_live_'))
+    (config.razorpayKeySecret && (config.liveKeyId?.startsWith('rzp_live_') || config.razorpayKeyId?.startsWith('rzp_live_') || liveKey.startsWith('rzp_live_'))
       ? config.razorpayKeySecret
       : '') ||
+    (liveKey.startsWith('rzp_live_') && config.razorpayKeySecret ? config.razorpayKeySecret : '') ||
     ''
   ).trim();
 
-  const hasValidLiveCreds = liveKey.startsWith('rzp_live_') && Boolean(liveSecret);
+  const hasValidLiveCreds = Boolean(liveKey.startsWith('rzp_live_') && liveSecret);
 
   // 2. Resolve test keys with fallbacks
   const testKey = (
     config.testKeyId ||
     process.env.RAZORPAY_TEST_KEY_ID ||
-    (!process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID?.startsWith('rzp_live_')
-      ? process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID
-      : '') ||
+    (!process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID?.startsWith('rzp_live_') ? process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID : '') ||
     (!process.env.RAZORPAY_KEY_ID?.startsWith('rzp_live_') ? process.env.RAZORPAY_KEY_ID : '') ||
     'rzp_test_Tu3J2xHanphLOy'
   ).trim();
@@ -54,21 +71,29 @@ export function buildRazorpayClient(config: PaymentGatewayConfig) {
     'wQKVEbjQupqQMEZeqjA2eeju'
   ).trim();
 
-  // If live credentials are provided in the host environment, lock strictly into LIVE mode
+  // If live credentials are provided in the host environment or database, lock strictly into LIVE mode
   const isEnvLiveExplicit =
     process.env.RAZORPAY_ENV === 'live' ||
     Boolean(process.env.RAZORPAY_KEY_ID?.startsWith('rzp_live_')) ||
-    Boolean(process.env.RAZORPAY_LIVE_KEY_ID?.startsWith('rzp_live_'));
+    Boolean(process.env.RAZORPAY_LIVE_KEY_ID?.startsWith('rzp_live_')) ||
+    Boolean(process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID?.startsWith('rzp_live_'));
 
-  const isLive = Boolean(hasValidLiveCreds && (config.testMode === false || isEnvLiveExplicit));
+  // Live mode is active whenever valid live credentials exist AND testMode is not explicitly forced
+  const isLive = Boolean(
+    hasValidLiveCreds && (config.testMode === false || isEnvLiveExplicit || liveKey.startsWith('rzp_live_'))
+  );
 
   const activeKeyId = isLive ? liveKey : testKey;
   const activeKeySecret = isLive ? liveSecret : testSecret;
 
-  if (config.testMode === false && !hasValidLiveCreds) {
-    console.warn(
-      '[Razorpay Warning] Live Production Mode is activated in settings, but Live Key ID (rzp_live_...) or Secret is missing. Falling back to test credentials until live keys are configured.'
+  if (liveKey.startsWith('rzp_live_') && !liveSecret) {
+    console.error(
+      `[Razorpay Warning] Live Key ID is present (${liveKey}), but Live Key Secret is missing. Falling back to sandbox test credentials.`
     );
+  } else if (isLive) {
+    console.log(`[Razorpay Gateway] Active Mode: LIVE PRODUCTION (Key: ${activeKeyId.slice(0, 12)}...)`);
+  } else {
+    console.log(`[Razorpay Gateway] Active Mode: SANDBOX TEST (Key: ${activeKeyId})`);
   }
 
   const isDemoMode =

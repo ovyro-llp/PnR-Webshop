@@ -58,26 +58,48 @@ export function getPersistedPaymentConfig(
     console.warn('[PaymentConfigStorage] Failed to read payment-config.json:', err.message);
   }
 
-  // 1. Detect live credentials from environment variables (Railway / host sovereign variables)
+  // 1. Detect live credentials from environment variables across all standard naming conventions
   const envLiveKeyId = (
     process.env.RAZORPAY_LIVE_KEY_ID ||
+    process.env.RAZORPAY_LIVE_KEY ||
     (process.env.RAZORPAY_KEY_ID?.startsWith('rzp_live_') ? process.env.RAZORPAY_KEY_ID : '') ||
     (process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID?.startsWith('rzp_live_')
       ? process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID
       : '') ||
+    (process.env.NEXT_PUBLIC_RAZORPAY_LIVE_KEY_ID?.startsWith('rzp_live_')
+      ? process.env.NEXT_PUBLIC_RAZORPAY_LIVE_KEY_ID
+      : '') ||
+    (process.env.RAZORPAY_API_KEY?.startsWith('rzp_live_') ? process.env.RAZORPAY_API_KEY : '') ||
+    (process.env.RZP_LIVE_KEY_ID?.startsWith('rzp_live_') ? process.env.RZP_LIVE_KEY_ID : '') ||
+    (process.env.RZP_LIVE_KEY?.startsWith('rzp_live_') ? process.env.RZP_LIVE_KEY : '') ||
+    (process.env.RZP_KEY_ID?.startsWith('rzp_live_') ? process.env.RZP_KEY_ID : '') ||
     ''
   ).trim();
 
   const envLiveSecret = (
     process.env.RAZORPAY_LIVE_KEY_SECRET ||
-    (process.env.RAZORPAY_KEY_ID?.startsWith('rzp_live_') ? process.env.RAZORPAY_KEY_SECRET : '') ||
-    (process.env.RAZORPAY_LIVE_KEY_ID?.startsWith('rzp_live_') ? process.env.RAZORPAY_KEY_SECRET : '') ||
+    process.env.RAZORPAY_LIVE_SECRET ||
+    process.env.RZP_LIVE_KEY_SECRET ||
+    process.env.RZP_LIVE_SECRET ||
+    (process.env.RAZORPAY_KEY_ID?.startsWith('rzp_live_') ? (process.env.RAZORPAY_KEY_SECRET || process.env.RAZORPAY_SECRET) : '') ||
+    (process.env.RAZORPAY_LIVE_KEY_ID?.startsWith('rzp_live_') ? (process.env.RAZORPAY_KEY_SECRET || process.env.RAZORPAY_SECRET) : '') ||
+    (process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID?.startsWith('rzp_live_') ? (process.env.RAZORPAY_KEY_SECRET || process.env.RAZORPAY_SECRET) : '') ||
+    (envLiveKeyId ? (
+      process.env.RAZORPAY_KEY_SECRET ||
+      process.env.RAZORPAY_SECRET ||
+      process.env.RAZORPAY_SECRET_KEY ||
+      process.env.RAZORPAY_API_SECRET ||
+      process.env.RZP_KEY_SECRET ||
+      process.env.RZP_SECRET ||
+      ''
+    ) : '') ||
     ''
   ).trim();
 
   const envLiveWebhook = (
     process.env.RAZORPAY_LIVE_WEBHOOK_SECRET ||
-    (process.env.RAZORPAY_KEY_ID?.startsWith('rzp_live_') ? process.env.RAZORPAY_WEBHOOK_SECRET : '') ||
+    process.env.RAZORPAY_WEBHOOK_SECRET ||
+    process.env.RZP_WEBHOOK_SECRET ||
     ''
   ).trim();
 
@@ -96,11 +118,14 @@ export function getPersistedPaymentConfig(
   const liveKeySecret = (
     envLiveSecret ||
     overrideConfig?.liveKeySecret ||
-    (overrideConfig?.razorpayKeySecret && (overrideConfig?.liveKeyId?.startsWith('rzp_live_') || overrideConfig?.razorpayKeyId?.startsWith('rzp_live_'))
+    (overrideConfig?.razorpayKeySecret && (overrideConfig?.liveKeyId?.startsWith('rzp_live_') || overrideConfig?.razorpayKeyId?.startsWith('rzp_live_') || liveKeyId.startsWith('rzp_live_'))
       ? overrideConfig.razorpayKeySecret
       : '') ||
+    (liveKeyId.startsWith('rzp_live_') && overrideConfig?.razorpayKeySecret ? overrideConfig.razorpayKeySecret : '') ||
     fileConfig.liveKeySecret ||
-    (fileConfig.razorpayKeySecret && fileConfig.razorpayKeyId?.startsWith('rzp_live_') ? fileConfig.razorpayKeySecret : '') ||
+    (fileConfig.razorpayKeySecret && (fileConfig.liveKeyId?.startsWith('rzp_live_') || fileConfig.razorpayKeyId?.startsWith('rzp_live_') || liveKeyId.startsWith('rzp_live_'))
+      ? fileConfig.razorpayKeySecret
+      : '') ||
     ''
   ).trim();
 
@@ -143,8 +168,9 @@ export function getPersistedPaymentConfig(
 
   // Determine testMode:
   let testMode: boolean;
-  if (process.env.RAZORPAY_ENV === 'test') {
-    testMode = true;
+  if (hasValidLiveCreds) {
+    // If valid live credentials are provided in env or database, run LIVE!
+    testMode = false;
   } else if (process.env.RAZORPAY_ENV === 'live') {
     testMode = false;
   } else if (typeof overrideConfig?.testMode === 'boolean') {
@@ -152,7 +178,7 @@ export function getPersistedPaymentConfig(
   } else if (typeof fileConfig.testMode === 'boolean') {
     testMode = fileConfig.testMode;
   } else {
-    testMode = !hasValidLiveCreds;
+    testMode = true;
   }
 
   // Safety: If testMode is false but no live creds exist anywhere, fallback gracefully to test
@@ -217,9 +243,15 @@ export function savePersistedPaymentConfig(
     merged.testWebhookSecret = current.testWebhookSecret || baseConfig?.testWebhookSecret || '';
   }
 
-  // If testMode was explicitly updated, sync active keys
-  if (updates.testMode !== undefined) {
-    merged.testMode = Boolean(updates.testMode);
+  // If live credentials are provided in updates, update merged values
+  if (updates.liveKeyId !== undefined) {
+    merged.liveKeyId = updates.liveKeyId.trim();
+    if (merged.liveKeyId === '') {
+      merged.liveKeySecret = '';
+    }
+  }
+  if (updates.razorpayKeyId && updates.razorpayKeyId.startsWith('rzp_live_')) {
+    merged.liveKeyId = updates.razorpayKeyId.trim();
   }
 
   const hasValidLiveCreds = Boolean(
@@ -228,7 +260,16 @@ export function savePersistedPaymentConfig(
     merged.liveKeySecret
   );
 
-  // If testMode is explicitly set to false without live creds, fallback to test
+  // If live credentials are provided or active, default to LIVE mode unless explicitly toggled
+  if (updates.liveKeyId?.startsWith('rzp_live_') || updates.razorpayKeyId?.startsWith('rzp_live_')) {
+    merged.testMode = false;
+  } else if (updates.testMode !== undefined) {
+    merged.testMode = Boolean(updates.testMode);
+  } else if (hasValidLiveCreds) {
+    merged.testMode = false;
+  }
+
+  // Safety fallback if testMode is false but no live creds exist anywhere
   if (!merged.testMode && !hasValidLiveCreds) {
     merged.testMode = true;
   }
@@ -238,9 +279,9 @@ export function savePersistedPaymentConfig(
     merged.razorpayKeySecret = merged.testKeySecret || 'wQKVEbjQupqQMEZeqjA2eeju';
     merged.razorpayWebhookSecret = merged.testWebhookSecret || 'rzp_whsec_demo';
   } else {
-    merged.razorpayKeyId = merged.liveKeyId || merged.testKeyId || 'rzp_test_Tu3J2xHanphLOy';
-    merged.razorpayKeySecret = merged.liveKeySecret || merged.testKeySecret || 'wQKVEbjQupqQMEZeqjA2eeju';
-    merged.razorpayWebhookSecret = merged.liveWebhookSecret || merged.testWebhookSecret || 'rzp_whsec_demo';
+    merged.razorpayKeyId = merged.liveKeyId || 'rzp_test_Tu3J2xHanphLOy';
+    merged.razorpayKeySecret = merged.liveKeySecret || 'wQKVEbjQupqQMEZeqjA2eeju';
+    merged.razorpayWebhookSecret = merged.liveWebhookSecret || 'rzp_whsec_demo';
   }
 
   // 1. Write to persistent JSON file (if filesystem allows)

@@ -7,7 +7,7 @@
   "testWebhookSecret": "rzp_whsec_demo",
   "liveKeyId": "",
   "liveKeySecret": "",
-  "liveWebhookSecret": "",
+  "liveWebhookSecret": "rzp_whsec_demo",
   "razorpayKeyId": "rzp_test_Tu3J2xHanphLOy",
   "razorpayKeySecret": "wQKVEbjQupqQMEZeqjA2eeju",
   "razorpayWebhookSecret": "rzp_whsec_demo"

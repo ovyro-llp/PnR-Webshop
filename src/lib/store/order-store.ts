@@ -266,6 +266,18 @@ if (typeof window === 'undefined' && process.env.DATABASE_URL?.trim()) {
     .catch((err: any) => {
       console.warn('[Payment Gateway Startup Hydration Warning]:', err.message);
     });
+
+  orderRepository
+    .getEmployees()
+    .then((dbEmployees) => {
+      if (dbEmployees && Array.isArray(dbEmployees) && dbEmployees.length > 0) {
+        globalThis.__PNR_EMPLOYEES__ = dbEmployees;
+        console.log(`[Employees Roster] Successfully pre-hydrated ${dbEmployees.length} staff records from PostgreSQL on startup.`);
+      }
+    })
+    .catch((err: any) => {
+      console.warn('[Employees Roster Startup Hydration Warning]:', err.message);
+    });
 }
 
 export const orderStore = {
@@ -1221,8 +1233,6 @@ export const orderStore = {
       const dbEmployees = await orderRepository.getEmployees();
       if (dbEmployees && Array.isArray(dbEmployees) && dbEmployees.length > 0) {
         globalThis.__PNR_EMPLOYEES__ = dbEmployees;
-      } else if (globalThis.__PNR_EMPLOYEES__ && globalThis.__PNR_EMPLOYEES__.length > 0) {
-        orderRepository.saveEmployees(globalThis.__PNR_EMPLOYEES__).catch(() => {});
       }
     } catch (e: any) {
       console.warn('[orderStore.getEmployeesAsync DB Warning]:', e.message);
@@ -1244,12 +1254,65 @@ export const orderStore = {
     return newEmp;
   },
 
+  createEmployeeAsync: async (data: Omit<Employee, 'id' | 'createdAt'>): Promise<Employee> => {
+    try {
+      const dbEmployees = await orderRepository.getEmployees();
+      if (dbEmployees && Array.isArray(dbEmployees) && dbEmployees.length > 0) {
+        globalThis.__PNR_EMPLOYEES__ = dbEmployees;
+      }
+    } catch (err: any) {
+      console.warn('[orderStore.createEmployeeAsync fetch Warning]:', err.message);
+    }
+
+    const newEmp: Employee = {
+      ...data,
+      id: `emp-${Date.now()}`,
+      createdAt: new Date().toISOString(),
+    };
+    if (!globalThis.__PNR_EMPLOYEES__) {
+      globalThis.__PNR_EMPLOYEES__ = [];
+    }
+    globalThis.__PNR_EMPLOYEES__.push(newEmp);
+
+    try {
+      await orderRepository.saveEmployees(globalThis.__PNR_EMPLOYEES__);
+    } catch (err: any) {
+      console.error('[orderStore.createEmployeeAsync DB save Error]:', err.message);
+    }
+
+    return newEmp;
+  },
+
   updateEmployee: (id: string, updates: Partial<Employee>): Employee | undefined => {
     const list = globalThis.__PNR_EMPLOYEES__ || [];
     const idx = list.findIndex((e) => e.id === id);
     if (idx !== -1) {
       list[idx] = { ...list[idx], ...updates };
       orderRepository.saveEmployees(list).catch(() => {});
+      return list[idx];
+    }
+    return undefined;
+  },
+
+  updateEmployeeAsync: async (id: string, updates: Partial<Employee>): Promise<Employee | undefined> => {
+    try {
+      const dbEmployees = await orderRepository.getEmployees();
+      if (dbEmployees && Array.isArray(dbEmployees) && dbEmployees.length > 0) {
+        globalThis.__PNR_EMPLOYEES__ = dbEmployees;
+      }
+    } catch (err: any) {
+      console.warn('[orderStore.updateEmployeeAsync fetch Warning]:', err.message);
+    }
+
+    const list = globalThis.__PNR_EMPLOYEES__ || [];
+    const idx = list.findIndex((e) => e.id === id);
+    if (idx !== -1) {
+      list[idx] = { ...list[idx], ...updates };
+      try {
+        await orderRepository.saveEmployees(list);
+      } catch (err: any) {
+        console.error('[orderStore.updateEmployeeAsync DB save Error]:', err.message);
+      }
       return list[idx];
     }
     return undefined;
@@ -1262,6 +1325,30 @@ export const orderStore = {
     const deleted = globalThis.__PNR_EMPLOYEES__.length < initialLen;
     if (deleted) {
       orderRepository.saveEmployees(globalThis.__PNR_EMPLOYEES__).catch(() => {});
+    }
+    return deleted;
+  },
+
+  deleteEmployeeAsync: async (id: string): Promise<boolean> => {
+    try {
+      const dbEmployees = await orderRepository.getEmployees();
+      if (dbEmployees && Array.isArray(dbEmployees) && dbEmployees.length > 0) {
+        globalThis.__PNR_EMPLOYEES__ = dbEmployees;
+      }
+    } catch (err: any) {
+      console.warn('[orderStore.deleteEmployeeAsync fetch Warning]:', err.message);
+    }
+
+    const list = globalThis.__PNR_EMPLOYEES__ || [];
+    const initialLen = list.length;
+    globalThis.__PNR_EMPLOYEES__ = list.filter((e) => e.id !== id);
+    const deleted = globalThis.__PNR_EMPLOYEES__.length < initialLen;
+    if (deleted) {
+      try {
+        await orderRepository.saveEmployees(globalThis.__PNR_EMPLOYEES__);
+      } catch (err: any) {
+        console.error('[orderStore.deleteEmployeeAsync DB save Error]:', err.message);
+      }
     }
     return deleted;
   },

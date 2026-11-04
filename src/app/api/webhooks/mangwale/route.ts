@@ -73,11 +73,16 @@ export async function POST(req: NextRequest) {
     }
 
     const payload = JSON.parse(rawBody);
+    const logisticsUpdate = parseMangwaleWebhook(payload);
+
     console.log('[Mangwale Webhook Received]', {
       eventId,
       timestamp,
-      event: payload.event || payload.event_type,
-      order: payload.order || payload.order_id,
+      event: payload.event || payload.event_type || payload.type,
+      taskId: logisticsUpdate.taskId,
+      orderNumber: logisticsUpdate.orderNumber,
+      status: logisticsUpdate.status,
+      rider: logisticsUpdate.riderName,
     });
 
     // Handle wallet lifecycle events gracefully
@@ -89,8 +94,6 @@ export async function POST(req: NextRequest) {
         message: `Wallet event ${eventName} acknowledged`,
       });
     }
-
-    const logisticsUpdate = parseMangwaleWebhook(payload);
 
     // Resolve order by Mangwale taskId or merchant external orderNumber
     const identifier = logisticsUpdate.taskId || logisticsUpdate.orderNumber;
