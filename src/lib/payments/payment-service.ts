@@ -1,4 +1,4 @@
-import { createRazorpayOrder, verifyRazorpaySignature, verifyWebhookSignature, getRazorpayClient } from './razorpay';
+import { createRazorpayOrder, verifyRazorpaySignature, verifyWebhookSignature, getRazorpayClient, getRazorpayClientAsync } from './razorpay';
 import { orderStore } from '@/lib/store/order-store';
 import { orderRepository } from '@/lib/db/order-repository';
 import { dispatchToMangwale } from '@/lib/logistics/mangwale';
@@ -87,7 +87,7 @@ export const paymentService = {
       outletSlug: normalizedSlug,
     });
 
-    const { keyId, isDemoMode } = getRazorpayClient();
+    const { keyId, isDemoMode } = await getRazorpayClientAsync();
 
     // Persist draft order intent in DB with status AWAITING_PAYMENT
     const orderNumber = `PNR-${Math.floor(10000 + Math.random() * 90000)}`;
@@ -163,7 +163,7 @@ export const paymentService = {
     const { razorpay_order_id, razorpay_payment_id, razorpay_signature, orderPayload } = input;
 
     // Validate Signature
-    const isValid = verifyRazorpaySignature({
+    const isValid = await verifyRazorpaySignature({
       razorpay_order_id,
       razorpay_payment_id,
       razorpay_signature,
@@ -306,7 +306,7 @@ export const paymentService = {
    * 3. Process incoming Razorpay webhooks (Handles payment.captured, payment.failed)
    */
   handlePaymentWebhook: async (rawBody: string, signature: string) => {
-    const isValid = verifyWebhookSignature({ rawBody, signature });
+    const isValid = await verifyWebhookSignature({ rawBody, signature });
     if (!isValid) {
       throw new Error('Invalid webhook signature');
     }

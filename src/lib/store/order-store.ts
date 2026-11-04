@@ -253,6 +253,21 @@ if (!globalThis.__PNR_PAYMENT_CONFIG__) {
   globalThis.__PNR_PAYMENT_CONFIG__ = getPersistedPaymentConfig();
 }
 
+// Trigger early pre-hydration from PostgreSQL on container startup
+if (typeof window === 'undefined' && process.env.DATABASE_URL?.trim()) {
+  orderRepository
+    .getSystemSetting<Partial<PaymentGatewayConfig>>('payment_gateway_config')
+    .then((dbConfig) => {
+      if (dbConfig) {
+        globalThis.__PNR_PAYMENT_CONFIG__ = getPersistedPaymentConfig(dbConfig);
+        console.log('[Payment Gateway] Successfully pre-hydrated configuration from PostgreSQL on startup.');
+      }
+    })
+    .catch((err: any) => {
+      console.warn('[Payment Gateway Startup Hydration Warning]:', err.message);
+    });
+}
+
 export const orderStore = {
   // Orders
   getAllOrders: (): Order[] => {
@@ -656,6 +671,9 @@ export const orderStore = {
   getPaymentConfig: (): PaymentGatewayConfig => {
     if (!globalThis.__PNR_PAYMENT_CONFIG__) {
       globalThis.__PNR_PAYMENT_CONFIG__ = getPersistedPaymentConfig();
+      if (typeof window === 'undefined') {
+        orderStore.getPaymentConfigAsync().catch(() => {});
+      }
     }
     return globalThis.__PNR_PAYMENT_CONFIG__;
   },
@@ -663,15 +681,9 @@ export const orderStore = {
   getPaymentConfigAsync: async (): Promise<PaymentGatewayConfig> => {
     try {
       const dbConfig = await orderRepository.getSystemSetting<Partial<PaymentGatewayConfig>>('payment_gateway_config');
-      if (dbConfig) {
-        const current = getPersistedPaymentConfig();
-        const merged: PaymentGatewayConfig = {
-          ...current,
-          ...dbConfig,
-        };
-        globalThis.__PNR_PAYMENT_CONFIG__ = merged;
-        return merged;
-      }
+      const resolved = getPersistedPaymentConfig(dbConfig || globalThis.__PNR_PAYMENT_CONFIG__ || undefined);
+      globalThis.__PNR_PAYMENT_CONFIG__ = resolved;
+      return resolved;
     } catch (e: any) {
       console.warn('[orderStore.getPaymentConfigAsync DB Warning]:', e.message);
     }
@@ -679,9 +691,32 @@ export const orderStore = {
   },
 
   updatePaymentConfig: (config: Partial<PaymentGatewayConfig>): PaymentGatewayConfig => {
-    const updated = savePersistedPaymentConfig(config);
+    const updated = savePersistedPaymentConfig(config, globalThis.__PNR_PAYMENT_CONFIG__);
     globalThis.__PNR_PAYMENT_CONFIG__ = updated;
     orderRepository.saveSystemSetting('payment_gateway_config', updated).catch(() => {});
+    return updated;
+  },
+
+  updatePaymentConfigAsync: async (
+    updates: Partial<PaymentGatewayConfig>
+  ): Promise<PaymentGatewayConfig> => {
+    let dbConfig: Partial<PaymentGatewayConfig> | null = null;
+    try {
+      dbConfig = await orderRepository.getSystemSetting<Partial<PaymentGatewayConfig>>('payment_gateway_config');
+    } catch (e: any) {
+      console.warn('[orderStore.updatePaymentConfigAsync DB fetch Warning]:', e.message);
+    }
+
+    const base = dbConfig || globalThis.__PNR_PAYMENT_CONFIG__ || undefined;
+    const updated = savePersistedPaymentConfig(updates, base);
+    globalThis.__PNR_PAYMENT_CONFIG__ = updated;
+
+    try {
+      await orderRepository.saveSystemSetting('payment_gateway_config', updated);
+    } catch (err: any) {
+      console.error('[orderStore.updatePaymentConfigAsync DB save Error]:', err.message);
+    }
+
     return updated;
   },
 

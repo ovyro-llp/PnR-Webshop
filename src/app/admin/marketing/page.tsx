@@ -44,6 +44,12 @@ export default function MarketingViewPage() {
     testMode: true,
     businessName: '',
   });
+  const [serverConfigFlags, setServerConfigFlags] = useState<{
+    hasLiveSecret?: boolean;
+    hasLiveWebhookSecret?: boolean;
+    hasTestSecret?: boolean;
+    hasLiveCreds?: boolean;
+  }>({});
   const [isSavingPayment, setIsSavingPayment] = useState(false);
   const [copiedWebhookUrl, setCopiedWebhookUrl] = useState(false);
   const [copiedMangwaleUrl, setCopiedMangwaleUrl] = useState(false);
@@ -83,6 +89,12 @@ export default function MarketingViewPage() {
           testMode: typeof data.config.testMode === 'boolean' ? data.config.testMode : true,
           businessName: data.config.businessName || "Puffs 'n' Rolls Nashik",
         }));
+        setServerConfigFlags({
+          hasLiveSecret: data.config.hasLiveSecret,
+          hasLiveWebhookSecret: data.config.hasLiveWebhookSecret,
+          hasTestSecret: data.config.hasTestSecret,
+          hasLiveCreds: data.config.hasLiveCreds,
+        });
       }
     } catch (e) {
       console.error('Failed to fetch payment config', e);
@@ -139,6 +151,12 @@ export default function MarketingViewPage() {
             testMode: typeof pData.config.testMode === 'boolean' ? pData.config.testMode : true,
             businessName: pData.config.businessName || "Puffs 'n' Rolls Nashik",
           }));
+          setServerConfigFlags({
+            hasLiveSecret: pData.config.hasLiveSecret,
+            hasLiveWebhookSecret: pData.config.hasLiveWebhookSecret,
+            hasTestSecret: pData.config.hasTestSecret,
+            hasLiveCreds: pData.config.hasLiveCreds,
+          });
         }
       } catch (err) {
         console.error('Failed loading marketing/payment config', err);
@@ -188,7 +206,7 @@ export default function MarketingViewPage() {
       });
       const data = await res.json();
       if (data.success) {
-        setStatusMessage('✓ Payment gateway configuration saved successfully!');
+        setStatusMessage('✓ Payment gateway credentials permanently saved to PostgreSQL! Live across all future deployments.');
         fetchPaymentConfig();
         setTimeout(() => setStatusMessage(''), 4000);
       } else {
@@ -715,7 +733,11 @@ export default function MarketingViewPage() {
                       onChange={(e) =>
                         setPaymentConfig({ ...paymentConfig, testKeySecret: e.target.value })
                       }
-                      placeholder="Enter test key secret"
+                      placeholder={
+                        serverConfigFlags.hasTestSecret
+                          ? '•••••••• (Stored in DB — leave blank to keep)'
+                          : 'Enter test key secret'
+                      }
                       className="w-full px-3.5 py-2.5 bg-stone-50/50 border border-stone-200 rounded-xl text-xs font-mono text-stone-900 focus:bg-white focus:outline-none focus:ring-1 focus:ring-stone-900"
                     />
                   </div>
@@ -779,9 +801,18 @@ export default function MarketingViewPage() {
                       onChange={(e) =>
                         setPaymentConfig({ ...paymentConfig, liveKeySecret: e.target.value })
                       }
-                      placeholder="Enter live production secret"
+                      placeholder={
+                        serverConfigFlags.hasLiveSecret
+                          ? '•••••••• (Stored permanently in DB — leave blank to keep)'
+                          : 'Enter live production secret'
+                      }
                       className="w-full px-3.5 py-2.5 bg-stone-50/50 border border-stone-200 rounded-xl text-xs font-mono text-stone-900 focus:bg-white focus:outline-none focus:ring-1 focus:ring-stone-900"
                     />
+                    {serverConfigFlags.hasLiveSecret && (
+                      <p className="text-[10px] text-emerald-600 mt-1 font-medium">
+                        ✓ Saved permanently in PostgreSQL database across deployments.
+                      </p>
+                    )}
                   </div>
                 </div>
 
@@ -795,9 +826,18 @@ export default function MarketingViewPage() {
                     onChange={(e) =>
                       setPaymentConfig({ ...paymentConfig, liveWebhookSecret: e.target.value })
                     }
-                    placeholder="Enter live webhook secret"
+                    placeholder={
+                      serverConfigFlags.hasLiveWebhookSecret
+                        ? '•••••••• (Stored permanently in DB — leave blank to keep)'
+                        : 'Enter live webhook secret'
+                    }
                     className="w-full px-3.5 py-2.5 bg-stone-50/50 border border-stone-200 rounded-xl text-xs font-mono text-stone-900 focus:bg-white focus:outline-none focus:ring-1 focus:ring-stone-900"
                   />
+                  {serverConfigFlags.hasLiveWebhookSecret && (
+                    <p className="text-[10px] text-emerald-600 mt-1 font-medium">
+                      ✓ Saved in PostgreSQL database.
+                    </p>
+                  )}
                 </div>
               </div>
 

@@ -1,6 +1,7 @@
 import Razorpay from 'razorpay';
 import crypto from 'crypto';
 import { orderStore } from '@/lib/store/order-store';
+import { PaymentGatewayConfig } from '@/types';
 
 export interface CreateOrderParams {
   amount: number; // in INR
@@ -9,10 +10,8 @@ export interface CreateOrderParams {
   outletSlug?: string;
 }
 
-export function getRazorpayClient() {
-  const config = orderStore.getPaymentConfig();
-
-  // 1. Resolve live keys if provided across any standard environment variable or saved config
+export function buildRazorpayClient(config: PaymentGatewayConfig) {
+  // 1. Resolve live keys if provided across any standard environment variable, DB config, or saved config
   const liveKey = (
     process.env.RAZORPAY_LIVE_KEY_ID ||
     (process.env.RAZORPAY_KEY_ID?.startsWith('rzp_live_') ? process.env.RAZORPAY_KEY_ID : '') ||
@@ -29,7 +28,7 @@ export function getRazorpayClient() {
     (process.env.RAZORPAY_KEY_ID?.startsWith('rzp_live_') ? process.env.RAZORPAY_KEY_SECRET : '') ||
     (process.env.RAZORPAY_LIVE_KEY_ID?.startsWith('rzp_live_') ? process.env.RAZORPAY_KEY_SECRET : '') ||
     config.liveKeySecret ||
-    (config.razorpayKeySecret && config.razorpayKeyId?.startsWith('rzp_live_')
+    (config.razorpayKeySecret && (config.liveKeyId?.startsWith('rzp_live_') || config.razorpayKeyId?.startsWith('rzp_live_'))
       ? config.razorpayKeySecret
       : '') ||
     ''
@@ -101,10 +100,20 @@ export function getRazorpayClient() {
   };
 }
 
+export function getRazorpayClient() {
+  const config = orderStore.getPaymentConfig();
+  return buildRazorpayClient(config);
+}
+
+export async function getRazorpayClientAsync() {
+  const config = await orderStore.getPaymentConfigAsync();
+  return buildRazorpayClient(config);
+}
+
 /**
  * Creates an order on Razorpay.
  * Amount is converted to paise (INR 1 = 100 paise).
- * Seamlessly provides sandbox mock fallback when demo keys are used.
+ * Seamlessly loads persisted database credentials across deployments.
  */
 export async function createRazorpayOrder({
   amount,
@@ -112,7 +121,7 @@ export async function createRazorpayOrder({
   notes = {},
   outletSlug,
 }: CreateOrderParams) {
-  const { instance, keyId, isDemoMode } = getRazorpayClient();
+  const { instance, keyId, isDemoMode } = await getRazorpayClientAsync();
   const paise = Math.round(amount * 100);
   const orderReceipt = receipt || `rcpt_${outletSlug || 'pnr'}_${Date.now()}`;
 
@@ -169,8 +178,9 @@ export async function createRazorpayOrder({
 
 /**
  * Verifies Razorpay payment signature via HMAC SHA256.
+ * Hydrates database-persisted keys asynchronously to ensure signatures are verified against real live keys.
  */
-export function verifyRazorpaySignature({
+export async function verifyRazorpaySignature({
   razorpay_order_id,
   razorpay_payment_id,
   razorpay_signature,
@@ -178,7 +188,7 @@ export function verifyRazorpaySignature({
   razorpay_order_id: string;
   razorpay_payment_id: string;
   razorpay_signature: string;
-}): boolean {
+}): Promise<boolean> {
   // If sandbox test mock order or simulated payment in demo mode
   if (
     razorpay_order_id.startsWith('order_pnr_') ||
@@ -188,7 +198,7 @@ export function verifyRazorpaySignature({
     return true;
   }
 
-  const { keySecret } = getRazorpayClient();
+  const { keySecret } = await getRazorpayClientAsync();
   if (!keySecret) return false;
 
   try {
@@ -212,15 +222,19 @@ export function verifyRazorpaySignature({
 /**
  * Verifies webhook signature sent by Razorpay in header 'x-razorpay-signature'
  */
-export function verifyWebhookSignature({
+export async function verifyWebhookSignature({
   rawBody,
   signature,
 }: {
   rawBody: string;
   signature: string;
-}): boolean {
-  const config = orderStore.getPaymentConfig();
-  const secret = config.razorpayWebhookSecret || process.env.RAZORPAY_WEBHOOK_SECRET || 'rzp_whsec_demo';
+}): Promise<boolean> {
+  const config = await orderStore.getPaymentConfigAsync();
+  const secret =
+    config.razorpayWebhookSecret ||
+    (config.testMode ? config.testWebhookSecret : config.liveWebhookSecret) ||
+    process.env.RAZORPAY_WEBHOOK_SECRET ||
+    'rzp_whsec_demo';
 
   if (secret === 'rzp_whsec_demo' && signature === 'mock_webhook_signature') {
     return true;
