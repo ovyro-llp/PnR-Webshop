@@ -112,6 +112,9 @@ export const orderRepository = {
             NOW(), NOW()
           )
           ON CONFLICT (id) DO UPDATE SET
+            customer_name = EXCLUDED.customer_name,
+            customer_phone = EXCLUDED.customer_phone,
+            customer_email = EXCLUDED.customer_email,
             payment_status = EXCLUDED.payment_status,
             order_status = EXCLUDED.order_status,
             items = EXCLUDED.items,
@@ -223,28 +226,31 @@ export const orderRepository = {
 
         // 4. Upsert Customer directory record without duplicate lifetime metric inflation
         const isNewlyCompleted = order.paymentStatus === 'COMPLETED';
-        const custSql = `
-          INSERT INTO public.customers (phone, name, email, saved_addresses, total_orders, total_spent, created_at, updated_at)
-          VALUES ($1, $2, $3, $4, CASE WHEN $5::boolean THEN 1 ELSE 0 END, CASE WHEN $5::boolean THEN $6 ELSE 0.00 END, NOW(), NOW())
-          ON CONFLICT (phone) DO UPDATE SET
-            name = COALESCE(EXCLUDED.name, public.customers.name),
-            email = COALESCE(EXCLUDED.email, public.customers.email),
-            updated_at = NOW();
-        `;
-        const addressObj = {
-          address: order.customer.address,
-          area: order.customer.area,
-          pincode: order.customer.pincode,
-          coordinates: order.customer.coordinates,
-        };
-        await client.query(custSql, [
-          order.customer.phone,
-          order.customer.name,
-          order.customer.email || null,
-          JSON.stringify([addressObj]),
-          isNewlyCompleted,
-          order.total,
-        ]);
+        const cleanCustomerPhone = (order.customer.phone || '').replace(/\D/g, '').slice(-10);
+        if (cleanCustomerPhone.length === 10) {
+          const custSql = `
+            INSERT INTO public.customers (phone, name, email, saved_addresses, total_orders, total_spent, created_at, updated_at)
+            VALUES ($1, $2, $3, $4, CASE WHEN $5::boolean THEN 1 ELSE 0 END, CASE WHEN $5::boolean THEN $6 ELSE 0.00 END, NOW(), NOW())
+            ON CONFLICT (phone) DO UPDATE SET
+              name = COALESCE(EXCLUDED.name, public.customers.name),
+              email = COALESCE(EXCLUDED.email, public.customers.email),
+              updated_at = NOW();
+          `;
+          const addressObj = {
+            address: order.customer.address,
+            area: order.customer.area,
+            pincode: order.customer.pincode,
+            coordinates: order.customer.coordinates,
+          };
+          await client.query(custSql, [
+            cleanCustomerPhone,
+            order.customer.name,
+            order.customer.email || null,
+            JSON.stringify([addressObj]),
+            isNewlyCompleted,
+            order.total,
+          ]);
+        }
 
         await client.query('COMMIT');
         return rowToOrder(savedRow, order.mangwale ? { task_id: order.mangwale.taskId, ...order.mangwale } : undefined);

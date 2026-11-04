@@ -102,12 +102,15 @@ export const paymentService = {
       orderNumber,
       outletSlug: normalizedSlug,
       campaignSlug: campaignSlug || 'direct',
-      customer: customer || {
-        name: 'Guest Customer',
-        phone: '9822000000',
-        address: 'Nashik',
-        area: outlet.area,
-        pincode: '422005',
+      customer: {
+        name: customer?.name || 'Valued Customer',
+        phone: customer?.phone || 'AWAITING_VERIFICATION',
+        email: customer?.email,
+        address: customer?.address || 'Nashik Doorstep Location',
+        area: customer?.area || outlet.area,
+        pincode: customer?.pincode || '422005',
+        specialInstructions: customer?.specialInstructions,
+        coordinates: customer?.coordinates,
       },
       items: items || [],
       subtotal: Number(input.subtotal || amount),
@@ -202,10 +205,14 @@ export const paymentService = {
       existingOrder.updatedAt = new Date().toISOString();
 
       if (orderPayload) {
-        existingOrder.customer = orderPayload.customer;
-        existingOrder.items = orderPayload.items;
-        existingOrder.subtotal = orderPayload.subtotal;
-        existingOrder.total = orderPayload.total;
+        existingOrder.customer = {
+          ...existingOrder.customer,
+          ...orderPayload.customer,
+          coordinates: orderPayload.customer?.coordinates || existingOrder.customer?.coordinates,
+        };
+        existingOrder.items = orderPayload.items || existingOrder.items;
+        existingOrder.subtotal = orderPayload.subtotal || existingOrder.subtotal;
+        existingOrder.total = orderPayload.total || existingOrder.total;
         existingOrder.paymentMethod = orderPayload.paymentMethod || 'UPI';
       }
 
@@ -230,6 +237,62 @@ export const paymentService = {
       });
     } else {
       throw new Error(`Order not found for Razorpay ID: ${razorpay_order_id}`);
+    }
+
+    // Authoritatively query Razorpay Payments API to retrieve verified contact & customer details
+    const { instance, isDemoMode } = await getRazorpayClientAsync();
+    let verifiedContact = '';
+    let verifiedEmail = '';
+
+    if (instance && !isDemoMode && razorpay_payment_id) {
+      try {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const paymentEntity: any = await instance.payments.fetch(razorpay_payment_id);
+        if (paymentEntity) {
+          if (paymentEntity.contact) {
+            verifiedContact = String(paymentEntity.contact).replace(/\D/g, '').slice(-10);
+          }
+          if (paymentEntity.email && !paymentEntity.email.includes('@puffsnrolls.com')) {
+            verifiedEmail = String(paymentEntity.email);
+          }
+        }
+      } catch (fetchErr) {
+        console.warn('[PaymentService] Failed to fetch payment entity from Razorpay:', fetchErr);
+      }
+    }
+
+    if (verifiedContact && verifiedContact.length === 10) {
+      settledOrder.customer.phone = verifiedContact;
+      if (
+        !settledOrder.customer.name ||
+        settledOrder.customer.name === 'Valued Customer' ||
+        settledOrder.customer.name === 'Guest Customer' ||
+        settledOrder.customer.name === 'Guest'
+      ) {
+        settledOrder.customer.name = `Customer ${verifiedContact.slice(-4)}`;
+      }
+    } else if (
+      !settledOrder.customer.phone ||
+      settledOrder.customer.phone === 'AWAITING_VERIFICATION' ||
+      settledOrder.customer.phone.replace(/\D/g, '').length < 10
+    ) {
+      if (orderPayload?.customer?.phone && orderPayload.customer.phone.replace(/\D/g, '').length === 10) {
+        settledOrder.customer.phone = orderPayload.customer.phone.replace(/\D/g, '').slice(-10);
+      } else {
+        settledOrder.customer.phone = '9822012345'; // Safe fallback for demo/test mode
+      }
+    }
+
+    if (verifiedEmail) {
+      settledOrder.customer.email = verifiedEmail;
+    }
+
+    // Ensure coordinates from client or map are attached
+    if (orderPayload?.customer?.coordinates) {
+      settledOrder.customer.coordinates = orderPayload.customer.coordinates;
+    }
+    if (orderPayload?.customer?.address) {
+      settledOrder.customer.address = orderPayload.customer.address;
     }
 
     // Decrement stock
@@ -348,6 +411,24 @@ export const paymentService = {
         order.orderStatus = 'RECEIVED';
         order.razorpayPaymentId = rzpPaymentId;
         order.updatedAt = new Date().toISOString();
+
+        if (paymentEntity?.contact) {
+          const verifiedContact = String(paymentEntity.contact).replace(/\D/g, '').slice(-10);
+          if (verifiedContact.length === 10) {
+            order.customer.phone = verifiedContact;
+            if (
+              !order.customer.name ||
+              order.customer.name === 'Valued Customer' ||
+              order.customer.name === 'Guest Customer' ||
+              order.customer.name === 'Guest'
+            ) {
+              order.customer.name = `Customer ${verifiedContact.slice(-4)}`;
+            }
+          }
+        }
+        if (paymentEntity?.email && !paymentEntity.email.includes('@puffsnrolls.com')) {
+          order.customer.email = String(paymentEntity.email);
+        }
 
         // Decrement outlet stock
         if (order.items && Array.isArray(order.items)) {

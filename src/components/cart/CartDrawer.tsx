@@ -74,6 +74,7 @@ export function CartDrawer({ outletSlug, campaignSlug }: CartDrawerProps) {
   const [authPhone, setAuthPhone] = useState('');
   const [authPassword, setAuthPassword] = useState('');
   const [showAuthPassword, setShowAuthPassword] = useState(false);
+  const [showManualAuth, setShowManualAuth] = useState(false);
 
   // Customer Delivery State (Strictly not pre-filled)
   const [customer, setCustomer] = useState<CustomerDetails>(() => ({
@@ -140,25 +141,30 @@ export function CartDrawer({ outletSlug, campaignSlug }: CartDrawerProps) {
       return;
     }
 
-    // 1. Validate Delivery Address
-    if (!customer.address.trim()) {
-      setSubmitError('Please enter your Flat / House No., Society / Building & Landmark in Nashik');
-      return;
-    }
-    if (!customer.pincode.trim() || customer.pincode.length < 6) {
-      setSubmitError('Please enter a valid 6-digit Nashik pincode (e.g. 422005)');
-      return;
-    }
+    // 1. Resolve Delivery Address & Locality
+    const resolvedAddress = customer.address.trim() || deliveryAddress?.trim() || 'Nashik Doorstep Location';
+    const resolvedArea = customer.area.trim() || deliveryArea?.trim() || nearestOutlet?.area || 'Nashik City';
+    const resolvedPincode = customer.pincode.trim() || '422005';
 
-    // 2. Validate / Authenticate Customer
-    let activeCustomer = { ...customer };
+    let activeCustomer: CustomerDetails = {
+      ...customer,
+      address: resolvedAddress,
+      area: resolvedArea,
+      pincode: resolvedPincode,
+      coordinates: effectiveCoords,
+    };
 
-    if (!isCustomerLoggedIn) {
+    // 2. Customer Authentication & Phone Handling
+    if (isCustomerLoggedIn) {
+      if (!activeCustomer.name.trim()) activeCustomer.name = user?.name || 'Valued Customer';
+      if (!activeCustomer.phone.trim() && user && 'phone' in user) activeCustomer.phone = user.phone;
+    } else if (paymentMethod === 'COD' || showManualAuth) {
+      // Cash on delivery requires rider phone upfront
       const cleanPhone = (authPhone || customer.phone).replace(/\D/g, '').slice(-10);
       const cleanName = (authName || customer.name).trim();
 
       if (cleanPhone.length < 10) {
-        setSubmitError('Please enter a valid 10-digit mobile phone number');
+        setSubmitError('Please enter a valid 10-digit mobile phone number for Cash on Delivery');
         return;
       }
       if (!cleanName) {
@@ -168,7 +174,6 @@ export function CartDrawer({ outletSlug, campaignSlug }: CartDrawerProps) {
 
       setIsSubmitting(true);
 
-      // If user chose explicit LOGIN mode with password
       if (authMode === 'LOGIN' && authPassword.trim()) {
         const loginRes = await loginCustomer(cleanPhone, authPassword.trim());
         if (!loginRes.success) {
@@ -176,15 +181,14 @@ export function CartDrawer({ outletSlug, campaignSlug }: CartDrawerProps) {
           setSubmitError(loginRes.error || 'Invalid phone or password');
           return;
         }
-      } else {
-        // Seamless account creation on order confirmation
+      } else if (paymentMethod === 'COD') {
         const authRes = await autoRegisterOrLoginCustomer(
           cleanName,
           cleanPhone,
-          customer.address,
-          customer.area,
-          customer.pincode,
-          customer.coordinates || deliveryCoordinates || undefined
+          resolvedAddress,
+          resolvedArea,
+          resolvedPincode,
+          effectiveCoords
         );
 
         if (!authRes.success) {
@@ -196,11 +200,13 @@ export function CartDrawer({ outletSlug, campaignSlug }: CartDrawerProps) {
 
       activeCustomer.name = cleanName;
       activeCustomer.phone = cleanPhone;
-      activeCustomer.coordinates = customer.coordinates || deliveryCoordinates || undefined;
     } else {
-      if (!activeCustomer.name.trim()) activeCustomer.name = user?.name || 'Valued Customer';
-      if (!activeCustomer.phone.trim() && user && 'phone' in user) activeCustomer.phone = user.phone;
-      activeCustomer.coordinates = customer.coordinates || deliveryCoordinates || undefined;
+      // ⚡ Magic Checkout (UPI/Cards): Phone number will be verified automatically by Razorpay OTP/WhatsApp!
+      // ZERO upfront typing required.
+      const cleanPhone = (authPhone || customer.phone).replace(/\D/g, '').slice(-10);
+      const cleanName = (authName || customer.name).trim();
+      activeCustomer.name = cleanName || 'Valued Customer';
+      activeCustomer.phone = cleanPhone || '';
     }
 
     setIsSubmitting(true);
@@ -218,7 +224,7 @@ export function CartDrawer({ outletSlug, campaignSlug }: CartDrawerProps) {
       return;
     }
 
-    // Flow 2: Online Payment Gateway (UPI, Cards, NetBanking)
+    // Flow 2: Online Payment Gateway (Razorpay Magic 1-Click Checkout)
     try {
       const createRes = await fetch('/api/payments/razorpay/create-order', {
         method: 'POST',
@@ -268,13 +274,13 @@ export function CartDrawer({ outletSlug, campaignSlug }: CartDrawerProps) {
         image: 'https://puffsnrolls.com/wp-content/uploads/2025/12/banner-logo.png',
         order_id: orderData.orderId,
         prefill: {
-          name: activeCustomer.name,
-          contact: activeCustomer.phone,
-          email: `${activeCustomer.phone.replace(/\D/g, '')}@puffsnrolls.com`,
+          ...(activeCustomer.name && activeCustomer.name !== 'Valued Customer' ? { name: activeCustomer.name } : {}),
+          ...(activeCustomer.phone && activeCustomer.phone.length === 10 ? { contact: activeCustomer.phone } : {}),
+          ...(activeCustomer.email ? { email: activeCustomer.email } : {}),
         },
         notes: {
-          delivery_lat: String(activeCustomer.coordinates?.lat || ''),
-          delivery_lng: String(activeCustomer.coordinates?.lng || ''),
+          delivery_lat: String(effectiveCoords.lat),
+          delivery_lng: String(effectiveCoords.lng),
           doorstep_address: activeCustomer.address,
           outlet_slug: effectiveOutletSlug,
           magic_checkout: 'true',
@@ -311,7 +317,27 @@ export function CartDrawer({ outletSlug, campaignSlug }: CartDrawerProps) {
             );
             setIsSubmitting(false);
             if (verifyRes.success && verifyRes.order) {
-              router.push(`/${effectiveOutletSlug}/order/${verifyRes.order.id}`);
+              const confirmedOrder = verifyRes.order;
+              const verifiedPhone = confirmedOrder.customer?.phone?.replace(/\D/g, '').slice(-10);
+              const verifiedName = confirmedOrder.customer?.name || (verifiedPhone ? `Customer ${verifiedPhone.slice(-4)}` : 'Valued Customer');
+
+              // Seamlessly log customer in so their account is ready instantly!
+              if (!isCustomerLoggedIn && verifiedPhone && verifiedPhone.length === 10) {
+                try {
+                  await autoRegisterOrLoginCustomer(
+                    verifiedName,
+                    verifiedPhone,
+                    confirmedOrder.customer?.address || activeCustomer.address,
+                    confirmedOrder.customer?.area || activeCustomer.area,
+                    confirmedOrder.customer?.pincode || activeCustomer.pincode,
+                    confirmedOrder.customer?.coordinates || effectiveCoords
+                  );
+                } catch (authErr) {
+                  console.warn('Auto customer account registration notice:', authErr);
+                }
+              }
+
+              router.push(`/${effectiveOutletSlug}/order/${confirmedOrder.id}`);
             } else {
               setSubmitError(verifyRes.error || 'Payment verification failed');
             }
@@ -550,7 +576,6 @@ export function CartDrawer({ outletSlug, campaignSlug }: CartDrawerProps) {
                         )}
                       </div>
                       <textarea
-                        required
                         rows={2}
                         placeholder="e.g. Flat 402, Shrinath Heights, Opp. BYK Circle"
                         value={customer.address}
@@ -635,37 +660,84 @@ export function CartDrawer({ outletSlug, campaignSlug }: CartDrawerProps) {
                       Change
                     </button>
                   </div>
+                ) : paymentMethod === 'UPI' && !showManualAuth ? (
+                  <div className="bg-gradient-to-r from-amber-500/10 via-amber-500/5 to-transparent border border-amber-300/80 rounded-2xl p-3.5 space-y-2.5">
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="flex items-start gap-2.5">
+                        <div className="w-8 h-8 rounded-xl bg-stone-900 text-amber-400 flex items-center justify-center shrink-0 mt-0.5 shadow-xs">
+                          <Zap className="w-4 h-4 fill-amber-400 text-amber-400" />
+                        </div>
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <span className="text-xs font-bold text-stone-900">
+                              Razorpay Magic 1-Click Login Active
+                            </span>
+                            <span className="text-[9px] font-bold text-emerald-800 bg-emerald-100 px-2 py-0.5 rounded-full uppercase tracking-wider">
+                              No Phone Form
+                            </span>
+                          </div>
+                          <p className="text-[11px] text-stone-600 mt-1 leading-relaxed">
+                            Razorpay Magic Checkout will automatically verify your mobile number via OTP / WhatsApp and log you into your PnR account on payment.
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="pt-2 border-t border-amber-200/50 flex items-center justify-between text-[11px]">
+                      <span className="text-stone-500">Have an existing password?</span>
+                      <button
+                        type="button"
+                        onClick={() => setShowManualAuth(true)}
+                        className="text-stone-800 hover:text-stone-950 font-semibold underline cursor-pointer"
+                      >
+                        Sign in manually
+                      </button>
+                    </div>
+                  </div>
                 ) : (
                   <div className="bg-white rounded-2xl border border-stone-200 p-4 space-y-3 shadow-xs">
                     <div className="flex items-center justify-between">
                       <h4 className="text-[11px] font-bold uppercase tracking-wider text-stone-900 flex items-center gap-1.5">
                         <User className="w-3.5 h-3.5 text-stone-600" />
-                        <span>Customer Account</span>
+                        <span>
+                          {paymentMethod === 'COD'
+                            ? 'Delivery Contact (Cash on Delivery)'
+                            : 'Customer Account'}
+                        </span>
                       </h4>
-                      <div className="flex rounded-md bg-stone-100 p-0.5">
+                      {paymentMethod === 'UPI' ? (
                         <button
                           type="button"
-                          onClick={() => setAuthMode('REGISTER')}
-                          className={`px-2 py-0.5 text-[10px] font-semibold rounded transition cursor-pointer ${
-                            authMode === 'REGISTER'
-                              ? 'bg-white text-stone-900 shadow-2xs'
-                              : 'text-stone-500'
-                          }`}
+                          onClick={() => setShowManualAuth(false)}
+                          className="text-[10px] text-amber-800 hover:text-amber-950 font-bold underline cursor-pointer"
                         >
-                          Express Checkout
+                          ⚡ Use 1-Click Magic Login
                         </button>
-                        <button
-                          type="button"
-                          onClick={() => setAuthMode('LOGIN')}
-                          className={`px-2 py-0.5 text-[10px] font-semibold rounded transition cursor-pointer ${
-                            authMode === 'LOGIN'
-                              ? 'bg-white text-stone-900 shadow-2xs'
-                              : 'text-stone-500'
-                          }`}
-                        >
-                          Sign In
-                        </button>
-                      </div>
+                      ) : (
+                        <div className="flex rounded-md bg-stone-100 p-0.5">
+                          <button
+                            type="button"
+                            onClick={() => setAuthMode('REGISTER')}
+                            className={`px-2 py-0.5 text-[10px] font-semibold rounded transition cursor-pointer ${
+                              authMode === 'REGISTER'
+                                ? 'bg-white text-stone-900 shadow-2xs'
+                                : 'text-stone-500'
+                            }`}
+                          >
+                            Express Checkout
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setAuthMode('LOGIN')}
+                            className={`px-2 py-0.5 text-[10px] font-semibold rounded transition cursor-pointer ${
+                              authMode === 'LOGIN'
+                                ? 'bg-white text-stone-900 shadow-2xs'
+                                : 'text-stone-500'
+                            }`}
+                          >
+                            Sign In
+                          </button>
+                        </div>
+                      )}
                     </div>
 
                     <div className="space-y-2">
@@ -675,7 +747,6 @@ export function CartDrawer({ outletSlug, campaignSlug }: CartDrawerProps) {
                         </label>
                         <input
                           type="text"
-                          required
                           placeholder="e.g. Rahul Deshmukh"
                           value={authName}
                           onChange={(e) => {
@@ -696,7 +767,6 @@ export function CartDrawer({ outletSlug, campaignSlug }: CartDrawerProps) {
                           </span>
                           <input
                             type="tel"
-                            required
                             inputMode="tel"
                             maxLength={10}
                             placeholder="98220 00000"
@@ -709,9 +779,14 @@ export function CartDrawer({ outletSlug, campaignSlug }: CartDrawerProps) {
                             className="w-full pl-10 pr-3 py-2 bg-stone-50 border border-stone-200 rounded-xl text-xs font-mono focus:bg-white focus:ring-1 focus:ring-stone-900 focus:outline-none"
                           />
                         </div>
+                        {paymentMethod === 'COD' && (
+                          <p className="text-[10px] text-stone-500 mt-1">
+                            * Rider will call this number upon doorstep arrival.
+                          </p>
+                        )}
                       </div>
 
-                      {authMode === 'LOGIN' ? (
+                      {authMode === 'LOGIN' && paymentMethod !== 'COD' ? (
                         <div>
                           <label className="block text-[10px] font-bold text-stone-600 uppercase tracking-wider mb-1">
                             Password *
@@ -719,7 +794,6 @@ export function CartDrawer({ outletSlug, campaignSlug }: CartDrawerProps) {
                           <div className="relative">
                             <input
                               type={showAuthPassword ? 'text' : 'password'}
-                              required
                               placeholder="Enter your password"
                               value={authPassword}
                               onChange={(e) => setAuthPassword(e.target.value)}
@@ -739,12 +813,14 @@ export function CartDrawer({ outletSlug, campaignSlug }: CartDrawerProps) {
                           </div>
                         </div>
                       ) : (
-                        <div className="p-2.5 bg-amber-50/70 border border-amber-200/60 rounded-xl flex items-center gap-2 text-[11px] text-amber-900">
-                          <Sparkles className="w-3.5 h-3.5 text-amber-600 shrink-0" />
-                          <span>
-                            Account created automatically upon confirming this order.
-                          </span>
-                        </div>
+                        paymentMethod === 'COD' && (
+                          <div className="p-2.5 bg-amber-50/70 border border-amber-200/60 rounded-xl flex items-center gap-2 text-[11px] text-amber-900">
+                            <Sparkles className="w-3.5 h-3.5 text-amber-600 shrink-0" />
+                            <span>
+                              Account created automatically upon placing this order.
+                            </span>
+                          </div>
+                        )
                       )}
                     </div>
                   </div>
