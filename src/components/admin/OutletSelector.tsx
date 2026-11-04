@@ -129,7 +129,7 @@ export function OutletSelector({
               <Sparkles className="w-3 h-3 text-amber-600" />
               <span>Select Nashik Outlet</span>
             </span>
-            <span className="text-[10px] font-mono text-stone-400">FOCO Model</span>
+            <span className="text-[10px] font-mono text-stone-400">Active Branch</span>
           </div>
 
           <div className="p-1.5 space-y-1">

@@ -43,21 +43,6 @@ interface RegisteredCustomerRecord {
 // Pre-seeded test accounts
 const PRESEEDED_CUSTOMERS: RegisteredCustomerRecord[] = [
   {
-    id: 'cust-aditya-101',
-    name: 'Aditya Deshmukh',
-    phone: '9822344556',
-    password: 'pnr@customer123',
-    savedAddresses: [
-      {
-        id: 'addr-1',
-        label: 'Home',
-        address: 'Flat 402, Shrinath Heights, Near KTHM College Ground',
-        area: 'Gangapur Road',
-        pincode: '422002',
-      },
-    ],
-  },
-  {
     id: 'cust-tester-102',
     name: "Puffs 'n' Rolls Tester",
     phone: '9822011223',

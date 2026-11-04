@@ -31,6 +31,18 @@ export default function AnalyticsDashboardPage() {
       totalOrders: number;
       avgOrderValue: number;
       completedOrders: number;
+      fulfillmentSlaRate: number | null;
+    };
+    hourlyDistribution?: {
+      time: string;
+      orders: number;
+      revenue: number;
+      pct: number;
+    }[];
+    fleetMetrics?: {
+      avgPrepMinutes: number | null;
+      avgTransitMinutes: number | null;
+      hasDeliveries: boolean;
     };
     outlets?: OutletAnalytics[];
     campaigns?: CampaignAnalytics[];
@@ -83,10 +95,11 @@ export default function AnalyticsDashboardPage() {
   }, [selectedOutlet]);
 
   const summary = analyticsData.summary || {
-    totalGMV: 42850,
-    totalOrders: 112,
-    avgOrderValue: 382,
-    completedOrders: 104,
+    totalGMV: 0,
+    totalOrders: 0,
+    avgOrderValue: 0,
+    completedOrders: 0,
+    fulfillmentSlaRate: null,
   };
 
   const outletList = analyticsData.outlets || [];
@@ -101,11 +114,11 @@ export default function AnalyticsDashboardPage() {
               <BarChart3 className="w-5 h-5" />
             </span>
             <h1 className="text-xl sm:text-2xl font-serif font-bold text-stone-900 tracking-tight">
-              FOCO Franchise Analytics &amp; Revenue
+              Store &amp; Outlet Analytics
             </h1>
           </div>
           <p className="text-xs text-stone-500 mt-1">
-            Real-time gross merchandise value, outlet P&amp;L breakdown, rush hour peaks, and fulfillment SLAs
+            Real-time gross merchandise value, outlet order breakdown, hourly trends, and delivery performance
           </p>
         </div>
 
@@ -146,9 +159,6 @@ export default function AnalyticsDashboardPage() {
             <span className="text-2xl font-serif font-bold text-stone-900">
               ₹{summary.totalGMV.toLocaleString()}
             </span>
-            <span className="text-[10px] text-emerald-700 font-medium flex items-center">
-              <ArrowUpRight className="w-3 h-3" /> +14.2%
-            </span>
           </div>
         </div>
 
@@ -170,9 +180,6 @@ export default function AnalyticsDashboardPage() {
             <span className="text-2xl font-serif font-bold text-stone-900">
               ₹{summary.avgOrderValue}
             </span>
-            <span className="text-[10px] text-emerald-700 font-medium flex items-center">
-              <ArrowUpRight className="w-3 h-3" /> +8.5%
-            </span>
           </div>
         </div>
 
@@ -180,10 +187,12 @@ export default function AnalyticsDashboardPage() {
           <span className="text-xs text-stone-400 block font-medium">Fulfillment SLA Rate</span>
           <div className="flex items-baseline gap-2 mt-1">
             <span className="text-2xl font-serif font-bold text-stone-900">
-              98.4%
+              {summary.totalOrders > 0 && summary.fulfillmentSlaRate !== null
+                ? `${summary.fulfillmentSlaRate}%`
+                : '—'}
             </span>
-            <span className="text-[10px] text-emerald-700 font-medium">
-              High Dispatch
+            <span className="text-[10px] text-stone-500 font-medium">
+              {summary.totalOrders > 0 ? 'Live Deliveries' : 'No orders yet'}
             </span>
           </div>
         </div>
@@ -193,7 +202,7 @@ export default function AnalyticsDashboardPage() {
       <div className="space-y-4">
         <h3 className="text-sm font-serif font-bold text-stone-900 flex items-center gap-2">
           <Store className="w-4 h-4 text-stone-700" />
-          <span>FOCO Outlet Franchise Breakdown</span>
+          <span>Outlet Performance Breakdown</span>
         </h3>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
@@ -209,7 +218,7 @@ export default function AnalyticsDashboardPage() {
                       {outlet.outletName.replace("Puffs 'n' Rolls - ", '')}
                     </h4>
                     <span className="text-[10px] text-stone-400 font-mono">
-                      Nashik FOCO Branch
+                      {outlet.outletSlug.replace('-', ' ').toUpperCase()} Branch
                     </span>
                   </div>
                   <span className="px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 text-[10px] font-mono border border-emerald-200 font-medium">
@@ -251,19 +260,23 @@ export default function AnalyticsDashboardPage() {
                   Top Selling Items
                 </span>
                 <div className="space-y-1.5">
-                  {outlet.topSellingItems.map((item, idx) => (
-                    <div
-                      key={item.name}
-                      className="flex items-center justify-between text-xs text-stone-700"
-                    >
-                      <span className="truncate max-w-[170px]">
-                        {idx + 1}. {item.name}
-                      </span>
-                      <span className="font-mono text-[11px] font-bold text-stone-900">
-                        {item.quantity} sold
-                      </span>
-                    </div>
-                  ))}
+                  {outlet.topSellingItems && outlet.topSellingItems.length > 0 ? (
+                    outlet.topSellingItems.map((item, idx) => (
+                      <div
+                        key={item.name}
+                        className="flex items-center justify-between text-xs text-stone-700"
+                      >
+                        <span className="truncate max-w-[170px]">
+                          {idx + 1}. {item.name}
+                        </span>
+                        <span className="font-mono text-[11px] font-bold text-stone-900">
+                          {item.quantity} sold
+                        </span>
+                      </div>
+                    ))
+                  ) : (
+                    <p className="text-[11px] text-stone-400 py-1">No items sold yet</p>
+                  )}
                 </div>
               </div>
             </div>
@@ -284,16 +297,13 @@ export default function AnalyticsDashboardPage() {
           </div>
 
           <div className="space-y-3 pt-2">
-            {[
-              { time: '11:00 AM - 1:00 PM (Brunch Pastries)', pct: 45, orders: '18 orders', rev: '₹4,890' },
-              { time: '1:00 PM - 3:00 PM (Lunch Rolls)', pct: 60, orders: '24 orders', rev: '₹6,420' },
-              { time: '4:00 PM - 6:00 PM (Evening Puff Rush)', pct: 95, orders: '42 orders', rev: '₹12,850' },
-              { time: '7:00 PM - 9:30 PM (Dinner & Cakes)', pct: 80, orders: '32 orders', rev: '₹18,690' },
-            ].map((slot) => (
+            {(analyticsData.hourlyDistribution || []).map((slot) => (
               <div key={slot.time} className="space-y-1 text-xs">
                 <div className="flex items-center justify-between">
                   <span className="text-stone-700 font-medium">{slot.time}</span>
-                  <span className="font-mono text-stone-900 font-bold">{slot.rev} ({slot.orders})</span>
+                  <span className="font-mono text-stone-900 font-bold">
+                    ₹{slot.revenue.toLocaleString()} ({slot.orders} orders)
+                  </span>
                 </div>
                 <div className="h-2 bg-stone-100 rounded-full overflow-hidden border border-stone-200">
                   <div
@@ -303,6 +313,11 @@ export default function AnalyticsDashboardPage() {
                 </div>
               </div>
             ))}
+            {summary.totalOrders === 0 && (
+              <p className="text-xs text-stone-400 text-center py-3">
+                No orders recorded yet today. Hourly rush distribution calculates live as orders are placed.
+              </p>
+            )}
           </div>
         </div>
 
@@ -314,8 +329,8 @@ export default function AnalyticsDashboardPage() {
                 <Truck className="w-4 h-4 text-stone-700" />
                 <span>Express Doorstep Delivery Fleet Metrics</span>
               </h3>
-              <span className="text-[10px] text-emerald-700 bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-200 font-mono font-medium">
-                Fleet Automated
+              <span className="text-[10px] text-stone-600 bg-stone-100 px-2.5 py-0.5 rounded-full border border-stone-200 font-mono font-medium">
+                {analyticsData.fleetMetrics?.hasDeliveries ? 'Fleet Active' : 'Awaiting Deliveries'}
               </span>
             </div>
 
@@ -323,20 +338,24 @@ export default function AnalyticsDashboardPage() {
               <div className="p-4 bg-[#FAF8F5] rounded-2xl border border-stone-200">
                 <span className="text-[10px] text-stone-500 block">Avg. Kitchen Prep Time</span>
                 <span className="text-xl font-serif font-bold text-stone-900 font-mono mt-1 block">
-                  12.4 mins
+                  {analyticsData.fleetMetrics?.avgPrepMinutes !== null && analyticsData.fleetMetrics?.avgPrepMinutes !== undefined
+                    ? `${analyticsData.fleetMetrics.avgPrepMinutes} mins`
+                    : '—'}
                 </span>
-                <span className="text-[10px] text-emerald-700 mt-0.5 block">
-                  Well within 18m SLA
+                <span className="text-[10px] text-stone-500 mt-0.5 block">
+                  {analyticsData.fleetMetrics?.hasDeliveries ? 'Based on live orders' : 'Awaiting orders'}
                 </span>
               </div>
 
               <div className="p-4 bg-[#FAF8F5] rounded-2xl border border-stone-200">
                 <span className="text-[10px] text-stone-500 block">Avg. Rider Transit Time</span>
                 <span className="text-xl font-serif font-bold text-stone-900 font-mono mt-1 block">
-                  18.2 mins
+                  {analyticsData.fleetMetrics?.avgTransitMinutes !== null && analyticsData.fleetMetrics?.avgTransitMinutes !== undefined
+                    ? `${analyticsData.fleetMetrics.avgTransitMinutes} mins`
+                    : '—'}
                 </span>
-                <span className="text-[10px] text-emerald-700 mt-0.5 block">
-                  Across Nashik radius
+                <span className="text-[10px] text-stone-500 mt-0.5 block">
+                  {analyticsData.fleetMetrics?.hasDeliveries ? 'Across delivery radius' : 'Awaiting dispatch'}
                 </span>
               </div>
             </div>

@@ -75,7 +75,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       permission: 'staff:view' as Permission,
     },
     {
-      label: 'FOCO Analytics',
+      label: 'Analytics & Reports',
       shortLabel: 'Analytics',
       href: '/admin/analytics',
       icon: BarChart3,

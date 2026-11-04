@@ -47,7 +47,7 @@ export default function AdminLoginPage() {
               P&amp;R Operations Portal
             </h1>
             <p className="text-xs text-stone-500 max-w-xs mx-auto leading-relaxed">
-              Multi-outlet performance marketing, outlet stock 86-ing, and FOCO fulfillment terminal.
+              Multi-outlet performance marketing, outlet stock management, and kitchen dispatch terminal.
             </p>
           </div>
         </div>

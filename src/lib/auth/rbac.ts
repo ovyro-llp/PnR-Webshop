@@ -156,7 +156,7 @@ export const PERMISSION_CATEGORIES: PermissionCategory[] = [
   {
     id: 'analytics',
     title: 'Analytics & Financials',
-    description: 'Real-time sales, outlet performance, and FOCO margin visibility',
+    description: 'Real-time sales, outlet performance, and store analytics visibility',
     permissions: [
       {
         id: 'analytics:view_outlet',
@@ -165,8 +165,8 @@ export const PERMISSION_CATEGORIES: PermissionCategory[] = [
       },
       {
         id: 'analytics:view_financials',
-        label: 'HQ Financials & FOCO Margins',
-        description: 'Access aggregate brand revenue, royalty splits, and store comparison metrics',
+        label: 'HQ Financials & Reports',
+        description: 'Access aggregate brand revenue, sales trends, and store comparison metrics',
       },
     ],
   },

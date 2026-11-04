@@ -191,7 +191,7 @@ export default function AdminPage() {
             </h1>
           </div>
           <p className="text-xs text-stone-500 mt-1">
-            Real-time customer bakery orders, FOCO settlements, and white-labeled delivery tracking
+            Real-time customer bakery orders, outlet settlements, and live delivery tracking
           </p>
         </div>
 
@@ -252,7 +252,7 @@ export default function AdminPage() {
           <span className="text-2xl font-serif font-bold text-stone-900 block mt-1">
             ₹{totalRevenue.toLocaleString()}
           </span>
-          <span className="text-[11px] text-emerald-700 font-medium">FOCO Settlements</span>
+          <span className="text-[11px] text-emerald-700 font-medium">Order Settlements</span>
         </div>
 
         <div className="bg-white p-5 rounded-3xl border border-stone-200/90 shadow-[0_2px_8px_rgba(0,0,0,0.02)] space-y-1">

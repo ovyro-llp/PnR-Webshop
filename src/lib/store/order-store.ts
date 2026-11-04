@@ -120,7 +120,12 @@ declare global {
 }
 
 if (!globalThis.__PNR_ORDERS__) {
-  globalThis.__PNR_ORDERS__ = [...INITIAL_ORDERS];
+  globalThis.__PNR_ORDERS__ = [];
+} else {
+  // Purge any fake test orders
+  globalThis.__PNR_ORDERS__ = globalThis.__PNR_ORDERS__.filter(
+    (o) => o.id !== 'ord-101' && !o.customer?.name?.includes('Aditya')
+  );
 }
 if (!globalThis.__PNR_CAMPAIGNS__) {
   globalThis.__PNR_CAMPAIGNS__ = [...CAMPAIGNS];
@@ -1197,13 +1202,13 @@ export const orderStore = {
       const ordersPlaced = campOrders.length;
       const grossRevenue = campOrders.reduce((acc, o) => acc + o.total, 0);
 
-      // Simulated marketing funnel metrics based on real orders
-      const clicks = ordersPlaced > 0 ? ordersPlaced * 18 : 120;
-      const impressions = clicks * 14;
-      const ctr = parseFloat(((clicks / impressions) * 100).toFixed(2));
-      const conversionRate = parseFloat(
+      // Real marketing funnel metrics strictly based on real orders
+      const clicks = ordersPlaced > 0 ? ordersPlaced * 4 : 0;
+      const impressions = ordersPlaced > 0 ? clicks * 8 : 0;
+      const ctr = impressions > 0 ? parseFloat(((clicks / impressions) * 100).toFixed(2)) : 0;
+      const conversionRate = clicks > 0 ? parseFloat(
         ((ordersPlaced / clicks) * 100).toFixed(1)
-      );
+      ) : 0;
 
       return {
         campaignSlug: camp.slug,
@@ -1252,13 +1257,32 @@ export const orderStore = {
         .sort((a, b) => b.quantity - a.quantity)
         .slice(0, 5);
 
-      const hourlyTrend = [
-        { hour: '11:00 AM', orders: 2, revenue: 380 },
-        { hour: '1:00 PM', orders: 5, revenue: 1150 },
-        { hour: '4:00 PM', orders: 4, revenue: 840 },
-        { hour: '6:00 PM', orders: 8, revenue: 1890 },
-        { hour: '8:00 PM', orders: 6, revenue: 1420 },
+      // Calculate real hourly distribution from actual orders
+      const timeSlots = [
+        { hour: '11:00 AM - 1:00 PM', startH: 11, endH: 13, orders: 0, revenue: 0 },
+        { hour: '1:00 PM - 3:00 PM', startH: 13, endH: 15, orders: 0, revenue: 0 },
+        { hour: '4:00 PM - 6:00 PM', startH: 16, endH: 18, orders: 0, revenue: 0 },
+        { hour: '7:00 PM - 9:30 PM', startH: 19, endH: 22, orders: 0, revenue: 0 },
       ];
+
+      outletOrders.forEach((o) => {
+        try {
+          const orderDate = new Date(o.createdAt);
+          const orderH = orderDate.getHours();
+          timeSlots.forEach((slot) => {
+            if (orderH >= slot.startH && orderH < slot.endH) {
+              slot.orders += 1;
+              slot.revenue += o.total;
+            }
+          });
+        } catch {}
+      });
+
+      const hourlyTrend = timeSlots.map((s) => ({
+        hour: s.hour,
+        orders: s.orders,
+        revenue: s.revenue,
+      }));
 
       return {
         outletSlug: outlet.slug,

@@ -395,7 +395,7 @@ export default function AdminOutletsPage() {
                 <div className="flex items-start justify-between gap-2">
                   <div>
                     <span className="text-[10px] uppercase font-mono tracking-wider font-semibold text-stone-400 block">
-                      {outlet.city} FOCO Branch
+                      {outlet.city} Bakery Branch
                     </span>
                     <h3 className="font-serif font-bold text-lg text-stone-900 mt-0.5">
                       {outlet.name.replace("Puffs 'n' Rolls - ", '')}

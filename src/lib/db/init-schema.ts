@@ -227,6 +227,10 @@ export async function ensureCoreTables(): Promise<boolean> {
               END IF;
             END IF;
           END $$;
+
+          -- Cleanse any legacy fake test orders or mock customers
+          DELETE FROM public.orders WHERE id = 'ord-101' OR order_number = 'PNR-26101' OR customer_name ILIKE '%Aditya Deshmukh%' OR customer_phone = '+91 98223 44556';
+          DELETE FROM public.customers WHERE phone = '+91 98223 44556' OR phone = '9822344556' OR name ILIKE '%Aditya Deshmukh%';
         `);
         await client.query('COMMIT');
         return true;

@@ -169,47 +169,4 @@ import MASTER_CATALOG from './master-catalog.json';
 
 export const MENU_ITEMS: MenuItem[] = MASTER_CATALOG as MenuItem[];
 
-export const INITIAL_ORDERS: Order[] = [
-  {
-    id: 'ord-101',
-    orderNumber: 'PNR-26101',
-    outletSlug: 'cycle-circle',
-    campaignSlug: 'cycle-circle-special',
-    customer: {
-      name: 'Aditya Deshmukh',
-      phone: '+91 98223 44556',
-      address: 'Flat 402, Shrinath Heights, Near KTHM College Ground',
-      area: 'Gangapur Road',
-      pincode: '422002',
-    },
-    items: [
-      {
-        itemId: 'item-1',
-        name: 'White Bread',
-        price: 50,
-        quantity: 2,
-        total: 100,
-      },
-      {
-        itemId: 'item-18',
-        name: 'Veg Puff (Classic)',
-        price: 50,
-        quantity: 2,
-        total: 100,
-      },
-    ],
-    subtotal: 200,
-    discount: 0,
-    deliveryFee: 25,
-    total: 225,
-    paymentMethod: 'UPI',
-    paymentStatus: 'COMPLETED',
-    orderStatus: 'PREPARING',
-    mangwale: {
-      status: 'PENDING',
-      notes: 'Order placed, awaiting dispatch to Mangwale upon bakery packing',
-    },
-    createdAt: '2026-10-29T14:50:00Z',
-    updatedAt: '2026-10-29T15:15:00Z',
-  },
-];
+export const INITIAL_ORDERS: Order[] = [];
