@@ -12,6 +12,10 @@ import {
   ArrowLeft,
   Truck,
   RefreshCw,
+  ExternalLink,
+  Copy,
+  Check,
+  MapPin,
 } from 'lucide-react';
 
 interface OrderTrackingClientProps {
@@ -28,6 +32,28 @@ export function OrderTrackingClient({
   const [order, setOrder] = useState<Order>(initialOrder);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [lastUpdated, setLastUpdated] = useState<Date>(new Date());
+  const [copiedLink, setCopiedLink] = useState(false);
+
+  const cleanCustomerPhone = order.customer?.phone
+    ? order.customer.phone.replace(/[^0-9]/g, '').slice(-10)
+    : '';
+
+  const trackingUrl =
+    order.mangwale?.trackingUrl ||
+    (order.mangwale?.taskId && cleanCustomerPhone
+      ? `https://track.mangwale.com/track/${encodeURIComponent(order.mangwale.taskId)}/${cleanCustomerPhone}`
+      : null);
+
+  const copyTrackingLink = async () => {
+    if (!trackingUrl) return;
+    try {
+      await navigator.clipboard.writeText(trackingUrl);
+      setCopiedLink(true);
+      setTimeout(() => setCopiedLink(false), 2500);
+    } catch (err) {
+      console.warn('Failed to copy tracking link', err);
+    }
+  };
 
   const pollOrder = async () => {
     try {
@@ -205,59 +231,117 @@ export function OrderTrackingClient({
           })}
         </div>
 
-        {/* Delivery Partner Info */}
-        {order.mangwale && (
-          <div className="p-4 bg-white rounded-2xl border border-stone-200/80 flex flex-wrap items-center justify-between gap-3 text-xs">
-            <div>
-              <span className="text-[10px] uppercase tracking-wider text-stone-400 font-medium">
-                Logistics Partner
-              </span>
-              <p className="font-bold text-stone-900">
-                Mangwale Express Delivery
-              </p>
-              {order.mangwale.riderName ? (
-                <div className="mt-0.5">
-                  <p className="text-xs text-stone-700 font-medium">
-                    Assigned Executive: <strong className="text-stone-900">{order.mangwale.riderName}</strong>
-                  </p>
-                  {order.mangwale.riderVehicleNo && (
-                    <p className="text-[10px] text-stone-500 font-mono">{order.mangwale.riderVehicleNo}</p>
-                  )}
+        {/* Prominent Mangwale Live Map Tracking Section */}
+        {trackingUrl ? (
+          <div className="bg-stone-900 text-white rounded-3xl p-5 sm:p-7 space-y-4 shadow-sm border border-stone-800">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div className="flex items-center gap-3">
+                <div className="w-11 h-11 rounded-2xl bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center shrink-0">
+                  <Truck className="w-5 h-5 text-emerald-400" />
                 </div>
-              ) : (
-                <p className="text-[11px] text-stone-500 mt-0.5">
-                  Awaiting rider assignment from Mangwale
-                </p>
-              )}
-              {order.mangwale.taskId && (
-                <p className="text-[10px] text-stone-400 font-mono mt-0.5">
-                  Mangwale Task ID: {order.mangwale.taskId}
-                </p>
-              )}
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-[10px] uppercase tracking-widest font-bold text-emerald-400">
+                      Live GPS Tracking
+                    </span>
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                  </div>
+                  <h4 className="text-base sm:text-lg font-serif font-bold text-white">
+                    Track Your Delivery on Mangwale Map
+                  </h4>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <a
+                  href={trackingUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="px-4 py-2.5 rounded-full bg-emerald-500 hover:bg-emerald-400 text-stone-950 font-bold text-xs flex items-center gap-1.5 transition shadow-sm cursor-pointer shrink-0"
+                >
+                  <MapPin className="w-3.5 h-3.5" />
+                  <span>Open Live Map</span>
+                  <ExternalLink className="w-3.5 h-3.5" />
+                </a>
+              </div>
             </div>
-            <div className="flex items-center gap-2">
-              {order.mangwale.riderPhone && (
+
+            <p className="text-xs text-stone-300 leading-relaxed">
+              Real-time driver location and delivery ETA powered by <strong>Mangwale Express Logistics</strong>.
+            </p>
+
+            <div className="p-3 bg-stone-950/60 rounded-xl border border-stone-800/80 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 text-xs">
+              <div className="flex items-center gap-2 font-mono text-[11px] text-stone-400 truncate">
+                <span className="shrink-0 text-stone-500">Live URL:</span>
+                <span className="text-stone-300 truncate font-sans text-xs">{trackingUrl}</span>
+              </div>
+              <button
+                onClick={copyTrackingLink}
+                className="px-3 py-1.5 rounded-lg bg-stone-800 hover:bg-stone-700 text-stone-200 text-xs font-semibold flex items-center gap-1.5 transition shrink-0 cursor-pointer self-start sm:self-auto border border-stone-700"
+              >
+                {copiedLink ? (
+                  <>
+                    <Check className="w-3.5 h-3.5 text-emerald-400" />
+                    <span className="text-emerald-400">Copied!</span>
+                  </>
+                ) : (
+                  <>
+                    <Copy className="w-3.5 h-3.5" />
+                    <span>Copy Link</span>
+                  </>
+                )}
+              </button>
+            </div>
+
+            {/* Rider & Task Details */}
+            <div className="pt-3 border-t border-stone-800 flex flex-wrap items-center justify-between gap-3 text-xs">
+              <div className="space-y-0.5">
+                {order.mangwale?.taskId && (
+                  <p className="text-[11px] font-mono text-stone-400">
+                    Task ID: <strong className="text-white">{order.mangwale.taskId}</strong>
+                  </p>
+                )}
+                {order.mangwale?.riderName ? (
+                  <p className="text-xs text-stone-300">
+                    Driver: <strong className="text-white">{order.mangwale.riderName}</strong>
+                    {order.mangwale.riderVehicleNo && (
+                      <span className="ml-1.5 text-stone-400 font-mono">({order.mangwale.riderVehicleNo})</span>
+                    )}
+                  </p>
+                ) : (
+                  <p className="text-[11px] text-stone-400">
+                    Awaiting driver assignment from Mangwale
+                  </p>
+                )}
+              </div>
+
+              {order.mangwale?.riderPhone && (
                 <a
                   href={`tel:${order.mangwale.riderPhone}`}
-                  className="px-3 py-1.5 rounded-full border border-stone-300 text-stone-700 hover:text-stone-900 font-semibold flex items-center gap-1.5 transition"
+                  className="px-3 py-1.5 rounded-full border border-stone-700 bg-stone-800 hover:bg-stone-700 text-white font-semibold flex items-center gap-1.5 transition"
                 >
                   <Phone className="w-3.5 h-3.5" />
                   <span>Call Executive</span>
                 </a>
               )}
-              {order.mangwale.trackingUrl && (
-                <a
-                  href={order.mangwale.trackingUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="px-3.5 py-1.5 rounded-full bg-emerald-700 text-white hover:bg-emerald-800 font-semibold flex items-center gap-1.5 transition shadow-xs"
-                >
-                  <Truck className="w-3.5 h-3.5" />
-                  <span>Track Live</span>
-                </a>
-              )}
             </div>
           </div>
+        ) : (
+          order.mangwale && (
+            <div className="p-4 bg-white rounded-2xl border border-stone-200/80 flex flex-wrap items-center justify-between gap-3 text-xs">
+              <div>
+                <span className="text-[10px] uppercase tracking-wider text-stone-400 font-medium">
+                  Logistics Partner
+                </span>
+                <p className="font-bold text-stone-900">
+                  Mangwale Express Delivery
+                </p>
+                <p className="text-[11px] text-stone-500 mt-0.5">
+                  Preparing order for dispatch to Mangwale
+                </p>
+              </div>
+            </div>
+          )
         )}
       </div>
 

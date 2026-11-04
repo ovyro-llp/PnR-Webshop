@@ -1,6 +1,7 @@
 import { getDbPool } from '@/lib/db';
 import { ensureCoreTables } from '@/lib/db/init-schema';
 import { Order, MangwaleLogisticsInfo, Outlet, OutletStockItem } from '@/types';
+import { getMangwaleTrackingUrl } from '@/lib/logistics/mangwale';
 
 function rowToOrder(row: any, deliveryRow?: any): Order {
   const customer = {
@@ -24,6 +25,14 @@ function rowToOrder(row: any, deliveryRow?: any): Order {
     items = [];
   }
 
+  const deliveryTaskId = deliveryRow?.task_id || row.mangwale_task_id;
+  const customerPhone = row.customer_phone || customer.phone;
+  const resolvedTrackingUrl =
+    deliveryRow?.tracking_url ||
+    (deliveryTaskId && customerPhone
+      ? getMangwaleTrackingUrl(deliveryTaskId, customerPhone)
+      : undefined);
+
   const mangwale: MangwaleLogisticsInfo = deliveryRow
     ? {
         taskId: deliveryRow.task_id,
@@ -31,7 +40,7 @@ function rowToOrder(row: any, deliveryRow?: any): Order {
         riderName: deliveryRow.rider_name,
         riderPhone: deliveryRow.rider_phone,
         riderVehicleNo: deliveryRow.rider_vehicle_no,
-        trackingUrl: deliveryRow.tracking_url,
+        trackingUrl: resolvedTrackingUrl,
         estimatedDeliveryMinutes: deliveryRow.estimated_delivery_minutes,
         dispatchedAt: deliveryRow.dispatched_at ? new Date(deliveryRow.dispatched_at).toISOString() : undefined,
         deliveredAt: deliveryRow.delivered_at ? new Date(deliveryRow.delivered_at).toISOString() : undefined,
@@ -200,7 +209,10 @@ export const orderRepository = {
             order.mangwale.riderName || null,
             order.mangwale.riderPhone || null,
             order.mangwale.riderVehicleNo || null,
-            order.mangwale.trackingUrl || null,
+            order.mangwale.trackingUrl ||
+              (order.mangwale.taskId && order.customer.phone
+                ? getMangwaleTrackingUrl(order.mangwale.taskId, order.customer.phone)
+                : null),
             order.mangwale.estimatedDeliveryMinutes || 25,
             order.customer.address,
             order.customer.coordinates?.lat || null,

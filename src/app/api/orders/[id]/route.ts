@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { orderStore } from '@/lib/store/order-store';
-import { fetchMangwaleOrderStatus } from '@/lib/logistics/mangwale';
+import { fetchMangwaleOrderStatus, getMangwaleTrackingUrl } from '@/lib/logistics/mangwale';
 import { Order } from '@/types';
 
 export async function GET(
@@ -33,7 +33,12 @@ export async function GET(
             riderName: liveStatus.rider?.name,
             riderPhone: liveStatus.rider?.phone,
             riderVehicleNo: liveStatus.rider?.vehicleNo,
-            trackingUrl: liveStatus.trackingUrl || order.mangwale.trackingUrl,
+            trackingUrl:
+              liveStatus.trackingUrl ||
+              order.mangwale.trackingUrl ||
+              (order.mangwale.taskId && order.customer?.phone
+                ? getMangwaleTrackingUrl(order.mangwale.taskId, order.customer.phone)
+                : undefined),
             estimatedDeliveryMinutes:
               liveStatus.estimatedDeliveryMinutes || order.mangwale.estimatedDeliveryMinutes,
             orderStatus:
@@ -52,6 +57,11 @@ export async function GET(
       } catch (err) {
         // Continue with current order state if real-time Mangwale polling fails
       }
+    }
+
+    // Ensure trackingUrl is always derived if taskId and phone exist
+    if (order.mangwale?.taskId && !order.mangwale.trackingUrl && order.customer?.phone) {
+      order.mangwale.trackingUrl = getMangwaleTrackingUrl(order.mangwale.taskId, order.customer.phone);
     }
 
     return NextResponse.json({ success: true, order });

@@ -41,6 +41,20 @@ export interface MangwaleDispatchResponse {
   message: string;
 }
 
+/**
+ * Generates the official customer live map tracking link for a Mangwale order:
+ * Format: https://track.mangwale.com/track/:taskId/:customerPhone
+ * Example: https://track.mangwale.com/track/ENT000196/9146992628
+ */
+export function getMangwaleTrackingUrl(taskId: string, customerPhone?: string): string {
+  if (!taskId || !taskId.trim()) return '';
+  const cleanPhone = (customerPhone || '').replace(/[^0-9]/g, '').slice(-10);
+  if (cleanPhone) {
+    return `https://track.mangwale.com/track/${encodeURIComponent(taskId.trim())}/${cleanPhone}`;
+  }
+  return `https://track.mangwale.com/track/${encodeURIComponent(taskId.trim())}`;
+}
+
 // Mangwale Enterprise Parcel API V1 Specification (business.mangwale.com)
 const DEFAULT_MANGWALE_ENDPOINT =
   process.env.MANGWALE_API_URL ||
@@ -305,7 +319,7 @@ export async function dispatchToMangwale(
           trackingUrl:
             orderData.tracking_url ||
             orderData.trackingUrl ||
-            `https://track.mangwale.com/track/${orderId}/${payload.drops[0].phone}`,
+            getMangwaleTrackingUrl(String(orderId), payload.drops[0].phone),
           estimatedDeliveryMinutes: Number(orderData.estimated_time_minutes || orderData.estimatedDeliveryMinutes || 22),
           rider: orderData.rider && orderData.rider.name
             ? {
@@ -356,7 +370,8 @@ export async function dispatchToMangwale(
  */
 export async function fetchMangwaleOrderStatus(
   taskId: string,
-  outlet?: Outlet
+  outlet?: Outlet,
+  customerPhone?: string
 ): Promise<{
   success: boolean;
   taskId: string;
@@ -451,7 +466,15 @@ export async function fetchMangwaleOrderStatus(
                 vehicleNo: riderData.vehicle_number || riderData.vehicleNo || '',
               }
             : undefined,
-        trackingUrl: orderData.tracking_url || undefined,
+        trackingUrl:
+          orderData.tracking_url ||
+          orderData.trackingUrl ||
+          (customerPhone || orderData.customer_phone || orderData.phone || orderData.drop_phone
+            ? getMangwaleTrackingUrl(
+                taskId,
+                customerPhone || orderData.customer_phone || orderData.phone || orderData.drop_phone
+              )
+            : undefined),
         estimatedDeliveryMinutes: Number(
           orderData.estimated_time_minutes || orderData.estimatedDeliveryMinutes || 0
         ),
@@ -646,7 +669,17 @@ export function parseMangwaleWebhook(payload: Record<string, unknown>): Partial<
 
   const taskId = String(orderData.order_id || payload.order_id || orderData.taskId || payload.taskId || '');
   const externalOrderId = String(orderData.external_order_id || payload.external_order_id || payload.orderNumber || payload.externalOrderId || '');
-  const trackingUrl = String(orderData.tracking_url || payload.tracking_url || payload.trackingUrl || '');
+  const customerPhone = String(
+    orderData.customer_phone ||
+    orderData.drop_phone ||
+    orderData.phone ||
+    payload.customer_phone ||
+    payload.drop_phone ||
+    payload.phone ||
+    ''
+  );
+  const rawTrackingUrl = String(orderData.tracking_url || payload.tracking_url || payload.trackingUrl || '');
+  const trackingUrl = rawTrackingUrl || (taskId && customerPhone ? getMangwaleTrackingUrl(taskId, customerPhone) : undefined);
 
   return {
     taskId,

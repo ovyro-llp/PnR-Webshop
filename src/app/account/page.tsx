@@ -7,7 +7,7 @@ import { useAuth } from '@/context/AuthContext';
 import { Navbar } from '@/components/layout/Navbar';
 import { Footer } from '@/components/layout/Footer';
 import { Order } from '@/types';
-import { User, MapPin, Phone, LogOut, ShoppingBag, Clock, ArrowRight, Edit3, Plus, Trash2, X, CheckCircle2 } from 'lucide-react';
+import { User, MapPin, Phone, LogOut, ShoppingBag, Clock, ArrowRight, Edit3, Plus, Trash2, X, CheckCircle2, Truck, ExternalLink } from 'lucide-react';
 
 export default function AccountPage() {
   const router = useRouter();
@@ -213,13 +213,40 @@ export default function AccountPage() {
                       </p>
                     </div>
 
-                    <Link
-                      href={`/${ord.outletSlug}/order/${ord.id}`}
-                      className="px-3.5 py-1.5 bg-stone-100 hover:bg-stone-200 text-stone-800 rounded-lg text-xs font-semibold self-start sm:self-center flex items-center gap-1 transition"
-                    >
-                      <span>Track Order</span>
-                      <ArrowRight className="w-3 h-3" />
-                    </Link>
+                    {(() => {
+                      const userPhone = customerUser?.phone || (user && 'phone' in user ? (user as any).phone : '');
+                      const cleanPhone = (ord.customer?.phone || userPhone || '').replace(/[^0-9]/g, '').slice(-10);
+                      const trackingUrl =
+                        ord.mangwale?.trackingUrl ||
+                        (ord.mangwale?.taskId && cleanPhone
+                          ? `https://track.mangwale.com/track/${encodeURIComponent(ord.mangwale.taskId)}/${cleanPhone}`
+                          : null);
+
+                      return (
+                        <div className="flex items-center gap-2 self-start sm:self-center">
+                          {trackingUrl && (
+                            <a
+                              href={trackingUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="px-3 py-1.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition"
+                              title="Track delivery on Mangwale Live GPS Map"
+                            >
+                              <Truck className="w-3.5 h-3.5 text-emerald-600" />
+                              <span>Live Map</span>
+                              <ExternalLink className="w-3 h-3 text-emerald-600" />
+                            </a>
+                          )}
+                          <Link
+                            href={`/${ord.outletSlug}/order/${ord.id}`}
+                            className="px-3.5 py-1.5 bg-stone-100 hover:bg-stone-200 text-stone-800 rounded-lg text-xs font-semibold flex items-center gap-1 transition"
+                          >
+                            <span>Details</span>
+                            <ArrowRight className="w-3 h-3" />
+                          </Link>
+                        </div>
+                      );
+                    })()}
                   </div>
                 ))}
               </div>
