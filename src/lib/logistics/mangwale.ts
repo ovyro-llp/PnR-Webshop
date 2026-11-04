@@ -63,9 +63,10 @@ const DEFAULT_MANGWALE_ENDPOINT =
 
 /**
  * Resolves Mangwale credentials for a specific outlet, with hierarchical fallback:
- * 1. Outlet-specific Mangwale configuration (inserted via Admin Portal)
- * 2. Environment variables fallback (MANGWALE_API_KEY, MANGWALE_API_SECRET)
- * 3. Default demo keys for Nashik city operation
+ * 1. Outlet-specific Live credentials (inserted via Admin Portal into DB)
+ * 2. Host environment variables (MANGWALE_API_KEY, MANGWALE_API_SECRET in Railway)
+ * 3. Outlet-specific test/sandbox credentials
+ * 4. Unconfigured default (safe disabled state)
  */
 export function resolveMangwaleCredentials(outlet?: Outlet): {
   apiKey: string;
@@ -76,37 +77,67 @@ export function resolveMangwaleCredentials(outlet?: Outlet): {
   isEnabled: boolean;
   isConfigured: boolean;
 } {
-  if (outlet?.mangwaleConfig && outlet.mangwaleConfig.apiKey) {
-    const config = outlet.mangwaleConfig;
+  // 1. Host Environment Variables (Railway / Server environment)
+  const envKey = process.env.MANGWALE_API_KEY?.trim();
+  const envSecret = process.env.MANGWALE_API_SECRET?.trim();
+  const envMode = (
+    process.env.MANGWALE_ENV ||
+    (envKey?.startsWith('mw_live_') ? 'live' : 'test')
+  ) as 'live' | 'sandbox' | 'test';
+  const hasEnvKeys = Boolean(envKey && envSecret);
+
+  // 2. Outlet-specific config (saved in DB / Admin Portal)
+  const outletConfig = outlet?.mangwaleConfig;
+  const hasOutletLiveKey = Boolean(
+    outletConfig?.apiKey?.startsWith('mw_live_') && outletConfig?.apiSecret
+  );
+
+  // If outlet has explicitly configured live keys in Admin UI / DB, prioritize them
+  if (hasOutletLiveKey && outletConfig) {
     return {
-      apiKey: config.apiKey,
-      apiSecret: config.apiSecret,
-      merchantId: config.merchantId || `MNG-${outlet.slug.toUpperCase()}`,
-      environment: config.environment || 'live',
+      apiKey: outletConfig.apiKey.trim(),
+      apiSecret: outletConfig.apiSecret.trim(),
+      merchantId:
+        outletConfig.merchantId ||
+        (outlet ? `MNG-PNR-${outlet.slug.toUpperCase()}` : 'MNG-PNR-NASHIK'),
+      environment: outletConfig.environment || 'live',
       endpoint: DEFAULT_MANGWALE_ENDPOINT,
-      isEnabled: config.isEnabled ?? true,
+      isEnabled: outletConfig.isEnabled ?? true,
       isConfigured: true,
     };
   }
 
-  // Fallback to environment variables
-  const envKey = process.env.MANGWALE_API_KEY;
-  const envSecret = process.env.MANGWALE_API_SECRET;
-  const envMode = (process.env.MANGWALE_ENV || 'test') as 'live' | 'sandbox' | 'test';
-
-  if (envKey && envSecret) {
+  // If host environment (Railway) has keys configured, apply them globally
+  if (hasEnvKeys && envKey && envSecret) {
     return {
       apiKey: envKey,
       apiSecret: envSecret,
-      merchantId: 'MNG-PNR-NASHIK',
+      merchantId:
+        outletConfig?.merchantId ||
+        (outlet ? `MNG-PNR-${outlet.slug.toUpperCase()}` : 'MNG-PNR-NASHIK'),
       environment: envMode,
       endpoint: DEFAULT_MANGWALE_ENDPOINT,
-      isEnabled: true,
+      isEnabled: outletConfig?.isEnabled ?? true,
       isConfigured: true,
     };
   }
 
-  // Development / sandbox defaults: Unconfigured until admin keys are entered
+  // 3. Fallback to outlet test credentials if present
+  if (outletConfig?.apiKey && outletConfig?.apiSecret) {
+    return {
+      apiKey: outletConfig.apiKey.trim(),
+      apiSecret: outletConfig.apiSecret.trim(),
+      merchantId:
+        outletConfig.merchantId ||
+        (outlet ? `MNG-PNR-${outlet.slug.toUpperCase()}` : 'MNG-PNR-NASHIK'),
+      environment: outletConfig.environment || 'test',
+      endpoint: DEFAULT_MANGWALE_ENDPOINT,
+      isEnabled: outletConfig.isEnabled ?? true,
+      isConfigured: true,
+    };
+  }
+
+  // 4. Development / sandbox defaults: Unconfigured until keys are entered
   return {
     apiKey: '',
     apiSecret: '',

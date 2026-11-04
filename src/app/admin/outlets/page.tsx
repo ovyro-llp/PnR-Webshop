@@ -142,12 +142,12 @@ export default function AdminOutletsPage() {
     });
 
     const existingConfig: MangwaleOutletConfig = outlet.mangwaleConfig || {
-      apiKey: `mw_live_${outlet.slug.replace(/[^a-z0-9]/g, '_')}_7731`,
-      apiSecret: `sk_live_${outlet.slug.replace(/[^a-z0-9]/g, '_')}_sec_9921`,
-      merchantId: `MNG-MKT-${outlet.slug.toUpperCase()}`,
+      apiKey: '',
+      apiSecret: '',
+      merchantId: `MNG-PNR-${outlet.slug.toUpperCase()}`,
       environment: 'live',
       isEnabled: true,
-      webhookSecret: `mw_whsec_${outlet.slug.replace(/[^a-z0-9]/g, '_')}_2026`,
+      webhookSecret: '',
     };
 
     setMangwaleData(existingConfig);
