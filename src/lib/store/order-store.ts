@@ -628,11 +628,27 @@ export const orderStore = {
     return globalThis.__PNR_MARKETING_TAGS__ || {};
   },
 
+  getMarketingTagsAsync: async () => {
+    try {
+      const dbTags = await orderRepository.getMarketingTags();
+      if (dbTags) {
+        globalThis.__PNR_MARKETING_TAGS__ = {
+          ...globalThis.__PNR_MARKETING_TAGS__,
+          ...dbTags,
+        };
+      }
+    } catch (e: any) {
+      console.warn('[orderStore.getMarketingTagsAsync DB Warning]:', e.message);
+    }
+    return orderStore.getMarketingTags();
+  },
+
   updateMarketingTags: (tags: Record<string, unknown>) => {
     globalThis.__PNR_MARKETING_TAGS__ = {
       ...globalThis.__PNR_MARKETING_TAGS__,
       ...tags,
     };
+    orderRepository.saveMarketingTags(globalThis.__PNR_MARKETING_TAGS__).catch(() => {});
     return globalThis.__PNR_MARKETING_TAGS__;
   },
 
@@ -1165,13 +1181,31 @@ export const orderStore = {
     );
   },
 
+  getEmployeesAsync: async (outletSlug?: string): Promise<Employee[]> => {
+    try {
+      const dbEmployees = await orderRepository.getEmployees();
+      if (dbEmployees && Array.isArray(dbEmployees) && dbEmployees.length > 0) {
+        globalThis.__PNR_EMPLOYEES__ = dbEmployees;
+      } else if (globalThis.__PNR_EMPLOYEES__ && globalThis.__PNR_EMPLOYEES__.length > 0) {
+        orderRepository.saveEmployees(globalThis.__PNR_EMPLOYEES__).catch(() => {});
+      }
+    } catch (e: any) {
+      console.warn('[orderStore.getEmployeesAsync DB Warning]:', e.message);
+    }
+    return orderStore.getEmployees(outletSlug);
+  },
+
   createEmployee: (data: Omit<Employee, 'id' | 'createdAt'>): Employee => {
     const newEmp: Employee = {
       ...data,
       id: `emp-${Date.now()}`,
       createdAt: new Date().toISOString(),
     };
-    globalThis.__PNR_EMPLOYEES__?.push(newEmp);
+    if (!globalThis.__PNR_EMPLOYEES__) {
+      globalThis.__PNR_EMPLOYEES__ = [];
+    }
+    globalThis.__PNR_EMPLOYEES__.push(newEmp);
+    orderRepository.saveEmployees(globalThis.__PNR_EMPLOYEES__).catch(() => {});
     return newEmp;
   },
 
@@ -1180,6 +1214,7 @@ export const orderStore = {
     const idx = list.findIndex((e) => e.id === id);
     if (idx !== -1) {
       list[idx] = { ...list[idx], ...updates };
+      orderRepository.saveEmployees(list).catch(() => {});
       return list[idx];
     }
     return undefined;
@@ -1189,7 +1224,11 @@ export const orderStore = {
     const list = globalThis.__PNR_EMPLOYEES__ || [];
     const initialLen = list.length;
     globalThis.__PNR_EMPLOYEES__ = list.filter((e) => e.id !== id);
-    return globalThis.__PNR_EMPLOYEES__.length < initialLen;
+    const deleted = globalThis.__PNR_EMPLOYEES__.length < initialLen;
+    if (deleted) {
+      orderRepository.saveEmployees(globalThis.__PNR_EMPLOYEES__).catch(() => {});
+    }
+    return deleted;
   },
 
   // Analytics Engine

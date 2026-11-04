@@ -7,7 +7,7 @@ export async function GET(req: NextRequest) {
     const { searchParams } = new URL(req.url);
     const outlet = searchParams.get('outlet') || 'all';
 
-    const employees = orderStore.getEmployees(outlet);
+    const employees = await orderStore.getEmployeesAsync(outlet);
     return NextResponse.json({
       success: true,
       employees,

@@ -1,6 +1,6 @@
 import { getDbPool } from '@/lib/db';
 import { ensureCoreTables } from '@/lib/db/init-schema';
-import { Order, MangwaleLogisticsInfo, Outlet, OutletStockItem, MenuItem } from '@/types';
+import { Order, MangwaleLogisticsInfo, Outlet, OutletStockItem, MenuItem, Employee } from '@/types';
 import { getMangwaleTrackingUrl } from '@/lib/logistics/mangwale';
 
 function rowToOrder(row: any, deliveryRow?: any): Order {
@@ -838,5 +838,33 @@ export const orderRepository = {
    */
   saveMasterProducts: async (products: MenuItem[]): Promise<boolean> => {
     return orderRepository.saveSystemSetting('master_catalog_products', products);
+  },
+
+  /**
+   * Fetch Employees roster from PostgreSQL
+   */
+  getEmployees: async (): Promise<Employee[] | null> => {
+    return orderRepository.getSystemSetting<Employee[]>('employees_roster');
+  },
+
+  /**
+   * Save Employees roster into PostgreSQL
+   */
+  saveEmployees: async (employees: Employee[]): Promise<boolean> => {
+    return orderRepository.saveSystemSetting('employees_roster', employees);
+  },
+
+  /**
+   * Fetch Marketing Tags from PostgreSQL
+   */
+  getMarketingTags: async (): Promise<Record<string, unknown> | null> => {
+    return orderRepository.getSystemSetting<Record<string, unknown>>('marketing_tags');
+  },
+
+  /**
+   * Save Marketing Tags into PostgreSQL
+   */
+  saveMarketingTags: async (tags: Record<string, unknown>): Promise<boolean> => {
+    return orderRepository.saveSystemSetting('marketing_tags', tags);
   },
 };

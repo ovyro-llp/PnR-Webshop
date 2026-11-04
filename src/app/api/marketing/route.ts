@@ -3,7 +3,7 @@ import { orderStore } from '@/lib/store/order-store';
 
 export async function GET() {
   try {
-    const tags = orderStore.getMarketingTags();
+    const tags = await orderStore.getMarketingTagsAsync();
     const campaigns = orderStore.getCampaigns();
     const analytics = orderStore.getCampaignAnalytics();
 
