@@ -37,6 +37,12 @@ import {
 import Image from 'next/image';
 
 const CATEGORIES: MenuCategory[] = [
+  'Celebration Cakes',
+  'Pastries & Desserts',
+  'Puffs, Rolls & Savories',
+  'Khari, Cookies & High Tea',
+  'Tea-Time Cakes & Brownies',
+  'Breads & Daily Bakes',
   'Puffs & Patties',
   'Savory Rolls',
   'Cakes & Pastries',

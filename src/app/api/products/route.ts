@@ -10,7 +10,7 @@ export async function GET(req: NextRequest) {
     const isVegParam = searchParams.get('isVeg');
     const isVeg = isVegParam !== null ? isVegParam === 'true' : undefined;
 
-    const products = orderStore.getMasterProducts({
+    const products = await orderStore.getMasterProductsAsync({
       category,
       search,
       outletSlug,

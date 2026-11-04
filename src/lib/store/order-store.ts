@@ -21,68 +21,78 @@ import { getPersistedPaymentConfig, savePersistedPaymentConfig } from '@/lib/pay
 
 export const DEFAULT_CATEGORIES: Category[] = [
   {
-    id: 'cat-puffs',
-    name: 'Puffs & Patties',
-    slug: 'puffs-and-patties',
-    description: 'Flaky artisanal layered bakery puffs and spiced potato patties',
+    id: 'cat-celebration-cakes',
+    name: 'Celebration Cakes',
+    slug: 'celebration-cakes',
+    description: 'Fresh artisanal celebration cakes in 1/2 KG and 1 KG',
     subCategories: [
-      { id: 'sub-veg-puff', categoryId: 'cat-puffs', name: 'Veg Puffs', slug: 'veg-puffs' },
-      { id: 'sub-paneer-puff', categoryId: 'cat-puffs', name: 'Paneer Puffs', slug: 'paneer-puffs' },
-      { id: 'sub-cheese-puff', categoryId: 'cat-puffs', name: 'Cheese & Corn', slug: 'cheese-and-corn' },
-      { id: 'sub-egg-puff', categoryId: 'cat-puffs', name: 'Egg & Non-Veg', slug: 'egg-and-non-veg' },
+      { id: 'sub-chocolate-cakes', categoryId: 'cat-celebration-cakes', name: 'Chocolate Cakes', slug: 'chocolate-cakes' },
+      { id: 'sub-signature-cakes', categoryId: 'cat-celebration-cakes', name: 'Signature Cakes', slug: 'signature-cakes' },
+      { id: 'sub-cheesecakes', categoryId: 'cat-celebration-cakes', name: 'Cheesecakes', slug: 'cheesecakes' },
+      { id: 'sub-fruit-berry', categoryId: 'cat-celebration-cakes', name: 'Fruit & Berry Cakes', slug: 'fruit-and-berry-cakes' },
+      { id: 'sub-exotic-cakes', categoryId: 'cat-celebration-cakes', name: 'Exotic Cakes', slug: 'exotic-cakes' },
+      { id: 'sub-sin-cakes', categoryId: 'cat-celebration-cakes', name: 'Sin Cakes', slug: 'sin-cakes' },
+      { id: 'sub-newly-launched', categoryId: 'cat-celebration-cakes', name: 'Newly Launched', slug: 'newly-launched' },
     ],
   },
   {
-    id: 'cat-rolls',
-    name: 'Savory Rolls',
-    slug: 'savory-rolls',
-    description: 'Fresh grilled rolls, kathi wraps, and flaky savory frankies',
+    id: 'cat-pastries-desserts',
+    name: 'Pastries & Desserts',
+    slug: 'pastries-and-desserts',
+    description: 'Decadent individual pastries, mousses, and artisanal doughnuts',
     subCategories: [
-      { id: 'sub-kathi-roll', categoryId: 'cat-rolls', name: 'Kathi Rolls', slug: 'kathi-rolls' },
-      { id: 'sub-paneer-roll', categoryId: 'cat-rolls', name: 'Paneer Tikka Rolls', slug: 'paneer-tikka-rolls' },
-      { id: 'sub-spring-roll', categoryId: 'cat-rolls', name: 'Spring Rolls', slug: 'spring-rolls' },
+      { id: 'sub-pastries-small', categoryId: 'cat-pastries-desserts', name: 'Pastries (Small)', slug: 'pastries-small' },
+      { id: 'sub-pastries-large', categoryId: 'cat-pastries-desserts', name: 'Pastries (Large)', slug: 'pastries-large' },
+      { id: 'sub-sin-pastries', categoryId: 'cat-pastries-desserts', name: 'Sin Pastries', slug: 'sin-pastries' },
+      { id: 'sub-cheese-pastries', categoryId: 'cat-pastries-desserts', name: 'Cheese Pastries', slug: 'cheese-pastries' },
+      { id: 'sub-doughnuts-desserts', categoryId: 'cat-pastries-desserts', name: 'Desserts & Doughnuts', slug: 'desserts-and-doughnuts' },
     ],
   },
   {
-    id: 'cat-cakes',
-    name: 'Cakes & Pastries',
-    slug: 'cakes-and-pastries',
-    description: 'Decadent Belgian chocolate truffles, red velvet, and tea cakes',
+    id: 'cat-puffs-savories',
+    name: 'Puffs, Rolls & Savories',
+    slug: 'puffs-rolls-and-savories',
+    description: 'Flaky bakery puffs, savory rolls, butter croissants, and calzones',
     subCategories: [
-      { id: 'sub-pastry-slice', categoryId: 'cat-cakes', name: 'Pastry Slices', slug: 'pastry-slices' },
-      { id: 'sub-celebration-cake', categoryId: 'cat-cakes', name: 'Celebration Cakes', slug: 'celebration-cakes' },
-      { id: 'sub-brownies', categoryId: 'cat-cakes', name: 'Brownies & Teacakes', slug: 'brownies-and-teacakes' },
+      { id: 'sub-puffs-patties', categoryId: 'cat-puffs-savories', name: 'Puffs & Patties', slug: 'puffs-and-patties' },
+      { id: 'sub-croissants', categoryId: 'cat-puffs-savories', name: 'Croissants', slug: 'croissants' },
+      { id: 'sub-savory-rolls', categoryId: 'cat-puffs-savories', name: 'Savory Rolls', slug: 'savory-rolls' },
+      { id: 'sub-toasts-calzones', categoryId: 'cat-puffs-savories', name: 'Toasts & Calzones', slug: 'toasts-and-calzones' },
+      { id: 'sub-fried-snacks', categoryId: 'cat-puffs-savories', name: 'Fried Snacks', slug: 'fried-snacks' },
+      { id: 'sub-buns-breads', categoryId: 'cat-puffs-savories', name: 'Buns & Breads', slug: 'buns-and-breads' },
     ],
   },
   {
-    id: 'cat-combos',
-    name: 'Snack Combos',
-    slug: 'snack-combos',
-    description: 'Value tea-time pairings and office snack boxes',
+    id: 'cat-high-tea',
+    name: 'Khari, Cookies & High Tea',
+    slug: 'khari-cookies-and-high-tea',
+    description: 'Crispy special khari, sweet rusk toast, and handcrafted cookies',
     subCategories: [
-      { id: 'sub-chai-combo', categoryId: 'cat-combos', name: 'Chai & Puff Combos', slug: 'chai-and-puff-combos' },
-      { id: 'sub-party-packs', categoryId: 'cat-combos', name: 'Party Packs', slug: 'party-packs' },
+      { id: 'sub-khari-toast', categoryId: 'cat-high-tea', name: 'Khari & Toast', slug: 'khari-and-toast' },
+      { id: 'sub-healthy-cookies', categoryId: 'cat-high-tea', name: 'Healthy Cookies', slug: 'healthy-cookies' },
+      { id: 'sub-eggless-cookies', categoryId: 'cat-high-tea', name: 'Eggless Cookies', slug: 'eggless-cookies' },
     ],
   },
   {
-    id: 'cat-breads',
-    name: 'Breads & Buns',
-    slug: 'breads-and-buns',
-    description: 'Freshly baked sourdough, soft pav, and multigrain loaves',
+    id: 'cat-tea-time-cakes',
+    name: 'Tea-Time Cakes & Brownies',
+    slug: 'tea-time-cakes-and-brownies',
+    description: 'Traditional mawa cakes, fudgy brownies, and bakery muffins',
     subCategories: [
-      { id: 'sub-artisan-bread', categoryId: 'cat-breads', name: 'Artisanal Loaves', slug: 'artisanal-loaves' },
-      { id: 'sub-buns-pav', categoryId: 'cat-breads', name: 'Burger Buns & Pav', slug: 'burger-buns-and-pav' },
-      { id: 'sub-garlic-bread', categoryId: 'cat-breads', name: 'Garlic Breads', slug: 'garlic-breads' },
+      { id: 'sub-tea-cakes-egg', categoryId: 'cat-tea-time-cakes', name: 'Tea Time Cakes (With Egg)', slug: 'tea-cakes-with-egg' },
+      { id: 'sub-tea-cakes-eggless', categoryId: 'cat-tea-time-cakes', name: 'Tea Time Cakes (Eggless)', slug: 'tea-cakes-eggless' },
+      { id: 'sub-muffins', categoryId: 'cat-tea-time-cakes', name: 'Muffins', slug: 'muffins' },
     ],
   },
   {
-    id: 'cat-beverages',
-    name: 'Beverages',
-    slug: 'beverages',
-    description: 'Hot cutting chai, iced teas, and thick cold coffees',
+    id: 'cat-breads-daily',
+    name: 'Breads & Daily Bakes',
+    slug: 'breads-and-daily-bakes',
+    description: 'Fresh sandwich loaves, sourdough, pav, and dinner rolls',
     subCategories: [
-      { id: 'sub-hot-chai', categoryId: 'cat-beverages', name: 'Special Chai', slug: 'special-chai' },
-      { id: 'sub-cold-brews', categoryId: 'cat-beverages', name: 'Cold Brews & Shakes', slug: 'cold-brews-and-shakes' },
+      { id: 'sub-loaves', categoryId: 'cat-breads-daily', name: 'Loaves', slug: 'loaves' },
+      { id: 'sub-flavored-breads', categoryId: 'cat-breads-daily', name: 'Flavored Breads', slug: 'flavored-breads' },
+      { id: 'sub-daily-buns', categoryId: 'cat-breads-daily', name: 'Daily Buns', slug: 'daily-buns' },
     ],
   },
 ];
@@ -118,12 +128,10 @@ if (!globalThis.__PNR_CAMPAIGNS__) {
 if (!globalThis.__PNR_OUTLETS__) {
   globalThis.__PNR_OUTLETS__ = [...OUTLETS];
 }
-if (!globalThis.__PNR_MASTER_PRODUCTS__) {
+if (!globalThis.__PNR_MASTER_PRODUCTS__ || globalThis.__PNR_MASTER_PRODUCTS__.length < 20) {
   globalThis.__PNR_MASTER_PRODUCTS__ = [...MENU_ITEMS];
 }
-if (!globalThis.__PNR_CATEGORIES__) {
-  globalThis.__PNR_CATEGORIES__ = [...DEFAULT_CATEGORIES];
-}
+globalThis.__PNR_CATEGORIES__ = [...DEFAULT_CATEGORIES];
 
 // Initial Employees Hierarchical Seed
 if (!globalThis.__PNR_EMPLOYEES__) {
@@ -203,7 +211,7 @@ if (!globalThis.__PNR_EMPLOYEES__) {
 }
 
 // Initial Outlet Stock Inventory Matrix (Per-outlet availability & quantities)
-if (!globalThis.__PNR_OUTLET_STOCK__) {
+if (!globalThis.__PNR_OUTLET_STOCK__ || globalThis.__PNR_OUTLET_STOCK__.length < 20) {
   const stockSeed: OutletStockItem[] = [];
   OUTLETS.forEach((outlet) => {
     MENU_ITEMS.forEach((item) => {
@@ -685,6 +693,9 @@ export const orderStore = {
     outletSlug?: string;
     isVeg?: boolean;
   }): MenuItem[] => {
+    if (!globalThis.__PNR_MASTER_PRODUCTS__ || globalThis.__PNR_MASTER_PRODUCTS__.length < 20) {
+      globalThis.__PNR_MASTER_PRODUCTS__ = [...MENU_ITEMS];
+    }
     let list = (globalThis.__PNR_MASTER_PRODUCTS__ || MENU_ITEMS).filter(
       (item) => !item.isArchived
     );
@@ -714,6 +725,28 @@ export const orderStore = {
     }
 
     return list;
+  },
+
+  getMasterProductsAsync: async (options?: {
+    category?: string;
+    search?: string;
+    outletSlug?: string;
+    isVeg?: boolean;
+  }): Promise<MenuItem[]> => {
+    try {
+      const dbProducts = await orderRepository.getMasterProducts();
+      if (dbProducts && Array.isArray(dbProducts) && dbProducts.length > 20) {
+        globalThis.__PNR_MASTER_PRODUCTS__ = dbProducts;
+      } else {
+        if (!globalThis.__PNR_MASTER_PRODUCTS__ || globalThis.__PNR_MASTER_PRODUCTS__.length < 20) {
+          globalThis.__PNR_MASTER_PRODUCTS__ = [...MENU_ITEMS];
+        }
+        orderRepository.saveMasterProducts(globalThis.__PNR_MASTER_PRODUCTS__).catch(() => {});
+      }
+    } catch (e: any) {
+      console.warn('[orderStore.getMasterProductsAsync DB Warning]:', e.message);
+    }
+    return orderStore.getMasterProducts(options);
   },
 
   getMasterProductById: (id: string): MenuItem | undefined => {
@@ -755,6 +788,7 @@ export const orderStore = {
 
     list.unshift(newProduct);
     globalThis.__PNR_MASTER_PRODUCTS__ = list;
+    orderRepository.saveMasterProducts(list).catch(() => {});
 
     // Provision stock items for assigned outlets
     if (!globalThis.__PNR_OUTLET_STOCK__) {
@@ -805,6 +839,8 @@ export const orderStore = {
           : current.originalPrice,
     };
     list[idx] = updated;
+    globalThis.__PNR_MASTER_PRODUCTS__ = list;
+    orderRepository.saveMasterProducts(list).catch(() => {});
 
     // Sync changes to outlet stock matrix
     const stockList = globalThis.__PNR_OUTLET_STOCK__ || [];
@@ -856,6 +892,8 @@ export const orderStore = {
     if (idx !== -1) {
       list[idx].isArchived = true;
       list[idx].availableOutlets = [];
+      globalThis.__PNR_MASTER_PRODUCTS__ = list;
+      orderRepository.saveMasterProducts(list).catch(() => {});
 
       // Deactivate from all outlet stock
       const stockList = globalThis.__PNR_OUTLET_STOCK__ || [];

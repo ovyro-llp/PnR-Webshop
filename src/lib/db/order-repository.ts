@@ -1,6 +1,6 @@
 import { getDbPool } from '@/lib/db';
 import { ensureCoreTables } from '@/lib/db/init-schema';
-import { Order, MangwaleLogisticsInfo, Outlet, OutletStockItem } from '@/types';
+import { Order, MangwaleLogisticsInfo, Outlet, OutletStockItem, MenuItem } from '@/types';
 import { getMangwaleTrackingUrl } from '@/lib/logistics/mangwale';
 
 function rowToOrder(row: any, deliveryRow?: any): Order {
@@ -824,5 +824,19 @@ export const orderRepository = {
       console.warn(`[orderRepository.saveSystemSetting DB Warning for "${key}"]:`, err.message);
       return false;
     }
+  },
+
+  /**
+   * Fetch Master Products catalog from PostgreSQL
+   */
+  getMasterProducts: async (): Promise<MenuItem[] | null> => {
+    return orderRepository.getSystemSetting<MenuItem[]>('master_catalog_products');
+  },
+
+  /**
+   * Upsert entire Master Products catalog into PostgreSQL
+   */
+  saveMasterProducts: async (products: MenuItem[]): Promise<boolean> => {
+    return orderRepository.saveSystemSetting('master_catalog_products', products);
   },
 };
