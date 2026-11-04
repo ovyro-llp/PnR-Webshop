@@ -15,6 +15,7 @@ import {
   Lock,
   ShieldCheck,
   AlertTriangle,
+  Sparkles,
 } from 'lucide-react';
 
 export default function MarketingViewPage() {
@@ -865,6 +866,16 @@ export default function MarketingViewPage() {
                   />
                   <p className="text-[11px] text-stone-400 mt-1">
                     Displayed at the top of the Razorpay checkout modal for customers.
+                  </p>
+                </div>
+
+                <div className="p-3 bg-amber-50/80 rounded-xl border border-amber-200 text-xs text-amber-950 space-y-1">
+                  <div className="flex items-center gap-1.5 font-bold">
+                    <Sparkles className="w-3.5 h-3.5 text-amber-700" />
+                    <span>Map-First Gating &amp; Razorpay Magic Checkout</span>
+                  </div>
+                  <p className="text-[11px] text-amber-900 leading-relaxed">
+                    Storefront strictly enforces customer map pinpointing before opening Magic Checkout. This guarantees exact doorstep GPS coordinates for Mangwale 30–45 min rider delivery before 1-click payment triggers.
                   </p>
                 </div>
               </div>

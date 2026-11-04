@@ -77,6 +77,12 @@ export const paymentService = {
       customerName: customer?.name || 'Guest',
       customerPhone: customer?.phone || '',
       itemCount: items ? String(items.length) : '1',
+      deliveryAddress: customer?.address || '',
+      deliveryArea: customer?.area || '',
+      deliveryPincode: customer?.pincode || '',
+      deliveryLat: customer?.coordinates?.lat ? String(customer.coordinates.lat) : '',
+      deliveryLng: customer?.coordinates?.lng ? String(customer.coordinates.lng) : '',
+      magicCheckout: 'true',
     };
 
     // Call Razorpay API

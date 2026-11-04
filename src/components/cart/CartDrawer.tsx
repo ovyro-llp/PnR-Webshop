@@ -25,6 +25,7 @@ import {
   MapPin,
   Map,
   Sparkles,
+  Zap,
 } from 'lucide-react';
 import { CustomerDetails, PaymentMethod } from '@/types';
 
@@ -131,9 +132,17 @@ export function CartDrawer({ outletSlug, campaignSlug }: CartDrawerProps) {
     e.preventDefault();
     setSubmitError('');
 
+    // 0. MANDATORY HARD GATE: Customer MUST pinpoint doorstep location on map first!
+    const effectiveCoords = customer.coordinates || deliveryCoordinates;
+    if (!effectiveCoords || typeof effectiveCoords.lat !== 'number' || typeof effectiveCoords.lng !== 'number') {
+      setIsMapModalOpen(true);
+      setSubmitError('📍 Please pinpoint your exact delivery doorstep on the map first to enable 1-Click Magic Checkout.');
+      return;
+    }
+
     // 1. Validate Delivery Address
     if (!customer.address.trim()) {
-      setSubmitError('Please enter your delivery address (Flat / House No., Society, Landmark) in Nashik');
+      setSubmitError('Please enter your Flat / House No., Society / Building & Landmark in Nashik');
       return;
     }
     if (!customer.pincode.trim() || customer.pincode.length < 6) {
@@ -255,7 +264,7 @@ export function CartDrawer({ outletSlug, campaignSlug }: CartDrawerProps) {
         amount: orderData.amount,
         currency: orderData.currency || 'INR',
         name: "Puffs 'n' Rolls Bakery",
-        description: `Order from ${orderData.outletName || 'Nashik Bakery'}`,
+        description: `⚡ 1-Click Magic Checkout • ${orderData.outletName || 'Nashik Bakery'}`,
         image: 'https://puffsnrolls.com/wp-content/uploads/2025/12/banner-logo.png',
         order_id: orderData.orderId,
         prefill: {
@@ -263,14 +272,28 @@ export function CartDrawer({ outletSlug, campaignSlug }: CartDrawerProps) {
           contact: activeCustomer.phone,
           email: `${activeCustomer.phone.replace(/\D/g, '')}@puffsnrolls.com`,
         },
+        notes: {
+          delivery_lat: String(activeCustomer.coordinates?.lat || ''),
+          delivery_lng: String(activeCustomer.coordinates?.lng || ''),
+          doorstep_address: activeCustomer.address,
+          outlet_slug: effectiveOutletSlug,
+          magic_checkout: 'true',
+        },
         theme: {
           color: '#1C1917',
+          backdrop_color: 'rgba(28, 25, 23, 0.7)',
         },
         modal: {
+          confirm_close: true,
           ondismiss: () => {
             setIsSubmitting(false);
           },
         },
+        retry: {
+          enabled: true,
+          max_count: 3,
+        },
+        send_sms_hash: true,
         handler: async (response: {
           razorpay_payment_id: string;
           razorpay_order_id: string;
@@ -455,36 +478,51 @@ export function CartDrawer({ outletSlug, campaignSlug }: CartDrawerProps) {
                   <div className="space-y-2">
                     {/* Map-First Location Selector */}
                     {!customer.coordinates ? (
-                      <div className="bg-amber-50/80 border border-amber-200 rounded-2xl p-3 space-y-2">
+                      <div className="bg-gradient-to-br from-amber-50 to-orange-50/70 border-2 border-amber-300/90 rounded-2xl p-3.5 space-y-2.5 shadow-xs">
                         <div className="flex items-start justify-between gap-2">
-                          <div className="flex items-start gap-2">
-                            <Map className="w-4 h-4 text-amber-700 shrink-0 mt-0.5" />
+                          <div className="flex items-start gap-2.5">
+                            <div className="p-1.5 rounded-xl bg-amber-100 text-amber-900 border border-amber-200 shrink-0 mt-0.5">
+                              <MapPin className="w-4 h-4 text-amber-700 animate-bounce" />
+                            </div>
                             <div>
-                              <p className="text-xs font-bold text-amber-950">
-                                Step 1: Select Location on Map
+                              <p className="text-xs font-bold text-amber-950 flex items-center gap-1.5">
+                                <span>Step 1: Pinpoint Doorstep on Map</span>
+                                <span className="text-[9px] uppercase font-bold tracking-wider px-1.5 py-0.2 rounded bg-amber-200/80 text-amber-900">
+                                  Required
+                                </span>
                               </p>
-                              <p className="text-[11px] text-amber-800 leading-tight">
-                                Pinpoint your doorstep to auto-fill street, area, and pincode.
+                              <p className="text-[11px] text-amber-900/90 leading-snug mt-0.5">
+                                Pinpoint your exact building on the map to verify 30–45m delivery &amp; unlock <strong>1-Click Magic Checkout</strong>.
                               </p>
                             </div>
                           </div>
                         </div>
                         <button
                           type="button"
-                          onClick={() => setIsMapModalOpen(true)}
-                          className="w-full py-2 bg-stone-900 hover:bg-stone-800 text-white rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition cursor-pointer shadow-xs"
+                          onClick={() => {
+                            setIsMapModalOpen(true);
+                            setSubmitError('');
+                          }}
+                          className="w-full py-2.5 bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-700 hover:to-amber-800 text-white rounded-xl text-xs font-bold flex items-center justify-center gap-2 transition cursor-pointer shadow-sm"
                         >
-                          <MapPin className="w-3.5 h-3.5 text-amber-400" />
-                          <span>Choose on Map (Auto-Fills Address)</span>
+                          <MapPin className="w-3.5 h-3.5 text-amber-200" />
+                          <span>Pinpoint on Map (Unlocks Magic Checkout)</span>
                         </button>
                       </div>
                     ) : (
-                      <div className="bg-emerald-50 border border-emerald-200/90 rounded-2xl p-3 flex items-center justify-between text-xs text-emerald-950">
-                        <div className="flex items-center gap-2">
-                          <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                      <div className="bg-emerald-50/90 border border-emerald-300 rounded-2xl p-3 flex items-center justify-between text-xs text-emerald-950 shadow-2xs">
+                        <div className="flex items-center gap-2.5">
+                          <div className="p-1 rounded-lg bg-emerald-600 text-white shrink-0">
+                            <CheckCircle2 className="w-4 h-4" />
+                          </div>
                           <div>
-                            <span className="font-semibold block leading-none">Map Location Locked</span>
-                            <span className="text-[10px] font-mono text-emerald-700">
+                            <div className="flex items-center gap-1.5">
+                              <span className="font-bold text-emerald-950">Doorstep Location Verified</span>
+                              <span className="text-[9px] font-bold text-emerald-800 bg-emerald-200/70 px-1.5 py-0.2 rounded-full">
+                                GPS Locked
+                              </span>
+                            </div>
+                            <span className="text-[10px] font-mono text-emerald-700 block">
                               Lat: {customer.coordinates.lat.toFixed(5)}, Lng: {customer.coordinates.lng.toFixed(5)}
                             </span>
                           </div>
@@ -492,7 +530,7 @@ export function CartDrawer({ outletSlug, campaignSlug }: CartDrawerProps) {
                         <button
                           type="button"
                           onClick={() => setIsMapModalOpen(true)}
-                          className="px-2.5 py-1 rounded-lg bg-emerald-100 hover:bg-emerald-200 text-emerald-900 text-[10px] font-bold tracking-wider uppercase transition cursor-pointer"
+                          className="px-2.5 py-1.5 rounded-lg bg-emerald-100 hover:bg-emerald-200 text-emerald-900 text-[10px] font-bold tracking-wider uppercase transition cursor-pointer"
                         >
                           Change Pin
                         </button>
@@ -727,37 +765,49 @@ export function CartDrawer({ outletSlug, campaignSlug }: CartDrawerProps) {
                   </div>
 
                   <div className="space-y-2">
-                    {/* Instant Online Payment Option */}
+                    {/* Instant Online Payment Option (Razorpay Magic 1-Click Checkout) */}
                     <button
                       type="button"
                       onClick={() => setPaymentMethod('UPI')}
-                      className={`w-full p-3 rounded-2xl border text-left transition relative flex items-start gap-3 cursor-pointer ${
+                      className={`w-full p-3.5 rounded-2xl border text-left transition relative flex items-start gap-3 cursor-pointer ${
                         paymentMethod === 'UPI'
-                          ? 'border-stone-900 bg-white ring-1 ring-stone-900 shadow-xs'
+                          ? 'border-stone-900 bg-white ring-2 ring-stone-900/10 shadow-xs'
                           : 'border-stone-200 bg-white/60 hover:bg-white text-stone-700'
                       }`}
                     >
                       <div
-                        className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 mt-0.5 ${
+                        className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 mt-0.5 ${
                           paymentMethod === 'UPI'
-                            ? 'bg-[#1C1917] text-white'
+                            ? 'bg-[#1C1917] text-amber-400'
                             : 'bg-stone-100 text-stone-500'
                         }`}
                       >
-                        <CreditCard className="w-4 h-4" />
+                        <Zap className="w-4.5 h-4.5 fill-amber-400 text-amber-400" />
                       </div>
                       <div className="flex-1 min-w-0">
-                        <div className="flex items-center justify-between">
+                        <div className="flex items-center justify-between gap-1">
                           <span className="text-xs font-bold text-stone-900">
-                            Instant Online Payment
+                            Razorpay Magic 1-Click Checkout
                           </span>
-                          <span className="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
-                            Instant
+                          <span className="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full bg-amber-100 text-amber-950 border border-amber-300 flex items-center gap-1 shrink-0">
+                            <Sparkles className="w-2.5 h-2.5 text-amber-700" />
+                            <span>1-Click Magic</span>
                           </span>
                         </div>
                         <p className="text-[11px] text-stone-500 mt-0.5">
-                          UPI (Google Pay, PhonePe, Paytm), Credit/Debit Cards, NetBanking
+                          Instant UPI (GPay, PhonePe, Paytm), Cards &amp; NetBanking with pre-filled Phone OTP
                         </p>
+                        {customer.coordinates ? (
+                          <div className="mt-1.5 flex items-center gap-1.5 text-[10px] text-emerald-700 font-semibold bg-emerald-50/80 px-2 py-0.5 rounded-md border border-emerald-200/60 w-fit">
+                            <CheckCircle2 className="w-3 h-3 text-emerald-600 shrink-0" />
+                            <span>Doorstep GPS Coordinates Locked &amp; Ready for Magic Checkout</span>
+                          </div>
+                        ) : (
+                          <div className="mt-1.5 flex items-center gap-1.5 text-[10px] text-amber-800 font-medium bg-amber-50 px-2 py-0.5 rounded-md border border-amber-200/80 w-fit">
+                            <MapPin className="w-3 h-3 text-amber-600 shrink-0" />
+                            <span>Map pinpoint required to unlock 1-Click Magic Checkout</span>
+                          </div>
+                        )}
                       </div>
                     </button>
 
@@ -823,31 +873,52 @@ export function CartDrawer({ outletSlug, campaignSlug }: CartDrawerProps) {
           {/* Checkout Footer */}
           {items.length > 0 && (
             <div className="p-4 sm:p-5 border-t border-stone-200 bg-white space-y-2">
-              <button
-                type="button"
-                onClick={handleCheckout}
-                disabled={isSubmitting}
-                className="w-full py-3.5 bg-[#1C1917] hover:bg-stone-800 active:scale-[0.99] text-white rounded-full font-bold text-xs uppercase tracking-wider transition shadow-sm flex items-center justify-center gap-2 disabled:opacity-60 cursor-pointer"
-              >
-                {isSubmitting ? (
-                  <span>Processing Order...</span>
-                ) : paymentMethod === 'UPI' ? (
-                  <>
-                    <Lock className="w-3.5 h-3.5 text-emerald-400" />
-                    <span>Pay Online • ₹{total}</span>
+              {!customer.coordinates ? (
+                <>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsMapModalOpen(true);
+                      setSubmitError('📍 Please pinpoint your delivery doorstep on the map to proceed.');
+                    }}
+                    className="w-full py-3.5 bg-gradient-to-r from-amber-600 via-amber-600 to-amber-700 hover:from-amber-700 hover:to-amber-800 active:scale-[0.99] text-white rounded-full font-bold text-xs uppercase tracking-wider transition shadow-md flex items-center justify-center gap-2 cursor-pointer"
+                  >
+                    <MapPin className="w-4 h-4 text-amber-200 animate-bounce" />
+                    <span>📍 Pinpoint Location on Map to Checkout</span>
                     <ArrowRight className="w-3.5 h-3.5" />
-                  </>
-                ) : (
-                  <>
-                    <span>Place Cash Order • ₹{total}</span>
-                    <ArrowRight className="w-3.5 h-3.5" />
-                  </>
-                )}
-              </button>
+                  </button>
+                  <p className="text-[10px] text-amber-900 font-semibold text-center flex items-center justify-center gap-1">
+                    <span>* Required for 30–45m Mangwale rider delivery &amp; Magic Checkout</span>
+                  </p>
+                </>
+              ) : (
+                <button
+                  type="button"
+                  onClick={handleCheckout}
+                  disabled={isSubmitting}
+                  className="w-full py-3.5 bg-[#1C1917] hover:bg-stone-800 active:scale-[0.99] text-white rounded-full font-bold text-xs uppercase tracking-wider transition shadow-sm flex items-center justify-center gap-2 disabled:opacity-60 cursor-pointer"
+                >
+                  {isSubmitting ? (
+                    <span>Opening Razorpay Magic Checkout...</span>
+                  ) : paymentMethod === 'UPI' ? (
+                    <>
+                      <Zap className="w-4 h-4 fill-amber-400 text-amber-400" />
+                      <span>⚡ Pay with Razorpay Magic 1-Click • ₹{total}</span>
+                      <ArrowRight className="w-3.5 h-3.5" />
+                    </>
+                  ) : (
+                    <>
+                      <Truck className="w-3.5 h-3.5 text-stone-300" />
+                      <span>Place Cash on Delivery Order • ₹{total}</span>
+                      <ArrowRight className="w-3.5 h-3.5" />
+                    </>
+                  )}
+                </button>
+              )}
 
               <div className="flex items-center justify-center gap-1.5 text-[10px] text-stone-400 text-center">
                 <ShieldCheck className="w-3 h-3 text-stone-400" />
-                <span>100% Quality Guaranteed • Fresh Oven Bakes</span>
+                <span>100% Quality Guaranteed • Fresh Oven Bakes • Razorpay Magic Secure</span>
               </div>
             </div>
           )}
@@ -873,6 +944,14 @@ export function CartDrawer({ outletSlug, campaignSlug }: CartDrawerProps) {
                 <X className="w-4 h-4" />
               </button>
             </div>
+
+            <div className="p-2.5 bg-amber-50 border border-amber-200/80 rounded-2xl flex items-center gap-2 text-xs text-amber-900">
+              <Zap className="w-3.5 h-3.5 fill-amber-500 text-amber-500 shrink-0" />
+              <span>
+                <strong>Required for Magic Checkout:</strong> Pin your exact doorstep for 30–45m delivery &amp; 1-click payment.
+              </span>
+            </div>
+
             <DeliveryMapPicker
               initialCoords={customer.coordinates || deliveryCoordinates || undefined}
               onConfirmLocation={(data) => {
@@ -893,6 +972,7 @@ export function CartDrawer({ outletSlug, campaignSlug }: CartDrawerProps) {
                 setDeliveryCoordinates({ lat: data.lat, lng: data.lng });
                 setDeliveryAddress(data.street || data.formattedAddress);
                 if (data.area) setDeliveryArea(data.area);
+                setSubmitError('');
                 setIsMapModalOpen(false);
               }}
               onClose={() => setIsMapModalOpen(false)}

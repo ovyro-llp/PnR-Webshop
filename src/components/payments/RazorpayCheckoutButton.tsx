@@ -110,7 +110,13 @@ export function RazorpayCheckoutButton({
         theme: {
           color: '#1C1917',
         },
+        retry: {
+          enabled: true,
+          max_count: 3,
+        },
+        send_sms_hash: true,
         modal: {
+          confirm_close: true,
           ondismiss: () => {
             setLoading(false);
           },
