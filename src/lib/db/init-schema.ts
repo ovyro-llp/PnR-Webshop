@@ -184,6 +184,13 @@ CREATE TABLE IF NOT EXISTS public.outlet_stock (
 
 CREATE INDEX IF NOT EXISTS idx_outlet_stock_outlet_slug ON public.outlet_stock(outlet_slug);
 CREATE INDEX IF NOT EXISTS idx_outlet_stock_item_id ON public.outlet_stock(item_id);
+
+-- 9. System & Gateway Settings Table (Permanent configuration unaffected by code deployments)
+CREATE TABLE IF NOT EXISTS public.system_settings (
+    key VARCHAR(100) PRIMARY KEY,
+    value JSONB NOT NULL,
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
 `;
 
 let initPromise: Promise<boolean> | null = null;

@@ -631,9 +631,28 @@ export const orderStore = {
     return globalThis.__PNR_PAYMENT_CONFIG__;
   },
 
+  getPaymentConfigAsync: async (): Promise<PaymentGatewayConfig> => {
+    try {
+      const dbConfig = await orderRepository.getSystemSetting<Partial<PaymentGatewayConfig>>('payment_gateway_config');
+      if (dbConfig) {
+        const current = getPersistedPaymentConfig();
+        const merged: PaymentGatewayConfig = {
+          ...current,
+          ...dbConfig,
+        };
+        globalThis.__PNR_PAYMENT_CONFIG__ = merged;
+        return merged;
+      }
+    } catch (e: any) {
+      console.warn('[orderStore.getPaymentConfigAsync DB Warning]:', e.message);
+    }
+    return orderStore.getPaymentConfig();
+  },
+
   updatePaymentConfig: (config: Partial<PaymentGatewayConfig>): PaymentGatewayConfig => {
     const updated = savePersistedPaymentConfig(config);
     globalThis.__PNR_PAYMENT_CONFIG__ = updated;
+    orderRepository.saveSystemSetting('payment_gateway_config', updated).catch(() => {});
     return updated;
   },
 

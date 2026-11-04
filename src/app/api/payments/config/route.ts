@@ -3,7 +3,7 @@ import { orderStore } from '@/lib/store/order-store';
 
 export async function GET() {
   try {
-    const config = orderStore.getPaymentConfig();
+    const config = await orderStore.getPaymentConfigAsync();
     const hasLiveCreds = Boolean(
       config.liveKeyId?.startsWith('rzp_live_') && config.liveKeySecret
     );

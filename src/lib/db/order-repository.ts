@@ -782,4 +782,47 @@ export const orderRepository = {
       return [];
     }
   },
+
+  /**
+   * Fetch system setting by key from PostgreSQL
+   */
+  getSystemSetting: async <T>(key: string): Promise<T | null> => {
+    if (!process.env.DATABASE_URL?.trim()) return null;
+    await ensureCoreTables();
+    const pool = getDbPool();
+    try {
+      const res = await pool.query(
+        'SELECT value FROM public.system_settings WHERE key = $1 LIMIT 1;',
+        [key]
+      );
+      if (res.rows.length === 0) return null;
+      return res.rows[0].value as T;
+    } catch (err: any) {
+      console.warn(`[orderRepository.getSystemSetting DB Warning for "${key}"]:`, err.message);
+      return null;
+    }
+  },
+
+  /**
+   * Upsert system setting by key into PostgreSQL
+   */
+  saveSystemSetting: async <T>(key: string, value: T): Promise<boolean> => {
+    if (!process.env.DATABASE_URL?.trim()) return false;
+    await ensureCoreTables();
+    const pool = getDbPool();
+    try {
+      await pool.query(
+        `INSERT INTO public.system_settings (key, value, updated_at)
+         VALUES ($1, $2, NOW())
+         ON CONFLICT (key) DO UPDATE SET
+           value = EXCLUDED.value,
+           updated_at = NOW();`,
+        [key, JSON.stringify(value)]
+      );
+      return true;
+    } catch (err: any) {
+      console.warn(`[orderRepository.saveSystemSetting DB Warning for "${key}"]:`, err.message);
+      return false;
+    }
+  },
 };
