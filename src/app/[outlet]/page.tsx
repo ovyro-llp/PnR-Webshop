@@ -154,7 +154,7 @@ export default async function OutletPage({
               Fresh Menu ({outlet.area})
             </h2>
             <p className="text-xs text-stone-500 mt-0.5">
-              Baked in small batches throughout the day. Free delivery above ₹299.
+              Baked in small batches throughout the day. Doorstep delivery across Nashik.
             </p>
           </div>
 

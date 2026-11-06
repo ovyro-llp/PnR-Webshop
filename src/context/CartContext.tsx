@@ -16,6 +16,9 @@ interface CartContextType {
   subtotal: number;
   discount: number;
   deliveryFee: number;
+  setDeliveryFee: (fee: number) => void;
+  deliveryQuote: any | null;
+  setDeliveryQuote: (quote: any | null) => void;
   total: number;
   appliedCoupon: string | null;
   applyCoupon: (code: string, discountPercentage: number) => void;
@@ -46,6 +49,8 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   const [appliedCoupon, setAppliedCoupon] = useState<string | null>(null);
   const [discountPercent, setDiscountPercent] = useState<number>(0);
   const [isCartOpen, setIsCartOpen] = useState(false);
+  const [customDeliveryFee, setCustomDeliveryFee] = useState<number | null>(null);
+  const [deliveryQuote, setDeliveryQuote] = useState<any | null>(null);
   const tracking = useTracking();
 
   // Load cart from localStorage
@@ -160,7 +165,8 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   const itemCount = items.reduce((sum, i) => sum + i.quantity, 0);
   const subtotal = items.reduce((sum, i) => sum + i.item.price * i.quantity, 0);
   const discount = Math.round((subtotal * discountPercent) / 100);
-  const deliveryFee = subtotal > 0 ? (subtotal > 299 ? 0 : 25) : 0;
+  // Delivery Fee: Paid directly by the customer based on the Mangwale rate card
+  const deliveryFee = subtotal > 0 ? (customDeliveryFee !== null ? customDeliveryFee : 35) : 0;
   const total = Math.max(0, subtotal - discount + deliveryFee);
 
   const submitOrder = async (
@@ -186,6 +192,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         subtotal,
         discount,
         deliveryFee,
+        deliveryQuote,
         total,
         paymentMethod,
       };
@@ -238,6 +245,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         subtotal,
         discount,
         deliveryFee,
+        deliveryQuote,
         total,
         paymentMethod,
       };
@@ -285,6 +293,9 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         subtotal,
         discount,
         deliveryFee,
+        setDeliveryFee: (fee: number) => setCustomDeliveryFee(Math.max(0, Math.round(fee))),
+        deliveryQuote,
+        setDeliveryQuote,
         total,
         appliedCoupon,
         applyCoupon,

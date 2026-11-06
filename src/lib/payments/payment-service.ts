@@ -211,8 +211,10 @@ export const paymentService = {
           coordinates: orderPayload.customer?.coordinates || existingOrder.customer?.coordinates,
         };
         existingOrder.items = orderPayload.items || existingOrder.items;
-        existingOrder.subtotal = orderPayload.subtotal || existingOrder.subtotal;
-        existingOrder.total = orderPayload.total || existingOrder.total;
+        existingOrder.subtotal = orderPayload.subtotal ?? existingOrder.subtotal;
+        existingOrder.discount = orderPayload.discount ?? existingOrder.discount;
+        existingOrder.deliveryFee = orderPayload.deliveryFee !== undefined ? Number(orderPayload.deliveryFee) : existingOrder.deliveryFee;
+        existingOrder.total = orderPayload.total ?? existingOrder.total;
         existingOrder.paymentMethod = orderPayload.paymentMethod || 'UPI';
       }
 

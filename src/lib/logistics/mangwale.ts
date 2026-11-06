@@ -41,6 +41,210 @@ export interface MangwaleDispatchResponse {
   message: string;
 }
 
+export interface MangwalePriceBreakdown {
+  deliveryFare: number;
+  platformFee: number;
+  subtotal: number;
+  gstPercent: number;
+  gstAmount: number;
+  total: number;
+  currency: string;
+}
+
+export interface MangwaleDeliveryQuote {
+  success: boolean;
+  serviceable: boolean;
+  distanceKm: number;
+  deliveryFee: number;
+  priceBreakdown: MangwalePriceBreakdown;
+  estimatedMinutes: number;
+  source: 'MANGWALE_LIVE_API' | 'MANGWALE_RATE_CARD';
+  message?: string;
+}
+
+/**
+ * Calculates delivery fee according to the official Mangwale Enterprise Rate Card:
+ * - Delivery fare: Distance (km) * ₹10.00/km (minimum ₹20.00)
+ * - Platform fee: Flat ₹10.00
+ * - Subtotal: Delivery fare + Platform fee
+ * - GST: 5% on subtotal
+ * - Total: Math.round(Subtotal + GST)
+ */
+export function calculateMangwaleDeliveryFee(distanceKm: number): {
+  deliveryFee: number;
+  priceBreakdown: MangwalePriceBreakdown;
+  estimatedMinutes: number;
+} {
+  const safeDistance = Math.max(1.0, Math.round(distanceKm * 100) / 100);
+  const deliveryFare = Math.max(20.0, Math.round(safeDistance * 10.0 * 100) / 100);
+  const platformFee = 10.0;
+  const subtotal = Math.round((deliveryFare + platformFee) * 100) / 100;
+  const gstAmount = Math.round(subtotal * 0.05 * 100) / 100;
+  const total = Math.round((subtotal + gstAmount) * 100) / 100;
+  const roundedFee = Math.round(total);
+
+  // ETA calculation: ~15 mins kitchen/prep + ~3 mins per km
+  const estimatedMinutes = Math.min(50, Math.max(20, Math.round(15 + safeDistance * 3)));
+
+  return {
+    deliveryFee: roundedFee,
+    priceBreakdown: {
+      deliveryFare,
+      platformFee,
+      subtotal,
+      gstPercent: 5,
+      gstAmount,
+      total,
+      currency: 'INR',
+    },
+    estimatedMinutes,
+  };
+}
+
+/**
+ * Haversine distance calculator with Nashik road routing topology factor (~1.25x)
+ */
+export function calculateHaversineDistanceKm(
+  lat1: number,
+  lon1: number,
+  lat2: number,
+  lon2: number
+): number {
+  const R = 6371; // Earth's radius in km
+  const dLat = ((lat2 - lat1) * Math.PI) / 180;
+  const dLon = ((lon2 - lon1) * Math.PI) / 180;
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos((lat1 * Math.PI) / 180) *
+      Math.cos((lat2 * Math.PI) / 180) *
+      Math.sin(dLon / 2) *
+      Math.sin(dLon / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  const straightLine = R * c;
+  const roadFactor = 1.25;
+  return Math.max(1.0, Math.round(straightLine * roadFactor * 100) / 100);
+}
+
+/**
+ * Fetches an official quote from Mangwale Enterprise API with fallback to verified rate card
+ */
+export async function getMangwaleDeliveryQuote({
+  outlet,
+  customerCoordinates,
+  customerAddress,
+}: {
+  outlet: Outlet;
+  customerCoordinates: { lat: number; lng: number };
+  customerAddress?: string;
+}): Promise<MangwaleDeliveryQuote> {
+  const outletCoords = outlet.coordinates || { lat: 20.0043996, lng: 73.7579984 };
+  const distanceKm = calculateHaversineDistanceKm(
+    outletCoords.lat,
+    outletCoords.lng,
+    customerCoordinates.lat,
+    customerCoordinates.lng
+  );
+
+  const localRateCard = calculateMangwaleDeliveryFee(distanceKm);
+
+  // Check if live Mangwale credentials are configured
+  const creds = resolveMangwaleCredentials(outlet);
+  if (creds.apiKey && creds.apiSecret) {
+    try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 4000);
+
+      const envMode = creds.apiKey.startsWith('mw_test_')
+        ? 'test'
+        : creds.environment === 'sandbox'
+        ? 'test'
+        : 'live';
+
+      const payload = {
+        pickup: {
+          lat: outletCoords.lat,
+          lng: outletCoords.lng,
+          address: outlet.address || 'Puffs n Rolls Outlet, Nashik',
+        },
+        drops: [
+          {
+            lat: customerCoordinates.lat,
+            lng: customerCoordinates.lng,
+            address: customerAddress || `${outlet.area}, Nashik`,
+          },
+        ],
+        order_type: 'parcel',
+        vehicle_type: 'bike',
+      };
+
+      const res = await fetch(`${creds.endpoint}/quote`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-API-Key': creds.apiKey,
+          'X-API-Secret': creds.apiSecret,
+          'X-Environment': envMode,
+          'X-Request-ID': `req_quote_${Date.now()}_${Math.random().toString(36).substring(7)}`,
+        },
+        body: JSON.stringify(payload),
+        signal: controller.signal,
+      }).catch(() => null);
+
+      clearTimeout(timeoutId);
+
+      if (res && res.ok) {
+        const data = await res.json().catch(() => ({}));
+        const quote = data.quotes?.[0];
+        if (quote && quote.serviceable !== false) {
+          const pb = quote.price_breakdown || {};
+          const fee = Math.round(Number(quote.estimated_fare || pb.total || localRateCard.deliveryFee));
+          return {
+            success: true,
+            serviceable: true,
+            distanceKm: Number(quote.distance_km || distanceKm),
+            deliveryFee: fee,
+            priceBreakdown: {
+              deliveryFare: Number(pb.delivery_fare || localRateCard.priceBreakdown.deliveryFare),
+              platformFee: Number(pb.platform_fee || 10.0),
+              subtotal: Number(pb.subtotal || Math.round((fee / 1.05) * 100) / 100),
+              gstPercent: Number(pb.gst_percent || 5),
+              gstAmount: Number(pb.gst_amount || Math.round((fee - fee / 1.05) * 100) / 100),
+              total: Number(quote.estimated_fare || pb.total || fee),
+              currency: 'INR',
+            },
+            estimatedMinutes: Number(quote.estimated_time_minutes || localRateCard.estimatedMinutes),
+            source: 'MANGWALE_LIVE_API',
+          };
+        } else if (quote && quote.serviceable === false) {
+          return {
+            success: false,
+            serviceable: false,
+            distanceKm,
+            deliveryFee: localRateCard.deliveryFee,
+            priceBreakdown: localRateCard.priceBreakdown,
+            estimatedMinutes: localRateCard.estimatedMinutes,
+            source: 'MANGWALE_LIVE_API',
+            message: 'Selected location is outside active Mangwale delivery zones in Nashik.',
+          };
+        }
+      }
+    } catch (err: any) {
+      console.warn('[Mangwale Quote API Notice]:', err.message);
+    }
+  }
+
+  // Pure verified rate card calculation fallback (distance × ₹10 + ₹10 + 5% GST)
+  return {
+    success: true,
+    serviceable: distanceKm <= 20.0,
+    distanceKm,
+    deliveryFee: localRateCard.deliveryFee,
+    priceBreakdown: localRateCard.priceBreakdown,
+    estimatedMinutes: localRateCard.estimatedMinutes,
+    source: 'MANGWALE_RATE_CARD',
+  };
+}
+
 /**
  * Generates the official customer live map tracking link for a Mangwale order:
  * Format: https://track.mangwale.com/track/:taskId/:customerPhone

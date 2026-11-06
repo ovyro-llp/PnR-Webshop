@@ -51,7 +51,11 @@ export function CartDrawer({ outletSlug, campaignSlug }: CartDrawerProps) {
     cartOutletSlug,
     itemCount,
     subtotal,
+    discount,
     deliveryFee,
+    setDeliveryFee,
+    deliveryQuote,
+    setDeliveryQuote,
     total,
     updateQuantity,
     removeItem,
@@ -112,6 +116,34 @@ export function CartDrawer({ outletSlug, campaignSlug }: CartDrawerProps) {
   }, [user]);
 
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('UPI');
+
+  // Dynamic Mangwale delivery quote calculation based on customer doorstep coordinates
+  const activeCoords = customer.coordinates || deliveryCoordinates;
+  useEffect(() => {
+    if (activeCoords && typeof activeCoords.lat === 'number' && typeof activeCoords.lng === 'number') {
+      let isCurrent = true;
+      const fetchLiveQuote = async () => {
+        try {
+          const res = await fetch(
+            `/api/logistics/quote?outletSlug=${effectiveOutletSlug}&lat=${activeCoords.lat}&lng=${activeCoords.lng}`
+          );
+          if (res.ok && isCurrent) {
+            const data = await res.json();
+            if (data && typeof data.deliveryFee === 'number') {
+              setDeliveryFee(data.deliveryFee);
+              setDeliveryQuote(data);
+            }
+          }
+        } catch (err) {
+          console.warn('Mangwale quote query notice:', err);
+        }
+      };
+      fetchLiveQuote();
+      return () => {
+        isCurrent = false;
+      };
+    }
+  }, [activeCoords?.lat, activeCoords?.lng, effectiveOutletSlug, setDeliveryFee, setDeliveryQuote]);
 
   if (!isCartOpen) return null;
 
@@ -231,6 +263,10 @@ export function CartDrawer({ outletSlug, campaignSlug }: CartDrawerProps) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           amount: total,
+          subtotal,
+          discount,
+          deliveryFee,
+          total,
           outletSlug: effectiveOutletSlug,
           campaignSlug,
           customer: activeCustomer,
@@ -239,6 +275,7 @@ export function CartDrawer({ outletSlug, campaignSlug }: CartDrawerProps) {
             name: i.item.name,
             price: i.item.price,
             quantity: i.quantity,
+            total: i.item.price * i.quantity,
           })),
         }),
       });
@@ -927,10 +964,23 @@ export function CartDrawer({ outletSlug, campaignSlug }: CartDrawerProps) {
                     <span>Items Subtotal</span>
                     <span>₹{subtotal}</span>
                   </div>
-                  <div className="flex justify-between text-stone-500">
-                    <span>Express Delivery Fee</span>
-                    <span>₹{deliveryFee}</span>
+                  <div className="flex justify-between text-stone-500 items-center">
+                    <div className="flex items-center gap-1.5">
+                      <span>Mangwale Doorstep Delivery</span>
+                      {deliveryQuote?.distanceKm && (
+                        <span className="text-[10px] font-mono bg-stone-100 text-stone-700 px-1.5 py-0.5 rounded font-semibold">
+                          {Number(deliveryQuote.distanceKm).toFixed(1)} km
+                        </span>
+                      )}
+                    </div>
+                    <span className="font-semibold text-stone-800">₹{deliveryFee}</span>
                   </div>
+                  {deliveryQuote?.priceBreakdown && (
+                    <div className="text-[10px] text-stone-400 pl-0.5 flex items-center justify-between">
+                      <span>Rate: ₹{deliveryQuote.priceBreakdown.deliveryFare} fare + ₹{deliveryQuote.priceBreakdown.platformFee} platform + 5% GST</span>
+                      <span className="text-emerald-700 font-medium">⚡ ~{deliveryQuote.estimatedMinutes || 30}m Express</span>
+                    </div>
+                  )}
                   <div className="pt-2 border-t border-stone-100 flex justify-between font-bold text-sm text-stone-900">
                     <span>Total Amount</span>
                     <span>₹{total}</span>
@@ -1048,6 +1098,27 @@ export function CartDrawer({ outletSlug, campaignSlug }: CartDrawerProps) {
                 setDeliveryCoordinates({ lat: data.lat, lng: data.lng });
                 setDeliveryAddress(data.street || data.formattedAddress);
                 if (data.area) setDeliveryArea(data.area);
+
+                // Immediate calculation with official Mangwale rate card
+                const dist = data.distanceKm || 2.5;
+                const fare = Math.max(20, Math.round(dist * 10 * 100) / 100);
+                const sub = fare + 10;
+                const calculatedFee = Math.round(sub * 1.05);
+                setDeliveryFee(calculatedFee);
+                setDeliveryQuote({
+                  distanceKm: dist,
+                  deliveryFee: calculatedFee,
+                  priceBreakdown: {
+                    deliveryFare: fare,
+                    platformFee: 10,
+                    subtotal: sub,
+                    gstPercent: 5,
+                    gstAmount: Math.round(sub * 0.05 * 100) / 100,
+                    total: Math.round(sub * 1.05 * 100) / 100,
+                  },
+                  estimatedMinutes: Math.min(50, Math.max(20, Math.round(15 + dist * 3))),
+                });
+
                 setSubmitError('');
                 setIsMapModalOpen(false);
               }}
