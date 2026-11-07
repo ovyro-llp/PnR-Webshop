@@ -1,6 +1,6 @@
 import { getDbPool } from '@/lib/db';
 import { ensureCoreTables } from '@/lib/db/init-schema';
-import { Order, MangwaleLogisticsInfo, Outlet, OutletStockItem, MenuItem, Employee } from '@/types';
+import { Order, MangwaleLogisticsInfo, Outlet, OutletStockItem, MenuItem, Employee, CustomerAccount } from '@/types';
 import { getMangwaleTrackingUrl } from '@/lib/logistics/mangwale';
 
 function rowToOrder(row: any, deliveryRow?: any): Order {
@@ -874,5 +874,177 @@ export const orderRepository = {
    */
   saveMarketingTags: async (tags: Record<string, unknown>): Promise<boolean> => {
     return orderRepository.saveSystemSetting('marketing_tags', tags);
+  },
+
+  /**
+   * Fetch registered customers from PostgreSQL with optional search
+   */
+  getCustomers: async (search?: string, limit = 100): Promise<CustomerAccount[]> => {
+    if (!process.env.DATABASE_URL || !process.env.DATABASE_URL.trim()) {
+      return [];
+    }
+    await ensureCoreTables();
+    const pool = getDbPool();
+    try {
+      let query = `
+        SELECT id, phone, name, email, password, saved_addresses, total_orders, total_spent, created_at, updated_at
+        FROM public.customers
+      `;
+      const params: any[] = [];
+      if (search && search.trim()) {
+        query += ` WHERE phone ILIKE $1 OR name ILIKE $1 OR email ILIKE $1`;
+        params.push(`%${search.trim()}%`);
+      }
+      query += ` ORDER BY updated_at DESC LIMIT $${params.length + 1}`;
+      params.push(limit);
+
+      const result = await pool.query(query, params);
+      return result.rows.map((row) => ({
+        id: row.id,
+        phone: row.phone,
+        name: row.name,
+        email: row.email || undefined,
+        password: row.password || 'pnr@customer123',
+        savedAddresses: typeof row.saved_addresses === 'string' ? JSON.parse(row.saved_addresses) : row.saved_addresses || [],
+        totalOrders: Number(row.total_orders || 0),
+        totalSpent: Number(row.total_spent || 0),
+        createdAt: row.created_at ? new Date(row.created_at).toISOString() : new Date().toISOString(),
+        updatedAt: row.updated_at ? new Date(row.updated_at).toISOString() : new Date().toISOString(),
+      }));
+    } catch (err: any) {
+      console.error('[orderRepository.getCustomers Error]:', err.message);
+      return [];
+    }
+  },
+
+  /**
+   * Fetch a single customer by phone number
+   */
+  getCustomerByPhone: async (phone: string): Promise<CustomerAccount | null> => {
+    if (!process.env.DATABASE_URL || !process.env.DATABASE_URL.trim()) {
+      return null;
+    }
+    await ensureCoreTables();
+    const pool = getDbPool();
+    try {
+      const clean = phone.replace(/\D/g, '').slice(-10);
+      const result = await pool.query(
+        `SELECT id, phone, name, email, password, saved_addresses, total_orders, total_spent, created_at, updated_at
+         FROM public.customers WHERE phone = $1 LIMIT 1`,
+        [clean]
+      );
+      if (result.rows.length === 0) return null;
+      const row = result.rows[0];
+      return {
+        id: row.id,
+        phone: row.phone,
+        name: row.name,
+        email: row.email || undefined,
+        password: row.password || 'pnr@customer123',
+        savedAddresses: typeof row.saved_addresses === 'string' ? JSON.parse(row.saved_addresses) : row.saved_addresses || [],
+        totalOrders: Number(row.total_orders || 0),
+        totalSpent: Number(row.total_spent || 0),
+        createdAt: row.created_at ? new Date(row.created_at).toISOString() : new Date().toISOString(),
+        updatedAt: row.updated_at ? new Date(row.updated_at).toISOString() : new Date().toISOString(),
+      };
+    } catch (err: any) {
+      console.error('[orderRepository.getCustomerByPhone Error]:', err.message);
+      return null;
+    }
+  },
+
+  /**
+   * Update customer password in PostgreSQL
+   */
+  updateCustomerPassword: async (phone: string, newPassword: string): Promise<boolean> => {
+    if (!process.env.DATABASE_URL || !process.env.DATABASE_URL.trim()) {
+      return false;
+    }
+    await ensureCoreTables();
+    const pool = getDbPool();
+    try {
+      const clean = phone.replace(/\D/g, '').slice(-10);
+      const res = await pool.query(
+        `UPDATE public.customers SET password = $1, updated_at = NOW() WHERE phone = $2`,
+        [newPassword, clean]
+      );
+      return (res.rowCount ?? 0) > 0;
+    } catch (err: any) {
+      console.error('[orderRepository.updateCustomerPassword Error]:', err.message);
+      return false;
+    }
+  },
+
+  /**
+   * Upsert customer record with credentials
+   */
+  createOrUpdateCustomer: async (data: {
+    phone: string;
+    name: string;
+    email?: string;
+    password?: string;
+    savedAddresses?: any[];
+  }): Promise<CustomerAccount | null> => {
+    if (!process.env.DATABASE_URL || !process.env.DATABASE_URL.trim()) {
+      return null;
+    }
+    await ensureCoreTables();
+    const pool = getDbPool();
+    try {
+      const clean = data.phone.replace(/\D/g, '').slice(-10);
+      const res = await pool.query(
+        `INSERT INTO public.customers (phone, name, email, password, saved_addresses, created_at, updated_at)
+         VALUES ($1, $2, $3, $4, $5, NOW(), NOW())
+         ON CONFLICT (phone) DO UPDATE SET
+           name = EXCLUDED.name,
+           email = COALESCE(EXCLUDED.email, public.customers.email),
+           password = COALESCE(EXCLUDED.password, public.customers.password),
+           saved_addresses = COALESCE(EXCLUDED.saved_addresses, public.customers.saved_addresses),
+           updated_at = NOW()
+         RETURNING *;`,
+        [
+          clean,
+          data.name,
+          data.email || null,
+          data.password || 'pnr@customer123',
+          JSON.stringify(data.savedAddresses || []),
+        ]
+      );
+      const row = res.rows[0];
+      return {
+        id: row.id,
+        phone: row.phone,
+        name: row.name,
+        email: row.email || undefined,
+        password: row.password || 'pnr@customer123',
+        savedAddresses: typeof row.saved_addresses === 'string' ? JSON.parse(row.saved_addresses) : row.saved_addresses || [],
+        totalOrders: Number(row.total_orders || 0),
+        totalSpent: Number(row.total_spent || 0),
+        createdAt: row.created_at ? new Date(row.created_at).toISOString() : new Date().toISOString(),
+        updatedAt: row.updated_at ? new Date(row.updated_at).toISOString() : new Date().toISOString(),
+      };
+    } catch (err: any) {
+      console.error('[orderRepository.createOrUpdateCustomer Error]:', err.message);
+      return null;
+    }
+  },
+
+  /**
+   * Delete customer from PostgreSQL
+   */
+  deleteCustomer: async (phone: string): Promise<boolean> => {
+    if (!process.env.DATABASE_URL || !process.env.DATABASE_URL.trim()) {
+      return false;
+    }
+    await ensureCoreTables();
+    const pool = getDbPool();
+    try {
+      const clean = phone.replace(/\D/g, '').slice(-10);
+      const res = await pool.query(`DELETE FROM public.customers WHERE phone = $1`, [clean]);
+      return (res.rowCount ?? 0) > 0;
+    } catch (err: any) {
+      console.error('[orderRepository.deleteCustomer Error]:', err.message);
+      return false;
+    }
   },
 };

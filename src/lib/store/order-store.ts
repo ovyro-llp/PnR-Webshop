@@ -12,6 +12,7 @@ import {
   UpdateProductDTO,
   Category,
   SubCategory,
+  CustomerAccount,
 } from '@/types';
 import { OUTLETS, CAMPAIGNS, MENU_ITEMS, INITIAL_ORDERS } from '@/lib/data/mock-data';
 import { dispatchToMangwale } from '@/lib/logistics/mangwale';
@@ -117,6 +118,33 @@ declare global {
   var __PNR_MASTER_PRODUCTS__: MenuItem[] | undefined;
   // eslint-disable-next-line no-var
   var __PNR_CATEGORIES__: Category[] | undefined;
+  // eslint-disable-next-line no-var
+  var __PNR_CUSTOMERS__: CustomerAccount[] | undefined;
+}
+
+if (!globalThis.__PNR_CUSTOMERS__) {
+  globalThis.__PNR_CUSTOMERS__ = [
+    {
+      id: 'cust-tester-102',
+      name: "Puffs 'n' Rolls Tester",
+      phone: '9822011223',
+      email: 'tester@puffsnrolls.com',
+      password: 'pnr@customer123',
+      savedAddresses: [
+        {
+          id: 'addr-2',
+          label: 'Office',
+          address: 'Shop No. 4, Opposite BYK College, Thatte Nagar',
+          area: 'College Road',
+          pincode: '422005',
+        },
+      ],
+      totalOrders: 3,
+      totalSpent: 1250,
+      createdAt: '2026-02-15T10:00:00Z',
+      updatedAt: '2026-10-29T12:00:00Z',
+    },
+  ];
 }
 
 if (!globalThis.__PNR_ORDERS__) {
@@ -152,6 +180,7 @@ if (!globalThis.__PNR_EMPLOYEES__) {
       status: 'ACTIVE',
       lastLogin: '2026-10-29T16:00:00Z',
       createdAt: '2026-01-15T10:00:00Z',
+      password: 'pnr@admin2026',
     },
     {
       id: 'emp-2',
@@ -164,6 +193,7 @@ if (!globalThis.__PNR_EMPLOYEES__) {
       status: 'ACTIVE',
       lastLogin: '2026-10-29T15:45:00Z',
       createdAt: '2026-02-01T10:00:00Z',
+      password: 'pnr@marketing2026',
     },
     {
       id: 'emp-3',
@@ -176,6 +206,7 @@ if (!globalThis.__PNR_EMPLOYEES__) {
       status: 'ACTIVE',
       lastLogin: '2026-10-29T16:15:00Z',
       createdAt: '2026-01-20T10:00:00Z',
+      password: 'cycle2026',
     },
     {
       id: 'emp-4',
@@ -188,6 +219,7 @@ if (!globalThis.__PNR_EMPLOYEES__) {
       status: 'ACTIVE',
       lastLogin: '2026-10-29T14:30:00Z',
       createdAt: '2026-01-20T10:00:00Z',
+      password: 'ndpatel2026',
     },
     {
       id: 'emp-5',
@@ -200,6 +232,7 @@ if (!globalThis.__PNR_EMPLOYEES__) {
       status: 'ACTIVE',
       lastLogin: '2026-10-29T13:10:00Z',
       createdAt: '2026-01-22T10:00:00Z',
+      password: 'gangapur2026',
     },
     {
       id: 'emp-6',
@@ -211,6 +244,7 @@ if (!globalThis.__PNR_EMPLOYEES__) {
       designation: 'Head Baker & Kitchen Lead',
       status: 'ACTIVE',
       createdAt: '2026-02-10T10:00:00Z',
+      password: 'kitchen2026',
     },
   ];
 }
@@ -1359,6 +1393,110 @@ export const orderStore = {
       }
     }
     return deleted;
+  },
+
+  // Customer Accounts Management
+  getCustomersAsync: async (search?: string): Promise<CustomerAccount[]> => {
+    try {
+      const dbCust = await orderRepository.getCustomers(search);
+      if (dbCust && Array.isArray(dbCust) && dbCust.length > 0) {
+        globalThis.__PNR_CUSTOMERS__ = dbCust;
+        return dbCust;
+      }
+    } catch (e: any) {
+      console.warn('[orderStore.getCustomersAsync DB Warning]:', e.message);
+    }
+    const mem = globalThis.__PNR_CUSTOMERS__ || [];
+    if (!search || !search.trim()) return mem;
+    const term = search.trim().toLowerCase();
+    return mem.filter(
+      (c) =>
+        c.phone.includes(term) ||
+        c.name.toLowerCase().includes(term) ||
+        (c.email && c.email.toLowerCase().includes(term))
+    );
+  },
+
+  getCustomerByPhoneAsync: async (phone: string): Promise<CustomerAccount | null> => {
+    const clean = phone.replace(/\D/g, '').slice(-10);
+    try {
+      const dbCust = await orderRepository.getCustomerByPhone(clean);
+      if (dbCust) return dbCust;
+    } catch (e: any) {
+      console.warn('[orderStore.getCustomerByPhoneAsync DB Warning]:', e.message);
+    }
+    const mem = globalThis.__PNR_CUSTOMERS__ || [];
+    return mem.find((c) => c.phone.replace(/\D/g, '').slice(-10) === clean) || null;
+  },
+
+  updateCustomerPasswordAsync: async (phone: string, newPassword: string): Promise<boolean> => {
+    const clean = phone.replace(/\D/g, '').slice(-10);
+    let updatedInDb = false;
+    try {
+      updatedInDb = await orderRepository.updateCustomerPassword(clean, newPassword);
+    } catch (e: any) {
+      console.warn('[orderStore.updateCustomerPasswordAsync DB Warning]:', e.message);
+    }
+    const mem = globalThis.__PNR_CUSTOMERS__ || [];
+    const idx = mem.findIndex((c) => c.phone.replace(/\D/g, '').slice(-10) === clean);
+    if (idx !== -1) {
+      mem[idx].password = newPassword;
+      mem[idx].updatedAt = new Date().toISOString();
+      return true;
+    }
+    return updatedInDb;
+  },
+
+  createCustomerAsync: async (data: {
+    name: string;
+    phone: string;
+    email?: string;
+    password?: string;
+    savedAddresses?: any[];
+  }): Promise<CustomerAccount> => {
+    const cleanPhone = data.phone.replace(/\D/g, '').slice(-10);
+    const newCust: CustomerAccount = {
+      id: `cust-${Date.now()}`,
+      name: data.name,
+      phone: cleanPhone,
+      email: data.email,
+      password: data.password || 'pnr@customer123',
+      savedAddresses: data.savedAddresses || [],
+      totalOrders: 0,
+      totalSpent: 0,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
+    try {
+      const dbCust = await orderRepository.createOrUpdateCustomer(data);
+      if (dbCust) {
+        newCust.id = dbCust.id;
+      }
+    } catch (e: any) {
+      console.warn('[orderStore.createCustomerAsync DB Warning]:', e.message);
+    }
+    if (!globalThis.__PNR_CUSTOMERS__) {
+      globalThis.__PNR_CUSTOMERS__ = [];
+    }
+    const existingIdx = globalThis.__PNR_CUSTOMERS__.findIndex((c) => c.phone === cleanPhone);
+    if (existingIdx !== -1) {
+      globalThis.__PNR_CUSTOMERS__[existingIdx] = newCust;
+    } else {
+      globalThis.__PNR_CUSTOMERS__.push(newCust);
+    }
+    return newCust;
+  },
+
+  deleteCustomerAsync: async (phone: string): Promise<boolean> => {
+    const clean = phone.replace(/\D/g, '').slice(-10);
+    try {
+      await orderRepository.deleteCustomer(clean);
+    } catch (e: any) {
+      console.warn('[orderStore.deleteCustomerAsync DB Warning]:', e.message);
+    }
+    const mem = globalThis.__PNR_CUSTOMERS__ || [];
+    globalThis.__PNR_CUSTOMERS__ = mem.filter((c) => c.phone.replace(/\D/g, '').slice(-10) !== clean);
+    return true;
   },
 
   // Analytics Engine

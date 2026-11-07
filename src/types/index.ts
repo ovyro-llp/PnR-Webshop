@@ -53,6 +53,28 @@ export interface Employee {
   status: 'ACTIVE' | 'INACTIVE';
   lastLogin?: string;
   createdAt: string;
+  password?: string;
+  temporaryPassword?: string;
+}
+
+export interface CustomerAccount {
+  id: string;
+  phone: string;
+  name: string;
+  email?: string;
+  password?: string;
+  savedAddresses?: Array<{
+    id: string;
+    label?: string;
+    address: string;
+    area: string;
+    pincode: string;
+    coordinates?: { lat: number; lng: number };
+  }>;
+  totalOrders: number;
+  totalSpent: number;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface OutletStockItem {

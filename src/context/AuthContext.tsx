@@ -123,7 +123,47 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         return { success: false, error: 'Please enter your account password' };
       }
 
-      // Read registered accounts from storage
+      // 1. Try dynamic server-side verification from PostgreSQL customers table
+      try {
+        const res = await fetch('/api/customers', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            action: 'VERIFY_LOGIN',
+            phone: cleanPhone,
+            password: cleanPassword,
+          }),
+        });
+        const data = await res.json();
+        if (data.success && data.customer) {
+          const customer: CustomerUser = {
+            id: data.customer.id || `cust-${Date.now()}`,
+            name: data.customer.name || 'Valued Customer',
+            phone: cleanPhone,
+            email: data.customer.email,
+            role: 'CUSTOMER',
+            savedAddresses: data.customer.savedAddresses || [
+              {
+                id: 'addr-default',
+                label: 'Home',
+                address: 'Flat 402, Shrinath Heights, Near BYK Circle',
+                area: 'College Road',
+                pincode: '422005',
+              },
+            ],
+          };
+          setUser(customer);
+          localStorage.setItem('pnr_auth_user', JSON.stringify(customer));
+          setIsCustomerLoginModalOpen(false);
+          return { success: true };
+        } else if (res.status === 401 || res.status === 403) {
+          return { success: false, error: data.error || 'Incorrect password' };
+        }
+      } catch (e) {
+        console.warn('API customer verification failed, checking local storage', e);
+      }
+
+      // 2. Read registered accounts from storage fallback
       let accounts: RegisteredCustomerRecord[] = [...PRESEEDED_CUSTOMERS];
       try {
         const stored = localStorage.getItem('pnr_registered_customers');
@@ -315,6 +355,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         ],
       };
 
+      // Try saving customer directly to PostgreSQL via backend API
+      try {
+        fetch('/api/customers', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            action: 'CREATE',
+            name: cleanName,
+            phone: cleanPhone,
+            password: cleanPassword,
+            address: 'Flat 402, Shrinath Heights, Near BYK Circle',
+            area: 'College Road',
+            pincode: '422005',
+          }),
+        }).catch(() => {});
+      } catch {}
+
       try {
         let accounts: RegisteredCustomerRecord[] = [...PRESEEDED_CUSTOMERS];
         const stored = localStorage.getItem('pnr_registered_customers');
@@ -351,8 +408,32 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const loginAdmin = useCallback(async (email: string, password: string) => {
     const cleanEmail = email.trim().toLowerCase();
+    const cleanPass = password.trim();
 
-    // Default Super Admin & Outlet Manager credentials
+    // 1. Dynamic verification against PostgreSQL Employees roster
+    try {
+      const res = await fetch('/api/employees', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'VERIFY_LOGIN',
+          email: cleanEmail,
+          password: cleanPass,
+        }),
+      });
+      const data = await res.json();
+      if (data.success && data.user) {
+        setUser(data.user);
+        localStorage.setItem('pnr_auth_user', JSON.stringify(data.user));
+        return { success: true };
+      } else if (data.error && res.status === 401) {
+        return { success: false, error: data.error };
+      }
+    } catch (e) {
+      console.warn('API employee login verification failed, using fallback checks', e);
+    }
+
+    // 2. Default Super Admin & Outlet Manager credentials fallback
     if (
       (cleanEmail === 'admin@puffsnrolls.com' && password === 'pnr@admin2026') ||
       (cleanEmail === 'admin' && password === 'admin')

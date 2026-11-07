@@ -136,6 +136,7 @@ CREATE TABLE IF NOT EXISTS public.customers (
     phone VARCHAR(50) UNIQUE NOT NULL,
     name VARCHAR(255) NOT NULL,
     email VARCHAR(255),
+    password VARCHAR(255) DEFAULT 'pnr@customer123',
     saved_addresses JSONB DEFAULT '[]'::jsonb,
     total_orders INTEGER DEFAULT 0 CHECK (total_orders >= 0),
     total_spent NUMERIC(10, 2) DEFAULT 0.00 CHECK (total_spent >= 0),
@@ -222,6 +223,10 @@ export async function ensureCoreTables(): Promise<boolean> {
               ALTER TABLE public.orders ADD COLUMN IF NOT EXISTS razorpay_order_id VARCHAR(100);
               ALTER TABLE public.orders ADD COLUMN IF NOT EXISTS razorpay_payment_id VARCHAR(100);
               ALTER TABLE public.orders ADD COLUMN IF NOT EXISTS razorpay_signature VARCHAR(255);
+            END IF;
+
+            IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'customers') THEN
+              ALTER TABLE public.customers ADD COLUMN IF NOT EXISTS password VARCHAR(255) DEFAULT 'pnr@customer123';
             END IF;
 
             IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'deliveries') THEN

@@ -68,8 +68,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       permission: 'marketing:view' as Permission,
     },
     {
-      label: 'Staff & RBAC Matrix',
-      shortLabel: 'Staff',
+      label: 'Users, Staff & Access',
+      shortLabel: 'Users',
       href: '/admin/employees',
       icon: Users,
       permission: 'staff:view' as Permission,
