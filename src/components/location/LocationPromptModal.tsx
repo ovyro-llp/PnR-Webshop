@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { useLocation, calculateDistanceKm } from '@/context/LocationContext';
 import { useCart } from '@/context/CartContext';
 import { DeliveryMapPicker, LocationSelectedData } from './DeliveryMapPicker';
@@ -109,6 +109,20 @@ export function LocationPromptModal() {
     );
   }, [stagedCoords, closestOutlet]);
 
+  // Lock body scroll and prevent viewport wobble when modal is open
+  useEffect(() => {
+    if (isLocationModalOpen) {
+      const prevOverflow = document.body.style.overflow;
+      const prevTouchAction = document.body.style.touchAction;
+      document.body.style.overflow = 'hidden';
+      document.body.style.touchAction = 'none';
+      return () => {
+        document.body.style.overflow = prevOverflow;
+        document.body.style.touchAction = prevTouchAction;
+      };
+    }
+  }, [isLocationModalOpen]);
+
   if (!isLocationModalOpen) return null;
 
   // Called continuously as user drags the pin, taps on map, or searches:
@@ -179,8 +193,8 @@ export function LocationPromptModal() {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/60 backdrop-blur-xs animate-in fade-in duration-200">
-      <div className="bg-[#FAF8F5] border border-stone-200 rounded-3xl max-w-lg w-full p-5 sm:p-7 relative shadow-2xl space-y-4 max-h-[94vh] overflow-y-auto">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/60 backdrop-blur-xs animate-in fade-in duration-200 overscroll-contain">
+      <div className="bg-[#FAF8F5] border border-stone-200 rounded-3xl max-w-lg w-full p-5 sm:p-7 relative shadow-2xl space-y-4 max-h-[94vh] overflow-y-auto overscroll-contain">
         {/* Close Button */}
         <button
           onClick={closeLocationModal}

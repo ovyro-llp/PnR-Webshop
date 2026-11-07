@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
 import { useAuth } from '@/context/AuthContext';
 import {
@@ -26,6 +26,20 @@ export function CustomerLoginModal() {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
+
+  // Lock body scroll and prevent viewport wobble when modal is open
+  useEffect(() => {
+    if (isCustomerLoginModalOpen) {
+      const prevOverflow = document.body.style.overflow;
+      const prevTouchAction = document.body.style.touchAction;
+      document.body.style.overflow = 'hidden';
+      document.body.style.touchAction = 'none';
+      return () => {
+        document.body.style.overflow = prevOverflow;
+        document.body.style.touchAction = prevTouchAction;
+      };
+    }
+  }, [isCustomerLoginModalOpen]);
 
   if (!isCustomerLoginModalOpen) return null;
 
@@ -56,8 +70,8 @@ export function CustomerLoginModal() {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in duration-200">
-      <div className="bg-[#FAF8F5] border border-stone-200 rounded-3xl max-w-md w-full p-6 sm:p-8 relative shadow-2xl space-y-5">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs overscroll-contain animate-in fade-in duration-200">
+      <div className="bg-[#FAF8F5] border border-stone-200 rounded-3xl max-w-md w-full p-6 sm:p-8 relative shadow-2xl space-y-5 max-h-[92vh] overflow-y-auto overscroll-contain">
         <button
           onClick={() => setIsCustomerLoginModalOpen(false)}
           className="absolute top-5 right-5 text-stone-400 hover:text-stone-800 p-1.5 rounded-full hover:bg-stone-200/50 transition cursor-pointer"

@@ -461,8 +461,8 @@ export function DeliveryMapPicker({
       </form>
 
       {/* Map Viewport Container */}
-      <div className="relative w-full h-[250px] sm:h-[280px] rounded-2xl overflow-hidden border border-stone-200 shadow-inner bg-stone-100">
-        <div ref={mapContainerRef} className="w-full h-full z-0" />
+      <div className="relative w-full h-[250px] sm:h-[280px] rounded-2xl overflow-hidden border border-stone-200 shadow-inner bg-stone-100 overscroll-contain">
+        <div ref={mapContainerRef} className="w-full h-full z-0 touch-none" />
 
         {/* Floating Instruction Banner */}
         <div className="absolute top-2.5 left-2.5 right-2.5 pointer-events-none z-10 flex justify-center">

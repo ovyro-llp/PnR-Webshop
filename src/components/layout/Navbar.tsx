@@ -58,10 +58,25 @@ export function Navbar({ currentOutletSlug, currentCampaignSlug }: NavbarProps) 
       .catch(() => {});
   }, []);
 
-  // Authoritative outlet for this customer is their nearest bakery
+  // Lock body scroll and prevent background wobble when mobile drawer is open
+  useEffect(() => {
+    if (isDrawerOpen) {
+      const prevOverflow = document.body.style.overflow;
+      const prevTouchAction = document.body.style.touchAction;
+      document.body.style.overflow = 'hidden';
+      document.body.style.touchAction = 'none';
+      return () => {
+        document.body.style.overflow = prevOverflow;
+        document.body.style.touchAction = prevTouchAction;
+      };
+    }
+  }, [isDrawerOpen]);
+
+  // Authoritative outlet for this customer is their nearest bakery (dynamic hotline)
   const effectiveOutlet =
+    nearestOutlet ||
     (currentOutletSlug && OUTLETS.find((o) => o.slug === currentOutletSlug)) ||
-    nearestOutlet;
+    OUTLETS[0];
 
   return (
     <>
@@ -121,12 +136,18 @@ export function Navbar({ currentOutletSlug, currentCampaignSlug }: NavbarProps) 
 
           {/* Desktop Direct Navigation (Hidden on Mobile, Visible on Desktop) */}
           <nav className="hidden md:flex items-center gap-6 text-xs font-medium text-stone-600">
-            <Link
-              href={`/${effectiveOutlet.slug}`}
-              className="hover:text-stone-950 transition font-semibold"
+            <a
+              href="#bakery-catalog"
+              onClick={(e) => {
+                if (typeof window !== 'undefined' && window.location.pathname === '/') {
+                  e.preventDefault();
+                  document.getElementById('bakery-catalog')?.scrollIntoView({ behavior: 'smooth' });
+                }
+              }}
+              className="hover:text-stone-950 transition font-semibold cursor-pointer"
             >
               Bakery Menu
-            </Link>
+            </a>
             <button
               type="button"
               onClick={openLocationModal}
@@ -188,16 +209,16 @@ export function Navbar({ currentOutletSlug, currentCampaignSlug }: NavbarProps) 
           MOBILE-ONLY CUSTOMER SLIDE-OVER DRAWER
          ========================================================================= */}
       {isDrawerOpen && (
-        <div className="md:hidden fixed inset-0 z-50 overflow-hidden">
+        <div className="md:hidden fixed inset-0 z-50 overflow-hidden touch-none">
           {/* Backdrop */}
           <div
-            className="fixed inset-0 bg-black/50 backdrop-blur-xs transition-opacity animate-in fade-in"
+            className="fixed inset-0 bg-black/50 backdrop-blur-xs transition-opacity animate-in fade-in touch-none overscroll-contain"
             onClick={() => setIsDrawerOpen(false)}
           />
 
           {/* Drawer Panel */}
           <div className="fixed inset-y-0 left-0 max-w-full flex">
-            <div className="w-[85vw] max-w-xs sm:max-w-sm bg-[#FAF8F5] shadow-2xl flex flex-col justify-between border-r border-stone-200 animate-in slide-in-from-left duration-250">
+            <div className="w-[85vw] max-w-xs sm:max-w-sm bg-[#FAF8F5] shadow-2xl flex flex-col justify-between border-r border-stone-200 animate-in slide-in-from-left duration-250 overscroll-contain touch-pan-y">
               {/* Header */}
               <div className="p-4 sm:p-5 border-b border-stone-200 bg-white flex items-center justify-between">
                 <div className="flex items-center gap-2.5">
@@ -224,7 +245,7 @@ export function Navbar({ currentOutletSlug, currentCampaignSlug }: NavbarProps) 
               </div>
 
               {/* Scrollable Nav Content */}
-              <div className="flex-1 overflow-y-auto p-4 sm:p-5 space-y-4 text-stone-800 text-xs">
+              <div className="flex-1 overflow-y-auto p-4 sm:p-5 space-y-4 text-stone-800 text-xs overscroll-contain touch-pan-y">
                 {/* 1. TOP CARD: Customer's Delivery Location (Address + Update Location link) */}
                 <div className="p-3.5 bg-white rounded-2xl border border-stone-200/90 shadow-2xs space-y-2.5">
                   <div className="flex items-center justify-between">
@@ -322,17 +343,26 @@ export function Navbar({ currentOutletSlug, currentCampaignSlug }: NavbarProps) 
 
                 {/* Section: Quick Links */}
                 <div className="space-y-1">
-                  <Link
-                    href={`/${effectiveOutlet.slug}`}
-                    onClick={() => setIsDrawerOpen(false)}
-                    className="w-full p-2.5 rounded-xl bg-stone-900 text-white font-medium flex items-center justify-between shadow-xs"
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsDrawerOpen(false);
+                      if (typeof window !== 'undefined') {
+                        if (window.location.pathname === '/') {
+                          document.getElementById('bakery-catalog')?.scrollIntoView({ behavior: 'smooth' });
+                        } else {
+                          router.push('/#bakery-catalog');
+                        }
+                      }
+                    }}
+                    className="w-full p-2.5 rounded-xl bg-stone-900 text-white font-medium flex items-center justify-between shadow-xs cursor-pointer"
                   >
                     <div className="flex items-center gap-2">
                       <Store className="w-3.5 h-3.5 text-amber-400" />
                       <span>Order from {effectiveOutlet.name.replace("Puffs 'n' Rolls - ", '')}</span>
                     </div>
                     <ChevronRight className="w-3.5 h-3.5 text-stone-400" />
-                  </Link>
+                  </button>
 
                   <button
                     onClick={() => {
@@ -370,7 +400,16 @@ export function Navbar({ currentOutletSlug, currentCampaignSlug }: NavbarProps) 
                         key={cat}
                         onClick={() => {
                           setIsDrawerOpen(false);
-                          router.push(`/${effectiveOutlet.slug}`);
+                          if (typeof window !== 'undefined') {
+                            window.dispatchEvent(
+                              new CustomEvent('pnr-select-category', { detail: { category: cat } })
+                            );
+                            if (window.location.pathname === '/') {
+                              document.getElementById('bakery-catalog')?.scrollIntoView({ behavior: 'smooth' });
+                            } else {
+                              router.push('/#bakery-catalog');
+                            }
+                          }
                         }}
                         className="p-2 rounded-xl bg-white border border-stone-200/80 text-[11px] font-medium text-stone-700 hover:border-stone-400 hover:bg-stone-50 transition text-left cursor-pointer truncate"
                       >

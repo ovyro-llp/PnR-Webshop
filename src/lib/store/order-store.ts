@@ -160,6 +160,13 @@ if (!globalThis.__PNR_CAMPAIGNS__) {
 }
 if (!globalThis.__PNR_OUTLETS__) {
   globalThis.__PNR_OUTLETS__ = [...OUTLETS];
+} else {
+  OUTLETS.forEach((o) => {
+    const existing = globalThis.__PNR_OUTLETS__?.find((e) => e.slug === o.slug);
+    if (existing) {
+      existing.phone = o.phone;
+    }
+  });
 }
 if (!globalThis.__PNR_MASTER_PRODUCTS__ || globalThis.__PNR_MASTER_PRODUCTS__.length < 20) {
   globalThis.__PNR_MASTER_PRODUCTS__ = [...MENU_ITEMS];

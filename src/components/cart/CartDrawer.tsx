@@ -103,6 +103,20 @@ export function CartDrawer({ outletSlug, campaignSlug }: CartDrawerProps) {
     }));
   }, [deliveryCoordinates, deliveryAddress, deliveryArea]);
 
+  // Lock body scroll and prevent viewport wobble when cart or map modal is open
+  useEffect(() => {
+    if (isCartOpen || isMapModalOpen) {
+      const prevOverflow = document.body.style.overflow;
+      const prevTouchAction = document.body.style.touchAction;
+      document.body.style.overflow = 'hidden';
+      document.body.style.touchAction = 'none';
+      return () => {
+        document.body.style.overflow = prevOverflow;
+        document.body.style.touchAction = prevTouchAction;
+      };
+    }
+  }, [isCartOpen, isMapModalOpen]);
+
   // Sync customer details when user logs in
   useEffect(() => {
     if (user && user.role === 'CUSTOMER') {
@@ -172,7 +186,7 @@ export function CartDrawer({ outletSlug, campaignSlug }: CartDrawerProps) {
     const effectiveCoords = customer.coordinates || deliveryCoordinates;
     if (!effectiveCoords || typeof effectiveCoords.lat !== 'number' || typeof effectiveCoords.lng !== 'number') {
       setIsMapModalOpen(true);
-      setSubmitError('📍 Please pinpoint your exact delivery doorstep on the map first to enable 1-Click Magic Checkout.');
+      setSubmitError('📍 Please pinpoint your exact delivery doorstep on the map first to proceed to checkout.');
       return;
     }
 
@@ -189,26 +203,25 @@ export function CartDrawer({ outletSlug, campaignSlug }: CartDrawerProps) {
       coordinates: effectiveCoords,
     };
 
-    // 2. Customer Authentication & Phone Handling
+    // 2. Customer Authentication & Phone Handling (Required for Mangwale delivery rider)
     if (isCustomerLoggedIn) {
       if (!activeCustomer.name.trim()) activeCustomer.name = user?.name || 'Valued Customer';
       if (!activeCustomer.phone.trim() && user && 'phone' in user) activeCustomer.phone = user.phone;
-    } else if (showManualAuth) {
-      const cleanPhone = (authPhone || customer.phone).replace(/\D/g, '').slice(-10);
-      const cleanName = (authName || customer.name).trim();
+    } else {
+      const cleanPhone = (customer.phone || authPhone).replace(/\D/g, '').slice(-10);
+      const cleanName = (customer.name || authName).trim();
 
+      if (cleanName.length < 2) {
+        setSubmitError('Please enter your full name for order delivery');
+        return;
+      }
       if (cleanPhone.length < 10) {
-        setSubmitError('Please enter a valid 10-digit mobile phone number');
-        return;
-      }
-      if (!cleanName) {
-        setSubmitError('Please enter your full name');
+        setSubmitError('Please enter a valid 10-digit mobile phone number for delivery rider contact');
         return;
       }
 
-      setIsSubmitting(true);
-
-      if (authMode === 'LOGIN' && authPassword.trim()) {
+      if (showManualAuth && authMode === 'LOGIN' && authPassword.trim()) {
+        setIsSubmitting(true);
         const loginRes = await loginCustomer(cleanPhone, authPassword.trim());
         if (!loginRes.success) {
           setIsSubmitting(false);
@@ -219,18 +232,11 @@ export function CartDrawer({ outletSlug, campaignSlug }: CartDrawerProps) {
 
       activeCustomer.name = cleanName;
       activeCustomer.phone = cleanPhone;
-    } else {
-      // ⚡ Magic Checkout (UPI/Cards): Phone number will be verified automatically by Razorpay OTP/WhatsApp!
-      // ZERO upfront typing required.
-      const cleanPhone = (authPhone || customer.phone).replace(/\D/g, '').slice(-10);
-      const cleanName = (authName || customer.name).trim();
-      activeCustomer.name = cleanName || 'Valued Customer';
-      activeCustomer.phone = cleanPhone || '';
     }
 
     setIsSubmitting(true);
 
-    // Online Payment Gateway (Razorpay Magic 1-Click Checkout - 100% Prepaid)
+    // Online Payment Gateway (Razorpay - 100% Prepaid Online)
     try {
       const createRes = await fetch('/api/payments/razorpay/create-order', {
         method: 'POST',
@@ -281,7 +287,7 @@ export function CartDrawer({ outletSlug, campaignSlug }: CartDrawerProps) {
         amount: orderData.amount,
         currency: orderData.currency || 'INR',
         name: "Puffs 'n' Rolls Bakery",
-        description: `⚡ 1-Click Magic Checkout • ${orderData.outletName || 'Nashik Bakery'}`,
+        description: `Fresh Bakes Payment • ${orderData.outletName || 'Nashik Bakery'}`,
         image: 'https://puffsnrolls.com/wp-content/uploads/2025/12/banner-logo.png',
         order_id: orderData.orderId,
         prefill: {
@@ -294,7 +300,7 @@ export function CartDrawer({ outletSlug, campaignSlug }: CartDrawerProps) {
           delivery_lng: String(effectiveCoords.lng),
           doorstep_address: activeCustomer.address,
           outlet_slug: effectiveOutletSlug,
-          magic_checkout: 'true',
+          payment_type: 'razorpay_prepaid',
         },
         theme: {
           color: '#1C1917',
@@ -378,15 +384,15 @@ export function CartDrawer({ outletSlug, campaignSlug }: CartDrawerProps) {
   };
 
   return (
-    <div className="fixed inset-0 z-50 overflow-hidden">
+    <div className="fixed inset-0 z-50 overflow-hidden touch-none">
       {/* Backdrop */}
       <div
-        className="fixed inset-0 bg-black/40 backdrop-blur-xs transition-opacity"
+        className="fixed inset-0 bg-black/40 backdrop-blur-xs transition-opacity overscroll-contain touch-none"
         onClick={() => setIsCartOpen(false)}
       />
 
       <div className="fixed inset-y-0 right-0 max-w-full flex pl-0 sm:pl-10">
-        <div className="w-screen max-w-md bg-[#FAF8F5] shadow-2xl flex flex-col justify-between border-l border-stone-200">
+        <div className="w-screen max-w-md bg-[#FAF8F5] shadow-2xl flex flex-col justify-between border-l border-stone-200 overscroll-contain touch-pan-y">
           {/* Header */}
           <div className="p-4 sm:p-5 border-b border-stone-200 bg-white flex items-center justify-between">
             <div className="flex items-center gap-2.5">
@@ -409,7 +415,7 @@ export function CartDrawer({ outletSlug, campaignSlug }: CartDrawerProps) {
           </div>
 
           {/* Cart Content */}
-          <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-4">
+          <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-4 overscroll-contain touch-pan-y">
             {items.length === 0 ? (
               <div className="py-16 text-center space-y-3">
                 <div className="w-14 h-14 bg-stone-100 text-stone-400 rounded-full flex items-center justify-center mx-auto">
@@ -529,7 +535,7 @@ export function CartDrawer({ outletSlug, campaignSlug }: CartDrawerProps) {
                                 </span>
                               </p>
                               <p className="text-[11px] text-amber-900/90 leading-snug mt-0.5">
-                                Pinpoint your exact building on the map to verify 30–45m delivery &amp; unlock <strong>1-Click Magic Checkout</strong>.
+                                Pinpoint your exact building on the map to verify 30–45m delivery &amp; calculate rider fare.
                               </p>
                             </div>
                           </div>
@@ -543,7 +549,7 @@ export function CartDrawer({ outletSlug, campaignSlug }: CartDrawerProps) {
                           className="w-full py-2.5 bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-700 hover:to-amber-800 text-white rounded-xl text-xs font-bold flex items-center justify-center gap-2 transition cursor-pointer shadow-sm"
                         >
                           <MapPin className="w-3.5 h-3.5 text-amber-200" />
-                          <span>Pinpoint on Map (Unlocks Magic Checkout)</span>
+                          <span>Pinpoint Delivery Doorstep on Map</span>
                         </button>
                       </div>
                     ) : (
@@ -660,7 +666,7 @@ export function CartDrawer({ outletSlug, campaignSlug }: CartDrawerProps) {
                 </div>
 
                 {/* =========================================================================
-                    SECTION 2: CUSTOMER CONTACT & ACCOUNT CREATION
+                    SECTION 2: CUSTOMER CONTACT DETAILS (FOR DELIVERY RIDER CONTACT)
                    ========================================================================= */}
                 {isCustomerLoggedIn ? (
                   <div className="bg-emerald-50/80 border border-emerald-200 rounded-2xl p-3 flex items-center justify-between">
@@ -685,67 +691,30 @@ export function CartDrawer({ outletSlug, campaignSlug }: CartDrawerProps) {
                       Change
                     </button>
                   </div>
-                ) : paymentMethod === 'UPI' && !showManualAuth ? (
-                  <div className="bg-gradient-to-r from-amber-500/10 via-amber-500/5 to-transparent border border-amber-300/80 rounded-2xl p-3.5 space-y-2.5">
-                    <div className="flex items-start justify-between gap-3">
-                      <div className="flex items-start gap-2.5">
-                        <div className="w-8 h-8 rounded-xl bg-stone-900 text-amber-400 flex items-center justify-center shrink-0 mt-0.5 shadow-xs">
-                          <Zap className="w-4 h-4 fill-amber-400 text-amber-400" />
-                        </div>
-                        <div>
-                          <div className="flex items-center gap-2">
-                            <span className="text-xs font-bold text-stone-900">
-                              Razorpay Magic 1-Click Login Active
-                            </span>
-                            <span className="text-[9px] font-bold text-emerald-800 bg-emerald-100 px-2 py-0.5 rounded-full uppercase tracking-wider">
-                              No Phone Form
-                            </span>
-                          </div>
-                          <p className="text-[11px] text-stone-600 mt-1 leading-relaxed">
-                            Razorpay Magic Checkout will automatically verify your mobile number via OTP / WhatsApp and log you into your PnR account on payment.
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-                    <div className="pt-2 border-t border-amber-200/50 flex items-center justify-between text-[11px]">
-                      <span className="text-stone-500">Have an existing password?</span>
-                      <button
-                        type="button"
-                        onClick={() => setShowManualAuth(true)}
-                        className="text-stone-800 hover:text-stone-950 font-semibold underline cursor-pointer"
-                      >
-                        Sign in manually
-                      </button>
-                    </div>
-                  </div>
                 ) : (
                   <div className="bg-white rounded-2xl border border-stone-200 p-4 space-y-3 shadow-xs">
                     <div className="flex items-center justify-between">
                       <h4 className="text-[11px] font-bold uppercase tracking-wider text-stone-900 flex items-center gap-1.5">
                         <User className="w-3.5 h-3.5 text-stone-600" />
-                        <span>Customer Account</span>
+                        <span>Customer Contact</span>
                       </h4>
-                      <button
-                        type="button"
-                        onClick={() => setShowManualAuth(false)}
-                        className="text-[10px] text-amber-800 hover:text-amber-950 font-bold underline cursor-pointer"
-                      >
-                        ⚡ Use 1-Click Magic Login
-                      </button>
+                      <span className="text-[10px] text-stone-500 font-medium">
+                        For Rider Updates
+                      </span>
                     </div>
 
-                    <div className="space-y-2">
+                    <div className="space-y-2.5">
                       <div>
                         <label className="block text-[10px] font-bold text-stone-600 uppercase tracking-wider mb-1">
-                          Your Full Name *
+                          Full Name *
                         </label>
                         <input
                           type="text"
                           placeholder="e.g. Rahul Deshmukh"
-                          value={authName}
+                          value={customer.name}
                           onChange={(e) => {
-                            setAuthName(e.target.value);
                             setCustomer((prev) => ({ ...prev, name: e.target.value }));
+                            setAuthName(e.target.value);
                           }}
                           className="w-full px-3 py-2 bg-stone-50 border border-stone-200 rounded-xl text-xs focus:bg-white focus:ring-1 focus:ring-stone-900 focus:outline-none"
                         />
@@ -764,22 +733,34 @@ export function CartDrawer({ outletSlug, campaignSlug }: CartDrawerProps) {
                             inputMode="tel"
                             maxLength={10}
                             placeholder="98220 00000"
-                            value={authPhone}
+                            value={customer.phone}
                             onChange={(e) => {
                               const clean = e.target.value.replace(/\D/g, '').slice(0, 10);
-                              setAuthPhone(clean);
                               setCustomer((prev) => ({ ...prev, phone: clean }));
+                              setAuthPhone(clean);
                             }}
                             className="w-full pl-10 pr-3 py-2 bg-stone-50 border border-stone-200 rounded-xl text-xs font-mono focus:bg-white focus:ring-1 focus:ring-stone-900 focus:outline-none"
                           />
                         </div>
+                        <p className="text-[10px] text-stone-400 mt-1">
+                          Delivery rider will call this number to confirm delivery upon arrival.
+                        </p>
                       </div>
 
-                      {authMode === 'LOGIN' && (
-                        <div>
-                          <label className="block text-[10px] font-bold text-stone-600 uppercase tracking-wider mb-1">
-                            Password *
-                          </label>
+                      {showManualAuth ? (
+                        <div className="pt-2 border-t border-stone-100 space-y-2">
+                          <div className="flex items-center justify-between">
+                            <label className="block text-[10px] font-bold text-stone-600 uppercase tracking-wider">
+                              Account Password
+                            </label>
+                            <button
+                              type="button"
+                              onClick={() => setShowManualAuth(false)}
+                              className="text-[10px] text-stone-500 hover:text-stone-800 underline cursor-pointer"
+                            >
+                              Cancel
+                            </button>
+                          </div>
                           <div className="relative">
                             <input
                               type={showAuthPassword ? 'text' : 'password'}
@@ -801,6 +782,16 @@ export function CartDrawer({ outletSlug, campaignSlug }: CartDrawerProps) {
                             </button>
                           </div>
                         </div>
+                      ) : (
+                        <div className="pt-1 flex items-center justify-end">
+                          <button
+                            type="button"
+                            onClick={() => setShowManualAuth(true)}
+                            className="text-[10px] text-stone-500 hover:text-stone-800 underline cursor-pointer"
+                          >
+                            Have an account password? Sign in
+                          </button>
+                        </div>
                       )}
                     </div>
                   </div>
@@ -821,51 +812,40 @@ export function CartDrawer({ outletSlug, campaignSlug }: CartDrawerProps) {
                   </div>
 
                   <div className="space-y-2">
-                    {/* Instant Online Payment Option (Razorpay Magic 1-Click Checkout) */}
-                    <button
-                      type="button"
-                      onClick={() => setPaymentMethod('UPI')}
-                      className={`w-full p-3.5 rounded-2xl border text-left transition relative flex items-start gap-3 cursor-pointer ${
-                        paymentMethod === 'UPI'
-                          ? 'border-stone-900 bg-white ring-2 ring-stone-900/10 shadow-xs'
-                          : 'border-stone-200 bg-white/60 hover:bg-white text-stone-700'
-                      }`}
+                    {/* Instant Online Payment Option (Razorpay - 100% Prepaid) */}
+                    <div
+                      className="w-full p-3.5 rounded-2xl border text-left border-stone-900 bg-white ring-2 ring-stone-900/10 shadow-xs flex items-start gap-3"
                     >
                       <div
-                        className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 mt-0.5 ${
-                          paymentMethod === 'UPI'
-                            ? 'bg-[#1C1917] text-amber-400'
-                            : 'bg-stone-100 text-stone-500'
-                        }`}
+                        className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0 mt-0.5 bg-[#1C1917] text-amber-400"
                       >
-                        <Zap className="w-4.5 h-4.5 fill-amber-400 text-amber-400" />
+                        <ShieldCheck className="w-4.5 h-4.5 text-amber-400" />
                       </div>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center justify-between gap-1">
                           <span className="text-xs font-bold text-stone-900">
-                            Razorpay Magic 1-Click Checkout
+                            Razorpay
                           </span>
-                          <span className="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full bg-amber-100 text-amber-950 border border-amber-300 flex items-center gap-1 shrink-0">
-                            <Sparkles className="w-2.5 h-2.5 text-amber-700" />
-                            <span>1-Click Magic</span>
+                          <span className="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-200 shrink-0">
+                            Prepaid Online
                           </span>
                         </div>
                         <p className="text-[11px] text-stone-500 mt-0.5">
-                          Instant UPI (GPay, PhonePe, Paytm), Cards &amp; NetBanking with pre-filled Phone OTP
+                          Instant UPI (GPay, PhonePe, Paytm), Cards, NetBanking &amp; Wallets
                         </p>
                         {customer.coordinates ? (
                           <div className="mt-1.5 flex items-center gap-1.5 text-[10px] text-emerald-700 font-semibold bg-emerald-50/80 px-2 py-0.5 rounded-md border border-emerald-200/60 w-fit">
                             <CheckCircle2 className="w-3 h-3 text-emerald-600 shrink-0" />
-                            <span>Doorstep GPS Coordinates Locked &amp; Ready for Magic Checkout</span>
+                            <span>Doorstep GPS Coordinates Verified</span>
                           </div>
                         ) : (
                           <div className="mt-1.5 flex items-center gap-1.5 text-[10px] text-amber-800 font-medium bg-amber-50 px-2 py-0.5 rounded-md border border-amber-200/80 w-fit">
                             <MapPin className="w-3 h-3 text-amber-600 shrink-0" />
-                            <span>Map pinpoint required to unlock 1-Click Magic Checkout</span>
+                            <span>Map pinpoint required to calculate delivery fare</span>
                           </div>
                         )}
                       </div>
-                    </button>
+                    </div>
                   </div>
                 </div>
 
@@ -925,7 +905,7 @@ export function CartDrawer({ outletSlug, campaignSlug }: CartDrawerProps) {
                     <ArrowRight className="w-3.5 h-3.5" />
                   </button>
                   <p className="text-[10px] text-amber-900 font-semibold text-center flex items-center justify-center gap-1">
-                    <span>* Required for 30–45m Mangwale rider delivery &amp; Magic Checkout</span>
+                    <span>* Required for 30–45m Mangwale rider delivery</span>
                   </p>
                 </>
               ) : (
@@ -936,11 +916,10 @@ export function CartDrawer({ outletSlug, campaignSlug }: CartDrawerProps) {
                   className="w-full py-3.5 bg-[#1C1917] hover:bg-stone-800 active:scale-[0.99] text-white rounded-full font-bold text-xs uppercase tracking-wider transition shadow-sm flex items-center justify-center gap-2 disabled:opacity-60 cursor-pointer"
                 >
                   {isSubmitting ? (
-                    <span>Opening Razorpay Magic Checkout...</span>
+                    <span>Opening Razorpay Checkout...</span>
                   ) : (
                     <>
-                      <Zap className="w-4 h-4 fill-amber-400 text-amber-400" />
-                      <span>⚡ Pay with Razorpay Magic 1-Click • ₹{total}</span>
+                      <span>Pay with Razorpay • ₹{total}</span>
                       <ArrowRight className="w-3.5 h-3.5" />
                     </>
                   )}
@@ -949,7 +928,7 @@ export function CartDrawer({ outletSlug, campaignSlug }: CartDrawerProps) {
 
               <div className="flex items-center justify-center gap-1.5 text-[10px] text-stone-400 text-center">
                 <ShieldCheck className="w-3 h-3 text-stone-400" />
-                <span>100% Quality Guaranteed • Fresh Oven Bakes • Razorpay Magic Secure</span>
+                <span>100% Quality Guaranteed • Fresh Oven Bakes • Secure Razorpay Payment</span>
               </div>
             </div>
           )}
@@ -958,8 +937,8 @@ export function CartDrawer({ outletSlug, campaignSlug }: CartDrawerProps) {
 
       {/* Map Picker Modal */}
       {isMapModalOpen && (
-        <div className="fixed inset-0 z-60 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in duration-200">
-          <div className="bg-[#FAF8F5] border border-stone-200 rounded-3xl max-w-md w-full p-5 relative shadow-2xl space-y-3 max-h-[92vh] overflow-y-auto">
+        <div className="fixed inset-0 z-60 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs overscroll-contain animate-in fade-in duration-200">
+          <div className="bg-[#FAF8F5] border border-stone-200 rounded-3xl max-w-md w-full p-5 relative shadow-2xl space-y-3 max-h-[92vh] overflow-y-auto overscroll-contain">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <MapPin className="w-4 h-4 text-amber-600" />
@@ -977,9 +956,9 @@ export function CartDrawer({ outletSlug, campaignSlug }: CartDrawerProps) {
             </div>
 
             <div className="p-2.5 bg-amber-50 border border-amber-200/80 rounded-2xl flex items-center gap-2 text-xs text-amber-900">
-              <Zap className="w-3.5 h-3.5 fill-amber-500 text-amber-500 shrink-0" />
+              <MapPin className="w-3.5 h-3.5 text-amber-600 shrink-0" />
               <span>
-                <strong>Required for Magic Checkout:</strong> Pin your exact doorstep for 30–45m delivery &amp; 1-click payment.
+                <strong>Required for Delivery:</strong> Pin your exact doorstep for 30–45m rider delivery.
               </span>
             </div>
 
