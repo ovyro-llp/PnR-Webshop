@@ -80,7 +80,7 @@ export async function PATCH(
     const body = await req.json();
     const { orderStatus, riderName, riderPhone, riderVehicleNo, estimatedMinutes, notes } = body;
 
-    const existingOrder = orderStore.getOrderById(id);
+    const existingOrder = (await orderStore.getOrderByIdAsync(id)) || orderStore.getOrderById(id);
     if (!existingOrder) {
       return NextResponse.json(
         { success: false, message: 'Order not found' },

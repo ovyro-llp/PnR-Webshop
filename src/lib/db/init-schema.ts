@@ -215,6 +215,15 @@ export async function ensureCoreTables(): Promise<boolean> {
         await client.query(`
           DO $$ 
           BEGIN 
+            IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'orders') THEN
+              ALTER TABLE public.orders ADD COLUMN IF NOT EXISTS delivery_fee NUMERIC(10, 2) NOT NULL DEFAULT 0.00;
+              ALTER TABLE public.orders ADD COLUMN IF NOT EXISTS delivery_lat DOUBLE PRECISION;
+              ALTER TABLE public.orders ADD COLUMN IF NOT EXISTS delivery_lng DOUBLE PRECISION;
+              ALTER TABLE public.orders ADD COLUMN IF NOT EXISTS razorpay_order_id VARCHAR(100);
+              ALTER TABLE public.orders ADD COLUMN IF NOT EXISTS razorpay_payment_id VARCHAR(100);
+              ALTER TABLE public.orders ADD COLUMN IF NOT EXISTS razorpay_signature VARCHAR(255);
+            END IF;
+
             IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'deliveries') THEN
               IF NOT EXISTS (
                 SELECT 1 FROM pg_constraint WHERE conname = 'uq_deliveries_order_id'

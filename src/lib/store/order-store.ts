@@ -295,13 +295,21 @@ export const orderStore = {
 
   getOrderById: (orderId: string): Order | undefined => {
     return (globalThis.__PNR_ORDERS__ || []).find(
-      (o) => o.id === orderId || o.orderNumber === orderId || o.razorpayOrderId === orderId
+      (o) =>
+        o.id === orderId ||
+        o.orderNumber === orderId ||
+        o.razorpayOrderId === orderId ||
+        o.mangwale?.taskId === orderId
     );
   },
 
   getOrderByIdAsync: async (orderId: string): Promise<Order | undefined> => {
     const memoryOrder = (globalThis.__PNR_ORDERS__ || []).find(
-      (o) => o.id === orderId || o.orderNumber === orderId || o.razorpayOrderId === orderId
+      (o) =>
+        o.id === orderId ||
+        o.orderNumber === orderId ||
+        o.razorpayOrderId === orderId ||
+        o.mangwale?.taskId === orderId
     );
     if (memoryOrder) return memoryOrder;
 

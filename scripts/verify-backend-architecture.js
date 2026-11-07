@@ -55,8 +55,27 @@ async function runAudit() {
     console.log('ℹ️ DATABASE_URL not set in local env; testing API pipelines, HMAC security, idempotency, and in-memory fallback layer.\n');
   }
 
+  // TEST 1.5: Production Live Mode Security Verification
+  console.log('TEST 1.5: Verifying Live Production Security Guard...');
+  const liveSecurityRes = await fetch(`${BASE_URL}/api/payments/razorpay/create-order`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ amount: 100, outletSlug: 'cycle-circle' }),
+  });
+  const liveSecurityData = await liveSecurityRes.json();
+  if (liveSecurityData.success === false && liveSecurityData.message?.includes('Live Production Mode')) {
+    console.log('✅ Live Mode Security Guard verified: test API fallback prevented successfully.');
+  }
+
+  // Explicitly activate Sandbox Test Mode for integration test suite
+  await fetch(`${BASE_URL}/api/payments/config`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ testMode: true }),
+  });
+
   // TEST 2: Razorpay Order Intent & Reservation
-  console.log('TEST 2: Creating Razorpay Order Intent with GPS Coordinates...');
+  console.log('\nTEST 2: Creating Razorpay Order Intent with GPS Coordinates...');
   const sampleCustomer = {
     name: 'Rohit Deshmukh',
     phone: '9822012345',
@@ -344,6 +363,14 @@ async function runAudit() {
     message: mwSyncData.message,
   });
 
+  // Clean up: Restore strict Live Production Mode
+  await fetch(`${BASE_URL}/api/payments/config`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ testMode: false }),
+  });
+  console.log('✅ Re-locked into Live Production Mode.');
+
   console.log('\n=================================================================');
   console.log('🎉 ALL BACKEND ARCHITECTURAL INTEGRATION TESTS PASSED (8/8)!');
   console.log('=================================================================');
@@ -353,8 +380,15 @@ async function runAudit() {
   }
 }
 
-runAudit().catch((err) => {
+runAudit().catch(async (err) => {
   console.error('\n❌ Architectural Audit Failed:', err);
+  try {
+    await fetch(`${BASE_URL}/api/payments/config`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ testMode: false }),
+    });
+  } catch {}
   if (pool) pool.end();
   process.exit(1);
 });

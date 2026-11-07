@@ -283,7 +283,7 @@ export const orderRepository = {
                 d.dispatched_at, d.delivered_at, d.notes as del_notes
          FROM public.orders o
          LEFT JOIN public.deliveries d ON o.id = d.order_id
-         WHERE o.id = $1 OR o.order_number = $1 OR o.razorpay_order_id = $1
+         WHERE o.id = $1 OR o.order_number = $1 OR o.razorpay_order_id = $1 OR d.task_id = $1
          LIMIT 1;`,
         [id]
       );
@@ -486,7 +486,8 @@ export const orderRepository = {
              delivered_at = CASE WHEN $2 = 'DELIVERED' THEN NOW() ELSE delivered_at END,
              notes = COALESCE($7, notes),
              updated_at = NOW()
-         WHERE task_id = $1 OR order_id = $1;`,
+         WHERE task_id = $1 OR order_id = $1
+            OR order_id IN (SELECT id FROM public.orders WHERE order_number = $1);`,
         [
           identifier,
           update.status || null,
@@ -501,10 +502,11 @@ export const orderRepository = {
       // 2. Update parent order status if requested
       if (update.orderStatus) {
         await pool.query(
-          `UPDATE public.orders o
+          `UPDATE public.orders
            SET order_status = $2, updated_at = NOW()
-           FROM public.deliveries d
-           WHERE (o.id = d.order_id AND d.task_id = $1) OR o.id = $1 OR o.order_number = $1;`,
+           WHERE id IN (SELECT order_id FROM public.deliveries WHERE task_id = $1)
+              OR id = $1
+              OR order_number = $1;`,
           [identifier, update.orderStatus]
         );
       }
