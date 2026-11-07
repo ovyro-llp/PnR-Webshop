@@ -20,10 +20,11 @@ export interface LocationSelectedData {
 
 interface DeliveryMapPickerProps {
   initialCoords?: { lat: number; lng: number } | null;
-  onConfirmLocation: (data: LocationSelectedData) => void;
+  onConfirmLocation?: (data: LocationSelectedData) => void;
   onLocationChange?: (data: LocationSelectedData) => void;
   onClose?: () => void;
   autoGeocodeOnMount?: boolean;
+  showActionButtons?: boolean;
 }
 
 export function DeliveryMapPicker({
@@ -32,6 +33,7 @@ export function DeliveryMapPicker({
   onLocationChange,
   onClose,
   autoGeocodeOnMount = true,
+  showActionButtons = false,
 }: DeliveryMapPickerProps) {
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
@@ -421,17 +423,19 @@ export function DeliveryMapPicker({
   };
 
   const handleConfirm = () => {
-    onConfirmLocation({
-      lat: currentCoords.lat,
-      lng: currentCoords.lng,
-      nearestOutlet: closestOutlet,
-      distanceKm: distance,
-      formattedAddress: detectedAddress,
-      street: detectedStreet,
-      area: detectedArea,
-      pincode: detectedPincode,
-      city: 'Nashik',
-    });
+    if (onConfirmLocation) {
+      onConfirmLocation({
+        lat: currentCoords.lat,
+        lng: currentCoords.lng,
+        nearestOutlet: closestOutlet,
+        distanceKm: distance,
+        formattedAddress: detectedAddress,
+        street: detectedStreet,
+        area: detectedArea,
+        pincode: detectedPincode,
+        city: 'Nashik',
+      });
+    }
   };
 
   return (
@@ -518,26 +522,28 @@ export function DeliveryMapPicker({
         </div>
       </div>
 
-      {/* Action Buttons */}
-      <div className="flex items-center gap-2 pt-1">
-        {onClose && (
+      {/* Action Buttons (Only rendered when explicitly requested; otherwise no button below map) */}
+      {showActionButtons && (
+        <div className="flex items-center gap-2 pt-1">
+          {onClose && (
+            <button
+              type="button"
+              onClick={onClose}
+              className="flex-1 py-2.5 px-3 rounded-xl border border-stone-300 text-stone-700 font-semibold text-xs hover:bg-stone-50 transition cursor-pointer"
+            >
+              Cancel
+            </button>
+          )}
           <button
             type="button"
-            onClick={onClose}
-            className="flex-1 py-2.5 px-3 rounded-xl border border-stone-300 text-stone-700 font-semibold text-xs hover:bg-stone-50 transition cursor-pointer"
+            onClick={handleConfirm}
+            className="flex-2 py-2.5 px-4 rounded-xl bg-stone-900 hover:bg-stone-800 text-white font-bold text-xs flex items-center justify-center gap-1.5 shadow-md transition cursor-pointer"
           >
-            Cancel
+            <Check className="w-4 h-4 text-emerald-400" />
+            <span>Confirm Pin &amp; Auto-fill Address</span>
           </button>
-        )}
-        <button
-          type="button"
-          onClick={handleConfirm}
-          className="flex-2 py-2.5 px-4 rounded-xl bg-stone-900 hover:bg-stone-800 text-white font-bold text-xs flex items-center justify-center gap-1.5 shadow-md transition cursor-pointer"
-        >
-          <Check className="w-4 h-4 text-emerald-400" />
-          <span>Confirm Pin & Auto-fill Address</span>
-        </button>
-      </div>
+        </div>
+      )}
     </div>
   );
 }

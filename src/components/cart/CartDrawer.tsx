@@ -985,6 +985,7 @@ export function CartDrawer({ outletSlug, campaignSlug }: CartDrawerProps) {
 
             <DeliveryMapPicker
               initialCoords={customer.coordinates || deliveryCoordinates || undefined}
+              showActionButtons={true}
               onConfirmLocation={(data) => {
                 setCustomer((prev) => {
                   let newAddr = data.street || data.formattedAddress;

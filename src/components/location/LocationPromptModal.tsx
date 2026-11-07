@@ -1,7 +1,7 @@
 'use client';
 
-import React, { useState } from 'react';
-import { useLocation } from '@/context/LocationContext';
+import React, { useState, useMemo } from 'react';
+import { useLocation, calculateDistanceKm } from '@/context/LocationContext';
 import { useCart } from '@/context/CartContext';
 import { DeliveryMapPicker, LocationSelectedData } from './DeliveryMapPicker';
 import { Outlet } from '@/types';
@@ -75,35 +75,68 @@ export function LocationPromptModal() {
     deliveryCoordinates || null
   );
   const [stagedOutlet, setStagedOutlet] = useState<Outlet | null>(nearestOutlet || null);
+  const [hasUserManuallySelectedOutlet, setHasUserManuallySelectedOutlet] = useState(false);
+
+  // Compute closest outlet based on current staged coordinates
+  const closestOutlet = useMemo(() => {
+    if (!stagedCoords) return nearestOutlet || allOutlets[0];
+    let best = allOutlets[0];
+    let minD = Infinity;
+    for (const o of allOutlets) {
+      if (o.coordinates) {
+        const d = calculateDistanceKm(
+          stagedCoords.lat,
+          stagedCoords.lng,
+          o.coordinates.lat,
+          o.coordinates.lng
+        );
+        if (d < minD) {
+          minD = d;
+          best = o;
+        }
+      }
+    }
+    return best;
+  }, [stagedCoords, allOutlets, nearestOutlet]);
+
+  const closestDistanceKm = useMemo(() => {
+    if (!stagedCoords || !closestOutlet.coordinates) return null;
+    return calculateDistanceKm(
+      stagedCoords.lat,
+      stagedCoords.lng,
+      closestOutlet.coordinates.lat,
+      closestOutlet.coordinates.lng
+    );
+  }, [stagedCoords, closestOutlet]);
 
   if (!isLocationModalOpen) return null;
 
-  // Called continuously as user drags the pin, taps on map, or searches
+  // Called continuously as user drags the pin, taps on map, or searches:
+  // Automatically fills floor/society/street and sets the closest outlet
   const handleMapLocationChange = (data: LocationSelectedData) => {
     setStagedCoords({ lat: data.lat, lng: data.lng });
-    // Default to the geocoded nearest outlet if user hasn't explicitly overridden it
-    if (!stagedOutlet || stagedOutlet.slug === nearestOutlet.slug) {
-      setStagedOutlet(data.nearestOutlet);
+
+    // Automatically select closest outlet from pin unless user manually selected a different outlet
+    if (!hasUserManuallySelectedOutlet) {
+      setStagedOutlet(data.nearestOutlet || closestOutlet);
     }
 
-    // Auto-fill address if not already manually customized, or update with street
-    setAddressInput((prev) => {
-      if (prev && prev.toLowerCase().includes('flat')) {
-        const prefix = prev.split(',')[0];
-        return `${prefix}, ${data.street || data.formattedAddress}`;
-      }
-      return data.street || data.formattedAddress;
-    });
+    // Auto-fill address details immediately from the map data
+    const newStreetOrAddr = data.street || data.formattedAddress;
+    if (newStreetOrAddr) {
+      setAddressInput((prev) => {
+        if (prev && (prev.toLowerCase().includes('flat') || prev.toLowerCase().includes('floor') || prev.toLowerCase().includes('room'))) {
+          const prefix = prev.split(',')[0];
+          return `${prefix}, ${newStreetOrAddr}`;
+        }
+        return newStreetOrAddr;
+      });
+    }
 
     if (data.pincode) {
       setPincodeInput(data.pincode);
     }
     setHasMapAutoFilled(true);
-  };
-
-  // Called when user clicks "Confirm Pin & Auto-fill Address" in the map picker
-  const handleMapConfirm = (data: LocationSelectedData) => {
-    handleMapLocationChange(data);
   };
 
   // Final confirmation to lock in address, coordinates, and chosen outlet
@@ -218,13 +251,13 @@ export function LocationPromptModal() {
 
         {activeTab === 'MAP' ? (
           <div className="space-y-3">
-            {/* 1. Map is shown FIRST */}
+            {/* 1. Map is shown FIRST (Zero buttons below map) */}
             <div className="rounded-2xl overflow-hidden border border-stone-200 bg-white p-2">
               <DeliveryMapPicker
                 initialCoords={stagedCoords || deliveryCoordinates || undefined}
                 onLocationChange={handleMapLocationChange}
-                onConfirmLocation={handleMapConfirm}
                 autoGeocodeOnMount={true}
+                showActionButtons={false}
               />
             </div>
 
@@ -275,45 +308,74 @@ export function LocationPromptModal() {
                 />
               </div>
 
-              {/* Fulfilling Bakery Kitchen / Outlet Choice */}
+              {/* Fulfilling Bakery Kitchen / Outlet Choice with Closest Mention & Recommended Tag */}
               <div className="pt-2 border-t border-stone-100 space-y-1.5">
                 <div className="flex items-center justify-between">
                   <label className="block text-[10px] font-bold text-stone-700 uppercase tracking-wider flex items-center gap-1.5">
                     <Store className="w-3.5 h-3.5 text-amber-700" />
                     <span>Fulfilling Bakery Kitchen</span>
                   </label>
-                  <span className="text-[9px] font-semibold text-amber-800 bg-amber-50 px-2 py-0.5 rounded-full border border-amber-200">
-                    {stagedOutlet ? stagedOutlet.name.replace("Puffs 'n' Rolls - ", '') : nearestOutlet.name.replace("Puffs 'n' Rolls - ", '')}
-                  </span>
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-[9px] font-bold text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200 flex items-center gap-1">
+                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-600 animate-pulse" />
+                      <span>Closest: {closestOutlet.name.replace("Puffs 'n' Rolls - ", '')}</span>
+                      {closestDistanceKm !== null && <span className="font-mono">({closestDistanceKm} km)</span>}
+                    </span>
+                    <span className="text-[9px] font-extrabold text-amber-900 bg-amber-100 px-1.5 py-0.5 rounded-md uppercase tracking-wider border border-amber-300/80">
+                      Recommended
+                    </span>
+                  </div>
                 </div>
+
                 <select
-                  value={stagedOutlet?.slug || nearestOutlet.slug}
+                  value={stagedOutlet?.slug || closestOutlet.slug}
                   onChange={(e) => {
                     const found = allOutlets.find((o) => o.slug === e.target.value);
-                    if (found) setStagedOutlet(found);
+                    if (found) {
+                      setStagedOutlet(found);
+                      setHasUserManuallySelectedOutlet(true);
+                    }
                   }}
-                  className="w-full px-3 py-2 bg-amber-50/50 hover:bg-white focus:bg-white border border-amber-300 rounded-xl text-xs font-semibold text-stone-900 focus:ring-1 focus:ring-amber-500 focus:outline-none cursor-pointer"
+                  className="w-full px-3 py-2 bg-white hover:bg-stone-50 focus:bg-white border border-stone-300 rounded-xl text-xs font-semibold text-stone-900 focus:ring-1 focus:ring-stone-900 focus:outline-none cursor-pointer"
                 >
-                  {allOutlets.map((o) => (
-                    <option key={o.slug} value={o.slug}>
-                      {o.name.replace("Puffs 'n' Rolls - ", '')} ({o.area}) {o.isOpen ? '• Baking Fresh' : '• Paused'}
-                    </option>
-                  ))}
+                  {allOutlets.map((o) => {
+                    const isClosest = o.slug === closestOutlet.slug;
+                    const dist = stagedCoords && o.coordinates
+                      ? calculateDistanceKm(stagedCoords.lat, stagedCoords.lng, o.coordinates.lat, o.coordinates.lng)
+                      : null;
+
+                    return (
+                      <option key={o.slug} value={o.slug}>
+                        {o.name.replace("Puffs 'n' Rolls - ", '')} ({o.area})
+                        {isClosest ? ' ★ [Recommended - Closest]' : ''}
+                        {dist !== null ? ` • ${dist} km` : ''}
+                      </option>
+                    );
+                  })}
                 </select>
+
                 <p className="text-[10px] text-stone-500">
-                  You can order from Gangapur Road, Cycle Circle, or ND Patel Road. Choose your preferred kitchen above.
+                  {stagedOutlet?.slug === closestOutlet.slug ? (
+                    <span className="text-emerald-700 font-medium">
+                      ✓ Pre-selected closest bakery ({closestOutlet.name.replace("Puffs 'n' Rolls - ", '')}) for fastest 25-minute oven-fresh delivery.
+                    </span>
+                  ) : (
+                    <span className="text-amber-900 font-medium">
+                      ✓ Custom kitchen selected: <strong>{stagedOutlet?.name.replace("Puffs 'n' Rolls - ", '')}</strong> (closest was {closestOutlet.name.replace("Puffs 'n' Rolls - ", '')}).
+                    </span>
+                  )}
                 </p>
               </div>
             </div>
 
-            {/* Confirm & Continue CTA */}
+            {/* The ONLY Button: Confirm Delivery Location and Order */}
             <button
               type="button"
               onClick={handleFinalConfirm}
               className="w-full py-3 bg-[#1C1917] hover:bg-stone-800 active:scale-[0.99] text-white rounded-xl text-xs font-bold tracking-wide transition shadow-md flex items-center justify-center gap-2 cursor-pointer"
             >
               <Check className="w-4 h-4 text-emerald-400" />
-              <span>Confirm Delivery Location &amp; Order</span>
+              <span>Confirm Delivery Location and Order</span>
             </button>
           </div>
         ) : (
@@ -345,6 +407,7 @@ export function LocationPromptModal() {
               {OUTLET_DIRECT_OPTIONS.map((loc) => {
                 const currentSlug = stagedOutlet?.slug || nearestOutlet?.slug;
                 const isSelected = currentSlug === loc.slug;
+                const isClosest = closestOutlet.slug === loc.slug;
                 return (
                   <button
                     key={loc.slug}
@@ -370,6 +433,11 @@ export function LocationPromptModal() {
                           <p className="font-semibold text-xs text-stone-900 truncate">
                             Puffs &apos;n&apos; Rolls - {loc.name}
                           </p>
+                          {isClosest && (
+                            <span className="text-[9px] uppercase tracking-wider font-extrabold px-1.5 py-0.2 rounded-md bg-emerald-100 text-emerald-800 shrink-0 border border-emerald-300">
+                              ★ Recommended
+                            </span>
+                          )}
                           <span className="text-[9px] uppercase tracking-wider font-bold px-1.5 py-0.2 rounded-md bg-stone-100 text-stone-600 shrink-0">
                             {loc.badge}
                           </span>
