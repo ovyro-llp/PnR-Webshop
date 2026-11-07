@@ -71,36 +71,30 @@ export function buildRazorpayClient(config: PaymentGatewayConfig) {
     'wQKVEbjQupqQMEZeqjA2eeju'
   ).trim();
 
-  // If live credentials are provided in the host environment or database, lock strictly into LIVE mode
-  const isEnvLiveExplicit =
-    process.env.RAZORPAY_ENV === 'live' ||
-    Boolean(process.env.RAZORPAY_KEY_ID?.startsWith('rzp_live_')) ||
-    Boolean(process.env.RAZORPAY_LIVE_KEY_ID?.startsWith('rzp_live_')) ||
-    Boolean(process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID?.startsWith('rzp_live_'));
+  // Determine mode: testMode === true ONLY if explicitly configured by Admin in Admin Control!
+  const isExplicitTestMode = config.testMode === true;
+  const isLive = !isExplicitTestMode;
 
-  // Live mode is active whenever valid live credentials exist AND testMode is not explicitly forced
-  const isLive = Boolean(
-    hasValidLiveCreds && (config.testMode === false || isEnvLiveExplicit || liveKey.startsWith('rzp_live_'))
-  );
+  // In Live mode, strictly use live credentials. NEVER fall back to test credentials!
+  const activeKeyId = isLive ? (liveKey || '') : testKey;
+  const activeKeySecret = isLive ? (liveSecret || '') : testSecret;
 
-  const activeKeyId = isLive ? liveKey : testKey;
-  const activeKeySecret = isLive ? liveSecret : testSecret;
-
-  if (liveKey.startsWith('rzp_live_') && !liveSecret) {
-    console.error(
-      `[Razorpay Warning] Live Key ID is present (${liveKey}), but Live Key Secret is missing. Falling back to sandbox test credentials.`
-    );
-  } else if (isLive) {
-    console.log(`[Razorpay Gateway] Active Mode: LIVE PRODUCTION (Key: ${activeKeyId.slice(0, 12)}...)`);
+  if (isLive) {
+    if (hasValidLiveCreds) {
+      console.log(`[Razorpay Gateway] Active Mode: LIVE PRODUCTION (Key: ${activeKeyId.slice(0, 12)}...)`);
+    } else {
+      console.warn(`[Razorpay Gateway] Active Mode: LIVE PRODUCTION (Pending Live Credentials)`);
+    }
   } else {
     console.log(`[Razorpay Gateway] Active Mode: SANDBOX TEST (Key: ${activeKeyId})`);
   }
 
   const isDemoMode =
-    activeKeyId === 'rzp_test_pnr_demo' ||
-    activeKeySecret === 'rzp_sec_demo_secret_key' ||
-    !activeKeyId ||
-    !activeKeySecret;
+    isExplicitTestMode &&
+    (activeKeyId === 'rzp_test_pnr_demo' ||
+      activeKeySecret === 'rzp_sec_demo_secret_key' ||
+      !activeKeyId ||
+      !activeKeySecret);
 
   let instance: Razorpay | null = null;
   if (!isDemoMode && activeKeyId && activeKeySecret) {
@@ -146,11 +140,22 @@ export async function createRazorpayOrder({
   notes = {},
   outletSlug,
 }: CreateOrderParams) {
-  const { instance, keyId, isDemoMode } = await getRazorpayClientAsync();
+  const { instance, keyId, isDemoMode, testMode, hasValidLiveCreds } =
+    await getRazorpayClientAsync();
   const paise = Math.round(amount * 100);
   const orderReceipt = receipt || `rcpt_${outletSlug || 'pnr'}_${Date.now()}`;
 
-  // If in demo mode or no live credentials configured yet, generate a development mock order
+  // STRICT PRODUCTION INTEGRITY:
+  // If in Live Production Mode, NEVER fall back to test credentials or demo mock orders!
+  if (testMode !== true) {
+    if (!hasValidLiveCreds || !instance || !keyId || !keyId.startsWith('rzp_live_')) {
+      throw new Error(
+        'Razorpay is set to Live Production Mode, but live credentials (rzp_live_...) are not configured or incomplete. The system will not fall back to test credentials. Please configure live credentials in Admin Control (or explicitly enable Sandbox Test Mode in Admin Control).'
+      );
+    }
+  }
+
+  // If in demo mode (ONLY allowed when explicitly in test mode), generate a development mock order
   if (isDemoMode || !instance) {
     return {
       id: `order_pnr_${Date.now()}_${Math.floor(Math.random() * 1000)}`,
@@ -214,16 +219,31 @@ export async function verifyRazorpaySignature({
   razorpay_payment_id: string;
   razorpay_signature: string;
 }): Promise<boolean> {
-  // If sandbox test mock order or simulated payment in demo mode
-  if (
-    razorpay_order_id.startsWith('order_pnr_') ||
-    razorpay_signature === 'mock_signature' ||
-    razorpay_signature.startsWith('demo_sig_')
-  ) {
-    return true;
+  const client = await getRazorpayClientAsync();
+
+  // STRICT PRODUCTION INTEGRITY:
+  // In Live mode, mock signatures and demo signatures are strictly forbidden!
+  if (client.testMode !== true) {
+    if (
+      razorpay_order_id.startsWith('order_pnr_') ||
+      razorpay_signature === 'mock_signature' ||
+      razorpay_signature.startsWith('demo_sig_')
+    ) {
+      console.error('[Razorpay Security Alert] Mock signature rejected in Live Production Mode.');
+      return false;
+    }
+  } else {
+    // Sandbox test mode allowance only
+    if (
+      razorpay_order_id.startsWith('order_pnr_') ||
+      razorpay_signature === 'mock_signature' ||
+      razorpay_signature.startsWith('demo_sig_')
+    ) {
+      return true;
+    }
   }
 
-  const { keySecret } = await getRazorpayClientAsync();
+  const { keySecret } = client;
   if (!keySecret) return false;
 
   try {
@@ -261,8 +281,16 @@ export async function verifyWebhookSignature({
     process.env.RAZORPAY_WEBHOOK_SECRET ||
     'rzp_whsec_demo';
 
-  if (secret === 'rzp_whsec_demo' && signature === 'mock_webhook_signature') {
-    return true;
+  // In Live mode, never accept mock webhook signatures
+  if (config.testMode !== true) {
+    if (signature === 'mock_webhook_signature') {
+      console.error('[Razorpay Security Alert] Mock webhook signature rejected in Live Production Mode.');
+      return false;
+    }
+  } else {
+    if (secret === 'rzp_whsec_demo' && signature === 'mock_webhook_signature') {
+      return true;
+    }
   }
 
   try {

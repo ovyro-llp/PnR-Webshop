@@ -1,5 +1,5 @@
 {
-  "testMode": true,
+  "testMode": false,
   "isEnabled": true,
   "businessName": "Puffs 'n' Rolls Nashik",
   "testKeyId": "rzp_test_Tu3J2xHanphLOy",
@@ -8,7 +8,7 @@
   "liveKeyId": "",
   "liveKeySecret": "",
   "liveWebhookSecret": "rzp_whsec_demo",
-  "razorpayKeyId": "rzp_test_Tu3J2xHanphLOy",
-  "razorpayKeySecret": "wQKVEbjQupqQMEZeqjA2eeju",
+  "razorpayKeyId": "",
+  "razorpayKeySecret": "",
   "razorpayWebhookSecret": "rzp_whsec_demo"
 }

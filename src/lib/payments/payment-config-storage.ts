@@ -167,24 +167,22 @@ export function getPersistedPaymentConfig(
   ).trim();
 
   // Determine testMode:
-  let testMode: boolean;
-  if (hasValidLiveCreds) {
-    // If valid live credentials are provided in env or database, run LIVE!
-    testMode = false;
-  } else if (process.env.RAZORPAY_ENV === 'live') {
-    testMode = false;
-  } else if (typeof overrideConfig?.testMode === 'boolean') {
+  // Admin explicit configuration is the sole authority!
+  // Default is LIVE PRODUCTION MODE (false). Test mode is only active if explicitly enabled by admin.
+  let testMode = false;
+  if (typeof overrideConfig?.testMode === 'boolean') {
     testMode = overrideConfig.testMode;
   } else if (typeof fileConfig.testMode === 'boolean') {
     testMode = fileConfig.testMode;
-  } else {
+  } else if (process.env.RAZORPAY_ENV === 'test') {
     testMode = true;
+  } else if (process.env.RAZORPAY_ENV === 'live') {
+    testMode = false;
   }
 
-  // Safety: If testMode is false but no live creds exist anywhere, fallback gracefully to test
-  if (!testMode && !hasValidLiveCreds) {
-    testMode = true;
-  }
+  // STRICT PRODUCTION INTEGRITY:
+  // Never automatically fall back to testMode = true when in Live mode!
+  // If live credentials are not yet entered, the system remains in Live mode (and will prompt for live keys).
 
   const isEnabled =
     typeof overrideConfig?.isEnabled === 'boolean'
@@ -196,9 +194,11 @@ export function getPersistedPaymentConfig(
   const businessName =
     overrideConfig?.businessName || fileConfig.businessName || "Puffs 'n' Rolls Nashik";
 
-  const razorpayKeyId = testMode ? testKeyId : (liveKeyId || testKeyId);
-  const razorpayKeySecret = testMode ? testKeySecret : (liveKeySecret || testKeySecret);
-  const razorpayWebhookSecret = testMode ? testWebhookSecret : (liveWebhookSecret || testWebhookSecret);
+  // STRICT CREDENTIAL SEGREGATION:
+  // In Live mode (testMode === false), NEVER fall back to test credentials!
+  const razorpayKeyId = testMode ? testKeyId : liveKeyId;
+  const razorpayKeySecret = testMode ? testKeySecret : liveKeySecret;
+  const razorpayWebhookSecret = testMode ? testWebhookSecret : liveWebhookSecret;
 
   return {
     testMode,
@@ -265,23 +265,20 @@ export function savePersistedPaymentConfig(
     merged.testMode = false;
   } else if (updates.testMode !== undefined) {
     merged.testMode = Boolean(updates.testMode);
-  } else if (hasValidLiveCreds) {
-    merged.testMode = false;
   }
 
-  // Safety fallback if testMode is false but no live creds exist anywhere
-  if (!merged.testMode && !hasValidLiveCreds) {
-    merged.testMode = true;
-  }
+  // STRICT PRODUCTION INTEGRITY:
+  // NEVER force testMode back to true automatically. Admin explicit control is the sole authority!
 
   if (merged.testMode) {
-    merged.razorpayKeyId = merged.testKeyId || 'rzp_test_Tu3J2xHanphLOy';
-    merged.razorpayKeySecret = merged.testKeySecret || 'wQKVEbjQupqQMEZeqjA2eeju';
-    merged.razorpayWebhookSecret = merged.testWebhookSecret || 'rzp_whsec_demo';
+    merged.razorpayKeyId = merged.testKeyId || '';
+    merged.razorpayKeySecret = merged.testKeySecret || '';
+    merged.razorpayWebhookSecret = merged.testWebhookSecret || '';
   } else {
-    merged.razorpayKeyId = merged.liveKeyId || 'rzp_test_Tu3J2xHanphLOy';
-    merged.razorpayKeySecret = merged.liveKeySecret || 'wQKVEbjQupqQMEZeqjA2eeju';
-    merged.razorpayWebhookSecret = merged.liveWebhookSecret || 'rzp_whsec_demo';
+    // Strictly live credentials. NEVER fall back to rzp_test_... in live mode!
+    merged.razorpayKeyId = merged.liveKeyId || '';
+    merged.razorpayKeySecret = merged.liveKeySecret || '';
+    merged.razorpayWebhookSecret = merged.liveWebhookSecret || '';
   }
 
   // 1. Write to persistent JSON file (if filesystem allows)

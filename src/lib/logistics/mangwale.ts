@@ -281,52 +281,61 @@ export function resolveMangwaleCredentials(outlet?: Outlet): {
   isEnabled: boolean;
   isConfigured: boolean;
 } {
-  // 1. Host Environment Variables (Railway / Server environment)
   const envKey = process.env.MANGWALE_API_KEY?.trim();
   const envSecret = process.env.MANGWALE_API_SECRET?.trim();
-  const envMode = (
-    process.env.MANGWALE_ENV ||
-    (envKey?.startsWith('mw_live_') ? 'live' : 'test')
-  ) as 'live' | 'sandbox' | 'test';
-  const hasEnvKeys = Boolean(envKey && envSecret);
-
-  // 2. Outlet-specific config (saved in DB / Admin Portal)
   const outletConfig = outlet?.mangwaleConfig;
-  const hasOutletLiveKey = Boolean(
-    outletConfig?.apiKey?.startsWith('mw_live_') && outletConfig?.apiSecret
-  );
 
-  // If outlet has explicitly configured live keys in Admin UI / DB, prioritize them
-  if (hasOutletLiveKey && outletConfig) {
+  // 1. Check if the admin explicitly designated TEST mode for this outlet in Admin Control:
+  const isExplicitTestMode =
+    outletConfig?.environment === 'test' || outletConfig?.environment === 'sandbox';
+
+  // 2. IN LIVE PRODUCTION MODE (Default):
+  // ONLY live credentials (starting with mw_live_) are permitted.
+  // The system MUST NEVER fall back to mw_test_ keys under any circumstances unless explicitly set to test by admin!
+  if (!isExplicitTestMode) {
+    // Check outlet-specific live key saved in DB / Admin Portal
+    if (outletConfig?.apiKey?.startsWith('mw_live_') && outletConfig?.apiSecret) {
+      return {
+        apiKey: outletConfig.apiKey.trim(),
+        apiSecret: outletConfig.apiSecret.trim(),
+        merchantId:
+          outletConfig.merchantId ||
+          (outlet ? `MNG-PNR-${outlet.slug.toUpperCase()}` : 'MNG-PNR-NASHIK'),
+        environment: 'live',
+        endpoint: DEFAULT_MANGWALE_ENDPOINT,
+        isEnabled: outletConfig.isEnabled ?? true,
+        isConfigured: true,
+      };
+    }
+
+    // Check host environment variables on Railway for live credentials
+    if (envKey?.startsWith('mw_live_') && envSecret) {
+      return {
+        apiKey: envKey,
+        apiSecret: envSecret,
+        merchantId:
+          outletConfig?.merchantId ||
+          (outlet ? `MNG-PNR-${outlet.slug.toUpperCase()}` : 'MNG-PNR-NASHIK'),
+        environment: 'live',
+        endpoint: DEFAULT_MANGWALE_ENDPOINT,
+        isEnabled: outletConfig?.isEnabled ?? true,
+        isConfigured: true,
+      };
+    }
+
+    // In Live mode without live keys: Unconfigured. NEVER fall back to test credentials!
     return {
-      apiKey: outletConfig.apiKey.trim(),
-      apiSecret: outletConfig.apiSecret.trim(),
-      merchantId:
-        outletConfig.merchantId ||
-        (outlet ? `MNG-PNR-${outlet.slug.toUpperCase()}` : 'MNG-PNR-NASHIK'),
-      environment: outletConfig.environment || 'live',
+      apiKey: '',
+      apiSecret: '',
+      merchantId: outlet ? `MNG-PNR-${outlet.slug.toUpperCase()}` : 'MNG-PNR-NASHIK',
+      environment: 'live',
       endpoint: DEFAULT_MANGWALE_ENDPOINT,
-      isEnabled: outletConfig.isEnabled ?? true,
-      isConfigured: true,
+      isEnabled: false,
+      isConfigured: false,
     };
   }
 
-  // If host environment (Railway) has keys configured, apply them globally
-  if (hasEnvKeys && envKey && envSecret) {
-    return {
-      apiKey: envKey,
-      apiSecret: envSecret,
-      merchantId:
-        outletConfig?.merchantId ||
-        (outlet ? `MNG-PNR-${outlet.slug.toUpperCase()}` : 'MNG-PNR-NASHIK'),
-      environment: envMode,
-      endpoint: DEFAULT_MANGWALE_ENDPOINT,
-      isEnabled: outletConfig?.isEnabled ?? true,
-      isConfigured: true,
-    };
-  }
-
-  // 3. Fallback to outlet test credentials if present
+  // 3. EXPLICIT TEST MODE ONLY (When Admin explicitly selected 'test' in Admin Control):
   if (outletConfig?.apiKey && outletConfig?.apiSecret) {
     return {
       apiKey: outletConfig.apiKey.trim(),
@@ -334,19 +343,32 @@ export function resolveMangwaleCredentials(outlet?: Outlet): {
       merchantId:
         outletConfig.merchantId ||
         (outlet ? `MNG-PNR-${outlet.slug.toUpperCase()}` : 'MNG-PNR-NASHIK'),
-      environment: outletConfig.environment || 'test',
+      environment: (outletConfig.environment as 'test' | 'sandbox') || 'test',
       endpoint: DEFAULT_MANGWALE_ENDPOINT,
       isEnabled: outletConfig.isEnabled ?? true,
       isConfigured: true,
     };
   }
 
-  // 4. Development / sandbox defaults: Unconfigured until keys are entered
+  if (envKey && envSecret) {
+    return {
+      apiKey: envKey,
+      apiSecret: envSecret,
+      merchantId:
+        outletConfig?.merchantId ||
+        (outlet ? `MNG-PNR-${outlet.slug.toUpperCase()}` : 'MNG-PNR-NASHIK'),
+      environment: 'test',
+      endpoint: DEFAULT_MANGWALE_ENDPOINT,
+      isEnabled: outletConfig?.isEnabled ?? true,
+      isConfigured: true,
+    };
+  }
+
   return {
     apiKey: '',
     apiSecret: '',
     merchantId: outlet ? `MNG-PNR-${outlet.slug.toUpperCase()}` : 'MNG-PNR-NASHIK',
-    environment: 'live',
+    environment: 'test',
     endpoint: DEFAULT_MANGWALE_ENDPOINT,
     isEnabled: false,
     isConfigured: false,
@@ -465,6 +487,21 @@ export async function dispatchToMangwale(
       trackingUrl: '',
       estimatedDeliveryMinutes: 0,
       message: `Mangwale dispatch is disabled for ${outlet.name}`,
+    };
+  }
+
+  // STRICT PRODUCTION INTEGRITY:
+  // If credentials are not configured, do not fall back to test credentials.
+  if (!creds.isConfigured || !creds.apiKey) {
+    return {
+      success: false,
+      taskId: '',
+      trackingUrl: '',
+      estimatedDeliveryMinutes: 0,
+      message:
+        creds.environment === 'live'
+          ? `Mangwale logistics is in Live Production Mode. Live credentials (mw_live_...) are required for ${outlet.name}. The system will not fall back to test credentials.`
+          : `Mangwale API credentials are not configured for ${outlet.name}. Please configure in Admin Outlet settings.`,
     };
   }
 

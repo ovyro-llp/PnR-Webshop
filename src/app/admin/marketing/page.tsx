@@ -90,7 +90,7 @@ export default function MarketingViewPage() {
           testKeyId: data.config.testKeyId || prev.testKeyId,
           liveKeyId: data.config.liveKeyId || prev.liveKeyId,
           isEnabled: data.config.isEnabled ?? true,
-          testMode: typeof data.config.testMode === 'boolean' ? data.config.testMode : true,
+          testMode: typeof data.config.testMode === 'boolean' ? data.config.testMode : false,
           businessName: data.config.businessName || "Puffs 'n' Rolls Nashik",
         }));
         setServerConfigFlags({
