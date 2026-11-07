@@ -154,10 +154,15 @@ export default function AdminPage() {
     }
   };
 
+  // Strictly filter to confirmed, paid orders (Zero Awaiting Payment / uncompleted checkouts)
+  const confirmedOrders = orders.filter(
+    (o) => o.orderStatus !== 'AWAITING_PAYMENT' && o.paymentStatus === 'COMPLETED'
+  );
+
   const filteredOrders =
     selectedOutletFilter === 'all'
-      ? orders
-      : orders.filter((o) => o.outletSlug === selectedOutletFilter);
+      ? confirmedOrders
+      : confirmedOrders.filter((o) => o.outletSlug === selectedOutletFilter);
 
   const totalRevenue = filteredOrders.reduce((sum, o) => sum + o.total, 0);
 
@@ -295,7 +300,7 @@ export default function AdminPage() {
           }`}
         >
           <Truck className="w-3.5 h-3.5" />
-          <span>Mangwale Deliveries</span>
+          <span>Mangwale Deliveries ({filteredOrders.filter((o) => o.mangwale?.taskId).length})</span>
         </button>
       </div>
 

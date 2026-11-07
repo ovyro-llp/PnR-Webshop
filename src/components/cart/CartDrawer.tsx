@@ -61,7 +61,6 @@ export function CartDrawer({ outletSlug, campaignSlug }: CartDrawerProps) {
     removeItem,
     isCartOpen,
     setIsCartOpen,
-    submitOrder,
     verifyRazorpayPayment,
   } = useCart();
 
@@ -190,13 +189,12 @@ export function CartDrawer({ outletSlug, campaignSlug }: CartDrawerProps) {
     if (isCustomerLoggedIn) {
       if (!activeCustomer.name.trim()) activeCustomer.name = user?.name || 'Valued Customer';
       if (!activeCustomer.phone.trim() && user && 'phone' in user) activeCustomer.phone = user.phone;
-    } else if (paymentMethod === 'COD' || showManualAuth) {
-      // Cash on delivery requires rider phone upfront
+    } else if (showManualAuth) {
       const cleanPhone = (authPhone || customer.phone).replace(/\D/g, '').slice(-10);
       const cleanName = (authName || customer.name).trim();
 
       if (cleanPhone.length < 10) {
-        setSubmitError('Please enter a valid 10-digit mobile phone number for Cash on Delivery');
+        setSubmitError('Please enter a valid 10-digit mobile phone number');
         return;
       }
       if (!cleanName) {
@@ -211,21 +209,6 @@ export function CartDrawer({ outletSlug, campaignSlug }: CartDrawerProps) {
         if (!loginRes.success) {
           setIsSubmitting(false);
           setSubmitError(loginRes.error || 'Invalid phone or password');
-          return;
-        }
-      } else if (paymentMethod === 'COD') {
-        const authRes = await autoRegisterOrLoginCustomer(
-          cleanName,
-          cleanPhone,
-          resolvedAddress,
-          resolvedArea,
-          resolvedPincode,
-          effectiveCoords
-        );
-
-        if (!authRes.success) {
-          setIsSubmitting(false);
-          setSubmitError(authRes.error || 'Failed to initialize customer account');
           return;
         }
       }
@@ -243,20 +226,7 @@ export function CartDrawer({ outletSlug, campaignSlug }: CartDrawerProps) {
 
     setIsSubmitting(true);
 
-    // Flow 1: Cash on Delivery
-    if (paymentMethod === 'COD') {
-      const res = await submitOrder(effectiveOutletSlug, campaignSlug, activeCustomer, 'COD');
-      setIsSubmitting(false);
-
-      if (res.success && res.order) {
-        router.push(`/${effectiveOutletSlug}/order/${res.order.id}`);
-      } else {
-        setSubmitError(res.error || 'Failed to place order. Please try again.');
-      }
-      return;
-    }
-
-    // Flow 2: Online Payment Gateway (Razorpay Magic 1-Click Checkout)
+    // Online Payment Gateway (Razorpay Magic 1-Click Checkout - 100% Prepaid)
     try {
       const createRes = await fetch('/api/payments/razorpay/create-order', {
         method: 'POST',
@@ -735,46 +705,15 @@ export function CartDrawer({ outletSlug, campaignSlug }: CartDrawerProps) {
                     <div className="flex items-center justify-between">
                       <h4 className="text-[11px] font-bold uppercase tracking-wider text-stone-900 flex items-center gap-1.5">
                         <User className="w-3.5 h-3.5 text-stone-600" />
-                        <span>
-                          {paymentMethod === 'COD'
-                            ? 'Delivery Contact (Cash on Delivery)'
-                            : 'Customer Account'}
-                        </span>
+                        <span>Customer Account</span>
                       </h4>
-                      {paymentMethod === 'UPI' ? (
-                        <button
-                          type="button"
-                          onClick={() => setShowManualAuth(false)}
-                          className="text-[10px] text-amber-800 hover:text-amber-950 font-bold underline cursor-pointer"
-                        >
-                          ⚡ Use 1-Click Magic Login
-                        </button>
-                      ) : (
-                        <div className="flex rounded-md bg-stone-100 p-0.5">
-                          <button
-                            type="button"
-                            onClick={() => setAuthMode('REGISTER')}
-                            className={`px-2 py-0.5 text-[10px] font-semibold rounded transition cursor-pointer ${
-                              authMode === 'REGISTER'
-                                ? 'bg-white text-stone-900 shadow-2xs'
-                                : 'text-stone-500'
-                            }`}
-                          >
-                            Express Checkout
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => setAuthMode('LOGIN')}
-                            className={`px-2 py-0.5 text-[10px] font-semibold rounded transition cursor-pointer ${
-                              authMode === 'LOGIN'
-                                ? 'bg-white text-stone-900 shadow-2xs'
-                                : 'text-stone-500'
-                            }`}
-                          >
-                            Sign In
-                          </button>
-                        </div>
-                      )}
+                      <button
+                        type="button"
+                        onClick={() => setShowManualAuth(false)}
+                        className="text-[10px] text-amber-800 hover:text-amber-950 font-bold underline cursor-pointer"
+                      >
+                        ⚡ Use 1-Click Magic Login
+                      </button>
                     </div>
 
                     <div className="space-y-2">
@@ -816,14 +755,9 @@ export function CartDrawer({ outletSlug, campaignSlug }: CartDrawerProps) {
                             className="w-full pl-10 pr-3 py-2 bg-stone-50 border border-stone-200 rounded-xl text-xs font-mono focus:bg-white focus:ring-1 focus:ring-stone-900 focus:outline-none"
                           />
                         </div>
-                        {paymentMethod === 'COD' && (
-                          <p className="text-[10px] text-stone-500 mt-1">
-                            * Rider will call this number upon doorstep arrival.
-                          </p>
-                        )}
                       </div>
 
-                      {authMode === 'LOGIN' && paymentMethod !== 'COD' ? (
+                      {authMode === 'LOGIN' && (
                         <div>
                           <label className="block text-[10px] font-bold text-stone-600 uppercase tracking-wider mb-1">
                             Password *
@@ -849,15 +783,6 @@ export function CartDrawer({ outletSlug, campaignSlug }: CartDrawerProps) {
                             </button>
                           </div>
                         </div>
-                      ) : (
-                        paymentMethod === 'COD' && (
-                          <div className="p-2.5 bg-amber-50/70 border border-amber-200/60 rounded-xl flex items-center gap-2 text-[11px] text-amber-900">
-                            <Sparkles className="w-3.5 h-3.5 text-amber-600 shrink-0" />
-                            <span>
-                              Account created automatically upon placing this order.
-                            </span>
-                          </div>
-                        )
                       )}
                     </div>
                   </div>
@@ -921,38 +846,6 @@ export function CartDrawer({ outletSlug, campaignSlug }: CartDrawerProps) {
                             <span>Map pinpoint required to unlock 1-Click Magic Checkout</span>
                           </div>
                         )}
-                      </div>
-                    </button>
-
-                    {/* Cash on Delivery Option */}
-                    <button
-                      type="button"
-                      onClick={() => setPaymentMethod('COD')}
-                      className={`w-full p-3 rounded-2xl border text-left transition relative flex items-start gap-3 cursor-pointer ${
-                        paymentMethod === 'COD'
-                          ? 'border-stone-900 bg-white ring-1 ring-stone-900 shadow-xs'
-                          : 'border-stone-200 bg-white/60 hover:bg-white text-stone-700'
-                      }`}
-                    >
-                      <div
-                        className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 mt-0.5 ${
-                          paymentMethod === 'COD'
-                            ? 'bg-[#1C1917] text-white'
-                            : 'bg-stone-100 text-stone-500'
-                        }`}
-                      >
-                        <Truck className="w-4 h-4" />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center justify-between">
-                          <span className="text-xs font-bold text-stone-900">Cash on Delivery</span>
-                          <span className="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full bg-stone-100 text-stone-600">
-                            Cash
-                          </span>
-                        </div>
-                        <p className="text-[11px] text-stone-500 mt-0.5">
-                          Pay cash or UPI scan directly to our delivery rider upon doorstep arrival
-                        </p>
                       </div>
                     </button>
                   </div>
@@ -1026,16 +919,10 @@ export function CartDrawer({ outletSlug, campaignSlug }: CartDrawerProps) {
                 >
                   {isSubmitting ? (
                     <span>Opening Razorpay Magic Checkout...</span>
-                  ) : paymentMethod === 'UPI' ? (
+                  ) : (
                     <>
                       <Zap className="w-4 h-4 fill-amber-400 text-amber-400" />
                       <span>⚡ Pay with Razorpay Magic 1-Click • ₹{total}</span>
-                      <ArrowRight className="w-3.5 h-3.5" />
-                    </>
-                  ) : (
-                    <>
-                      <Truck className="w-3.5 h-3.5 text-stone-300" />
-                      <span>Place Cash on Delivery Order • ₹{total}</span>
                       <ArrowRight className="w-3.5 h-3.5" />
                     </>
                   )}

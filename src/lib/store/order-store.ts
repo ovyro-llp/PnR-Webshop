@@ -377,6 +377,10 @@ export const orderStore = {
       throw new Error(`Orders are currently paused for ${outlet.name}. Please select another outlet.`);
     }
 
+    if (orderData.paymentMethod === 'COD') {
+      throw new Error('Cash on Delivery (COD) is not accepted. All orders must be prepaid online.');
+    }
+
     // Validate stock and availability before order acceptance
     const stockList = globalThis.__PNR_OUTLET_STOCK__ || [];
     for (const item of orderData.items) {
@@ -399,9 +403,7 @@ export const orderStore = {
       id: `ord-${Date.now()}`,
       orderNumber,
       orderStatus: 'RECEIVED',
-      paymentStatus:
-        orderData.paymentStatus ||
-        (orderData.paymentMethod === 'COD' ? 'COD_CONFIRMED' : 'COMPLETED'),
+      paymentStatus: orderData.paymentStatus || 'COMPLETED',
       mangwale: {
         status: 'PENDING',
         notes: 'Dispatch initiated to logistics fleet',
@@ -1502,7 +1504,9 @@ export const orderStore = {
   // Analytics Engine
   getCampaignAnalytics: (): CampaignAnalytics[] => {
     const campaigns = globalThis.__PNR_CAMPAIGNS__ || [];
-    const orders = globalThis.__PNR_ORDERS__ || [];
+    const orders = (globalThis.__PNR_ORDERS__ || []).filter(
+      (o) => o.orderStatus !== 'AWAITING_PAYMENT' && o.paymentStatus === 'COMPLETED'
+    );
 
     return campaigns.map((camp) => {
       const campOrders = orders.filter((o) => o.campaignSlug === camp.slug);
@@ -1536,7 +1540,9 @@ export const orderStore = {
     const outlets = outletSlug
       ? (globalThis.__PNR_OUTLETS__ || []).filter((o) => o.slug === outletSlug)
       : globalThis.__PNR_OUTLETS__ || [];
-    const allOrders = globalThis.__PNR_ORDERS__ || [];
+    const allOrders = (globalThis.__PNR_ORDERS__ || []).filter(
+      (o) => o.orderStatus !== 'AWAITING_PAYMENT' && o.paymentStatus === 'COMPLETED'
+    );
 
     return outlets.map((outlet) => {
       const outletOrders = allOrders.filter((o) => o.outletSlug === outlet.slug);

@@ -88,13 +88,16 @@ export function OrderTrackingClient({
     return () => clearInterval(interval);
   }, [initialOrder.id, order.orderStatus]);
 
+  const isAwaitingPayment =
+    order.orderStatus === 'AWAITING_PAYMENT' || order.paymentStatus === 'PENDING';
+
   const steps = [
     {
       label: 'Order Received',
-      desc: 'Sent to bakery kitchen',
+      desc: isAwaitingPayment ? 'Awaiting payment confirmation' : 'Sent to bakery kitchen',
       icon: ChefHat,
-      completed: true,
-      active: order.orderStatus === 'RECEIVED',
+      completed: !isAwaitingPayment,
+      active: !isAwaitingPayment && order.orderStatus === 'RECEIVED',
     },
     {
       label: 'Baking Fresh',
@@ -126,6 +129,7 @@ export function OrderTrackingClient({
   ];
 
   const getStatusDisplay = (status: Order['orderStatus']) => {
+    if (isAwaitingPayment) return 'Awaiting Payment Confirmation';
     switch (status) {
       case 'RECEIVED':
         return 'Order Received by Kitchen';
@@ -146,21 +150,47 @@ export function OrderTrackingClient({
 
   return (
     <main className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-8 flex-1 w-full">
-      {/* Order Confirmed Box */}
-      <div className="bg-white rounded-3xl p-6 sm:p-10 border border-stone-200/80 text-center space-y-3 shadow-xs">
-        <div className="w-12 h-12 bg-stone-100 text-stone-900 rounded-full flex items-center justify-center mx-auto">
-          <CheckCircle2 className="w-6 h-6" />
+      {/* Order Status Box */}
+      {isAwaitingPayment ? (
+        <div className="bg-amber-50/80 rounded-3xl p-6 sm:p-10 border border-amber-200/80 text-center space-y-3 shadow-xs">
+          <div className="w-12 h-12 bg-amber-100 text-amber-900 rounded-full flex items-center justify-center mx-auto">
+            <Clock className="w-6 h-6 text-amber-700" />
+          </div>
+          <span className="text-[10px] uppercase tracking-widest font-semibold text-amber-800">
+            Payment Incomplete • {order.orderNumber}
+          </span>
+          <h1 className="text-2xl sm:text-3xl font-serif font-bold text-stone-900">
+            Awaiting Payment Confirmation
+          </h1>
+          <p className="text-stone-600 text-xs sm:text-sm max-w-md mx-auto leading-relaxed">
+            Payment for this order has not been completed. If you closed or cancelled the payment window, please return to the bakery menu to complete your order.
+          </p>
+          <div className="pt-2">
+            <Link
+              href={`/${outletSlug}`}
+              className="inline-flex items-center gap-2 px-6 py-2.5 bg-[#1C1917] hover:bg-stone-800 text-white rounded-full text-xs font-semibold shadow-xs transition"
+            >
+              <ArrowLeft className="w-3.5 h-3.5" />
+              <span>Return to Bakery Menu</span>
+            </Link>
+          </div>
         </div>
-        <span className="text-[10px] uppercase tracking-widest font-semibold text-stone-400">
-          Order Confirmed • {order.orderNumber}
-        </span>
-        <h1 className="text-2xl sm:text-3xl font-serif font-bold text-stone-900">
-          Thank You, {order.customer.name}
-        </h1>
-        <p className="text-stone-600 text-xs sm:text-sm max-w-md mx-auto leading-relaxed">
-          Your fresh bakery order has been placed with <strong>{outlet?.name || "Puffs 'n' Rolls"}</strong>. Our ovens are hot and preparing your items.
-        </p>
-      </div>
+      ) : (
+        <div className="bg-white rounded-3xl p-6 sm:p-10 border border-stone-200/80 text-center space-y-3 shadow-xs">
+          <div className="w-12 h-12 bg-stone-100 text-stone-900 rounded-full flex items-center justify-center mx-auto">
+            <CheckCircle2 className="w-6 h-6" />
+          </div>
+          <span className="text-[10px] uppercase tracking-widest font-semibold text-stone-400">
+            Order Confirmed • {order.orderNumber}
+          </span>
+          <h1 className="text-2xl sm:text-3xl font-serif font-bold text-stone-900">
+            Thank You, {order.customer.name}
+          </h1>
+          <p className="text-stone-600 text-xs sm:text-sm max-w-md mx-auto leading-relaxed">
+            Your fresh bakery order has been placed with <strong>{outlet?.name || "Puffs 'n' Rolls"}</strong>. Our ovens are hot and preparing your items.
+          </p>
+        </div>
+      )}
 
       {/* Live Delivery Status Box */}
       <div className="bg-[#FAF8F5] border border-stone-200/90 rounded-3xl p-6 sm:p-8 space-y-6 shadow-xs">

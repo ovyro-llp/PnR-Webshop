@@ -24,6 +24,13 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    if (paymentMethod === 'COD') {
+      return NextResponse.json(
+        { success: false, message: 'Cash on Delivery (COD) is not accepted. All orders must be prepaid online via UPI or card.' },
+        { status: 400 }
+      );
+    }
+
     const order = await orderStore.createOrder({
       outletSlug,
       campaignSlug,
