@@ -32,9 +32,18 @@ interface NavbarProps {
 
 export function Navbar({ currentOutletSlug, currentCampaignSlug }: NavbarProps) {
   const router = useRouter();
-  const { itemCount, setIsCartOpen } = useCart();
+  const { itemCount, setIsCartOpen, setCartOutletSlug } = useCart();
   const { user, isCustomer, openCustomerLogin } = useAuth();
-  const { nearestOutlet, openLocationModal, distanceKm } = useLocation();
+  const {
+    nearestOutlet,
+    allOutlets,
+    switchOutlet,
+    openLocationModal,
+    distanceKm,
+    deliveryAddress,
+    deliveryArea,
+    deliveryCoordinates,
+  } = useLocation();
   const [categories, setCategories] = useState<{ id: string; name: string }[]>([]);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
 
@@ -100,10 +109,10 @@ export function Navbar({ currentOutletSlug, currentCampaignSlug }: NavbarProps) 
               <MapPin className="w-3.5 h-3.5 text-amber-700 mr-1.5 shrink-0 group-hover:scale-110 transition-transform" />
               <div className="truncate text-left">
                 <span className="font-semibold text-[10px] sm:text-xs text-stone-900 block truncate">
-                  {effectiveOutlet.name.replace("Puffs 'n' Rolls - ", '')}
+                  {deliveryAddress ? deliveryAddress.split(',')[0] : effectiveOutlet.name.replace("Puffs 'n' Rolls - ", '')}
                 </span>
-                <span className="text-[9px] text-stone-400 font-mono hidden sm:block">
-                  {distanceKm ? `${distanceKm} km • ` : ''}Nearest Bakery
+                <span className="text-[9px] text-stone-500 font-mono hidden sm:block truncate">
+                  {effectiveOutlet.name.replace("Puffs 'n' Rolls - ", '')} {distanceKm ? `• ${distanceKm} km` : '• Fresh Oven'}
                 </span>
               </div>
               <ChevronDown className="w-3 h-3 text-stone-400 ml-1.5 shrink-0" />
@@ -215,29 +224,37 @@ export function Navbar({ currentOutletSlug, currentCampaignSlug }: NavbarProps) 
               </div>
 
               {/* Scrollable Nav Content */}
-              <div className="flex-1 overflow-y-auto p-4 sm:p-5 space-y-5 text-stone-800 text-xs">
-                {/* Nearest Outlet Exclusive Card (Zero other outlets exposed) */}
-                <div className="p-3.5 bg-white rounded-2xl border border-stone-200/90 shadow-2xs space-y-2">
+              <div className="flex-1 overflow-y-auto p-4 sm:p-5 space-y-4 text-stone-800 text-xs">
+                {/* 1. TOP CARD: Customer's Delivery Location (Address + Update Location link) */}
+                <div className="p-3.5 bg-white rounded-2xl border border-stone-200/90 shadow-2xs space-y-2.5">
                   <div className="flex items-center justify-between">
-                    <span className="text-[10px] uppercase font-mono text-amber-800 font-bold tracking-wider flex items-center gap-1">
-                      <MapPin className="w-3 h-3 text-amber-700" />
-                      Nearest Bakery Kitchen
+                    <span className="text-[10px] uppercase font-mono text-amber-800 font-bold tracking-wider flex items-center gap-1.5">
+                      <MapPin className="w-3.5 h-3.5 text-amber-700" />
+                      Your Delivery Location
                     </span>
-                    <span className="text-[10px] font-medium text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full">
-                      ● Open Now
-                    </span>
+                    {deliveryCoordinates ? (
+                      <span className="text-[9px] font-bold text-emerald-800 bg-emerald-100/80 px-2 py-0.5 rounded-full border border-emerald-200">
+                        GPS Locked
+                      </span>
+                    ) : (
+                      <span className="text-[9px] font-semibold text-stone-600 bg-stone-100 px-2 py-0.5 rounded-full">
+                        Nashik
+                      </span>
+                    )}
                   </div>
                   <div>
-                    <p className="font-serif font-bold text-stone-900 text-sm">
-                      {effectiveOutlet.name}
+                    <p className="font-semibold text-stone-900 text-xs leading-snug line-clamp-2">
+                      {deliveryAddress || 'Nashik Doorstep Location'}
                     </p>
-                    <p className="text-[11px] text-stone-500 mt-0.5">
-                      {effectiveOutlet.address}
-                    </p>
+                    {deliveryArea && (
+                      <p className="text-[10px] text-stone-500 mt-0.5 truncate">
+                        {deliveryArea}
+                      </p>
+                    )}
                   </div>
-                  <div className="pt-1 flex items-center justify-between text-[11px] border-t border-stone-100">
-                    <span className="text-stone-500 font-mono">
-                      {effectiveOutlet.deliveryTimeEstimate}
+                  <div className="pt-2 flex items-center justify-between text-[11px] border-t border-stone-100">
+                    <span className="text-stone-400 text-[10px]">
+                      Doorstep GPS verified
                     </span>
                     <button
                       type="button"
@@ -245,10 +262,61 @@ export function Navbar({ currentOutletSlug, currentCampaignSlug }: NavbarProps) 
                         setIsDrawerOpen(false);
                         openLocationModal();
                       }}
-                      className="text-stone-800 hover:text-stone-950 font-semibold underline cursor-pointer"
+                      className="text-amber-800 hover:text-amber-950 font-bold text-xs underline underline-offset-2 cursor-pointer flex items-center gap-1"
                     >
-                      Update Location
+                      <Navigation className="w-3 h-3 text-amber-700" />
+                      <span>Update Location</span>
                     </button>
+                  </div>
+                </div>
+
+                {/* 2. BELOW CARD: Fulfilling Bakery Kitchen with customizable outlet choice */}
+                <div className="p-3.5 bg-stone-50/90 rounded-2xl border border-stone-200/90 space-y-2.5">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[10px] uppercase font-mono text-stone-600 font-bold tracking-wider flex items-center gap-1.5">
+                      <Store className="w-3.5 h-3.5 text-stone-700" />
+                      Fulfilling Bakery Kitchen
+                    </span>
+                    <span className="text-[10px] font-medium text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full">
+                      ● Baking Fresh
+                    </span>
+                  </div>
+                  <div>
+                    <div className="flex items-center justify-between">
+                      <p className="font-serif font-bold text-stone-900 text-sm">
+                        {effectiveOutlet.name}
+                      </p>
+                      {distanceKm && (
+                        <span className="text-[10px] font-mono text-stone-600 bg-white px-2 py-0.5 rounded-md border border-stone-200">
+                          {distanceKm} km
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-[11px] text-stone-500 mt-0.5 line-clamp-2">
+                      {effectiveOutlet.address}
+                    </p>
+                  </div>
+
+                  {/* Switch outlet dropdown for customer choice */}
+                  <div className="pt-2 border-t border-stone-200/80 space-y-1">
+                    <label className="block text-[9px] uppercase font-bold text-stone-500 tracking-wider">
+                      Switch Fulfilling Kitchen:
+                    </label>
+                    <select
+                      value={effectiveOutlet.slug}
+                      onChange={(e) => {
+                        const newSlug = e.target.value;
+                        switchOutlet(newSlug);
+                        setCartOutletSlug(newSlug);
+                      }}
+                      className="w-full px-2.5 py-1.5 bg-white border border-stone-300 rounded-xl text-xs font-semibold text-stone-900 focus:outline-none cursor-pointer"
+                    >
+                      {allOutlets.map((outlet) => (
+                        <option key={outlet.slug} value={outlet.slug}>
+                          {outlet.name} — {outlet.area}
+                        </option>
+                      ))}
+                    </select>
                   </div>
                 </div>
 

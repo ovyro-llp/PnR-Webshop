@@ -21,6 +21,7 @@ export interface LocationContextType {
   requestLocation: () => Promise<void>;
   findNearestOutletFromCoords: (lat: number, lng: number) => { outlet: Outlet; distance: number };
   setManualOutlet: (slug: string, address?: string, coords?: { lat: number; lng: number }) => void;
+  switchOutlet: (slug: string) => void;
   openLocationModal: () => void;
   closeLocationModal: () => void;
 }
@@ -219,18 +220,33 @@ export function LocationProvider({ children }: { children: React.ReactNode }) {
     const found = OUTLETS.find((o) => o.slug === slug);
     if (found) {
       setNearestOutlet(found);
-      setDistanceKm(null);
       setHasSetLocation(true);
       setLocationError(null);
       setIsLocationModalOpen(false);
 
+      const effectiveCoords = coords || deliveryCoordinates || found.coordinates;
       if (coords) {
         setDeliveryCoordinatesState(coords);
         try {
           localStorage.setItem(STORAGE_KEY_COORDS, JSON.stringify(coords));
         } catch {}
-      } else if (found.coordinates) {
+      } else if (found.coordinates && !deliveryCoordinates) {
         setDeliveryCoordinatesState(found.coordinates);
+      }
+
+      if (effectiveCoords && found.coordinates) {
+        const dist = calculateDistanceKm(
+          effectiveCoords.lat,
+          effectiveCoords.lng,
+          found.coordinates.lat,
+          found.coordinates.lng
+        );
+        setDistanceKm(dist);
+        try {
+          localStorage.setItem(STORAGE_KEY_DISTANCE, String(dist));
+        } catch {}
+      } else {
+        setDistanceKm(null);
       }
 
       if (address) {
@@ -242,11 +258,33 @@ export function LocationProvider({ children }: { children: React.ReactNode }) {
 
       try {
         localStorage.setItem(STORAGE_KEY_OUTLET, found.slug);
-        localStorage.removeItem(STORAGE_KEY_DISTANCE);
         localStorage.setItem(STORAGE_KEY_PROMPTED, 'true');
       } catch {}
     }
-  }, []);
+  }, [deliveryCoordinates]);
+
+  const switchOutlet = useCallback((slug: string) => {
+    const found = OUTLETS.find((o) => o.slug === slug);
+    if (found) {
+      setNearestOutlet(found);
+      try {
+        localStorage.setItem(STORAGE_KEY_OUTLET, found.slug);
+      } catch {}
+
+      if (deliveryCoordinates && found.coordinates) {
+        const dist = calculateDistanceKm(
+          deliveryCoordinates.lat,
+          deliveryCoordinates.lng,
+          found.coordinates.lat,
+          found.coordinates.lng
+        );
+        setDistanceKm(dist);
+        try {
+          localStorage.setItem(STORAGE_KEY_DISTANCE, String(dist));
+        } catch {}
+      }
+    }
+  }, [deliveryCoordinates]);
 
   const openLocationModal = useCallback(() => setIsLocationModalOpen(true), []);
   const closeLocationModal = useCallback(() => {
@@ -275,6 +313,7 @@ export function LocationProvider({ children }: { children: React.ReactNode }) {
         requestLocation,
         findNearestOutletFromCoords,
         setManualOutlet,
+        switchOutlet,
         openLocationModal,
         closeLocationModal,
       }}

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useLocation } from '@/context/LocationContext';
@@ -13,24 +13,24 @@ import { Footer } from '@/components/layout/Footer';
 import { MenuItem } from '@/types';
 import { MENU_ITEMS } from '@/lib/data/mock-data';
 import {
-  MapPin,
   Sparkles,
-  Phone,
-  Compass,
-  Package,
   Navigation,
-  Clock,
-  ShieldCheck,
-  ChevronRight,
   Flame,
+  Package,
+  Store,
+  Clock,
+  CheckCircle2,
 } from 'lucide-react';
 
+export type DietaryFilterType = 'ALL' | 'VEG' | 'NON_VEG';
+
 export default function HomePage() {
-  const { nearestOutlet, distanceKm, openLocationModal, isDetecting } = useLocation();
+  const { nearestOutlet, distanceKm, openLocationModal, deliveryAddress } = useLocation();
   const [items, setItems] = useState<MenuItem[]>(() =>
     MENU_ITEMS.filter((i) => i.availableOutlets.includes(nearestOutlet.slug))
   );
   const [selectedCategory, setSelectedCategory] = useState<string>('All');
+  const [dietaryFilter, setDietaryFilter] = useState<DietaryFilterType>('ALL');
   const [loading, setLoading] = useState(false);
 
   // Fetch updated catalog for this specific nearest outlet
@@ -45,7 +45,6 @@ export default function HomePage() {
         }
       })
       .catch(() => {
-        // Fallback to local data
         if (active) {
           setItems(
             MENU_ITEMS.filter((i) => i.availableOutlets.includes(nearestOutlet.slug))
@@ -62,14 +61,47 @@ export default function HomePage() {
   }, [nearestOutlet.slug]);
 
   // Categories list
-  const categories = ['All', ...Array.from(new Set(items.map((i) => i.category)))];
+  const categories = useMemo(() => {
+    return ['All', ...Array.from(new Set(items.map((i) => i.category)))];
+  }, [items]);
 
-  const filteredItems =
-    selectedCategory === 'All'
-      ? items
-      : items.filter((i) => i.category === selectedCategory);
+  // Filter items by category & dietary choice
+  const filteredItems = useMemo(() => {
+    return items.filter((item) => {
+      if (selectedCategory !== 'All' && item.category !== selectedCategory) {
+        return false;
+      }
+      if (dietaryFilter === 'VEG' && !item.isVeg) {
+        return false;
+      }
+      if (dietaryFilter === 'NON_VEG' && item.isVeg) {
+        return false;
+      }
+      return true;
+    });
+  }, [items, selectedCategory, dietaryFilter]);
 
-  const bestsellers = items.filter((i) => i.isBestseller);
+  // Hero Bestsellers / Signature Products directly in Hero Section
+  const signatureItems = useMemo(() => {
+    const list = items.filter((i) => {
+      if (dietaryFilter === 'VEG' && !i.isVeg) return false;
+      if (dietaryFilter === 'NON_VEG' && i.isVeg) return false;
+      return i.isBestseller;
+    });
+    // If not enough bestsellers for filter, fallback to any matching filtered items
+    if (list.length < 4) {
+      const remaining = items.filter((i) => {
+        if (dietaryFilter === 'VEG' && !i.isVeg) return false;
+        if (dietaryFilter === 'NON_VEG' && i.isVeg) return false;
+        return !list.find((b) => b.id === i.id);
+      });
+      return [...list, ...remaining].slice(0, 4);
+    }
+    return list.slice(0, 4);
+  }, [items, dietaryFilter]);
+
+  const vegCount = useMemo(() => items.filter((i) => i.isVeg).length, [items]);
+  const nonVegCount = useMemo(() => items.filter((i) => !i.isVeg).length, [items]);
 
   return (
     <TrackingProvider
@@ -80,128 +112,132 @@ export default function HomePage() {
       <div className="min-h-screen flex flex-col bg-[#FDFCFB] overflow-x-hidden w-full">
         <Navbar currentOutletSlug={nearestOutlet.slug} />
 
-        {/* Minimalist Mobile-First Hero Section */}
-        <section className="relative border-b border-stone-200/80 py-8 sm:py-16 overflow-hidden w-full bg-gradient-to-b from-[#FAF8F5] to-white">
+        {/* =========================================================================
+            HERO SECTION: PRODUCT-FIRST ARTISANAL SHOWCASE
+            (No giant outlet info wall; delicious products featured immediately!)
+           ========================================================================= */}
+        <section className="relative border-b border-stone-200/80 pt-4 pb-8 sm:py-10 overflow-hidden w-full bg-gradient-to-b from-[#FAF8F5] via-white to-[#FDFCFB]">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6 sm:space-y-8">
-            <div className="max-w-3xl space-y-3">
-              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] sm:text-[11px] font-semibold tracking-widest uppercase bg-stone-100 text-stone-700 border border-stone-200">
-                <Sparkles className="w-3 h-3 text-amber-700" />
-                <span>Baking Excellence In Nashik Since 2001</span>
-              </div>
-              <h1 className="text-2xl sm:text-4xl md:text-5xl lg:text-6xl font-serif font-bold text-stone-900 tracking-tight leading-snug sm:leading-tight">
-                Artisanal Bakes, Warm Savory Rolls &amp; Celebration Cakes.
-              </h1>
-              <p className="text-xs sm:text-base text-stone-600 max-w-2xl leading-relaxed">
-                Handcrafted daily at your local bakery in {nearestOutlet.area} using pure butter, slow fermentation, and authentic recipes. Delivered fresh to your doorstep in 25 minutes.
-              </p>
-            </div>
-
-            {/* Exclusive Nearest Bakery Card (No other outlets visible to the customer) */}
-            <div className="max-w-3xl bg-white border border-stone-200/90 rounded-3xl p-5 sm:p-7 shadow-xs space-y-4">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-stone-100">
-                <div>
-                  <span className="text-[10px] uppercase tracking-wider font-bold text-amber-800 flex items-center gap-1">
-                    <MapPin className="w-3.5 h-3.5 text-amber-700" />
-                    Your Nearest Bakery Kitchen
+            
+            {/* Top Compact Outlet & Delivery Bar */}
+            <div className="flex flex-wrap items-center justify-between gap-3 bg-white border border-stone-200/90 rounded-2xl px-3.5 py-2 sm:px-4 sm:py-2.5 shadow-2xs">
+              <div className="flex items-center gap-2 min-w-0">
+                <span className="w-2.5 h-2.5 rounded-full bg-emerald-600 animate-pulse shrink-0" />
+                <p className="text-xs text-stone-800 truncate">
+                  Dispatched fresh from <strong className="font-semibold text-stone-900">{nearestOutlet.name}</strong> ({nearestOutlet.area})
+                </p>
+                {distanceKm && (
+                  <span className="text-[10px] font-mono text-stone-600 bg-stone-100 px-2 py-0.5 rounded-full border border-stone-200 shrink-0 hidden sm:inline">
+                    {distanceKm} km
                   </span>
-                  <h3 className="font-serif font-bold text-lg sm:text-2xl text-stone-900 mt-0.5">
-                    {nearestOutlet.name}
-                  </h3>
-                </div>
-
-                <div className="flex items-center gap-2">
-                  <span
-                    className={`text-[11px] px-2.5 py-1 rounded-full font-semibold flex items-center gap-1.5 ${
-                      nearestOutlet.isOpen
-                        ? 'text-emerald-800 bg-emerald-50 border border-emerald-200'
-                        : 'text-rose-800 bg-rose-50 border border-rose-200'
-                    }`}
-                  >
-                    <span
-                      className={`w-2 h-2 rounded-full ${
-                        nearestOutlet.isOpen ? 'bg-emerald-600 animate-pulse' : 'bg-rose-600'
-                      }`}
-                    />
-                    {nearestOutlet.isOpen ? 'Baking Fresh Today' : 'Scheduled Pause'}
-                  </span>
-                  {distanceKm && (
-                    <span className="text-[11px] font-mono px-2.5 py-1 rounded-full bg-stone-100 text-stone-700 border border-stone-200 font-semibold">
-                      {distanceKm} km away
-                    </span>
-                  )}
-                </div>
+                )}
               </div>
 
-              <p className="text-xs text-stone-600 leading-relaxed">
-                {nearestOutlet.tagline}
-              </p>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs text-stone-600 pt-1">
-                <div className="flex items-start gap-2">
-                  <MapPin className="w-4 h-4 text-stone-400 shrink-0 mt-0.5" />
-                  <span className="line-clamp-2">{nearestOutlet.address}</span>
-                </div>
-                <div className="flex items-center gap-2 font-mono text-[11px]">
-                  <Clock className="w-4 h-4 text-stone-400 shrink-0" />
-                  <span>Open {nearestOutlet.openingHours}</span>
-                </div>
-              </div>
-
-              {/* Action Bar */}
-              <div className="pt-3 border-t border-stone-100 flex flex-wrap items-center justify-between gap-3">
-                <div className="flex items-center gap-3 text-xs text-stone-500">
-                  <a
-                    href={`tel:${nearestOutlet.phone}`}
-                    className="flex items-center gap-1 font-mono font-medium hover:text-stone-950"
-                  >
-                    <Phone className="w-3.5 h-3.5 text-stone-400" />
-                    <span>{nearestOutlet.phone}</span>
-                  </a>
-                  {nearestOutlet.googleMapsUrl && (
-                    <a
-                      href={nearestOutlet.googleMapsUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex items-center gap-1 text-stone-800 hover:text-amber-800 font-medium transition"
-                    >
-                      <Compass className="w-3.5 h-3.5 text-amber-700" />
-                      <span>Directions</span>
-                    </a>
-                  )}
-                </div>
-
+              <div className="flex items-center gap-2">
                 <button
                   type="button"
                   onClick={openLocationModal}
-                  className="px-3.5 py-1.5 bg-stone-100 hover:bg-stone-200 active:scale-95 text-stone-800 rounded-full text-xs font-semibold flex items-center gap-1.5 transition cursor-pointer"
+                  className="text-xs font-bold text-amber-800 hover:text-amber-950 underline underline-offset-2 flex items-center gap-1 cursor-pointer shrink-0"
                 >
                   <Navigation className="w-3.5 h-3.5 text-amber-700" />
-                  <span>Change Location</span>
+                  <span>Choose Outlet / Location</span>
                 </button>
               </div>
             </div>
+
+            {/* Hero Main Headline & Dietary Filter Row */}
+            <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
+              <div className="space-y-2 max-w-2xl">
+                <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] sm:text-[11px] font-bold tracking-widest uppercase bg-amber-50 text-amber-900 border border-amber-200/80">
+                  <Sparkles className="w-3 h-3 text-amber-700" />
+                  <span>Nashik&apos;s Iconic Bakery • Since 2001</span>
+                </div>
+                <h1 className="text-2xl sm:text-4xl lg:text-5xl font-serif font-bold text-stone-900 tracking-tight leading-tight">
+                  Warm Savory Rolls, Artisanal Puffs &amp; Gourmet Cakes
+                </h1>
+                <p className="text-xs sm:text-sm text-stone-600 leading-relaxed">
+                  Baked with 100% pure butter and slow fermentation. Handcrafted every morning and delivered hot in 25 minutes.
+                </p>
+              </div>
+
+              {/* 3-Way Dietary Filter Toggle: All (Both) | Veg Only | Non-Veg Only */}
+              <div className="shrink-0 flex items-center">
+                <div className="flex items-center p-1 bg-white border border-stone-200/90 rounded-2xl shadow-2xs">
+                  {/* All (Both) */}
+                  <button
+                    type="button"
+                    onClick={() => setDietaryFilter('ALL')}
+                    className={`px-3 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 cursor-pointer ${
+                      dietaryFilter === 'ALL'
+                        ? 'bg-stone-900 text-white shadow-xs'
+                        : 'text-stone-600 hover:text-stone-900'
+                    }`}
+                  >
+                    <span className="w-1.5 h-1.5 rounded-full bg-stone-400" />
+                    <span>All Items</span>
+                  </button>
+
+                  {/* Veg Only */}
+                  <button
+                    type="button"
+                    onClick={() => setDietaryFilter('VEG')}
+                    className={`px-3 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 cursor-pointer ${
+                      dietaryFilter === 'VEG'
+                        ? 'bg-emerald-600 text-white shadow-xs'
+                        : 'text-emerald-800 hover:text-emerald-950 bg-emerald-50/50'
+                    }`}
+                  >
+                    <span className={`w-2 h-2 rounded-full ${dietaryFilter === 'VEG' ? 'bg-white' : 'bg-emerald-600'}`} />
+                    <span>Veg Only ({vegCount})</span>
+                  </button>
+
+                  {/* Non-Veg Only */}
+                  <button
+                    type="button"
+                    onClick={() => setDietaryFilter('NON_VEG')}
+                    className={`px-3 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 cursor-pointer ${
+                      dietaryFilter === 'NON_VEG'
+                        ? 'bg-rose-700 text-white shadow-xs'
+                        : 'text-rose-800 hover:text-rose-950 bg-rose-50/50'
+                    }`}
+                  >
+                    <span className={`w-2 h-2 rounded-full ${dietaryFilter === 'NON_VEG' ? 'bg-white' : 'bg-rose-700'}`} />
+                    <span>Non-Veg ({nonVegCount})</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            {/* =====================================================================
+                PRODUCTS DIRECTLY IN HERO SECTION: SIGNATURE BESTSELLERS
+               ===================================================================== */}
+            <div className="pt-2 space-y-3">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Flame className="w-4 h-4 text-amber-600" />
+                  <h2 className="text-base sm:text-lg font-serif font-bold text-stone-900">
+                    Fresh Out Of The Oven • Signature Bestsellers
+                  </h2>
+                </div>
+                <span className="text-[11px] font-mono text-stone-500">
+                  ⚡ Dispatched in 25 mins
+                </span>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+                {signatureItems.map((item) => (
+                  <MenuItemCard key={`hero-${item.id}`} item={item} outletSlug={nearestOutlet.slug} />
+                ))}
+              </div>
+            </div>
+
           </div>
         </section>
 
-        {/* Bestselling Showcase */}
-        {bestsellers.length > 0 && selectedCategory === 'All' && (
-          <section className="pt-8 sm:pt-12 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-4 w-full">
-            <div className="flex items-center gap-2">
-              <Flame className="w-4 h-4 text-amber-600" />
-              <h2 className="text-lg sm:text-xl font-serif font-bold text-stone-900">
-                Today&apos;s Bakery Bestsellers
-              </h2>
-            </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
-              {bestsellers.slice(0, 4).map((item) => (
-                <MenuItemCard key={`best-${item.id}`} item={item} outletSlug={nearestOutlet.slug} />
-              ))}
-            </div>
-          </section>
-        )}
-
-        {/* Live Counter Catalog */}
-        <section className="py-8 sm:py-14 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6 sm:space-y-8 flex-1 w-full">
+        {/* =========================================================================
+            LIVE COUNTER CATALOG SECTION
+           ========================================================================= */}
+        <section className="py-8 sm:py-12 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6 sm:space-y-8 flex-1 w-full">
           <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
             <div>
               <span className="text-[10px] uppercase tracking-widest font-semibold text-stone-400 block">
@@ -211,35 +247,64 @@ export default function HomePage() {
                 Baking at {nearestOutlet.area}
               </h2>
               <p className="text-xs sm:text-sm text-stone-500 mt-0.5">
-                Prepared in small batches every morning. Fast 25-minute delivery across your neighborhood.
+                Small batch bakes prepared daily. Fast 25-minute delivery across your neighborhood.
               </p>
             </div>
 
             {/* Category Pills Filter */}
             <div className="flex items-center gap-1.5 overflow-x-auto pb-1 max-w-full">
-              {categories.map((cat) => (
-                <button
-                  key={cat}
-                  onClick={() => setSelectedCategory(cat)}
-                  className={`px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition cursor-pointer ${
-                    selectedCategory === cat
-                      ? 'bg-[#1C1917] text-white shadow-xs'
-                      : 'bg-stone-100 hover:bg-stone-200 text-stone-700'
-                  }`}
-                >
-                  {cat}
-                </button>
-              ))}
+              {categories.map((cat) => {
+                const count = cat === 'All'
+                  ? filteredItems.length
+                  : items.filter((i) => {
+                      if (dietaryFilter === 'VEG' && !i.isVeg) return false;
+                      if (dietaryFilter === 'NON_VEG' && i.isVeg) return false;
+                      return i.category === cat;
+                    }).length;
+
+                return (
+                  <button
+                    key={cat}
+                    onClick={() => setSelectedCategory(cat)}
+                    className={`px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition cursor-pointer flex items-center gap-1.5 ${
+                      selectedCategory === cat
+                        ? 'bg-[#1C1917] text-white shadow-xs'
+                        : 'bg-stone-100 hover:bg-stone-200 text-stone-700'
+                    }`}
+                  >
+                    <span>{cat}</span>
+                    <span
+                      className={`text-[10px] px-1.5 py-0.2 rounded-full ${
+                        selectedCategory === cat
+                          ? 'bg-white/20 text-white'
+                          : 'bg-stone-200/80 text-stone-600'
+                      }`}
+                    >
+                      {count}
+                    </span>
+                  </button>
+                );
+              })}
             </div>
           </div>
 
           {filteredItems.length === 0 ? (
             <div className="p-8 text-center bg-stone-50 rounded-2xl border border-stone-200 space-y-2">
               <Package className="w-8 h-8 text-stone-400 mx-auto" />
-              <p className="font-serif font-bold text-stone-800 text-sm">Fresh Batch Baking Now</p>
+              <p className="font-serif font-bold text-stone-800 text-sm">No items matching this selection</p>
               <p className="text-xs text-stone-500 max-w-md mx-auto">
-                Our artisanal bakers are currently preparing the next fresh batch for {nearestOutlet.name}.
+                No products found for the selected category and dietary preference.
               </p>
+              <button
+                type="button"
+                onClick={() => {
+                  setSelectedCategory('All');
+                  setDietaryFilter('ALL');
+                }}
+                className="mt-2 px-4 py-1.5 bg-stone-900 text-white text-xs font-bold rounded-full"
+              >
+                Reset Filters
+              </button>
             </div>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">

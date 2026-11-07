@@ -2,6 +2,7 @@ import { notFound } from 'next/navigation';
 import { orderStore } from '@/lib/store/order-store';
 import { Navbar } from '@/components/layout/Navbar';
 import { MenuItemCard } from '@/components/menu/MenuItemCard';
+import { MenuCatalogSection } from '@/components/menu/MenuCatalogSection';
 import { CartDrawer } from '@/components/cart/CartDrawer';
 import { MobileCartBar } from '@/components/cart/MobileCartBar';
 import { Footer } from '@/components/layout/Footer';
@@ -144,49 +145,14 @@ export default async function OutletPage({
           </section>
         )}
 
-        {/* Menu Catalog */}
-        <main className="max-w-7xl mx-auto px-3.5 sm:px-6 lg:px-8 py-8 sm:py-12 space-y-6 sm:space-y-8 flex-1 w-full">
-          <div>
-            <span className="text-[10px] uppercase tracking-widest font-semibold text-stone-400 block">
-              Outlet Catalog
-            </span>
-            <h2 className="text-xl sm:text-2xl font-serif font-bold text-stone-900 mt-0.5">
-              Fresh Menu ({outlet.area})
-            </h2>
-            <p className="text-xs text-stone-500 mt-0.5">
-              Baked in small batches throughout the day. Doorstep delivery across Nashik.
-            </p>
-          </div>
-
-          {menuItems.length === 0 ? (
-            <div className="p-12 text-center bg-white rounded-3xl border border-stone-200/90 space-y-4 max-w-lg mx-auto my-8">
-              <div className="w-14 h-14 bg-amber-50 text-amber-800 rounded-full flex items-center justify-center mx-auto">
-                <Package className="w-7 h-7 text-amber-700" />
-              </div>
-              <div className="space-y-1.5">
-                <h3 className="font-serif font-bold text-stone-900 text-lg">
-                  Fresh Batch In Preparation
-                </h3>
-                <p className="text-xs text-stone-500 leading-relaxed">
-                  Our bakers at {outlet.name} are currently preparing today&apos;s fresh bakes. No products are currently assigned to this outlet&apos;s counter.
-                </p>
-              </div>
-              <div className="pt-2 flex flex-col sm:flex-row items-center justify-center gap-2">
-                <Link
-                  href="/"
-                  className="px-4 py-2 bg-[#1C1917] text-white rounded-full text-xs font-semibold hover:bg-stone-800 transition"
-                >
-                  Back to Bakery Menu
-                </Link>
-              </div>
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
-              {menuItems.map((item) => (
-                <MenuItemCard key={item.id} item={item} outletSlug={outlet.slug} />
-              ))}
-            </div>
-          )}
+        {/* Menu Catalog with Category & 3-Way Dietary Filtering */}
+        <main className="max-w-7xl mx-auto px-3.5 sm:px-6 lg:px-8 py-8 sm:py-12 flex-1 w-full">
+          <MenuCatalogSection
+            items={menuItems}
+            outletSlug={outlet.slug}
+            title={`Fresh Menu (${outlet.area})`}
+            subtitle={`Small batch bakes prepared daily at ${outlet.name}. Fast 25-minute delivery across Nashik.`}
+          />
         </main>
 
         <Footer />

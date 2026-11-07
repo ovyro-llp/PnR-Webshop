@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import { useLocation } from '@/context/LocationContext';
+import { useCart } from '@/context/CartContext';
 import { DeliveryMapPicker, LocationSelectedData } from './DeliveryMapPicker';
 import { Outlet } from '@/types';
 import {
@@ -17,10 +18,18 @@ import {
   ArrowRight,
   Map,
   Edit3,
+  Store,
 } from 'lucide-react';
 import Image from 'next/image';
 
-const LOCALITY_OPTIONS = [
+const OUTLET_DIRECT_OPTIONS = [
+  {
+    slug: 'gangapur-road',
+    name: "Gangapur Road",
+    areaKey: 'Gangapur Road / Sahdev Nagar',
+    areas: 'Near Datta Chowk, Sahdev Nagar, Serene Meadows, Someshwar, Anandwalli',
+    badge: 'Artisanal Bakes & Cafe',
+  },
   {
     slug: 'cycle-circle',
     name: 'Cycle Circle',
@@ -35,18 +44,12 @@ const LOCALITY_OPTIONS = [
     areas: 'Patel Plaza, Opp. BSNL Office, Mohan Nagar, CBS, Old Nashik, Shalimar',
     badge: 'Heritage Kitchen',
   },
-  {
-    slug: 'gangapur-road',
-    name: 'Gangapur Road',
-    areaKey: 'Gangapur Road / Sahdev Nagar',
-    areas: 'Near Datta Chowk, Sahdev Nagar, Serene Meadows, Someshwar, Anandwalli',
-    badge: 'Artisanal Bakes',
-  },
 ];
 
 export function LocationPromptModal() {
   const {
     nearestOutlet,
+    allOutlets,
     isLocationModalOpen,
     closeLocationModal,
     requestLocation,
@@ -57,14 +60,14 @@ export function LocationPromptModal() {
     hasSetLocation,
     deliveryAddress,
     setDeliveryAddress,
-    deliveryArea,
     setDeliveryArea,
     deliveryCoordinates,
     setDeliveryCoordinates,
   } = useLocation();
 
+  const { setCartOutletSlug } = useCart();
+
   const [addressInput, setAddressInput] = useState(deliveryAddress || '');
-  const [selectedArea, setSelectedArea] = useState(deliveryArea || 'Cycle Circle / College Road');
   const [pincodeInput, setPincodeInput] = useState('422005');
   const [activeTab, setActiveTab] = useState<'MAP' | 'LIST'>('MAP');
   const [hasMapAutoFilled, setHasMapAutoFilled] = useState(false);
@@ -78,11 +81,13 @@ export function LocationPromptModal() {
   // Called continuously as user drags the pin, taps on map, or searches
   const handleMapLocationChange = (data: LocationSelectedData) => {
     setStagedCoords({ lat: data.lat, lng: data.lng });
-    setStagedOutlet(data.nearestOutlet);
+    // Default to the geocoded nearest outlet if user hasn't explicitly overridden it
+    if (!stagedOutlet || stagedOutlet.slug === nearestOutlet.slug) {
+      setStagedOutlet(data.nearestOutlet);
+    }
 
     // Auto-fill address if not already manually customized, or update with street
     setAddressInput((prev) => {
-      // If user has already entered a flat/apartment prefix, preserve it and update street
       if (prev && prev.toLowerCase().includes('flat')) {
         const prefix = prev.split(',')[0];
         return `${prefix}, ${data.street || data.formattedAddress}`;
@@ -90,9 +95,6 @@ export function LocationPromptModal() {
       return data.street || data.formattedAddress;
     });
 
-    if (data.area) {
-      setSelectedArea(data.area);
-    }
     if (data.pincode) {
       setPincodeInput(data.pincode);
     }
@@ -104,14 +106,15 @@ export function LocationPromptModal() {
     handleMapLocationChange(data);
   };
 
-  // Final confirmation to lock in address and coordinates
+  // Final confirmation to lock in address, coordinates, and chosen outlet
   const handleFinalConfirm = () => {
-    const finalAddress = addressInput.trim() || 'Nashik';
-    const finalArea = selectedArea || 'Cycle Circle / College Road';
+    const finalAddress = addressInput.trim() || 'Nashik Doorstep Location';
     const outletToUse = stagedOutlet || nearestOutlet;
+    const finalArea = outletToUse.area || 'Nashik City';
 
     setDeliveryAddress(finalAddress);
     setDeliveryArea(finalArea);
+    setCartOutletSlug(outletToUse.slug);
 
     if (stagedCoords) {
       setDeliveryCoordinates(stagedCoords);
@@ -123,11 +126,22 @@ export function LocationPromptModal() {
     closeLocationModal();
   };
 
-  const handleSelectLocalityManual = (loc: typeof LOCALITY_OPTIONS[0]) => {
-    setSelectedArea(loc.areaKey);
-    setManualOutlet(loc.slug, addressInput.trim() || loc.name);
-    setDeliveryAddress(addressInput.trim() || loc.name);
-    setDeliveryArea(loc.areaKey);
+  const handleSelectOutletDirect = (slug: string) => {
+    const found = allOutlets.find((o) => o.slug === slug);
+    if (!found) return;
+
+    setStagedOutlet(found);
+    setCartOutletSlug(found.slug);
+    const finalAddress = addressInput.trim() || deliveryAddress || found.name;
+    setDeliveryAddress(finalAddress);
+    setDeliveryArea(found.area);
+
+    if (stagedCoords || deliveryCoordinates) {
+      const coords = stagedCoords || deliveryCoordinates!;
+      setManualOutlet(found.slug, finalAddress, coords);
+    } else {
+      setManualOutlet(found.slug, finalAddress);
+    }
     closeLocationModal();
   };
 
@@ -162,7 +176,7 @@ export function LocationPromptModal() {
             Choose Delivery Location
           </h3>
           <p className="text-xs text-stone-600 max-w-xs mx-auto">
-            Select your location on the map below. We will auto-fill your address and connect your nearest bakery kitchen.
+            Pinpoint your doorstep on the map below, edit your address, and select your preferred bakery kitchen.
           </p>
         </div>
 
@@ -197,8 +211,8 @@ export function LocationPromptModal() {
                 : 'text-stone-600 hover:text-stone-900'
             }`}
           >
-            <Building2 className="w-3.5 h-3.5 text-stone-600" />
-            <span>Select Locality List</span>
+            <Store className="w-3.5 h-3.5 text-amber-700" />
+            <span>Choose Bakery Outlet</span>
           </button>
         </div>
 
@@ -214,8 +228,8 @@ export function LocationPromptModal() {
               />
             </div>
 
-            {/* 2. Auto-filled Address Fields (Editable by customer afterwards) */}
-            <div className="bg-white rounded-2xl border border-stone-200 p-3.5 space-y-2.5 shadow-xs">
+            {/* 2. Auto-filled Address Fields (Editable by customer) */}
+            <div className="bg-white rounded-2xl border border-stone-200 p-3.5 space-y-3 shadow-xs">
               <div className="flex items-center justify-between">
                 <span className="text-[10px] font-bold uppercase tracking-wider text-stone-700 flex items-center gap-1">
                   <Edit3 className="w-3 h-3 text-amber-600" />
@@ -246,38 +260,49 @@ export function LocationPromptModal() {
                 </div>
               </div>
 
-              {/* Editable Area and Pincode */}
-              <div className="grid grid-cols-2 gap-2">
-                <div>
-                  <label className="block text-[10px] font-bold text-stone-500 uppercase tracking-wider mb-1">
-                    Locality *
+              {/* Pincode Input (NO Locality field) */}
+              <div>
+                <label className="block text-[10px] font-bold text-stone-500 uppercase tracking-wider mb-1">
+                  Delivery Pincode *
+                </label>
+                <input
+                  type="text"
+                  maxLength={6}
+                  value={pincodeInput}
+                  placeholder="e.g. 422005"
+                  onChange={(e) => setPincodeInput(e.target.value)}
+                  className="w-full px-3 py-2 bg-stone-50 border border-stone-300 rounded-xl text-xs font-mono focus:bg-white focus:ring-1 focus:ring-stone-900 focus:outline-none"
+                />
+              </div>
+
+              {/* Fulfilling Bakery Kitchen / Outlet Choice */}
+              <div className="pt-2 border-t border-stone-100 space-y-1.5">
+                <div className="flex items-center justify-between">
+                  <label className="block text-[10px] font-bold text-stone-700 uppercase tracking-wider flex items-center gap-1.5">
+                    <Store className="w-3.5 h-3.5 text-amber-700" />
+                    <span>Fulfilling Bakery Kitchen</span>
                   </label>
-                  <select
-                    value={selectedArea}
-                    onChange={(e) => setSelectedArea(e.target.value)}
-                    className="w-full px-2.5 py-1.5 bg-stone-50 border border-stone-300 rounded-xl text-xs text-stone-800 focus:bg-white focus:outline-none"
-                  >
-                    <option value="Cycle Circle / College Road">Cycle Circle / College Road</option>
-                    <option value="Krishi Nagar / Thatte Nagar">Krishi Nagar / Thatte Nagar</option>
-                    <option value="Gangapur Road / Sahdev Nagar">Gangapur Road / Sahdev Nagar</option>
-                    <option value="Datta Chowk / Serene Meadows">Datta Chowk / Serene Meadows</option>
-                    <option value="ND Patel Road / Shalimar">ND Patel Road / Shalimar</option>
-                    <option value="CBS / Old Nashik">CBS / Old Nashik</option>
-                    <option value="Panchavati">Panchavati</option>
-                  </select>
+                  <span className="text-[9px] font-semibold text-amber-800 bg-amber-50 px-2 py-0.5 rounded-full border border-amber-200">
+                    {stagedOutlet ? stagedOutlet.name.replace("Puffs 'n' Rolls - ", '') : nearestOutlet.name.replace("Puffs 'n' Rolls - ", '')}
+                  </span>
                 </div>
-                <div>
-                  <label className="block text-[10px] font-bold text-stone-500 uppercase tracking-wider mb-1">
-                    Pincode *
-                  </label>
-                  <input
-                    type="text"
-                    maxLength={6}
-                    value={pincodeInput}
-                    onChange={(e) => setPincodeInput(e.target.value)}
-                    className="w-full px-2.5 py-1.5 bg-stone-50 border border-stone-300 rounded-xl text-xs font-mono focus:bg-white focus:ring-1 focus:ring-stone-900 focus:outline-none"
-                  />
-                </div>
+                <select
+                  value={stagedOutlet?.slug || nearestOutlet.slug}
+                  onChange={(e) => {
+                    const found = allOutlets.find((o) => o.slug === e.target.value);
+                    if (found) setStagedOutlet(found);
+                  }}
+                  className="w-full px-3 py-2 bg-amber-50/50 hover:bg-white focus:bg-white border border-amber-300 rounded-xl text-xs font-semibold text-stone-900 focus:ring-1 focus:ring-amber-500 focus:outline-none cursor-pointer"
+                >
+                  {allOutlets.map((o) => (
+                    <option key={o.slug} value={o.slug}>
+                      {o.name.replace("Puffs 'n' Rolls - ", '')} ({o.area}) {o.isOpen ? '• Baking Fresh' : '• Paused'}
+                    </option>
+                  ))}
+                </select>
+                <p className="text-[10px] text-stone-500">
+                  You can order from Gangapur Road, Cycle Circle, or ND Patel Road. Choose your preferred kitchen above.
+                </p>
               </div>
             </div>
 
@@ -288,7 +313,7 @@ export function LocationPromptModal() {
               className="w-full py-3 bg-[#1C1917] hover:bg-stone-800 active:scale-[0.99] text-white rounded-xl text-xs font-bold tracking-wide transition shadow-md flex items-center justify-center gap-2 cursor-pointer"
             >
               <Check className="w-4 h-4 text-emerald-400" />
-              <span>Confirm Delivery Location & Order</span>
+              <span>Confirm Delivery Location &amp; Order</span>
             </button>
           </div>
         ) : (
@@ -312,34 +337,38 @@ export function LocationPromptModal() {
               )}
             </button>
 
-            {/* Manual Locality Picker */}
+            {/* Direct Outlet Picker */}
             <div className="space-y-2 pt-1">
-              {LOCALITY_OPTIONS.map((loc) => {
-                const isSelected = nearestOutlet?.slug === loc.slug;
+              <p className="text-[10px] uppercase font-bold text-stone-400 tracking-wider">
+                Select Specific Bakery Kitchen To Order From:
+              </p>
+              {OUTLET_DIRECT_OPTIONS.map((loc) => {
+                const currentSlug = stagedOutlet?.slug || nearestOutlet?.slug;
+                const isSelected = currentSlug === loc.slug;
                 return (
                   <button
                     key={loc.slug}
-                    onClick={() => handleSelectLocalityManual(loc)}
-                    className={`w-full p-2.5 rounded-2xl border text-left transition flex items-center justify-between cursor-pointer ${
+                    onClick={() => handleSelectOutletDirect(loc.slug)}
+                    className={`w-full p-3 rounded-2xl border text-left transition flex items-center justify-between cursor-pointer ${
                       isSelected
-                        ? 'bg-white border-stone-900 ring-1 ring-stone-900 shadow-xs'
+                        ? 'bg-white border-stone-900 ring-2 ring-stone-900/10 shadow-xs'
                         : 'bg-white/70 hover:bg-white border-stone-200 hover:border-stone-300'
                     }`}
                   >
                     <div className="flex items-start gap-2.5 min-w-0">
                       <div
-                        className={`w-7 h-7 rounded-lg flex items-center justify-center shrink-0 mt-0.5 ${
+                        className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 mt-0.5 ${
                           isSelected
                             ? 'bg-stone-900 text-amber-400'
                             : 'bg-stone-100 text-stone-500'
                         }`}
                       >
-                        <Building2 className="w-3.5 h-3.5" />
+                        <Store className="w-4 h-4" />
                       </div>
                       <div className="min-w-0">
                         <div className="flex items-center gap-2">
                           <p className="font-semibold text-xs text-stone-900 truncate">
-                            {loc.name}
+                            Puffs &apos;n&apos; Rolls - {loc.name}
                           </p>
                           <span className="text-[9px] uppercase tracking-wider font-bold px-1.5 py-0.2 rounded-md bg-stone-100 text-stone-600 shrink-0">
                             {loc.badge}
@@ -365,7 +394,7 @@ export function LocationPromptModal() {
 
         <div className="pt-2 text-center border-t border-stone-200/70">
           <p className="text-[10px] text-stone-400">
-            Delivering hot & fresh from your nearest oven in under 25 minutes.
+            Delivering hot &amp; fresh from your selected oven in under 25 minutes.
           </p>
         </div>
       </div>

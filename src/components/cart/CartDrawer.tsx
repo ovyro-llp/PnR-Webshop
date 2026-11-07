@@ -26,6 +26,7 @@ import {
   Map,
   Sparkles,
   Zap,
+  Store,
 } from 'lucide-react';
 import { CustomerDetails, PaymentMethod } from '@/types';
 
@@ -45,10 +46,13 @@ export function CartDrawer({ outletSlug, campaignSlug }: CartDrawerProps) {
     deliveryCoordinates,
     setDeliveryCoordinates,
     nearestOutlet,
+    allOutlets,
+    switchOutlet,
   } = useLocation();
   const {
     items,
     cartOutletSlug,
+    setCartOutletSlug,
     itemCount,
     subtotal,
     discount,
@@ -591,27 +595,38 @@ export function CartDrawer({ outletSlug, campaignSlug }: CartDrawerProps) {
                       />
                     </div>
 
-                    <div className="grid grid-cols-2 gap-2">
-                      <div>
-                        <label className="block text-[10px] font-bold text-stone-600 uppercase tracking-wider mb-1">
-                          Nashik Locality *
+                    {/* Fulfilling Bakery Kitchen Selector (Choose outlet freely) */}
+                    <div className="p-3 bg-stone-50 rounded-xl border border-stone-200/90 space-y-1.5">
+                      <div className="flex items-center justify-between">
+                        <label className="block text-[10px] font-bold text-stone-700 uppercase tracking-wider flex items-center gap-1.5">
+                          <Store className="w-3.5 h-3.5 text-amber-700" />
+                          <span>Fulfilling Bakery Kitchen</span>
                         </label>
-                        <select
-                          value={customer.area}
-                          onChange={(e) => setCustomer({ ...customer, area: e.target.value })}
-                          className="w-full px-3 py-2 bg-stone-50 border border-stone-200 rounded-xl text-xs text-stone-800 focus:bg-white focus:outline-none"
-                        >
-                          <option value="">Select Locality...</option>
-                          <option value="Cycle Circle / College Road">Cycle Circle / College Road</option>
-                          <option value="Krishi Nagar / Thatte Nagar">Krishi Nagar / Thatte Nagar</option>
-                          <option value="Gangapur Road / Sahdev Nagar">Gangapur Road / Sahdev Nagar</option>
-                          <option value="Datta Chowk / Serene Meadows">Datta Chowk / Serene Meadows</option>
-                          <option value="ND Patel Road / Shalimar">ND Patel Road / Shalimar</option>
-                          <option value="CBS / Old Nashik">CBS / Old Nashik</option>
-                          <option value="Panchavati">Panchavati</option>
-                        </select>
+                        <span className="text-[10px] font-semibold text-emerald-800 bg-emerald-100/70 px-2 py-0.5 rounded-full border border-emerald-200">
+                          Customizable
+                        </span>
                       </div>
+                      <select
+                        value={effectiveOutletSlug}
+                        onChange={(e) => {
+                          const newSlug = e.target.value;
+                          switchOutlet(newSlug);
+                          setCartOutletSlug(newSlug);
+                        }}
+                        className="w-full px-3 py-2 bg-white border border-stone-300 rounded-xl text-xs font-semibold text-stone-900 focus:ring-1 focus:ring-stone-900 focus:outline-none cursor-pointer"
+                      >
+                        {allOutlets.map((outlet) => (
+                          <option key={outlet.slug} value={outlet.slug}>
+                            {outlet.name} — {outlet.area}
+                          </option>
+                        ))}
+                      </select>
+                      <p className="text-[10px] text-stone-500">
+                        Order from Gangapur Road, Cycle Circle, or ND Patel Road anytime.
+                      </p>
+                    </div>
 
+                    <div className="grid grid-cols-2 gap-2">
                       <div>
                         <label className="block text-[10px] font-bold text-stone-600 uppercase tracking-wider mb-1">
                           Pincode *
@@ -625,18 +640,21 @@ export function CartDrawer({ outletSlug, campaignSlug }: CartDrawerProps) {
                           className="w-full px-3 py-2 bg-stone-50 border border-stone-200 rounded-xl text-xs font-mono focus:bg-white focus:ring-1 focus:ring-stone-900 focus:outline-none"
                         />
                       </div>
-                    </div>
 
-                    <div>
-                      <input
-                        type="text"
-                        placeholder="Delivery instructions (e.g. Ring doorbell, leave at door)"
-                        value={customer.specialInstructions || ''}
-                        onChange={(e) =>
-                          setCustomer({ ...customer, specialInstructions: e.target.value })
-                        }
-                        className="w-full px-3 py-1.5 bg-stone-50 border border-stone-200 rounded-xl text-[11px] text-stone-700 focus:bg-white focus:outline-none"
-                      />
+                      <div>
+                        <label className="block text-[10px] font-bold text-stone-600 uppercase tracking-wider mb-1">
+                          Landmark / Note
+                        </label>
+                        <input
+                          type="text"
+                          placeholder="e.g. Near Datta Mandir"
+                          value={customer.specialInstructions || ''}
+                          onChange={(e) =>
+                            setCustomer({ ...customer, specialInstructions: e.target.value })
+                          }
+                          className="w-full px-3 py-2 bg-stone-50 border border-stone-200 rounded-xl text-xs text-stone-700 focus:bg-white focus:outline-none"
+                        />
+                      </div>
                     </div>
                   </div>
                 </div>
