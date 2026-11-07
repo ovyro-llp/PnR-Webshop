@@ -130,25 +130,6 @@ export default function HomePage() {
     });
   }, [items, selectedCategory, dietaryFilter, searchQuery]);
 
-  // Hero Bestsellers / Signature Products directly in Hero Section
-  const signatureItems = useMemo(() => {
-    const list = items.filter((i) => {
-      if (dietaryFilter === 'VEG' && !i.isVeg) return false;
-      if (dietaryFilter === 'NON_VEG' && i.isVeg) return false;
-      return i.isBestseller;
-    });
-    // If not enough bestsellers for filter, fallback to any matching filtered items
-    if (list.length < 4) {
-      const remaining = items.filter((i) => {
-        if (dietaryFilter === 'VEG' && !i.isVeg) return false;
-        if (dietaryFilter === 'NON_VEG' && i.isVeg) return false;
-        return !list.find((b) => b.id === i.id);
-      });
-      return [...list, ...remaining].slice(0, 4);
-    }
-    return list.slice(0, 4);
-  }, [items, dietaryFilter]);
-
   const vegCount = useMemo(() => items.filter((i) => i.isVeg).length, [items]);
   const nonVegCount = useMemo(() => items.filter((i) => !i.isVeg).length, [items]);
 
@@ -161,144 +142,46 @@ export default function HomePage() {
       <div className="min-h-screen flex flex-col bg-[#FDFCFB] overflow-x-hidden w-full">
         <Navbar currentOutletSlug={nearestOutlet.slug} />
 
-        {/* =========================================================================
-            HERO SECTION: PRODUCT-FIRST ARTISANAL SHOWCASE
-            (No giant outlet info wall; delicious signature products featured immediately!)
-           ========================================================================= */}
-        <section className="relative border-b border-stone-200/80 pt-4 pb-8 sm:py-10 overflow-hidden w-full bg-gradient-to-b from-[#FAF8F5] via-white to-[#FDFCFB]">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6 sm:space-y-8">
-            
-            {/* Top Compact Outlet & Delivery Bar */}
-            <div className="flex flex-wrap items-center justify-between gap-3 bg-white border border-stone-200/90 rounded-2xl px-3.5 py-2 sm:px-4 sm:py-2.5 shadow-2xs">
-              <div className="flex items-center gap-2 min-w-0">
-                <span className="w-2.5 h-2.5 rounded-full bg-emerald-600 animate-pulse shrink-0" />
-                <p className="text-xs text-stone-800 truncate">
-                  Dispatched fresh from <strong className="font-semibold text-stone-900">{nearestOutlet.name}</strong> ({nearestOutlet.area})
-                </p>
-                {distanceKm && (
-                  <span className="text-[10px] font-mono text-stone-600 bg-stone-100 px-2 py-0.5 rounded-full border border-stone-200 shrink-0 hidden sm:inline">
-                    {distanceKm} km
-                  </span>
-                )}
-              </div>
-
-              <div className="flex items-center gap-2">
-                <button
-                  type="button"
-                  onClick={openLocationModal}
-                  className="text-xs font-bold text-amber-800 hover:text-amber-950 underline underline-offset-2 flex items-center gap-1 cursor-pointer shrink-0"
-                >
-                  <Navigation className="w-3.5 h-3.5 text-amber-700" />
-                  <span>Choose Outlet / Location</span>
-                </button>
-              </div>
+        {/* Top Compact Outlet & Doorstep Delivery Status Bar */}
+        <div className="bg-[#FAF8F5] border-b border-stone-200/80 py-2.5 px-4 sm:px-6 lg:px-8">
+          <div className="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-3">
+            <div className="flex items-center gap-2 min-w-0">
+              <span className="w-2.5 h-2.5 rounded-full bg-emerald-600 animate-pulse shrink-0" />
+              <p className="text-xs text-stone-800 truncate">
+                Dispatched fresh from <strong className="font-semibold text-stone-900">{nearestOutlet.name}</strong> ({nearestOutlet.area})
+              </p>
+              {distanceKm && (
+                <span className="text-[10px] font-mono text-stone-600 bg-stone-100 px-2 py-0.5 rounded-full border border-stone-200 shrink-0 hidden sm:inline">
+                  {distanceKm} km
+                </span>
+              )}
             </div>
 
-            {/* Hero Main Headline & Dietary Filter Row */}
-            <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
-              <div className="space-y-2 max-w-2xl">
-                <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] sm:text-[11px] font-bold tracking-widest uppercase bg-amber-50 text-amber-900 border border-amber-200/80">
-                  <Sparkles className="w-3 h-3 text-amber-700" />
-                  <span>Nashik&apos;s Iconic Bakery • Since 2001</span>
-                </div>
-                <h1 className="text-2xl sm:text-4xl lg:text-5xl font-serif font-bold text-stone-900 tracking-tight leading-tight">
-                  Warm Savory Rolls, Artisanal Puffs &amp; Gourmet Cakes
-                </h1>
-                <p className="text-xs sm:text-sm text-stone-600 leading-relaxed">
-                  Baked with 100% pure butter and slow fermentation. Handcrafted every morning and delivered hot in 25 minutes.
-                </p>
-              </div>
-
-              {/* 3-Way Dietary Filter Toggle: All (Both) | Veg Only | Non-Veg Only */}
-              <div className="shrink-0 flex items-center">
-                <div className="flex items-center p-1 bg-white border border-stone-200/90 rounded-2xl shadow-2xs">
-                  {/* All (Both) */}
-                  <button
-                    type="button"
-                    onClick={() => setDietaryFilter('ALL')}
-                    className={`px-3 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 cursor-pointer ${
-                      dietaryFilter === 'ALL'
-                        ? 'bg-stone-900 text-white shadow-xs'
-                        : 'text-stone-600 hover:text-stone-900'
-                    }`}
-                  >
-                    <span className="w-1.5 h-1.5 rounded-full bg-stone-400" />
-                    <span>All Items</span>
-                  </button>
-
-                  {/* Veg Only */}
-                  <button
-                    type="button"
-                    onClick={() => setDietaryFilter('VEG')}
-                    className={`px-3 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 cursor-pointer ${
-                      dietaryFilter === 'VEG'
-                        ? 'bg-emerald-600 text-white shadow-xs'
-                        : 'text-emerald-800 hover:text-emerald-950 bg-emerald-50/50'
-                    }`}
-                  >
-                    <span className={`w-2 h-2 rounded-full ${dietaryFilter === 'VEG' ? 'bg-white' : 'bg-emerald-600'}`} />
-                    <span>Veg Only ({vegCount})</span>
-                  </button>
-
-                  {/* Non-Veg Only */}
-                  <button
-                    type="button"
-                    onClick={() => setDietaryFilter('NON_VEG')}
-                    className={`px-3 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 cursor-pointer ${
-                      dietaryFilter === 'NON_VEG'
-                        ? 'bg-rose-700 text-white shadow-xs'
-                        : 'text-rose-800 hover:text-rose-950 bg-rose-50/50'
-                    }`}
-                  >
-                    <span className={`w-2 h-2 rounded-full ${dietaryFilter === 'NON_VEG' ? 'bg-white' : 'bg-rose-700'}`} />
-                    <span>Non-Veg ({nonVegCount})</span>
-                  </button>
-                </div>
-              </div>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={openLocationModal}
+                className="text-xs font-bold text-amber-800 hover:text-amber-950 underline underline-offset-2 flex items-center gap-1 cursor-pointer shrink-0"
+              >
+                <Navigation className="w-3.5 h-3.5 text-amber-700" />
+                <span>Choose Outlet / Location</span>
+              </button>
             </div>
-
-            {/* =====================================================================
-                PRODUCTS DIRECTLY IN HERO SECTION: SIGNATURE BESTSELLERS
-               ===================================================================== */}
-            <div className="pt-2 space-y-3">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <Flame className="w-4 h-4 text-amber-600" />
-                  <h2 className="text-base sm:text-lg font-serif font-bold text-stone-900">
-                    Fresh Out Of The Oven • Signature Bestsellers
-                  </h2>
-                </div>
-                <a
-                  href="#bakery-catalog"
-                  className="text-xs font-bold text-stone-700 hover:text-stone-950 flex items-center gap-1"
-                >
-                  <span>Browse Full Menu</span>
-                  <ArrowRight className="w-3.5 h-3.5" />
-                </a>
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
-                {signatureItems.map((item) => (
-                  <MenuItemCard key={`hero-${item.id}`} item={item} outletSlug={nearestOutlet.slug} />
-                ))}
-              </div>
-            </div>
-
           </div>
-        </section>
+        </div>
 
         {/* =========================================================================
-            LIVE COUNTER CATALOG SECTION (LEFT NAVIGATION + SEARCH + PRODUCTS)
+            LIVE COUNTER CATALOG SECTION (DIRECT PRODUCTS + LEFT NAVIGATION)
            ========================================================================= */}
-        <section id="bakery-catalog" className="py-8 sm:py-12 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6 flex-1 w-full">
+        <main id="bakery-catalog" className="py-6 sm:py-8 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6 flex-1 w-full">
           <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-3 pb-2 border-b border-stone-200/80">
             <div>
               <span className="text-[10px] uppercase tracking-widest font-semibold text-stone-400 block">
                 Artisanal Counter Menu
               </span>
-              <h2 className="text-xl sm:text-2xl md:text-3xl font-serif font-bold text-stone-900 mt-0.5">
+              <h1 className="text-xl sm:text-2xl md:text-3xl font-serif font-bold text-stone-900 mt-0.5">
                 Baking Fresh at {nearestOutlet.area}
-              </h2>
+              </h1>
             </div>
             <p className="text-xs text-stone-500 font-medium">
               Handcrafted daily in small batches • Dispatched in 25 mins
@@ -307,9 +190,9 @@ export default function HomePage() {
 
           <div className="flex flex-col lg:flex-row gap-8 items-start w-full">
             {/* =====================================================================
-                STICKY LEFT-SIDE NAVIGATION & CATEGORIZATION SIDEBAR
+                STICKY LEFT-SIDE NAVIGATION & CATEGORIZATION SIDEBAR (DESKTOP)
                ===================================================================== */}
-            <aside className="w-full lg:w-72 shrink-0 lg:sticky lg:top-20 space-y-4 bg-[#FAF8F5]/90 p-4 sm:p-5 rounded-3xl border border-stone-200/90 shadow-2xs">
+            <aside className="hidden lg:block w-72 shrink-0 sticky top-20 space-y-4 bg-[#FAF8F5]/90 p-4 sm:p-5 rounded-3xl border border-stone-200/90 shadow-2xs">
               {/* Left Search Bar */}
               <div className="space-y-1.5">
                 <div className="flex items-center justify-between">
@@ -488,6 +371,43 @@ export default function HomePage() {
                   )}
                 </div>
 
+                {/* Mobile Dietary Choice Toggle */}
+                <div className="flex items-center p-0.5 bg-stone-100 rounded-xl border border-stone-200/80 w-full">
+                  <button
+                    type="button"
+                    onClick={() => setDietaryFilter('ALL')}
+                    className={`flex-1 py-1 px-2 rounded-lg text-[11px] font-bold transition text-center cursor-pointer ${
+                      dietaryFilter === 'ALL'
+                        ? 'bg-stone-900 text-white shadow-xs'
+                        : 'text-stone-600 hover:text-stone-900'
+                    }`}
+                  >
+                    All Items
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setDietaryFilter('VEG')}
+                    className={`flex-1 py-1 px-2 rounded-lg text-[11px] font-bold transition text-center cursor-pointer ${
+                      dietaryFilter === 'VEG'
+                        ? 'bg-emerald-600 text-white shadow-xs'
+                        : 'text-emerald-700 hover:text-emerald-950'
+                    }`}
+                  >
+                    Veg ({vegCount})
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setDietaryFilter('NON_VEG')}
+                    className={`flex-1 py-1 px-2 rounded-lg text-[11px] font-bold transition text-center cursor-pointer ${
+                      dietaryFilter === 'NON_VEG'
+                        ? 'bg-rose-700 text-white shadow-xs'
+                        : 'text-rose-700 hover:text-rose-950'
+                    }`}
+                  >
+                    Non-Veg ({nonVegCount})
+                  </button>
+                </div>
+
                 {/* Mobile Horizontal Category Pills */}
                 <div className="flex items-center gap-1.5 overflow-x-auto pb-1 max-w-full">
                   {categories.map((cat) => (
@@ -561,7 +481,7 @@ export default function HomePage() {
               )}
             </div>
           </div>
-        </section>
+        </main>
 
         {/* Footer */}
         <Footer />
