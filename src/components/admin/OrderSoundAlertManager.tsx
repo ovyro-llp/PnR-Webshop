@@ -46,34 +46,63 @@ class RestaurantChimeSynthesizer {
   private executeChime(ctx: AudioContext): void {
     const now = ctx.currentTime;
 
-    // Harmonious, crisp 4-note ascending kitchen service chime
-    // E5 (659Hz) -> G#5 (830Hz) -> B5 (987Hz) -> E6 (1318Hz)
-    const chord = [
-      { freq: 659.25, time: 0.0, dur: 0.45, gain: 0.35 },
-      { freq: 830.61, time: 0.16, dur: 0.45, gain: 0.40 },
-      { freq: 987.77, time: 0.32, dur: 0.55, gain: 0.45 },
-      { freq: 1318.51, time: 0.48, dur: 0.85, gain: 0.55 },
+    // Aviation Cabin Spec 2-Note Chime (D5 587.33Hz -> B4 493.88Hz)
+    // Deep, crisp, and cuts through loud kitchen fan and oven noise
+    const tones = [
+      { freq: 587.33, time: 0.00, dur: 0.50, gain: 0.45 }, // High tone (D5)
+      { freq: 493.88, time: 0.26, dur: 0.85, gain: 0.55 }, // Low tone (B4)
     ];
 
-    chord.forEach(({ freq, time, dur, gain }) => {
+    tones.forEach(({ freq, time, dur, gain }) => {
       try {
         const osc = ctx.createOscillator();
-        const gainNode = ctx.createGain();
+        const overtone1 = ctx.createOscillator();
+        const overtone2 = ctx.createOscillator();
 
-        // Sine + Triangle harmonic blend for natural metallic bell ring
+        const gainNode = ctx.createGain();
+        const overtoneGain1 = ctx.createGain();
+        const overtoneGain2 = ctx.createGain();
+
+        // Fundamental tone: triangle wave for warm body
         osc.type = 'triangle';
         osc.frequency.setValueAtTime(freq, now + time);
 
-        // Attack & Exponential Release
+        // Acoustic overtone 1 (2.76x) for authentic brass/bell resonance
+        overtone1.type = 'sine';
+        overtone1.frequency.setValueAtTime(freq * 2.76, now + time);
+
+        // Acoustic overtone 2 (5.40x) for high chime clarity
+        overtone2.type = 'sine';
+        overtone2.frequency.setValueAtTime(freq * 5.40, now + time);
+
+        // Envelopes: 12ms sharp attack, natural exponential decay
         gainNode.gain.setValueAtTime(0.0001, now + time);
-        gainNode.gain.exponentialRampToValueAtTime(gain, now + time + 0.02);
+        gainNode.gain.exponentialRampToValueAtTime(gain * 0.75, now + time + 0.012);
         gainNode.gain.exponentialRampToValueAtTime(0.0001, now + time + dur);
 
+        overtoneGain1.gain.setValueAtTime(0.0001, now + time);
+        overtoneGain1.gain.exponentialRampToValueAtTime(gain * 0.28, now + time + 0.012);
+        overtoneGain1.gain.exponentialRampToValueAtTime(0.0001, now + time + dur * 0.7);
+
+        overtoneGain2.gain.setValueAtTime(0.0001, now + time);
+        overtoneGain2.gain.exponentialRampToValueAtTime(gain * 0.12, now + time + 0.012);
+        overtoneGain2.gain.exponentialRampToValueAtTime(0.0001, now + time + dur * 0.5);
+
         osc.connect(gainNode);
+        overtone1.connect(overtoneGain1);
+        overtone2.connect(overtoneGain2);
+
         gainNode.connect(ctx.destination);
+        overtoneGain1.connect(ctx.destination);
+        overtoneGain2.connect(ctx.destination);
 
         osc.start(now + time);
+        overtone1.start(now + time);
+        overtone2.start(now + time);
+
         osc.stop(now + time + dur + 0.05);
+        overtone1.stop(now + time + dur + 0.05);
+        overtone2.stop(now + time + dur + 0.05);
       } catch {
         // Audio node creation error safeguard
       }
@@ -190,11 +219,11 @@ export default function OrderSoundAlertManager() {
       // Play immediately once
       chimeSynth.playOrderBell();
 
-      // Clear any prior interval and loop every 2.2 seconds until 'Read' is clicked
+      // Clear any prior interval and loop every 2.0 seconds until 'Read' is clicked
       if (ringIntervalRef.current) clearInterval(ringIntervalRef.current);
       ringIntervalRef.current = setInterval(() => {
         chimeSynth.playOrderBell();
-      }, 2200);
+      }, 2000);
     } else {
       if (ringIntervalRef.current) {
         clearInterval(ringIntervalRef.current);
