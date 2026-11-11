@@ -250,8 +250,22 @@ export default function OrderSoundAlertManager() {
 
   return (
     <>
-      {/* 1. Persistent Audio Status Pill in Top Right / Header */}
+      {/* 1. Persistent Audio Status Pill in Bottom Right */}
       <div className="fixed bottom-4 right-4 z-40 flex items-center gap-2">
+        <button
+          id="btn-test-chime"
+          onClick={() => {
+            chimeSynth.unlock();
+            setAudioUnlocked(true);
+            chimeSynth.playOrderBell();
+          }}
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold shadow-md transition cursor-pointer backdrop-blur-md border bg-white/95 text-stone-700 border-stone-200 hover:bg-stone-100 hover:text-stone-900 active:scale-95"
+          title="Play a test chime through your speakers to check audio volume"
+        >
+          <Volume2 className="w-3.5 h-3.5 text-stone-600" />
+          <span>Test Sound</span>
+        </button>
+
         <button
           onClick={() => {
             chimeSynth.unlock();
