@@ -523,6 +523,30 @@ export const orderStore = {
     return undefined;
   },
 
+  markOrderAsRead: async (orderId: string, readBy?: string): Promise<Order | undefined> => {
+    const orders = globalThis.__PNR_ORDERS__ || [];
+    const index = orders.findIndex((o) => o.id === orderId || o.orderNumber === orderId);
+    const nowIso = new Date().toISOString();
+    if (index !== -1) {
+      orders[index] = {
+        ...orders[index],
+        isRead: true,
+        readAt: nowIso,
+        readBy: readBy || orders[index].readBy,
+        updatedAt: nowIso,
+      };
+      orderRepository.markOrderAsRead(orderId, readBy).catch(() => {});
+      return orders[index];
+    }
+    const dbOrder = await orderRepository.markOrderAsRead(orderId, readBy);
+    if (dbOrder) {
+      if (!globalThis.__PNR_ORDERS__) globalThis.__PNR_ORDERS__ = [];
+      globalThis.__PNR_ORDERS__.unshift(dbOrder);
+      return dbOrder;
+    }
+    return undefined;
+  },
+
   // Outlets & Campaigns
   normalizeOutletSlug: (slug?: string): string => {
     if (!slug) return 'cycle-circle';

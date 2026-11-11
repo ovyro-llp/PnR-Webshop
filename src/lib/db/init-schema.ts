@@ -29,6 +29,9 @@ CREATE TABLE IF NOT EXISTS public.orders (
     razorpay_order_id VARCHAR(100),
     razorpay_payment_id VARCHAR(100),
     razorpay_signature VARCHAR(255),
+    is_read BOOLEAN NOT NULL DEFAULT FALSE,
+    read_at TIMESTAMPTZ,
+    read_by VARCHAR(100),
     utm_source VARCHAR(100),
     utm_medium VARCHAR(100),
     utm_campaign VARCHAR(100),
@@ -43,6 +46,7 @@ CREATE INDEX IF NOT EXISTS idx_orders_created_at ON public.orders(created_at DES
 CREATE INDEX IF NOT EXISTS idx_orders_customer_phone ON public.orders(customer_phone);
 CREATE INDEX IF NOT EXISTS idx_orders_razorpay_order_id ON public.orders(razorpay_order_id);
 CREATE INDEX IF NOT EXISTS idx_orders_order_status ON public.orders(order_status);
+CREATE INDEX IF NOT EXISTS idx_orders_is_read ON public.orders(is_read);
 
 -- 2. Payment Records Ledger Table
 CREATE TABLE IF NOT EXISTS public.payment_records (
@@ -223,6 +227,9 @@ export async function ensureCoreTables(): Promise<boolean> {
               ALTER TABLE public.orders ADD COLUMN IF NOT EXISTS razorpay_order_id VARCHAR(100);
               ALTER TABLE public.orders ADD COLUMN IF NOT EXISTS razorpay_payment_id VARCHAR(100);
               ALTER TABLE public.orders ADD COLUMN IF NOT EXISTS razorpay_signature VARCHAR(255);
+              ALTER TABLE public.orders ADD COLUMN IF NOT EXISTS is_read BOOLEAN NOT NULL DEFAULT FALSE;
+              ALTER TABLE public.orders ADD COLUMN IF NOT EXISTS read_at TIMESTAMPTZ;
+              ALTER TABLE public.orders ADD COLUMN IF NOT EXISTS read_by VARCHAR(100);
             END IF;
 
             IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'customers') THEN

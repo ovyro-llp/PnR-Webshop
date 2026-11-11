@@ -298,6 +298,9 @@ export interface Order {
   razorpayOrderId?: string;
   razorpayPaymentId?: string;
   razorpaySignature?: string;
+  isRead?: boolean;
+  readAt?: string;
+  readBy?: string;
   createdAt: string;
   updatedAt: string;
 }

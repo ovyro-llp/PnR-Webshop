@@ -19,6 +19,8 @@ import {
   MapPin,
   Send,
   Eye,
+  Bell,
+  CheckCheck,
 } from 'lucide-react';
 
 export default function AdminPage() {
@@ -153,6 +155,51 @@ export default function AdminPage() {
       console.error('Failed to update order status', err);
     }
   };
+
+  const handleMarkOrderAsRead = async (orderId: string) => {
+    try {
+      const res = await fetch(`/api/orders/${orderId}/read`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          readBy: adminUser?.name || adminUser?.email || 'Cafe Manager',
+        }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setStatusMessage(`✓ Order marked as read`);
+        setOrders((prev) =>
+          prev.map((o) =>
+            o.id === orderId || o.orderNumber === orderId
+              ? { ...o, isRead: true, readAt: new Date().toISOString() }
+              : o
+          )
+        );
+        window.dispatchEvent(new CustomEvent('pnr-order-read', { detail: { orderId } }));
+        setTimeout(() => setStatusMessage(''), 3000);
+      }
+    } catch (err) {
+      console.error('Failed to mark order as read', err);
+    }
+  };
+
+  // Sync when an order is marked read from the floating audio alert banner
+  useEffect(() => {
+    const handleReadEvent = (e: Event) => {
+      const customEvent = e as CustomEvent<{ orderId: string }>;
+      if (customEvent.detail?.orderId) {
+        setOrders((prev) =>
+          prev.map((o) =>
+            o.id === customEvent.detail.orderId || o.orderNumber === customEvent.detail.orderId
+              ? { ...o, isRead: true, readAt: new Date().toISOString() }
+              : o
+          )
+        );
+      }
+    };
+    window.addEventListener('pnr-order-read', handleReadEvent);
+    return () => window.removeEventListener('pnr-order-read', handleReadEvent);
+  }, []);
 
   // Strictly filter to confirmed, paid orders (Zero Awaiting Payment / uncompleted checkouts)
   const confirmedOrders = orders.filter(
@@ -328,12 +375,33 @@ export default function AdminPage() {
                         {order.orderNumber}
                       </span>
                       {getStatusBadge(order.orderStatus)}
+                      {!order.isRead && (
+                        <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-rose-50 text-rose-700 border border-rose-200 animate-pulse flex items-center gap-1">
+                          <span className="w-1.5 h-1.5 rounded-full bg-rose-600 animate-ping" />
+                          <span>New Unread</span>
+                        </span>
+                      )}
                       <span className="text-[11px] text-stone-400 font-mono">
                         {new Date(order.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                       </span>
                     </div>
 
                     <div className="flex items-center gap-2">
+                      {!order.isRead ? (
+                        <button
+                          onClick={() => handleMarkOrderAsRead(order.id)}
+                          className="px-3 py-1 rounded-full bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold flex items-center gap-1.5 shadow-xs transition cursor-pointer"
+                          title="Acknowledge incoming order and silence sound alert"
+                        >
+                          <CheckCircle2 className="w-3.5 h-3.5" />
+                          <span>Read</span>
+                        </button>
+                      ) : (
+                        <span className="text-[10px] text-stone-400 font-mono flex items-center gap-1 px-2 py-0.5 rounded-full bg-stone-50 border border-stone-100">
+                          <CheckCheck className="w-3.5 h-3.5 text-emerald-600" />
+                          <span>Read</span>
+                        </span>
+                      )}
                       <span className="text-xs font-bold text-stone-900 font-mono">
                         ₹{order.total} ({order.paymentMethod})
                       </span>
@@ -410,6 +478,16 @@ export default function AdminPage() {
                     </div>
 
                     <div className="flex items-center gap-2">
+                      {!order.isRead && (
+                        <button
+                          onClick={() => handleMarkOrderAsRead(order.id)}
+                          className="px-3 py-1.5 bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold rounded-full shadow-2xs transition cursor-pointer flex items-center gap-1.5"
+                          title="Acknowledge incoming order and silence sound alert"
+                        >
+                          <CheckCircle2 className="w-3.5 h-3.5" />
+                          <span>Read</span>
+                        </button>
+                      )}
                       {order.orderStatus === 'RECEIVED' && (
                         <>
                           <button

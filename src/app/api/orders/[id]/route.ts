@@ -78,7 +78,7 @@ export async function PATCH(
   try {
     const { id } = await params;
     const body = await req.json();
-    const { orderStatus, riderName, riderPhone, riderVehicleNo, estimatedMinutes, notes } = body;
+    const { orderStatus, riderName, riderPhone, riderVehicleNo, estimatedMinutes, notes, isRead, readBy } = body;
 
     const existingOrder = (await orderStore.getOrderByIdAsync(id)) || orderStore.getOrderById(id);
     if (!existingOrder) {
@@ -89,6 +89,11 @@ export async function PATCH(
     }
 
     let updated = existingOrder;
+    if (isRead) {
+      const res = await orderStore.markOrderAsRead(id, readBy);
+      if (res) updated = res;
+    }
+
     if (orderStatus) {
       const res = orderStore.updateOrderStatus(id, orderStatus);
       if (res) updated = res;

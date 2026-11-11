@@ -21,6 +21,7 @@ import {
   Shield,
   Truck,
 } from 'lucide-react';
+import OrderSoundAlertManager from '@/components/admin/OrderSoundAlertManager';
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
@@ -405,6 +406,9 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           </div>
         </div>
       )}
+
+      {/* Order Sound Alert Manager with continuous chime loop until acknowledged */}
+      <OrderSoundAlertManager />
 
       {/* Main Page Area */}
       <main className="flex-1 min-w-0 overflow-y-auto">{children}</main>

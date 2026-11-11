@@ -68,6 +68,9 @@ function rowToOrder(row: any, deliveryRow?: any): Order {
     razorpayOrderId: row.razorpay_order_id || undefined,
     razorpayPaymentId: row.razorpay_payment_id || undefined,
     razorpaySignature: row.razorpay_signature || undefined,
+    isRead: Boolean(row.is_read),
+    readAt: row.read_at ? new Date(row.read_at).toISOString() : undefined,
+    readBy: row.read_by || undefined,
     mangwale,
     createdAt: row.created_at ? new Date(row.created_at).toISOString() : new Date().toISOString(),
     updatedAt: row.updated_at ? new Date(row.updated_at).toISOString() : new Date().toISOString(),
@@ -424,6 +427,35 @@ export const orderRepository = {
       return rowToOrder(res.rows[0]);
     } catch (err: any) {
       console.warn('[orderRepository.updateOrderStatus DB Warning]:', err.message);
+      return null;
+    }
+  },
+
+  /**
+   * Mark order as acknowledged/read by cafe manager
+   */
+  markOrderAsRead: async (orderId: string, readBy?: string): Promise<Order | null> => {
+    if (!process.env.DATABASE_URL?.trim()) {
+      return null;
+    }
+    await ensureCoreTables();
+    const pool = getDbPool();
+
+    try {
+      const res = await pool.query(
+        `UPDATE public.orders
+         SET is_read = TRUE,
+             read_at = NOW(),
+             read_by = COALESCE($2, read_by),
+             updated_at = NOW()
+         WHERE id = $1 OR order_number = $1
+         RETURNING *;`,
+        [orderId, readBy || null]
+      );
+      if (res.rows.length === 0) return null;
+      return rowToOrder(res.rows[0]);
+    } catch (err: any) {
+      console.warn('[orderRepository.markOrderAsRead DB Warning]:', err.message);
       return null;
     }
   },
