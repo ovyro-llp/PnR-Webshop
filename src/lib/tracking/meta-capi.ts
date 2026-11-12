@@ -1,6 +1,16 @@
 import crypto from 'crypto';
 import { TrackingEventPayload } from '@/types';
 import { orderRepository } from '@/lib/db/order-repository';
+import { orderStore } from '@/lib/store/order-store';
+
+declare global {
+  // eslint-disable-next-line no-var
+  var __PNR_SENT_CAPI_EVENTS__: Set<string> | undefined;
+}
+
+if (!globalThis.__PNR_SENT_CAPI_EVENTS__) {
+  globalThis.__PNR_SENT_CAPI_EVENTS__ = new Set<string>();
+}
 
 /**
  * Normalizes and computes SHA-256 hash for Meta CAPI parameters
@@ -31,11 +41,20 @@ export function hashPhoneForMeta(rawPhone: string): string | undefined {
 /**
  * Server-Side Meta Conversions API (CAPI) Sender
  * Strictly normalizes and hashes user PII per Meta v19.0 specification.
+ * Enforces server-side deduplication using event_name and orderId/eventId.
  */
 export async function sendMetaCAPI(payload: TrackingEventPayload) {
   const pixelId = payload.pixelId || process.env.META_PIXEL_ID || '999888777666555';
   const accessToken = process.env.META_CAPI_ACCESS_TOKEN;
-  const eventId = payload.orderId || `evt_${Date.now()}_${Math.random().toString(36).substring(7)}`;
+  const eventId = payload.orderId || payload.eventId || `evt_${Date.now()}_${Math.random().toString(36).substring(7)}`;
+
+  // Strict Server-Side Deduplication Guard
+  const dedupKey = `${payload.eventName}_${eventId}`;
+  if (globalThis.__PNR_SENT_CAPI_EVENTS__?.has(dedupKey)) {
+    console.log(`[Meta CAPI Deduplicated] Skipping duplicate CAPI event for ${dedupKey}`);
+    return { success: true, deduplicated: true, eventId };
+  }
+  globalThis.__PNR_SENT_CAPI_EVENTS__?.add(dedupKey);
 
   // SHA-256 Hashing of user data
   const hashedPhone = payload.userData?.phone ? hashPhoneForMeta(payload.userData.phone) : undefined;
@@ -68,6 +87,8 @@ export async function sendMetaCAPI(payload: TrackingEventPayload) {
     value: payload.value || 0,
     content_name: payload.contentName,
     content_ids: payload.contentIds,
+    contents: payload.contents,
+    content_type: 'product',
     outlet_slug: payload.outletSlug,
     campaign_slug: payload.campaignSlug,
   };
@@ -87,7 +108,19 @@ export async function sendMetaCAPI(payload: TrackingEventPayload) {
     ],
   };
 
-  // If no live access token, simulate gracefully and audit log to DB
+  const eventRecord = {
+    orderId: payload.orderId,
+    eventName: payload.eventName,
+    eventId,
+    pixelId,
+    outletSlug: payload.outletSlug,
+    campaignSlug: payload.campaignSlug,
+    value: payload.value,
+    currency: payload.currency || 'INR',
+    userHash: { phoneHashed: Boolean(hashedPhone), emailHashed: Boolean(hashedEmail) },
+  };
+
+  // If no live access token, simulate gracefully and audit log to DB and memory store
   if (!accessToken || accessToken === 'mock_token' || accessToken === 'test_capi_token') {
     console.log(`[Meta CAPI Simulated] ${payload.eventName} for Order ${eventId} (Pixel: ${pixelId})`, {
       event_id: eventId,
@@ -96,19 +129,13 @@ export async function sendMetaCAPI(payload: TrackingEventPayload) {
     });
 
     try {
-      await orderRepository.recordMarketingEvent({
-        orderId: payload.orderId,
-        eventName: payload.eventName,
-        eventId,
-        pixelId,
-        outletSlug: payload.outletSlug,
-        campaignSlug: payload.campaignSlug,
-        value: payload.value,
-        currency: payload.currency || 'INR',
-        userHash: { phoneHashed: Boolean(hashedPhone), emailHashed: Boolean(hashedEmail) },
+      const fullRecord = {
+        ...eventRecord,
         capiStatus: 'SIMULATED',
         capiResponse: { status: 'simulated_success', timestamp: currentTimestamp },
-      });
+      };
+      orderStore.recordMarketingEvent(fullRecord);
+      await orderRepository.recordMarketingEvent(fullRecord);
     } catch {}
 
     return { success: true, simulated: true, eventId };
@@ -126,38 +153,26 @@ export async function sendMetaCAPI(payload: TrackingEventPayload) {
     const resJson = await res.json().catch(() => ({}));
 
     try {
-      await orderRepository.recordMarketingEvent({
-        orderId: payload.orderId,
-        eventName: payload.eventName,
-        eventId,
-        pixelId,
-        outletSlug: payload.outletSlug,
-        campaignSlug: payload.campaignSlug,
-        value: payload.value,
-        currency: payload.currency || 'INR',
-        userHash: { phoneHashed: Boolean(hashedPhone), emailHashed: Boolean(hashedEmail) },
+      const fullRecord = {
+        ...eventRecord,
         capiStatus: res.ok ? 'SENT' : 'FAILED',
         capiResponse: resJson,
-      });
+      };
+      orderStore.recordMarketingEvent(fullRecord);
+      await orderRepository.recordMarketingEvent(fullRecord);
     } catch {}
 
     return { success: res.ok, data: resJson, eventId };
   } catch (error: any) {
     console.error('[Meta CAPI Dispatch Error]:', error.message);
     try {
-      await orderRepository.recordMarketingEvent({
-        orderId: payload.orderId,
-        eventName: payload.eventName,
-        eventId,
-        pixelId,
-        outletSlug: payload.outletSlug,
-        campaignSlug: payload.campaignSlug,
-        value: payload.value,
-        currency: payload.currency || 'INR',
-        userHash: { phoneHashed: Boolean(hashedPhone) },
+      const fullRecord = {
+        ...eventRecord,
         capiStatus: 'FAILED',
         capiResponse: { error: error.message },
-      });
+      };
+      orderStore.recordMarketingEvent(fullRecord);
+      await orderRepository.recordMarketingEvent(fullRecord);
     } catch {}
     return { success: false, error: error.message, eventId };
   }

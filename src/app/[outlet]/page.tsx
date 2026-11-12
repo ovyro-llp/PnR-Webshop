@@ -6,7 +6,7 @@ import { MenuCatalogSection } from '@/components/menu/MenuCatalogSection';
 import { CartDrawer } from '@/components/cart/CartDrawer';
 import { MobileCartBar } from '@/components/cart/MobileCartBar';
 import { Footer } from '@/components/layout/Footer';
-import { TrackingProvider } from '@/components/tracking/TrackingProvider';
+import { PageTracker } from '@/components/tracking/PageTracker';
 import { MapPin, Phone, Clock, Star, Sparkles, ArrowRight, Package } from 'lucide-react';
 import Link from 'next/link';
 
@@ -31,11 +31,12 @@ export default async function OutletPage({
     .filter((c) => c.outletSlug === outletSlug && c.active);
 
   return (
-    <TrackingProvider
-      pixelId={outlet.defaultMetaPixelId}
-      googleAdsId={outlet.defaultGoogleAdsId}
-      outletSlug={outlet.slug}
-    >
+    <>
+      <PageTracker
+        pixelId={outlet.defaultMetaPixelId}
+        googleAdsId={outlet.defaultGoogleAdsId}
+        outletSlug={outlet.slug}
+      />
       <div className="min-h-screen flex flex-col bg-[#FDFCFB] overflow-x-hidden w-full">
         <Navbar currentOutletSlug={outlet.slug} />
 
@@ -159,6 +160,6 @@ export default async function OutletPage({
         <MobileCartBar />
         <CartDrawer outletSlug={outlet.slug} />
       </div>
-    </TrackingProvider>
+    </>
   );
 }

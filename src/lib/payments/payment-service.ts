@@ -337,7 +337,16 @@ export const paymentService = {
     if (outlet) {
       try {
         const campaign = orderStore.getCampaign(settledOrder.outletSlug, settledOrder.campaignSlug);
-        const pixelId = campaign?.metaPixelId || outlet.defaultMetaPixelId;
+        const tags = orderStore.getMarketingTags();
+        const pixelId = campaign?.metaPixelId || outlet.defaultMetaPixelId || (tags.globalMetaPixelId as string) || '999888777666555';
+        const contentIds = settledOrder.items?.map((i) => i.itemId) || [];
+        const contents = settledOrder.items?.map((i) => ({
+          id: i.itemId,
+          quantity: i.quantity,
+          item_price: i.price,
+        })) || [];
+
+        // Meta standard Purchase event (Server CAPI)
         await sendMetaCAPI({
           eventName: 'Purchase',
           pixelId,
@@ -346,12 +355,34 @@ export const paymentService = {
           value: settledOrder.total,
           orderId: settledOrder.orderNumber,
           contentName: `Order from ${outlet.name}`,
+          contentIds,
+          contents,
           userData: {
             name: settledOrder.customer.name,
             phone: settledOrder.customer.phone,
             email: settledOrder.customer.email,
           },
         });
+
+        // Store corresponding Sale event in persistent marketing ledger
+        const saleRecord = {
+          orderId: settledOrder.orderNumber,
+          eventName: 'Sale',
+          eventId: `sale_${settledOrder.orderNumber}`,
+          pixelId,
+          outletSlug: settledOrder.outletSlug,
+          campaignSlug: settledOrder.campaignSlug,
+          value: settledOrder.total,
+          currency: 'INR',
+          capiStatus: 'CONFIRMED_PAID',
+          capiResponse: {
+            paymentId: razorpay_payment_id,
+            paymentMethod: settledOrder.paymentMethod,
+            itemCount: settledOrder.items?.length || 0,
+          },
+        };
+        orderStore.recordMarketingEvent(saleRecord);
+        await orderRepository.recordMarketingEvent(saleRecord);
       } catch (err) {
         console.warn('Meta CAPI trigger error during settlement:', err);
       }
@@ -469,7 +500,8 @@ export const paymentService = {
 
           try {
             const campaign = orderStore.getCampaign(order.outletSlug, order.campaignSlug);
-            const pixelId = campaign?.metaPixelId || outlet.defaultMetaPixelId;
+            const tags = orderStore.getMarketingTags();
+            const pixelId = campaign?.metaPixelId || outlet.defaultMetaPixelId || (tags.globalMetaPixelId as string) || '999888777666555';
             await sendMetaCAPI({
               eventName: 'Purchase',
               pixelId,
@@ -478,6 +510,12 @@ export const paymentService = {
               value: order.total,
               orderId: order.orderNumber,
               contentName: `Order from ${outlet.name}`,
+              contentIds: order.items?.map((i) => i.itemId) || [],
+              contents: order.items?.map((i) => ({
+                id: i.itemId,
+                quantity: i.quantity,
+                item_price: i.price,
+              })) || [],
               userData: {
                 name: order.customer.name,
                 phone: order.customer.phone,

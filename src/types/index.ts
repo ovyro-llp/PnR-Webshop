@@ -362,7 +362,9 @@ export interface TrackingEventPayload {
   currency?: string;
   contentName?: string;
   contentIds?: string[];
+  contents?: Array<{ id: string; quantity: number; item_price: number; [key: string]: unknown }>;
   orderId?: string;
+  eventId?: string;
   userData?: {
     phone?: string;
     email?: string;

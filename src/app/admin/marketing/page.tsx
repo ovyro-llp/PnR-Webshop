@@ -59,11 +59,25 @@ export default function MarketingViewPage() {
   const [copiedMangwaleUrl, setCopiedMangwaleUrl] = useState(false);
 
   const [analytics, setAnalytics] = useState<CampaignAnalytics[]>([]);
+  const [recentEvents, setRecentEvents] = useState<any[]>([]);
   const [isSaving, setIsSaving] = useState(false);
   const [statusMessage, setStatusMessage] = useState('');
 
+  const fetchRecentEvents = async () => {
+    try {
+      const res = await fetch('/api/marketing/events?limit=25');
+      const data = await res.json();
+      if (data.success && data.events) {
+        setRecentEvents(data.events);
+      }
+    } catch (e) {
+      console.warn('Failed to load recent events', e);
+    }
+  };
+
   const fetchMarketingData = async () => {
     try {
+      fetchRecentEvents();
       const res = await fetch('/api/marketing');
       const data = await res.json();
       if (data.success) {
@@ -150,6 +164,7 @@ export default function MarketingViewPage() {
         if (mounted && mData.success) {
           if (mData.tags) setTags((prev) => ({ ...prev, ...mData.tags }));
           if (mData.analytics) setAnalytics(mData.analytics);
+          fetchRecentEvents();
         }
 
         if (mounted && pData.success && pData.config) {
@@ -576,6 +591,115 @@ export default function MarketingViewPage() {
                   ))}
                 </tbody>
               </table>
+            </div>
+          </div>
+
+          {/* Live Meta Pixel & CAPI Deduplication Ledger */}
+          <div className="bg-white rounded-3xl border border-stone-200/90 shadow-[0_2px_8px_rgba(0,0,0,0.02)] overflow-hidden">
+            <div className="p-4 sm:p-5 border-b border-stone-100 flex items-center justify-between">
+              <div>
+                <div className="flex items-center gap-2">
+                  <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse" />
+                  <h3 className="text-sm font-serif font-bold text-stone-900">
+                    Live Meta Pixel &amp; CAPI Event Ledger
+                  </h3>
+                </div>
+                <p className="text-[11px] text-stone-500 mt-0.5">
+                  Synchronized browser pixel and server Conversions API events with shared eventID deduplication
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={fetchRecentEvents}
+                className="text-xs text-stone-500 hover:text-stone-900 flex items-center gap-1.5 px-2.5 py-1 rounded-lg border border-stone-200 bg-stone-50 hover:bg-stone-100 transition cursor-pointer"
+              >
+                <RefreshCw className="w-3 h-3" />
+                <span>Refresh Events</span>
+              </button>
+            </div>
+
+            <div className="overflow-x-auto">
+              {recentEvents.length === 0 ? (
+                <div className="p-8 text-center text-stone-400 text-xs">
+                  <Sparkles className="w-6 h-6 mx-auto mb-2 text-stone-300" />
+                  <p className="font-medium text-stone-600">No events logged in the active session yet.</p>
+                  <p className="text-[11px] text-stone-400 mt-0.5">
+                    Browse the storefront, add bakery items to cart, or place an order to see live Meta Pixel and CAPI events stream here.
+                  </p>
+                </div>
+              ) : (
+                <table className="w-full text-left text-xs">
+                  <thead className="bg-[#FAF8F5] text-stone-500 uppercase font-mono text-[10px] border-b border-stone-100">
+                    <tr>
+                      <th className="p-3.5">Event Type</th>
+                      <th className="p-3.5">Event ID (Dedup Key)</th>
+                      <th className="p-3.5">Order / Target</th>
+                      <th className="p-3.5 text-right">Value</th>
+                      <th className="p-3.5">Pixel ID</th>
+                      <th className="p-3.5">CAPI Status</th>
+                      <th className="p-3.5 text-right">Time</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-stone-100">
+                    {recentEvents.map((evt) => (
+                      <tr key={evt.id || evt.eventId} className="hover:bg-stone-50/50">
+                        <td className="p-3.5">
+                          <span
+                            className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold ${
+                              evt.eventName === 'Purchase' || evt.eventName === 'Sale'
+                                ? 'bg-emerald-100 text-emerald-800'
+                                : evt.eventName === 'InitiateCheckout'
+                                ? 'bg-amber-100 text-amber-800'
+                                : evt.eventName === 'AddToCart'
+                                ? 'bg-blue-100 text-blue-800'
+                                : 'bg-stone-100 text-stone-700'
+                            }`}
+                          >
+                            <span className="w-1.5 h-1.5 rounded-full bg-current" />
+                            <span>{evt.eventName}</span>
+                          </span>
+                        </td>
+                        <td className="p-3.5 font-mono text-[11px] text-stone-600">
+                          {evt.eventId}
+                        </td>
+                        <td className="p-3.5 font-medium text-stone-900">
+                          {evt.orderId ? (
+                            <span className="font-mono text-emerald-700 font-semibold">{evt.orderId}</span>
+                          ) : (
+                            <span className="text-stone-400 font-mono text-[11px]">
+                              {evt.outletSlug ? `/${evt.outletSlug}` : 'Storefront'}
+                            </span>
+                          )}
+                        </td>
+                        <td className="p-3.5 text-right font-mono font-semibold text-stone-900">
+                          {evt.value ? `₹${Number(evt.value).toLocaleString()}` : '—'}
+                        </td>
+                        <td className="p-3.5">
+                          <span className="font-mono text-[10px] text-stone-500 bg-stone-50 px-2 py-0.5 rounded border border-stone-200">
+                            {evt.pixelId ? `${evt.pixelId.slice(0, 8)}...` : 'Default'}
+                          </span>
+                        </td>
+                        <td className="p-3.5">
+                          <span
+                            className={`px-2 py-0.5 rounded text-[10px] font-mono font-semibold ${
+                              evt.capiStatus === 'SENT' || evt.capiStatus === 'CONFIRMED_PAID'
+                                ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                                : evt.capiStatus === 'SIMULATED'
+                                ? 'bg-blue-50 text-blue-700 border border-blue-200'
+                                : 'bg-stone-100 text-stone-600'
+                            }`}
+                          >
+                            {evt.capiStatus || 'LOGGED'}
+                          </span>
+                        </td>
+                        <td className="p-3.5 text-right font-mono text-stone-400 text-[11px]">
+                          {evt.createdAt ? new Date(evt.createdAt).toLocaleTimeString() : 'Just now'}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
             </div>
           </div>
         </div>

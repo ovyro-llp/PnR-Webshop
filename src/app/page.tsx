@@ -8,7 +8,7 @@ import { Navbar } from '@/components/layout/Navbar';
 import { MenuItemCard } from '@/components/menu/MenuItemCard';
 import { CartDrawer } from '@/components/cart/CartDrawer';
 import { MobileCartBar } from '@/components/cart/MobileCartBar';
-import { TrackingProvider } from '@/components/tracking/TrackingProvider';
+import { PageTracker } from '@/components/tracking/PageTracker';
 import { Footer } from '@/components/layout/Footer';
 import { MenuItem } from '@/types';
 import { MENU_ITEMS } from '@/lib/data/mock-data';
@@ -134,11 +134,12 @@ export default function HomePage() {
   const nonVegCount = useMemo(() => items.filter((i) => !i.isVeg).length, [items]);
 
   return (
-    <TrackingProvider
-      pixelId={nearestOutlet.defaultMetaPixelId || '999888777666555'}
-      googleAdsId={nearestOutlet.defaultGoogleAdsId || 'AW-987654300'}
-      outletSlug={nearestOutlet.slug}
-    >
+    <>
+      <PageTracker
+        pixelId={nearestOutlet.defaultMetaPixelId}
+        googleAdsId={nearestOutlet.defaultGoogleAdsId}
+        outletSlug={nearestOutlet.slug}
+      />
       <div className="min-h-screen flex flex-col bg-[#FDFCFB] overflow-x-hidden w-full">
         <Navbar currentOutletSlug={nearestOutlet.slug} />
 
@@ -490,6 +491,6 @@ export default function HomePage() {
         <MobileCartBar />
         <CartDrawer outletSlug={nearestOutlet.slug} />
       </div>
-    </TrackingProvider>
+    </>
   );
 }

@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { Order, Outlet } from '@/types';
+import { useTracking } from '@/components/tracking/TrackingProvider';
 import {
   CheckCircle2,
   Clock,
@@ -29,10 +30,18 @@ export function OrderTrackingClient({
   outlet,
   outletSlug,
 }: OrderTrackingClientProps) {
+  const tracking = useTracking();
   const [order, setOrder] = useState<Order>(initialOrder);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [lastUpdated, setLastUpdated] = useState<Date>(new Date());
   const [copiedLink, setCopiedLink] = useState(false);
+
+  // Guarantee Purchase event is tracked once (strictly guarded by sessionStorage deduplication)
+  useEffect(() => {
+    if (order.paymentStatus === 'COMPLETED' && order.orderNumber) {
+      tracking.trackPurchase(order.orderNumber, order.total, order.items || []);
+    }
+  }, [order.paymentStatus, order.orderNumber, order.total, order.items, tracking]);
 
   const cleanCustomerPhone = order.customer?.phone
     ? order.customer.phone.replace(/[^0-9]/g, '').slice(-10)

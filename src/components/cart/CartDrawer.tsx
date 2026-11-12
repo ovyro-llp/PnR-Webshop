@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { useCart } from '@/context/CartContext';
 import { useAuth } from '@/context/AuthContext';
 import { useLocation } from '@/context/LocationContext';
+import { useTracking } from '@/components/tracking/TrackingProvider';
 import { useRouter } from 'next/navigation';
 import { DeliveryMapPicker } from '@/components/location/DeliveryMapPicker';
 import {
@@ -38,6 +39,7 @@ interface CartDrawerProps {
 export function CartDrawer({ outletSlug, campaignSlug }: CartDrawerProps) {
   const router = useRouter();
   const { user, isCustomer, loginCustomer, registerCustomer, autoRegisterOrLoginCustomer, logout, openCustomerLogin } = useAuth();
+  const tracking = useTracking();
   const {
     deliveryAddress,
     setDeliveryAddress,
@@ -235,6 +237,19 @@ export function CartDrawer({ outletSlug, campaignSlug }: CartDrawerProps) {
     }
 
     setIsSubmitting(true);
+
+    // Track Meta & Google Ads InitiateCheckout
+    tracking.trackInitiateCheckout(
+      total,
+      itemCount,
+      items.map((i) => ({
+        id: i.item.id,
+        name: i.item.name,
+        price: i.item.price,
+        quantity: i.quantity,
+        category: i.item.category,
+      }))
+    );
 
     // Online Payment Gateway (Razorpay - 100% Prepaid Online)
     try {

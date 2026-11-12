@@ -5,7 +5,7 @@ import { CampaignHero } from '@/components/marketing/CampaignHero';
 import { MenuItemCard } from '@/components/menu/MenuItemCard';
 import { CartDrawer } from '@/components/cart/CartDrawer';
 import { MobileCartBar } from '@/components/cart/MobileCartBar';
-import { TrackingProvider } from '@/components/tracking/TrackingProvider';
+import { PageTracker } from '@/components/tracking/PageTracker';
 import { Star, ShieldCheck, CheckCircle2, Award, Clock } from 'lucide-react';
 
 export const dynamic = 'force-dynamic';
@@ -38,12 +38,13 @@ export default async function CampaignLandingPage({
   const googleAdsId = campaign?.googleAdsId || outlet.defaultGoogleAdsId;
 
   return (
-    <TrackingProvider
-      pixelId={pixelId}
-      googleAdsId={googleAdsId}
-      outletSlug={outlet.slug}
-      campaignSlug={campaignSlug}
-    >
+    <>
+      <PageTracker
+        pixelId={pixelId}
+        googleAdsId={googleAdsId}
+        outletSlug={outlet.slug}
+        campaignSlug={campaignSlug}
+      />
       <div className="min-h-screen flex flex-col bg-[#FDFCFB] overflow-x-hidden w-full">
         <Navbar currentOutletSlug={outlet.slug} currentCampaignSlug={campaignSlug} />
 
@@ -180,6 +181,6 @@ export default async function CampaignLandingPage({
         <MobileCartBar />
         <CartDrawer outletSlug={outlet.slug} campaignSlug={campaignSlug} />
       </div>
-    </TrackingProvider>
+    </>
   );
 }

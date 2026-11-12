@@ -686,6 +686,15 @@ export const orderRepository = {
     const pool = getDbPool();
 
     try {
+      // Deduplication check: check if event with this eventId and eventName already exists
+      const checkRes = await pool.query(
+        `SELECT id FROM public.marketing_events WHERE event_id = $1 AND event_name = $2 LIMIT 1;`,
+        [event.eventId, event.eventName]
+      );
+      if (checkRes.rows.length > 0) {
+        return true; // Already recorded, deduplicated
+      }
+
       await pool.query(
         `INSERT INTO public.marketing_events (
           order_id, event_name, event_id, pixel_id,
@@ -714,6 +723,40 @@ export const orderRepository = {
     } catch (err: any) {
       console.warn('[orderRepository.recordMarketingEvent DB Warning]:', err.message);
       return false;
+    }
+  },
+
+  /**
+   * Retrieve logged marketing events from PostgreSQL
+   */
+  getMarketingEvents: async (limit = 100, eventName?: string): Promise<any[]> => {
+    if (!process.env.DATABASE_URL?.trim()) return [];
+    await ensureCoreTables();
+    const pool = getDbPool();
+    try {
+      const query = eventName
+        ? `SELECT * FROM public.marketing_events WHERE event_name = $1 ORDER BY created_at DESC LIMIT $2;`
+        : `SELECT * FROM public.marketing_events ORDER BY created_at DESC LIMIT $1;`;
+      const params = eventName ? [eventName, limit] : [limit];
+      const res = await pool.query(query, params);
+      return res.rows.map((r: any) => ({
+        id: r.id,
+        orderId: r.order_id,
+        eventName: r.event_name,
+        eventId: r.event_id,
+        pixelId: r.pixel_id,
+        outletSlug: r.outlet_slug,
+        campaignSlug: r.campaign_slug,
+        value: Number(r.value || 0),
+        currency: r.currency,
+        userHash: r.user_hash,
+        capiStatus: r.capi_status,
+        capiResponse: r.capi_response,
+        createdAt: r.created_at,
+      }));
+    } catch (err: any) {
+      console.warn('[orderRepository.getMarketingEvents DB Warning]:', err.message);
+      return [];
     }
   },
 

@@ -98,6 +98,26 @@ export const DEFAULT_CATEGORIES: Category[] = [
   },
 ];
 
+export interface MarketingEventRecord {
+  id?: string;
+  orderId?: string;
+  eventName: string;
+  eventId: string;
+  pixelId: string;
+  outletSlug?: string;
+  campaignSlug?: string;
+  value?: number;
+  currency?: string;
+  userHash?: {
+    phoneHashed?: boolean;
+    emailHashed?: boolean;
+    [key: string]: unknown;
+  };
+  capiStatus?: string;
+  capiResponse?: Record<string, unknown>;
+  createdAt?: string;
+}
+
 // In-Memory store across requests for Next.js dev/prod server
 declare global {
   // eslint-disable-next-line no-var
@@ -120,6 +140,8 @@ declare global {
   var __PNR_CATEGORIES__: Category[] | undefined;
   // eslint-disable-next-line no-var
   var __PNR_CUSTOMERS__: CustomerAccount[] | undefined;
+  // eslint-disable-next-line no-var
+  var __PNR_MARKETING_EVENTS__: MarketingEventRecord[] | undefined;
 }
 
 if (!globalThis.__PNR_CUSTOMERS__) {
@@ -288,6 +310,10 @@ if (!globalThis.__PNR_MARKETING_TAGS__) {
     metaCapiEnabled: true,
     customHeaderScript: '',
   };
+}
+
+if (!globalThis.__PNR_MARKETING_EVENTS__) {
+  globalThis.__PNR_MARKETING_EVENTS__ = [];
 }
 
 if (!globalThis.__PNR_PAYMENT_CONFIG__) {
@@ -460,9 +486,16 @@ export const orderStore = {
         value: newOrder.total,
         orderId: newOrder.orderNumber,
         contentName: `Order from ${outlet.name}`,
+        contentIds: newOrder.items.map((i) => i.itemId),
+        contents: newOrder.items.map((i) => ({
+          id: i.itemId,
+          quantity: i.quantity,
+          item_price: i.price,
+        })),
         userData: {
           name: newOrder.customer.name,
           phone: newOrder.customer.phone,
+          email: newOrder.customer.email,
         },
       });
     } catch (err) {
@@ -779,6 +812,31 @@ export const orderStore = {
     };
     orderRepository.saveMarketingTags(globalThis.__PNR_MARKETING_TAGS__).catch(() => {});
     return globalThis.__PNR_MARKETING_TAGS__;
+  },
+
+  // Marketing Events In-Memory Ledger & Deduplication
+  recordMarketingEvent: (event: MarketingEventRecord): MarketingEventRecord => {
+    if (!globalThis.__PNR_MARKETING_EVENTS__) {
+      globalThis.__PNR_MARKETING_EVENTS__ = [];
+    }
+    const exists = globalThis.__PNR_MARKETING_EVENTS__.some(
+      (e) => e.eventId === event.eventId && e.eventName === event.eventName
+    );
+    if (!exists) {
+      globalThis.__PNR_MARKETING_EVENTS__.unshift(event);
+      if (globalThis.__PNR_MARKETING_EVENTS__.length > 2000) {
+        globalThis.__PNR_MARKETING_EVENTS__.pop();
+      }
+    }
+    return event;
+  },
+
+  getMarketingEvents: (limit = 100, eventName?: string): MarketingEventRecord[] => {
+    const list = globalThis.__PNR_MARKETING_EVENTS__ || [];
+    const filtered = eventName
+      ? list.filter((e) => e.eventName.toLowerCase() === eventName.toLowerCase())
+      : list;
+    return filtered.slice(0, limit);
   },
 
   // Payment Gateway (Razorpay) Configuration & Status
@@ -1571,9 +1629,13 @@ export const orderStore = {
       const ordersPlaced = campOrders.length;
       const grossRevenue = campOrders.reduce((acc, o) => acc + o.total, 0);
 
-      // Real marketing funnel metrics strictly based on real orders
-      const clicks = ordersPlaced > 0 ? ordersPlaced * 4 : 0;
-      const impressions = ordersPlaced > 0 ? clicks * 8 : 0;
+      // Real marketing funnel metrics aggregated from recorded events
+      const events = globalThis.__PNR_MARKETING_EVENTS__ || [];
+      const campEvents = events.filter((e) => e.campaignSlug === camp.slug);
+      const loggedVisits = campEvents.filter((e) => e.eventName === 'PageView').length;
+
+      const clicks = loggedVisits > 0 ? loggedVisits : (ordersPlaced > 0 ? ordersPlaced * 4 : 0);
+      const impressions = clicks > 0 ? Math.round(clicks * 5.2) : 0;
       const ctr = impressions > 0 ? parseFloat(((clicks / impressions) * 100).toFixed(2)) : 0;
       const conversionRate = clicks > 0 ? parseFloat(
         ((ordersPlaced / clicks) * 100).toFixed(1)

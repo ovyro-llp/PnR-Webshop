@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from 'next';
 import { Geist, Geist_Mono, Playfair_Display } from 'next/font/google';
 import './globals.css';
 import { AuthProvider } from '@/context/AuthContext';
+import { TrackingProvider } from '@/components/tracking/TrackingProvider';
 import { CartProvider } from '@/context/CartContext';
 import { LocationProvider } from '@/context/LocationContext';
 import { CustomerLoginModal } from '@/components/auth/CustomerLoginModal';
@@ -49,11 +50,13 @@ export default function RootLayout({
       <body className="min-h-full flex flex-col bg-[#FDFCFB] text-stone-900 font-sans selection:bg-stone-200 overflow-x-hidden w-full">
         <AuthProvider>
           <LocationProvider>
-            <CartProvider>
-              {children}
-              <CustomerLoginModal />
-              <LocationPromptModal />
-            </CartProvider>
+            <TrackingProvider>
+              <CartProvider>
+                {children}
+                <CustomerLoginModal />
+                <LocationPromptModal />
+              </CartProvider>
+            </TrackingProvider>
           </LocationProvider>
         </AuthProvider>
       </body>
