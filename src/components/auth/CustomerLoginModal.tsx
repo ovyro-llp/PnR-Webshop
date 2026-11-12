@@ -13,6 +13,7 @@ import {
   EyeOff,
   AlertCircle,
   ShieldCheck,
+  Sparkles,
 } from 'lucide-react';
 
 export function CustomerLoginModal() {
@@ -197,6 +198,31 @@ export function CustomerLoginModal() {
               <span>{isLoading ? 'Signing In...' : 'Sign In'}</span>
               <ArrowRight className="w-3.5 h-3.5" />
             </button>
+
+            {/* Quick Demo Test Login Button */}
+            <div className="pt-2 border-t border-stone-200/80 space-y-1.5">
+              <button
+                type="button"
+                onClick={async () => {
+                  setPhone('9822011223');
+                  setPassword('pnr@customer123');
+                  setIsLoading(true);
+                  setErrorMessage('');
+                  const res = await loginCustomer('9822011223', 'pnr@customer123');
+                  setIsLoading(false);
+                  if (!res.success) {
+                    setErrorMessage(res.error || 'Test login failed');
+                  }
+                }}
+                className="w-full py-2 bg-amber-50 hover:bg-amber-100 border border-amber-200 text-amber-900 rounded-xl text-xs font-semibold flex items-center justify-center gap-1.5 transition cursor-pointer"
+              >
+                <Sparkles className="w-3.5 h-3.5 text-amber-700" />
+                <span>One-Click Test Login (9822011223)</span>
+              </button>
+              <p className="text-[10px] text-stone-400 text-center">
+                New customer? Click <b>New Customer</b> above to register your mobile number.
+              </p>
+            </div>
           </form>
         ) : (
           <form onSubmit={handleRegisterSubmit} className="space-y-3.5">

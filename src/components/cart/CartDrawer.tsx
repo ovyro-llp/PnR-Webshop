@@ -37,7 +37,7 @@ interface CartDrawerProps {
 
 export function CartDrawer({ outletSlug, campaignSlug }: CartDrawerProps) {
   const router = useRouter();
-  const { user, isCustomer, loginCustomer, registerCustomer, autoRegisterOrLoginCustomer, logout } = useAuth();
+  const { user, isCustomer, loginCustomer, registerCustomer, autoRegisterOrLoginCustomer, logout, openCustomerLogin } = useAuth();
   const {
     deliveryAddress,
     setDeliveryAddress,
@@ -783,13 +783,20 @@ export function CartDrawer({ outletSlug, campaignSlug }: CartDrawerProps) {
                           </div>
                         </div>
                       ) : (
-                        <div className="pt-1 flex items-center justify-end">
+                        <div className="pt-1 flex items-center justify-between text-[10px]">
                           <button
                             type="button"
                             onClick={() => setShowManualAuth(true)}
-                            className="text-[10px] text-stone-500 hover:text-stone-800 underline cursor-pointer"
+                            className="text-stone-500 hover:text-stone-800 underline cursor-pointer"
                           >
-                            Have an account password? Sign in
+                            Enter account password
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => openCustomerLogin()}
+                            className="text-amber-800 hover:text-amber-950 font-bold underline cursor-pointer"
+                          >
+                            Already have an account? Sign in
                           </button>
                         </div>
                       )}

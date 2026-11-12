@@ -167,24 +167,26 @@ export function Navbar({ currentOutletSlug, currentCampaignSlug }: NavbarProps) 
           </nav>
 
           {/* Right: Customer & Cart Actions */}
-          <div className="flex items-center gap-1.5 sm:gap-3 shrink-0">
+          <div className="flex items-center gap-1.5 sm:gap-2.5 shrink-0">
             {user && isCustomer ? (
               <Link
                 href="/account"
-                aria-label="Account"
-                className="flex items-center justify-center w-8 h-8 sm:w-auto sm:h-auto sm:px-3 sm:py-1.5 rounded-full text-stone-700 hover:text-stone-950 text-xs font-medium transition border border-stone-200 bg-white"
+                aria-label="My Account"
+                className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-full text-stone-800 hover:text-stone-950 text-xs font-semibold transition border border-stone-200 bg-white hover:bg-stone-50 shadow-2xs"
               >
-                <User className="w-3.5 h-3.5 text-stone-700" />
-                <span className="hidden sm:inline sm:ml-1">{user.name.split(' ')[0]}</span>
+                <div className="w-4 h-4 rounded-full bg-[#1C1917] text-white flex items-center justify-center text-[9px] font-bold">
+                  {user.name.charAt(0)}
+                </div>
+                <span className="truncate max-w-[65px] sm:max-w-none">{user.name.split(' ')[0]}</span>
               </Link>
             ) : (
               <button
                 onClick={openCustomerLogin}
-                aria-label="Sign In"
-                className="flex items-center justify-center w-8 h-8 sm:w-auto sm:h-auto sm:px-3 sm:py-1.5 rounded-full text-stone-600 hover:text-stone-950 text-xs font-medium transition cursor-pointer"
+                aria-label="Customer Sign In"
+                className="flex items-center gap-1 px-2.5 sm:px-3 py-1.5 rounded-full text-stone-800 hover:text-stone-950 text-xs font-semibold transition cursor-pointer border border-stone-200 bg-white hover:bg-stone-50 shadow-2xs active:scale-95"
               >
-                <User className="w-3.5 h-3.5" />
-                <span className="hidden sm:inline sm:ml-1">Sign In</span>
+                <User className="w-3.5 h-3.5 text-amber-700" />
+                <span>Sign In</span>
               </button>
             )}
 
@@ -246,6 +248,49 @@ export function Navbar({ currentOutletSlug, currentCampaignSlug }: NavbarProps) 
 
               {/* Scrollable Nav Content */}
               <div className="flex-1 overflow-y-auto p-4 sm:p-5 space-y-4 text-stone-800 text-xs overscroll-contain touch-pan-y">
+                {/* 0. CUSTOMER ACCOUNT & SIGN IN BANNER */}
+                <div className="p-3 bg-stone-900 text-white rounded-2xl shadow-xs flex items-center justify-between gap-3">
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    <div className="w-8 h-8 rounded-xl bg-amber-400 text-stone-950 flex items-center justify-center font-bold text-xs shrink-0">
+                      {user && isCustomer ? user.name.charAt(0) : <User className="w-4 h-4 text-stone-900" />}
+                    </div>
+                    <div className="min-w-0">
+                      {user && isCustomer ? (
+                        <>
+                          <span className="font-bold text-xs block text-white truncate">{user.name}</span>
+                          <span className="text-[10px] text-stone-400 font-mono block">+91 {(user as any).phone || 'Customer'}</span>
+                        </>
+                      ) : (
+                        <>
+                          <span className="font-bold text-xs block text-white">Customer Account</span>
+                          <span className="text-[10px] text-stone-400 block">Sign in to track orders</span>
+                        </>
+                      )}
+                    </div>
+                  </div>
+
+                  {user && isCustomer ? (
+                    <Link
+                      href="/account"
+                      onClick={() => setIsDrawerOpen(false)}
+                      className="px-3 py-1.5 bg-white/10 hover:bg-white/20 text-white rounded-xl text-[11px] font-semibold transition shrink-0"
+                    >
+                      Orders
+                    </Link>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setIsDrawerOpen(false);
+                        openCustomerLogin();
+                      }}
+                      className="px-3 py-1.5 bg-amber-400 hover:bg-amber-300 text-stone-950 rounded-xl text-[11px] font-bold shadow-xs transition shrink-0 cursor-pointer"
+                    >
+                      Sign In
+                    </button>
+                  )}
+                </div>
+
                 {/* 1. TOP CARD: Customer's Delivery Location (Address + Update Location link) */}
                 <div className="p-3.5 bg-white rounded-2xl border border-stone-200/90 shadow-2xs space-y-2.5">
                   <div className="flex items-center justify-between">

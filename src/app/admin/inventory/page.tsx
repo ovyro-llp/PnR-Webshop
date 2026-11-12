@@ -1774,7 +1774,7 @@ export default function OutletInventoryPage() {
                     </div>
                   )}
                   <input
-                    type="url"
+                    type="text"
                     placeholder="https://... photo url or /api/media/..."
                     value={newProductForm.image}
                     onChange={(e) =>
@@ -2058,7 +2058,7 @@ export default function OutletInventoryPage() {
                     </div>
                   )}
                   <input
-                    type="url"
+                    type="text"
                     value={editingProduct.image || ''}
                     onChange={(e) =>
                       setEditingProduct({ ...editingProduct, image: e.target.value })

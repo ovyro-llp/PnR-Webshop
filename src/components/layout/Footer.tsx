@@ -82,6 +82,11 @@ export function Footer() {
                 </Link>
               </li>
               <li>
+                <Link href="/login" className="hover:text-amber-400 text-stone-300 font-medium transition">
+                  Customer Sign In
+                </Link>
+              </li>
+              <li>
                 <Link href="/account" className="hover:text-white transition">
                   My Orders &amp; Account
                 </Link>

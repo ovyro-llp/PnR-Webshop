@@ -20,6 +20,7 @@ import {
   ChevronRight,
   Shield,
   Truck,
+  Image as ImageIcon,
 } from 'lucide-react';
 import OrderSoundAlertManager from '@/components/admin/OrderSoundAlertManager';
 
@@ -82,6 +83,13 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       icon: BarChart3,
       permission: 'analytics:view_outlet' as Permission,
     },
+    {
+      label: 'Media Library',
+      shortLabel: 'Media',
+      href: '/admin/media',
+      icon: ImageIcon,
+      permission: 'inventory:view' as Permission,
+    },
   ];
 
   const navItems = useMemo(
@@ -120,6 +128,10 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       return;
     }
     if (pathname.startsWith('/admin/analytics') && !hasPermission(userRole, 'analytics:view_outlet')) {
+      router.push('/admin');
+      return;
+    }
+    if (pathname.startsWith('/admin/media') && !hasPermission(userRole, 'inventory:view')) {
       router.push('/admin');
       return;
     }
