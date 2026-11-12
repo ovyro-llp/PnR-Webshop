@@ -1,0 +1,571 @@
+================================================================================
+PUFFS 'N' ROLLS — MISSING PRODUCT PHOTOS AUDIT (STRICT MATCHING)
+Generated: 2026-11-12 21:13:03
+Directory: /Users/hrushi/Downloads/Pnr Shop/pnr product photos
+================================================================================
+
+EXECUTIVE SUMMARY:
+  • Total Products in Master Catalog (Excel):   224
+  • Products with STRICT Matching Photo:       9
+  • Products MISSING Dedicated Photo:          215
+  • Total Photos Located in Folder:            45
+      - Named Photos:                          39
+      - Unlabeled Camera Photos (WhatsApp):    6
+
+AUDIT RULE (STRICT MATCHING):
+  Under strict matching, an item is only marked as photographed if a dedicated
+  photo exists with the exact product name. Generic photos (e.g. "croissant.jpeg",
+  "Calzone.jpeg") do NOT count as covers for specific variants (e.g. "Butter Croissant",
+  "Cheese Croissant", "Veg Calzone"). Those specific items require their own photos.
+
+================================================================================
+SECTION 1: PRODUCTS MISSING PHOTOS — CATEGORY-WISE CHECKLIST
+================================================================================
+
+--------------------------------------------------------------------------------
+CATEGORY: BREADS (12 missing / 14 total products)
+--------------------------------------------------------------------------------
+  [ ]  1. WHITE BREAD  (₹50)
+  [ ]  2. BROWN BREAD  (₹70)
+  [ ]  3. FRENCH LOAF  (₹70)
+  [ ]  4. CHEESE & GARLIC BREAD  (₹50)
+  [ ]  5. LADI PAAV 6PCS  (₹30)
+  [ ]  6. WHOLE WHEAT LADI PAAV 6PCS  (₹40)
+  [ ]  7. GARLIC BREAD  (₹40)
+  [ ]  8. BREAD ROLLS 2 PCS  (₹25)
+  [ ]  9. BREAD BUNS 2 PCS  (₹25)
+  [ ] 10. PITA BREAD 2PCS  (₹30)
+  [ ] 11. BUTTER SWEET BUN 2 PCS  (₹50)
+  [ ] 12. DINNER ROLL  (₹30)
+
+--------------------------------------------------------------------------------
+CATEGORY: BAKED SNACKS (28 missing / 28 total products)
+--------------------------------------------------------------------------------
+  [ ]  1. KOREAN CHILLY BUNS  (₹100)
+  [ ]  2. VEG DELIGHT PUFF  (₹30)
+  [ ]  3. VEG SPICY DELIGHT PUFF  (₹30)
+  [ ]  4. VEG PUFF  (₹50)
+  [ ]  5. VEG SPICY PUFF  (₹50)
+  [ ]  6. VEG SPICY KOREAN PUFF  (₹60)
+  [ ]  7. CHICKEN SPICY KOREAN PUFF  (₹60)
+  [ ]  8. CHICKEN PUFF  (₹60)
+  [ ]  9. SPICY CHICKEN PUFF  (₹60)
+  [ ] 10. CHICKEN MUSHROOM PUFF  (₹60)
+  [ ] 11. VEG FLAKY TUSKAN  (₹170)
+  [ ] 12. VEG FLAKY SPINACH  (₹170)
+  [ ] 13. CHICKEN FLAKY TUSKAN  (₹170)
+  [ ] 14. CHICKEN FLAKY SPINACH  (₹170)
+  [ ] 15. BUTTER CROISSANT  (₹100)
+  [ ] 16. CHEESE CROISSANT  (₹150)
+  [ ] 17. CHOCOLATE CROISSANT  (₹150)
+  [ ] 18. ALMOND CHOCOLATE CROISSANT  (₹170)
+  [ ] 19. NUTELLA CROISSANT  (₹180)
+  [ ] 20. COFFEE CROISSANT  (₹170)
+  [ ] 21. VEG MEXICAN TOAST  (₹80)
+  [ ] 22. CHICKEN MEXICAN TOAST  (₹80)
+  [ ] 23. VEG CALZONE  (₹90)
+  [ ] 24. CHICKEN CALZONE  (₹90)
+  [ ] 25. VEG CHEEZY ROLL  (₹80)
+  [ ] 26. CHICKEN CHEEZY ROLL  (₹80)
+  [ ] 27. VEG SPICY BAKED ROLL  (₹80)
+  [ ] 28. CHICKEN SPICY BAKED ROLL  (₹80)
+
+--------------------------------------------------------------------------------
+CATEGORY: HIGH TEA (33 missing / 37 total products)
+--------------------------------------------------------------------------------
+  [ ]  1. WHOLE WHEAT TOAST  (₹100)
+  [ ]  2. WHOLE WHEAT  (₹100)
+  [ ]  3. WHOLE WHEAT COOKIES  (₹150)
+  [ ]  4. MULTIGRAIN COOKIES  (₹150)
+  [ ]  5. MILLET COOKIES  (₹230)
+  [ ]  6. RUSK (SWEET TOAST)  (₹100)
+  [ ]  7. RAGI JOY COOKIES  (₹230)
+  [ ]  8. BREAD STICKS  (₹70)
+  [ ]  9. JEERA BUTTER  (₹80)
+  [ ] 10. GINGER COOKIES  (₹130)
+  [ ] 11. MIX FRUIT COOKIES  (₹130)
+  [ ] 12. COCONUT MACAROON  (₹130)
+  [ ] 13. ALMOND COOKIES  (₹130)
+  [ ] 14. CASHEW COOKIES  (₹130)
+  [ ] 15. OSMANIA COOKIES  (₹180)
+  [ ] 16. KASHMIRI ROTH  (₹200)
+  [ ] 17. CHOCOLATE CHIP COOKIES  (₹200)
+  [ ] 18. BROWNIE (PER PC)  (₹100)
+  [ ] 19. BANANA WALNUT CAKE  (₹200)
+  [ ] 20. MAWA CAKE  (₹290)
+  [ ] 21. MIX FRUIT CAKE  (₹310)
+  [ ] 22. ALMOND CAKE  (₹330)
+  [ ] 23. DOUBLE CHOCOLATE CAKE  (₹360)
+  [ ] 24. CHOCOLATE WALNUT CAKE  (₹380)
+  [ ] 25. BROWNIE ROUND  (₹600)
+  [ ] 26. CARROT CAKE 300 GMS  (₹130)
+  [ ] 27. MAWA CAKE  (₹240)
+  [ ] 28. CHOCOLATE TOFFEE CARAMEL  (₹370)
+  [ ] 29. CHOCOLATE OVERLOADED CAKE  (₹370)
+  [ ] 30. DARK FOREST CAKE  (₹370)
+  [ ] 31. CHOCOLATE WALNUT  (₹130)
+  [ ] 32. BLUEBERRY MUFFIN  (₹130)
+  [ ] 33. CHOCOLATE NUTTELLA  (₹130)
+
+--------------------------------------------------------------------------------
+CATEGORY: FILLING N FRIED SNACK (3 missing / 3 total products)
+--------------------------------------------------------------------------------
+  [ ]  1. CHICKEN MASALA PATTY  (₹100)
+  [ ]  2. CHICKEN PARSI PATTICE  (Price TBD)
+  [ ]  3. CHICKEN CHEEZY ROLL 2 PCS  (Price TBD)
+
+--------------------------------------------------------------------------------
+CATEGORY: SWEET TOOTH (50 missing / 51 total products)
+--------------------------------------------------------------------------------
+  [ ]  1. CHOCOLATE DELIGHT  (₹70)
+  [ ]  2. CHOCOLATE CHIP DELIGHT  (₹90)
+  [ ]  3. EXOTIC BLACK FOREST GATEAU  (₹90)
+  [ ]  4. VANILLA WHITE CHOCOLATE  (₹90)
+  [ ]  5. CHOCOLATE TRUFFLE  (₹100)
+  [ ]  6. CHOCOLATE OREO DELIGHT  (₹100)
+  [ ]  7. DUTCH TRUFFLE GATEAU  (₹100)
+  [ ]  8. IRISH CHOCOLATE  (₹110)
+  [ ]  9. CHOCOLATE TOFFEE CARAMEL  (₹150)
+  [ ] 10. MUD MEC ROCKS  (₹230)
+  [ ] 11. PINEAPPLE DELIGHT  (₹90)
+  [ ] 12. MIX FRUIT GATEAU  (₹90)
+  [ ] 13. BLUEBERRY GATEAU  (₹120)
+  [ ] 14. HONEY ALMOND GATEAU  (₹100)
+  [ ] 15. NOUGAT GATEAU  (₹90)
+  [ ] 16. REDVELVET  (₹95)
+  [ ] 17. CHOCOLATE DELIGHT  (₹110)
+  [ ] 18. CHOCOLATE CHIP DELIGHT  (₹120)
+  [ ] 19. EXOTIC BLACK FOREST GATEAU  (₹120)
+  [ ] 20. VANILLA WHITE CHOCOLATE  (₹120)
+  [ ] 21. DUTCH TRUFFLE GATEAU  (₹120)
+  [ ] 22. CHOCOLATE TRUFFLE  (₹150)
+  [ ] 23. PINEAPPLE DELIGHT  (₹120)
+  [ ] 24. MIX FRUIT GATEAU  (₹120)
+  [ ] 25. BLUEBERRY GATEAU  (₹175)
+  [ ] 26. HONEY ALMOND GATEAU  (₹130)
+  [ ] 27. NOUGAT GATEAU  (₹120)
+  [ ] 28. Chocolate Sin Cake Pastry  (₹190)
+  [ ] 29. Chocolate Sin Hazeltine Pastry  (₹220)
+  [ ] 30. Chocolate Sin Toffee Caramel Pastry  (₹220)
+  [ ] 31. Nuttela Sin Pastry  (₹230)
+  [ ] 32. BISCOFF CHEESE PASTRY  (₹220)
+  [ ] 33. BLUEBERRY CHEESE PASTRY  (₹220)
+  [ ] 34. HAZELTINE CHEESE PASTRY  (₹220)
+  [ ] 35. Tiramisu  (₹190)
+  [ ] 36. Coffee Mocca  (₹190)
+  [ ] 37. Exotic Redvelvet  (₹170)
+  [ ] 38. CHOCOLATE BOMB  (₹50)
+  [ ] 39. CHOCOLATE MOUSSE  (₹90)
+  [ ] 40. CINAMON  (₹80)
+  [ ] 41. DOUBLE CHOCOLATE DOUGHNUT  (₹140)
+  [ ] 42. DOLCE DOUGHNUT  (₹140)
+  [ ] 43. KITKAT DOUGHNUT  (₹140)
+  [ ] 44. COLORED CHOCOLATE DOUGHNUT  (₹140)
+  [ ] 45. SILK BOMB  (₹140)
+  [ ] 46. ICED SPRINKLE DOUGHNUT  (₹140)
+  [ ] 47. NUTELLA DOUGHNUT  (₹150)
+  [ ] 48. STRAWBERY  MOUSSE  (₹150)
+  [ ] 49. BLACKBERRY MOUSSE  (₹180)
+  [ ] 50. CHOCOLATE MOUSSE  (₹160)
+
+--------------------------------------------------------------------------------
+CATEGORY: CAKES HALF KG-NEW (47 missing / 48 total products)
+--------------------------------------------------------------------------------
+  [ ]  1. CHOCOLATE DELIGHT  (₹450)
+  [ ]  2. CHOCOLATE CHIP DELIGHT  (₹550)
+  [ ]  3. EXOTIC BLACK FOREST GATEAU  (₹550)
+  [ ]  4. CHOCOLATE TRUFFLE  (₹600)
+  [ ]  5. DUTCH TRUFFLE GATEAU  (₹600)
+  [ ]  6. VANILLA WHITE CHOCOLATE  (₹600)
+  [ ]  7. CHOCOLATE OREO DELIGHT  (₹650)
+  [ ]  8. BLACK FOREST TRUFFLE  (₹650)
+  [ ]  9. CHOCOLATE TRUFFLE NOUGAT  (₹650)
+  [ ] 10. CHOCOLATE DELIGHT ROSE  (₹700)
+  [ ] 11. IRISH CHOCOLATE  (₹700)
+  [ ] 12. WHITE FOREST  (₹700)
+  [ ] 13. REDVELVET CHOCOLATE CAKE  (₹750)
+  [ ] 14. MOCHA VELVET CLOUD  (₹650)
+  [ ] 15. MOCHA GATEAU  (₹750)
+  [ ] 16. BLACK FOREST OLD SCHOOL  (₹850)
+  [ ] 17. CHOCOLATE TOFFEE CARAMEL  (₹900)
+  [ ] 18. CHOCOLATE HAZELTINE  (₹1000)
+  [ ] 19. MUD CHOCOLATE  (₹1200)
+  [ ] 20. MUD MEC ROCKS  (₹1400)
+  [ ] 21. CHEESE CAKE (COLD)  (₹1300)
+  [ ] 22. CHEESE CAKE (BAKED)  (₹1300)
+  [ ] 23. PINEAPPLE (REGULAR)  (₹600)
+  [ ] 24. PINEAPPLE (LOADED)  (₹700)
+  [ ] 25. FRESH STRAWBERRY  (₹650)
+  [ ] 26. MIX FRUIT GATEAU  (₹650)
+  [ ] 27. BLUEBERRY GATEAU  (₹750)
+  [ ] 28. MIX FRUIT WHITE CHOCOLATE GATEAU  (₹750)
+  [ ] 29. HONEY ALMOND GATEAU  (₹650)
+  [ ] 30. NOUGAT GATEAU  (₹650)
+  [ ] 31. RASMALAI  (₹750)
+  [ ] 32. CHOCOLATE SIN CAKE  (₹800)
+  [ ] 33. HAZELTINE SIN CAKE  (₹950)
+  [ ] 34. NUTELA SIN CAKE  (₹950)
+  [ ] 35. CHOCOLATE TOFFEE CARAMEL CAKE  (₹950)
+  [ ] 36. MANGO SIN CAKE  (₹950)
+  [ ] 37. EXOTIC RED VELVET  (₹750)
+  [ ] 38. TIRAMISU  (₹800)
+  [ ] 39. BERRY BOMB (STRAW / BLUE & BLACK BERRIES)  (₹900)
+  [ ] 40. BERRY BERRY (STRAWBERRY & BLUEBERRY)  (₹800)
+  [ ] 41. PRINT CHARGES  (₹200)
+  [ ] 42. TALL CAKE  (₹150)
+  [ ] 43. SHAPE CHARGES (PER KG)  (₹150)
+  [ ] 44. WEDDING CAKE (PER KG)  (₹300)
+  [ ] 45. FONDANT (PER GRAM)  (₹4)
+  [ ] 46. TRUFFLE ON BASE  (₹150)
+  [ ] 47. CREAM ON BASE  (₹100)
+
+--------------------------------------------------------------------------------
+CATEGORY: CAKES ONE KG-NEW (42 missing / 43 total products)
+--------------------------------------------------------------------------------
+  [ ]  1. CHOCOLATE DELIGHT  (₹900)
+  [ ]  2. CHOCOLATE CHIP DELIGHT  (₹1100)
+  [ ]  3. EXOTIC BLACK FOREST GATEAU  (₹1100)
+  [ ]  4. DUTCH TRUFFLE GATEAU  (₹1200)
+  [ ]  5. VANILLA WHITE CHOCOLATE  (₹1200)
+  [ ]  6. CHOCOLATE TRUFFLE  (₹1200)
+  [ ]  7. CHOCOLATE COOKIE DELIGHT  (₹1300)
+  [ ]  8. BLACK FOREST TRUFFLE  (₹1300)
+  [ ]  9. CHOCOLATE TRUFFLE NOUGAT  (₹1300)
+  [ ] 10. IRISH CHOCOLATE  (₹1400)
+  [ ] 11. CHOCOLATE DELIGHT ROSE  (₹1400)
+  [ ] 12. WHITE FOREST  (₹1400)
+  [ ] 13. CHOCOLATE TOFFEE CARAMEL  (₹1800)
+  [ ] 14. CHOCOLATE HAZELTINE  (₹2000)
+  [ ] 15. MUD CHOCOLATE  (₹2400)
+  [ ] 16. MUD MEC ROCKS  (₹2800)
+  [ ] 17. CHEESE CAKE (COLD)  (₹2600)
+  [ ] 18. PINEAPPLE DELIGHT (REGULAR)  (₹1200)
+  [ ] 19. PINEAPPLE DELIGHT (LOADED)  (₹1400)
+  [ ] 20. MIX FRUIT GATEAU  (₹1300)
+  [ ] 21. FRESH STRAWBERRY  (₹1300)
+  [ ] 22. BLUEBERRY GATEAU  (₹1500)
+  [ ] 23. MIX FRUIT CHOCOLATE GATEAU  (₹1500)
+  [ ] 24. HONEY ALMOND GATEAU  (₹1300)
+  [ ] 25. NOUGAT GATEAU  (₹1300)
+  [ ] 26. RASMALAI REGULAR  (₹1500)
+  [ ] 27. CHOCOLATE SIN CAKE  (₹1600)
+  [ ] 28. CHOCOLATE SIN HAZELTINE CAKE  (₹1900)
+  [ ] 29. CHOCOLATE SIN TOFFEE CARAMEL CAKE  (₹1900)
+  [ ] 30. NUTELLA SIN CAKE  (₹1900)
+  [ ] 31. MANGO SIN CAKE  (₹1900)
+  [ ] 32. EXOTIC RED VELVET  (₹1500)
+  [ ] 33. TIRAMISU  (₹1600)
+  [ ] 34. BERRY BOMB  (₹1800)
+  [ ] 35. BERRY BERRY  (₹1600)
+  [ ] 36. PRINT CHARGES  (₹300)
+  [ ] 37. TALL CAKE  (₹150)
+  [ ] 38. SHAPE CHARGES (PER KG)  (₹150)
+  [ ] 39. WEDDING CAKE (PER KG)  (₹300)
+  [ ] 40. FONDANT (PER GRAM)  (₹4)
+  [ ] 41. TRUFFLE ON BASE  (₹150)
+  [ ] 42. CREAM ON BASE  (₹100)
+
+================================================================================
+SECTION 2: MASTER ALPHABETICAL LIST OF PRODUCTS MISSING PHOTOS
+================================================================================
+
+  1. ALMOND CAKE  [HIGH TEA] — ₹330
+  2. ALMOND CHOCOLATE CROISSANT  [BAKED SNACKS] — ₹170
+  3. ALMOND COOKIES  [HIGH TEA] — ₹130
+  4. BANANA WALNUT CAKE  [HIGH TEA] — ₹200
+  5. BERRY BERRY  [CAKES ONE KG-NEW] — ₹1600
+  6. BERRY BERRY (STRAWBERRY & BLUEBERRY)  [CAKES HALF KG-NEW] — ₹800
+  7. BERRY BOMB  [CAKES ONE KG-NEW] — ₹1800
+  8. BERRY BOMB (STRAW / BLUE & BLACK BERRIES)  [CAKES HALF KG-NEW] — ₹900
+  9. BISCOFF CHEESE PASTRY  [SWEET TOOTH] — ₹220
+ 10. BLACK FOREST OLD SCHOOL  [CAKES HALF KG-NEW] — ₹850
+ 11. BLACK FOREST TRUFFLE  [CAKES HALF KG-NEW] — ₹650
+ 12. BLACK FOREST TRUFFLE  [CAKES ONE KG-NEW] — ₹1300
+ 13. BLACKBERRY MOUSSE  [SWEET TOOTH] — ₹180
+ 14. BLUEBERRY CHEESE PASTRY  [SWEET TOOTH] — ₹220
+ 15. BLUEBERRY GATEAU  [CAKES HALF KG-NEW] — ₹750
+ 16. BLUEBERRY GATEAU  [CAKES ONE KG-NEW] — ₹1500
+ 17. BLUEBERRY GATEAU  [SWEET TOOTH] — ₹120
+ 18. BLUEBERRY GATEAU  [SWEET TOOTH] — ₹175
+ 19. BLUEBERRY MUFFIN  [HIGH TEA] — ₹130
+ 20. BREAD BUNS 2 PCS  [BREADS] — ₹25
+ 21. BREAD ROLLS 2 PCS  [BREADS] — ₹25
+ 22. BREAD STICKS  [HIGH TEA] — ₹70
+ 23. BROWN BREAD  [BREADS] — ₹70
+ 24. BROWNIE (PER PC)  [HIGH TEA] — ₹100
+ 25. BROWNIE ROUND  [HIGH TEA] — ₹600
+ 26. BUTTER CROISSANT  [BAKED SNACKS] — ₹100
+ 27. BUTTER SWEET BUN 2 PCS  [BREADS] — ₹50
+ 28. CARROT CAKE 300 GMS  [HIGH TEA] — ₹130
+ 29. CASHEW COOKIES  [HIGH TEA] — ₹130
+ 30. CHEESE & GARLIC BREAD  [BREADS] — ₹50
+ 31. CHEESE CAKE (BAKED)  [CAKES HALF KG-NEW] — ₹1300
+ 32. CHEESE CAKE (COLD)  [CAKES HALF KG-NEW] — ₹1300
+ 33. CHEESE CAKE (COLD)  [CAKES ONE KG-NEW] — ₹2600
+ 34. CHEESE CROISSANT  [BAKED SNACKS] — ₹150
+ 35. CHICKEN CALZONE  [BAKED SNACKS] — ₹90
+ 36. CHICKEN CHEEZY ROLL  [BAKED SNACKS] — ₹80
+ 37. CHICKEN CHEEZY ROLL 2 PCS  [FILLING N FRIED SNACK] — Price TBD
+ 38. CHICKEN FLAKY SPINACH  [BAKED SNACKS] — ₹170
+ 39. CHICKEN FLAKY TUSKAN  [BAKED SNACKS] — ₹170
+ 40. CHICKEN MASALA PATTY  [FILLING N FRIED SNACK] — ₹100
+ 41. CHICKEN MEXICAN TOAST  [BAKED SNACKS] — ₹80
+ 42. CHICKEN MUSHROOM PUFF  [BAKED SNACKS] — ₹60
+ 43. CHICKEN PARSI PATTICE  [FILLING N FRIED SNACK] — Price TBD
+ 44. CHICKEN PUFF  [BAKED SNACKS] — ₹60
+ 45. CHICKEN SPICY BAKED ROLL  [BAKED SNACKS] — ₹80
+ 46. CHICKEN SPICY KOREAN PUFF  [BAKED SNACKS] — ₹60
+ 47. CHOCOLATE BOMB  [SWEET TOOTH] — ₹50
+ 48. CHOCOLATE CHIP COOKIES  [HIGH TEA] — ₹200
+ 49. CHOCOLATE CHIP DELIGHT  [CAKES HALF KG-NEW] — ₹550
+ 50. CHOCOLATE CHIP DELIGHT  [CAKES ONE KG-NEW] — ₹1100
+ 51. CHOCOLATE CHIP DELIGHT  [SWEET TOOTH] — ₹90
+ 52. CHOCOLATE CHIP DELIGHT  [SWEET TOOTH] — ₹120
+ 53. CHOCOLATE COOKIE DELIGHT  [CAKES ONE KG-NEW] — ₹1300
+ 54. CHOCOLATE CROISSANT  [BAKED SNACKS] — ₹150
+ 55. CHOCOLATE DELIGHT  [CAKES HALF KG-NEW] — ₹450
+ 56. CHOCOLATE DELIGHT  [CAKES ONE KG-NEW] — ₹900
+ 57. CHOCOLATE DELIGHT  [SWEET TOOTH] — ₹70
+ 58. CHOCOLATE DELIGHT  [SWEET TOOTH] — ₹110
+ 59. CHOCOLATE DELIGHT ROSE  [CAKES HALF KG-NEW] — ₹700
+ 60. CHOCOLATE DELIGHT ROSE  [CAKES ONE KG-NEW] — ₹1400
+ 61. CHOCOLATE HAZELTINE  [CAKES HALF KG-NEW] — ₹1000
+ 62. CHOCOLATE HAZELTINE  [CAKES ONE KG-NEW] — ₹2000
+ 63. CHOCOLATE MOUSSE  [SWEET TOOTH] — ₹90
+ 64. CHOCOLATE MOUSSE  [SWEET TOOTH] — ₹160
+ 65. CHOCOLATE NUTTELLA  [HIGH TEA] — ₹130
+ 66. CHOCOLATE OREO DELIGHT  [CAKES HALF KG-NEW] — ₹650
+ 67. CHOCOLATE OREO DELIGHT  [SWEET TOOTH] — ₹100
+ 68. CHOCOLATE OVERLOADED CAKE  [HIGH TEA] — ₹370
+ 69. CHOCOLATE SIN CAKE  [CAKES HALF KG-NEW] — ₹800
+ 70. CHOCOLATE SIN CAKE  [CAKES ONE KG-NEW] — ₹1600
+ 71. Chocolate Sin Cake Pastry  [SWEET TOOTH] — ₹190
+ 72. CHOCOLATE SIN HAZELTINE CAKE  [CAKES ONE KG-NEW] — ₹1900
+ 73. Chocolate Sin Hazeltine Pastry  [SWEET TOOTH] — ₹220
+ 74. CHOCOLATE SIN TOFFEE CARAMEL CAKE  [CAKES ONE KG-NEW] — ₹1900
+ 75. Chocolate Sin Toffee Caramel Pastry  [SWEET TOOTH] — ₹220
+ 76. CHOCOLATE TOFFEE CARAMEL  [CAKES HALF KG-NEW] — ₹900
+ 77. CHOCOLATE TOFFEE CARAMEL  [CAKES ONE KG-NEW] — ₹1800
+ 78. CHOCOLATE TOFFEE CARAMEL  [HIGH TEA] — ₹370
+ 79. CHOCOLATE TOFFEE CARAMEL  [SWEET TOOTH] — ₹150
+ 80. CHOCOLATE TOFFEE CARAMEL CAKE  [CAKES HALF KG-NEW] — ₹950
+ 81. CHOCOLATE TRUFFLE  [CAKES HALF KG-NEW] — ₹600
+ 82. CHOCOLATE TRUFFLE  [CAKES ONE KG-NEW] — ₹1200
+ 83. CHOCOLATE TRUFFLE  [SWEET TOOTH] — ₹100
+ 84. CHOCOLATE TRUFFLE  [SWEET TOOTH] — ₹150
+ 85. CHOCOLATE TRUFFLE NOUGAT  [CAKES HALF KG-NEW] — ₹650
+ 86. CHOCOLATE TRUFFLE NOUGAT  [CAKES ONE KG-NEW] — ₹1300
+ 87. CHOCOLATE WALNUT  [HIGH TEA] — ₹130
+ 88. CHOCOLATE WALNUT CAKE  [HIGH TEA] — ₹380
+ 89. CINAMON  [SWEET TOOTH] — ₹80
+ 90. COCONUT MACAROON  [HIGH TEA] — ₹130
+ 91. COFFEE CROISSANT  [BAKED SNACKS] — ₹170
+ 92. Coffee Mocca  [SWEET TOOTH] — ₹190
+ 93. COLORED CHOCOLATE DOUGHNUT  [SWEET TOOTH] — ₹140
+ 94. CREAM ON BASE  [CAKES HALF KG-NEW] — ₹100
+ 95. CREAM ON BASE  [CAKES ONE KG-NEW] — ₹100
+ 96. DARK FOREST CAKE  [HIGH TEA] — ₹370
+ 97. DINNER ROLL  [BREADS] — ₹30
+ 98. DOLCE DOUGHNUT  [SWEET TOOTH] — ₹140
+ 99. DOUBLE CHOCOLATE CAKE  [HIGH TEA] — ₹360
+100. DOUBLE CHOCOLATE DOUGHNUT  [SWEET TOOTH] — ₹140
+101. DUTCH TRUFFLE GATEAU  [CAKES HALF KG-NEW] — ₹600
+102. DUTCH TRUFFLE GATEAU  [CAKES ONE KG-NEW] — ₹1200
+103. DUTCH TRUFFLE GATEAU  [SWEET TOOTH] — ₹100
+104. DUTCH TRUFFLE GATEAU  [SWEET TOOTH] — ₹120
+105. EXOTIC BLACK FOREST GATEAU  [CAKES HALF KG-NEW] — ₹550
+106. EXOTIC BLACK FOREST GATEAU  [CAKES ONE KG-NEW] — ₹1100
+107. EXOTIC BLACK FOREST GATEAU  [SWEET TOOTH] — ₹90
+108. EXOTIC BLACK FOREST GATEAU  [SWEET TOOTH] — ₹120
+109. EXOTIC RED VELVET  [CAKES HALF KG-NEW] — ₹750
+110. EXOTIC RED VELVET  [CAKES ONE KG-NEW] — ₹1500
+111. Exotic Redvelvet  [SWEET TOOTH] — ₹170
+112. FONDANT (PER GRAM)  [CAKES HALF KG-NEW] — ₹4
+113. FONDANT (PER GRAM)  [CAKES ONE KG-NEW] — ₹4
+114. FRENCH LOAF  [BREADS] — ₹70
+115. FRESH STRAWBERRY  [CAKES HALF KG-NEW] — ₹650
+116. FRESH STRAWBERRY  [CAKES ONE KG-NEW] — ₹1300
+117. GARLIC BREAD  [BREADS] — ₹40
+118. GINGER COOKIES  [HIGH TEA] — ₹130
+119. HAZELTINE CHEESE PASTRY  [SWEET TOOTH] — ₹220
+120. HAZELTINE SIN CAKE  [CAKES HALF KG-NEW] — ₹950
+121. HONEY ALMOND GATEAU  [CAKES HALF KG-NEW] — ₹650
+122. HONEY ALMOND GATEAU  [CAKES ONE KG-NEW] — ₹1300
+123. HONEY ALMOND GATEAU  [SWEET TOOTH] — ₹100
+124. HONEY ALMOND GATEAU  [SWEET TOOTH] — ₹130
+125. ICED SPRINKLE DOUGHNUT  [SWEET TOOTH] — ₹140
+126. IRISH CHOCOLATE  [CAKES HALF KG-NEW] — ₹700
+127. IRISH CHOCOLATE  [CAKES ONE KG-NEW] — ₹1400
+128. IRISH CHOCOLATE  [SWEET TOOTH] — ₹110
+129. JEERA BUTTER  [HIGH TEA] — ₹80
+130. KASHMIRI ROTH  [HIGH TEA] — ₹200
+131. KITKAT DOUGHNUT  [SWEET TOOTH] — ₹140
+132. KOREAN CHILLY BUNS  [BAKED SNACKS] — ₹100
+133. LADI PAAV 6PCS  [BREADS] — ₹30
+134. MANGO SIN CAKE  [CAKES HALF KG-NEW] — ₹950
+135. MANGO SIN CAKE  [CAKES ONE KG-NEW] — ₹1900
+136. MAWA CAKE  [HIGH TEA] — ₹290
+137. MAWA CAKE  [HIGH TEA] — ₹240
+138. MILLET COOKIES  [HIGH TEA] — ₹230
+139. MIX FRUIT CAKE  [HIGH TEA] — ₹310
+140. MIX FRUIT CHOCOLATE GATEAU  [CAKES ONE KG-NEW] — ₹1500
+141. MIX FRUIT COOKIES  [HIGH TEA] — ₹130
+142. MIX FRUIT GATEAU  [CAKES HALF KG-NEW] — ₹650
+143. MIX FRUIT GATEAU  [CAKES ONE KG-NEW] — ₹1300
+144. MIX FRUIT GATEAU  [SWEET TOOTH] — ₹90
+145. MIX FRUIT GATEAU  [SWEET TOOTH] — ₹120
+146. MIX FRUIT WHITE CHOCOLATE GATEAU  [CAKES HALF KG-NEW] — ₹750
+147. MOCHA GATEAU  [CAKES HALF KG-NEW] — ₹750
+148. MOCHA VELVET CLOUD  [CAKES HALF KG-NEW] — ₹650
+149. MUD CHOCOLATE  [CAKES HALF KG-NEW] — ₹1200
+150. MUD CHOCOLATE  [CAKES ONE KG-NEW] — ₹2400
+151. MUD MEC ROCKS  [CAKES HALF KG-NEW] — ₹1400
+152. MUD MEC ROCKS  [CAKES ONE KG-NEW] — ₹2800
+153. MUD MEC ROCKS  [SWEET TOOTH] — ₹230
+154. MULTIGRAIN COOKIES  [HIGH TEA] — ₹150
+155. NOUGAT GATEAU  [CAKES HALF KG-NEW] — ₹650
+156. NOUGAT GATEAU  [CAKES ONE KG-NEW] — ₹1300
+157. NOUGAT GATEAU  [SWEET TOOTH] — ₹90
+158. NOUGAT GATEAU  [SWEET TOOTH] — ₹120
+159. NUTELA SIN CAKE  [CAKES HALF KG-NEW] — ₹950
+160. NUTELLA CROISSANT  [BAKED SNACKS] — ₹180
+161. NUTELLA DOUGHNUT  [SWEET TOOTH] — ₹150
+162. NUTELLA SIN CAKE  [CAKES ONE KG-NEW] — ₹1900
+163. Nuttela Sin Pastry  [SWEET TOOTH] — ₹230
+164. OSMANIA COOKIES  [HIGH TEA] — ₹180
+165. PINEAPPLE (LOADED)  [CAKES HALF KG-NEW] — ₹700
+166. PINEAPPLE (REGULAR)  [CAKES HALF KG-NEW] — ₹600
+167. PINEAPPLE DELIGHT  [SWEET TOOTH] — ₹90
+168. PINEAPPLE DELIGHT  [SWEET TOOTH] — ₹120
+169. PINEAPPLE DELIGHT (LOADED)  [CAKES ONE KG-NEW] — ₹1400
+170. PINEAPPLE DELIGHT (REGULAR)  [CAKES ONE KG-NEW] — ₹1200
+171. PITA BREAD 2PCS  [BREADS] — ₹30
+172. PRINT CHARGES  [CAKES HALF KG-NEW] — ₹200
+173. PRINT CHARGES  [CAKES ONE KG-NEW] — ₹300
+174. RAGI JOY COOKIES  [HIGH TEA] — ₹230
+175. RASMALAI  [CAKES HALF KG-NEW] — ₹750
+176. RASMALAI REGULAR  [CAKES ONE KG-NEW] — ₹1500
+177. REDVELVET  [SWEET TOOTH] — ₹95
+178. REDVELVET CHOCOLATE CAKE  [CAKES HALF KG-NEW] — ₹750
+179. RUSK (SWEET TOAST)  [HIGH TEA] — ₹100
+180. SHAPE CHARGES (PER KG)  [CAKES HALF KG-NEW] — ₹150
+181. SHAPE CHARGES (PER KG)  [CAKES ONE KG-NEW] — ₹150
+182. SILK BOMB  [SWEET TOOTH] — ₹140
+183. SPICY CHICKEN PUFF  [BAKED SNACKS] — ₹60
+184. STRAWBERY  MOUSSE  [SWEET TOOTH] — ₹150
+185. TALL CAKE  [CAKES HALF KG-NEW] — ₹150
+186. TALL CAKE  [CAKES ONE KG-NEW] — ₹150
+187. TIRAMISU  [CAKES HALF KG-NEW] — ₹800
+188. TIRAMISU  [CAKES ONE KG-NEW] — ₹1600
+189. Tiramisu  [SWEET TOOTH] — ₹190
+190. TRUFFLE ON BASE  [CAKES HALF KG-NEW] — ₹150
+191. TRUFFLE ON BASE  [CAKES ONE KG-NEW] — ₹150
+192. VANILLA WHITE CHOCOLATE  [CAKES HALF KG-NEW] — ₹600
+193. VANILLA WHITE CHOCOLATE  [CAKES ONE KG-NEW] — ₹1200
+194. VANILLA WHITE CHOCOLATE  [SWEET TOOTH] — ₹90
+195. VANILLA WHITE CHOCOLATE  [SWEET TOOTH] — ₹120
+196. VEG CALZONE  [BAKED SNACKS] — ₹90
+197. VEG CHEEZY ROLL  [BAKED SNACKS] — ₹80
+198. VEG DELIGHT PUFF  [BAKED SNACKS] — ₹30
+199. VEG FLAKY SPINACH  [BAKED SNACKS] — ₹170
+200. VEG FLAKY TUSKAN  [BAKED SNACKS] — ₹170
+201. VEG MEXICAN TOAST  [BAKED SNACKS] — ₹80
+202. VEG PUFF  [BAKED SNACKS] — ₹50
+203. VEG SPICY BAKED ROLL  [BAKED SNACKS] — ₹80
+204. VEG SPICY DELIGHT PUFF  [BAKED SNACKS] — ₹30
+205. VEG SPICY KOREAN PUFF  [BAKED SNACKS] — ₹60
+206. VEG SPICY PUFF  [BAKED SNACKS] — ₹50
+207. WEDDING CAKE (PER KG)  [CAKES HALF KG-NEW] — ₹300
+208. WEDDING CAKE (PER KG)  [CAKES ONE KG-NEW] — ₹300
+209. WHITE BREAD  [BREADS] — ₹50
+210. WHITE FOREST  [CAKES HALF KG-NEW] — ₹700
+211. WHITE FOREST  [CAKES ONE KG-NEW] — ₹1400
+212. WHOLE WHEAT  [HIGH TEA] — ₹100
+213. WHOLE WHEAT COOKIES  [HIGH TEA] — ₹150
+214. WHOLE WHEAT LADI PAAV 6PCS  [BREADS] — ₹40
+215. WHOLE WHEAT TOAST  [HIGH TEA] — ₹100
+
+================================================================================
+SECTION 3: PRODUCTS WITH CONFIRMED STRICT PHOTO MATCH
+================================================================================
+
+[BREADS]
+  ✓ MULTIGRAIN BREAD (₹80) ===> "MULTIGRAIN BREAD.jpeg"
+  ✓ WHOLE WHEAT BREAD (₹100) ===> "WHOLE WHEAT BREAD.jpeg"
+
+[HIGH TEA]
+  ✓ SPECIAL KHARI (₹100) ===> "SPECIAL KHARI.jpeg"
+  ✓ JEERA KHARI (₹100) ===> "JEERA KHARI.jpeg"
+  ✓ CHEESE SPIRALS (₹150) ===> "Cheese Spirals.jpeg"
+  ✓ BUTTER COOKIES (₹190) ===> "Butter Cookies.jpeg"
+
+[SWEET TOOTH]
+  ✓ CHOCO BEES (₹90) ===> "CHOCO BEES.jpeg"
+
+[CAKES HALF KG-NEW]
+  ✓ AMERICAN BITES (₹750) ===> "ICECREAM/American Bites.jpeg"
+
+[CAKES ONE KG-NEW]
+  ✓ AMERICAN BITES (₹1500) ===> "ICECREAM/American Bites.jpeg"
+
+================================================================================
+SECTION 4: PHOTOS IN FOLDER THAT DID NOT STRICTLY MATCH ANY EXCEL PRODUCT
+================================================================================
+
+The following 37 photos exist in "pnr product photos/", but their filename does
+not strictly match an exact product title in the Excel list:
+
+A. NEAR / PARTIAL MATCH CANDIDATES (May match if renamed to exact catalog title):
+  • "Chick Mushroom Puff" (Chick Mushroom Puff.jpeg)
+      Suggested Catalog Target: CHICKEN MUSHROOM PUFF [BAKED SNACKS]
+  • "Cinnamon Doughnut" (SNACKS GENERAL/Cinnamon Doughnut.jpeg)
+      Suggested Catalog Target: CINAMON [SWEET TOOTH]
+  • "Mexxican sandwich" (Mexxican sandwich.jpeg)
+      Suggested Catalog Target: VEG/CHICKEN MEXICAN TOAST [BAKED SNACKS]
+  • "SWEET TOAST" (SWEET TOAST.jpeg)
+      Suggested Catalog Target: RUSK (SWEET TOAST) [HIGH TEA]
+  • "colored doughnut" (colored doughnut.jpeg)
+      Suggested Catalog Target: COLORED CHOCOLATE DOUGHNUT [SWEET TOOTH]
+  • "sprinkled Doughnut" (sprinkled Doughnut.jpeg)
+      Suggested Catalog Target: ICED SPRINKLE DOUGHNUT [SWEET TOOTH]
+
+B. GENERIC PHOTOS (Covers a food group, but specific product photos are needed):
+  • "Calzone" (Calzone.jpeg) — Matches generic category but Excel has "VEG CALZONE" and "CHICKEN CALZONE"
+  • "FLAKY TUSKAN" (FLAKY TUSKAN.jpeg) — Matches generic category but Excel has "VEG FLAKY TUSKAN" and "CHICKEN FLAKY TUSKAN"
+  • "Khari" (Khari.jpeg) — Matches generic category but Excel has "SPECIAL KHARI" and "JEERA KHARI"
+  • "croissant" (croissant.jpeg) — Matches generic category but Excel has 6 specific croissant items
+
+C. CAFE SNACKS & ICE CREAM FLAVORS (Not listed in standard Bakery MRP sheet):
+  • "Belgian Chocolate" (ICECREAM/Belgian Chocolate.jpeg)
+  • "Black current" (ICECREAM/Black current.jpeg)
+  • "Bluberry Cheesecake" (ICECREAM/Bluberry Cheesecake.jpeg)
+  • "Burgers" (SNACKS GENERAL/Burgers.jpeg)
+  • "Chicken Mayo" (Chicken Mayo.jpeg)
+  • "Chicken Salami" (Chicken Salami.jpeg)
+  • "Chocolate Sugar free" (ICECREAM/Chocolate Sugar free.jpeg)
+  • "Coffee Walnut" (ICECREAM/Coffee Walnut.jpeg)
+  • "Cotton Candy" (ICECREAM/Cotton Candy.jpeg)
+  • "Ferrero Rocher" (ICECREAM/Ferrero Rocher.jpeg)
+  • "French Fries" (SNACKS GENERAL/French Fries.jpeg)
+  • "French Vanilla" (ICECREAM/French Vanilla.jpeg)
+  • "Kitkat Shake" (Kitkat Shake.jpeg)
+  • "Maggie" (Maggie.jpeg)
+  • "Milk Shakes" (SNACKS GENERAL/Milk Shakes.jpeg)
+  • "RajBhog" (ICECREAM/RajBhog.jpeg)
+  • "Roasted Almond" (ICECREAM/Roasted Almond.jpeg)
+  • "Rum n Raisin" (ICECREAM/Rum n Raisin.jpeg)
+  • "Salted Butter Caramel" (ICECREAM/Salted Butter Caramel.jpeg)
+  • "Vanilla Madagascar Sugar free" (ICECREAM/Vanilla Madagascar Sugar free.jpeg)
+  • "Wrap" (Wrap.jpeg)
+
+D. UNLABELED CAMERA PHOTOS (WhatsApp timestamps — Need identification):
+  • WhatsApp Image 2026-11-02 at 5.27.38 PM.jpeg
+  • WhatsApp Image 2026-11-02 at 5.27.38 PM (1).jpeg
+  • SNACKS GENERAL/WhatsApp Image 2026-11-02 at 5.27.42 PM.jpeg
+  • SNACKS GENERAL/WhatsApp Image 2026-11-02 at 5.27.44 PM (2).jpeg
+  • SNACKS GENERAL/WhatsApp Image 2026-11-02 at 5.27.44 PM.jpeg
+  • ICECREAM/WhatsApp Image 2026-11-02 at 5.27.28 PM.jpeg
+
+================================================================================
+END OF REPORT
+================================================================================
