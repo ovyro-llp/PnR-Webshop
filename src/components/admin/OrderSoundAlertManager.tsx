@@ -154,6 +154,30 @@ export default function OrderSoundAlertManager() {
     };
   }, [handleUserInteraction]);
 
+  // Helper to read acknowledged orders from localStorage to avoid polling flicker
+  const getAcknowledgedIds = (): Set<string> => {
+    if (typeof window === 'undefined') return new Set();
+    try {
+      const stored = localStorage.getItem('pnr_acknowledged_orders');
+      if (stored) {
+        const arr = JSON.parse(stored);
+        if (Array.isArray(arr)) return new Set(arr);
+      }
+    } catch {}
+    return new Set();
+  };
+
+  const addAcknowledgedIds = (ids: string[]) => {
+    if (typeof window === 'undefined') return;
+    try {
+      const existing = getAcknowledgedIds();
+      ids.forEach((id) => {
+        if (id) existing.add(id);
+      });
+      localStorage.setItem('pnr_acknowledged_orders', JSON.stringify(Array.from(existing)));
+    } catch {}
+  };
+
   // Polling for incoming confirmed, paid orders
   const fetchActiveOrders = useCallback(async () => {
     try {
@@ -167,12 +191,16 @@ export default function OrderSoundAlertManager() {
       const data = await res.json();
 
       if (data.success && Array.isArray(data.orders)) {
+        const acknowledged = getAcknowledgedIds();
         // Filter strictly to:
         // 1. Paid, non-awaiting orders
-        // 2. Unread orders (!o.isRead)
+        // 2. Unread orders (!o.isRead) AND not acknowledged in current browser session
         // 3. Belonging to this manager's outlet scope
         const newUnread = data.orders.filter((order: Order) => {
           if (order.isRead === true) return false;
+          if (acknowledged.has(order.id) || (order.orderNumber && acknowledged.has(order.orderNumber))) {
+            return false;
+          }
           if (order.orderStatus === 'AWAITING_PAYMENT') return false;
           if (order.paymentStatus !== 'COMPLETED') return false;
 
@@ -204,8 +232,10 @@ export default function OrderSoundAlertManager() {
   useEffect(() => {
     const handleLocalRead = (e: Event) => {
       const customEvent = e as CustomEvent<{ orderId: string }>;
-      if (customEvent.detail?.orderId) {
-        setUnreadOrders((prev) => prev.filter((o) => o.id !== customEvent.detail.orderId && o.orderNumber !== customEvent.detail.orderId));
+      const id = customEvent.detail?.orderId;
+      if (id) {
+        addAcknowledgedIds([id]);
+        setUnreadOrders((prev) => prev.filter((o) => o.id !== id && o.orderNumber !== id));
       }
     };
 
@@ -239,41 +269,61 @@ export default function OrderSoundAlertManager() {
     };
   }, [unreadOrders.length, isMuted]);
 
-  // Handler for cafe manager clicking the 'Read' button
-  const handleMarkAsRead = async (orderId: string) => {
-    setIsMarkingRead(orderId);
+  // Handler for cafe manager clicking the 'Read' button:
+  // Immediately stops sound, dismisses banner optimistically, and syncs in background
+  const handleMarkAsRead = async (targetOrderId?: string) => {
+    const ordersToDismiss = targetOrderId
+      ? unreadOrders.filter((o) => o.id === targetOrderId || o.orderNumber === targetOrderId)
+      : [...unreadOrders];
+
+    const idsToAcknowledge = ordersToDismiss.flatMap((o) => [o.id, o.orderNumber]).filter(Boolean) as string[];
+
+    // 1. INSTANT OPTIMISTIC UI: Dismiss alert immediately and stop audio ringing
+    addAcknowledgedIds(idsToAcknowledge);
+    setUnreadOrders((prev) =>
+      targetOrderId
+        ? prev.filter((o) => o.id !== targetOrderId && o.orderNumber !== targetOrderId)
+        : []
+    );
+
+    if (ringIntervalRef.current) {
+      clearInterval(ringIntervalRef.current);
+      ringIntervalRef.current = null;
+    }
+
+    // Broadcast read event to local components and other tabs
+    idsToAcknowledge.forEach((id) => {
+      window.dispatchEvent(
+        new CustomEvent('pnr-order-read', {
+          detail: { orderId: id },
+        })
+      );
+    });
+
+    // 2. Asynchronous Background Sync with server
     try {
-      const response = await fetch(`/api/orders/${orderId}/read`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          readBy: adminUser?.name || adminUser?.email || 'Cafe Manager',
-        }),
-      });
-
-      if (response.ok) {
-        // Immediately remove from unread orders list so ringing stops instantly
-        setUnreadOrders((prev) => prev.filter((o) => o.id !== orderId && o.orderNumber !== orderId));
-
-        // Dispatch local event to sync Orders table immediately
-        window.dispatchEvent(
-          new CustomEvent('pnr-order-read', {
-            detail: { orderId },
-          })
-        );
+      const outletSlug = !isSuperAdmin && assignedOutlets.length > 0 ? assignedOutlets[0] : 'all';
+      if (targetOrderId) {
+        await fetch(`/api/orders/${targetOrderId}/read`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            readBy: adminUser?.name || adminUser?.email || 'Cafe Manager',
+            outletSlug,
+          }),
+        }).catch(() => {});
+      } else {
+        await fetch('/api/orders/all/read', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            readBy: adminUser?.name || adminUser?.email || 'Cafe Manager',
+            outletSlug,
+          }),
+        }).catch(() => {});
       }
     } catch (err) {
-      console.error('Failed to mark order as read:', err);
-    } finally {
-      setIsMarkingRead(null);
-    }
-  };
-
-  // Handler to mark all active unread orders as read at once
-  const handleMarkAllAsRead = async () => {
-    const idsToRead = unreadOrders.map((o) => o.id);
-    for (const id of idsToRead) {
-      await handleMarkAsRead(id);
+      console.warn('Background mark order read error:', err);
     }
   };
 
@@ -370,33 +420,14 @@ export default function OrderSoundAlertManager() {
 
             {/* Action Buttons: Explicit 'Read' Button */}
             <div className="flex items-center gap-2 self-end sm:self-center">
-              {unreadOrders.length > 1 && (
-                <button
-                  onClick={handleMarkAllAsRead}
-                  disabled={Boolean(isMarkingRead)}
-                  className="px-3.5 py-2 rounded-xl bg-white/20 hover:bg-white/30 text-white text-xs font-semibold transition cursor-pointer backdrop-blur-xs"
-                >
-                  Read All ({unreadOrders.length})
-                </button>
-              )}
-
               <button
                 id="btn-acknowledge-order-read"
-                onClick={() => handleMarkAsRead(unreadOrders[0].id)}
-                disabled={Boolean(isMarkingRead)}
+                onClick={() => handleMarkAsRead()}
                 className="px-6 py-2.5 rounded-xl bg-white hover:bg-stone-100 text-rose-700 font-bold text-sm tracking-wide shadow-lg hover:shadow-xl transition transform active:scale-95 flex items-center gap-2 cursor-pointer"
+                title="Acknowledge incoming order alert and silence chime immediately"
               >
-                {isMarkingRead === unreadOrders[0].id ? (
-                  <>
-                    <span className="w-4 h-4 border-2 border-rose-700 border-t-transparent rounded-full animate-spin" />
-                    <span>Silencing...</span>
-                  </>
-                ) : (
-                  <>
-                    <CheckCircle className="w-5 h-5 text-emerald-600" />
-                    <span>Read</span>
-                  </>
-                )}
+                <CheckCircle className="w-5 h-5 text-emerald-600" />
+                <span>Read</span>
               </button>
             </div>
           </div>

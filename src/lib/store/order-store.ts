@@ -544,7 +544,34 @@ export const orderStore = {
       globalThis.__PNR_ORDERS__.unshift(dbOrder);
       return dbOrder;
     }
+    // Fallback if DB update did not return row but order exists
+    const existing = await orderStore.getOrderByIdAsync(orderId);
+    if (existing) {
+      existing.isRead = true;
+      existing.readAt = nowIso;
+      existing.readBy = readBy || existing.readBy;
+      existing.updatedAt = nowIso;
+      return existing;
+    }
     return undefined;
+  },
+
+  markAllOrdersAsRead: async (outletSlug?: string, readBy?: string): Promise<boolean> => {
+    const orders = globalThis.__PNR_ORDERS__ || [];
+    const nowIso = new Date().toISOString();
+    const normalized = outletSlug ? orderStore.normalizeOutletSlug(outletSlug) : 'all';
+
+    orders.forEach((o) => {
+      if (normalized === 'all' || orderStore.normalizeOutletSlug(o.outletSlug) === normalized) {
+        o.isRead = true;
+        o.readAt = nowIso;
+        o.readBy = readBy || o.readBy;
+        o.updatedAt = nowIso;
+      }
+    });
+
+    orderRepository.markAllOrdersAsRead(outletSlug, readBy).catch(() => {});
+    return true;
   },
 
   // Outlets & Campaigns

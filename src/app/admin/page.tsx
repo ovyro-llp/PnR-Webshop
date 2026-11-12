@@ -54,8 +54,22 @@ export default function AdminPage() {
           : `/api/orders/list?outlet=${selectedOutletFilter}`;
       const res = await fetch(url);
       const data = await res.json();
-      if (data.success) {
-        setOrders(data.orders);
+      if (data.success && Array.isArray(data.orders)) {
+        let ackSet = new Set<string>();
+        try {
+          const stored = localStorage.getItem('pnr_acknowledged_orders');
+          if (stored) {
+            const arr = JSON.parse(stored);
+            if (Array.isArray(arr)) ackSet = new Set(arr);
+          }
+        } catch {}
+
+        const reconciled = data.orders.map((o: Order) =>
+          ackSet.has(o.id) || (o.orderNumber && ackSet.has(o.orderNumber))
+            ? { ...o, isRead: true }
+            : o
+        );
+        setOrders(reconciled);
       }
     } catch (e) {
       console.error('Failed to fetch orders', e);
@@ -157,29 +171,38 @@ export default function AdminPage() {
   };
 
   const handleMarkOrderAsRead = async (orderId: string) => {
+    // 1. Optimistic Local Update
     try {
-      const res = await fetch(`/api/orders/${orderId}/read`, {
+      const stored = localStorage.getItem('pnr_acknowledged_orders');
+      const arr = stored ? JSON.parse(stored) : [];
+      if (!arr.includes(orderId)) {
+        arr.push(orderId);
+        localStorage.setItem('pnr_acknowledged_orders', JSON.stringify(arr));
+      }
+    } catch {}
+
+    setOrders((prev) =>
+      prev.map((o) =>
+        o.id === orderId || o.orderNumber === orderId
+          ? { ...o, isRead: true, readAt: new Date().toISOString() }
+          : o
+      )
+    );
+    window.dispatchEvent(new CustomEvent('pnr-order-read', { detail: { orderId } }));
+    setStatusMessage(`✓ Order marked as read`);
+    setTimeout(() => setStatusMessage(''), 3000);
+
+    // 2. Background Sync
+    try {
+      await fetch(`/api/orders/${orderId}/read`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           readBy: adminUser?.name || adminUser?.email || 'Cafe Manager',
         }),
-      });
-      const data = await res.json();
-      if (data.success) {
-        setStatusMessage(`✓ Order marked as read`);
-        setOrders((prev) =>
-          prev.map((o) =>
-            o.id === orderId || o.orderNumber === orderId
-              ? { ...o, isRead: true, readAt: new Date().toISOString() }
-              : o
-          )
-        );
-        window.dispatchEvent(new CustomEvent('pnr-order-read', { detail: { orderId } }));
-        setTimeout(() => setStatusMessage(''), 3000);
-      }
+      }).catch(() => {});
     } catch (err) {
-      console.error('Failed to mark order as read', err);
+      console.warn('Background sync error:', err);
     }
   };
 

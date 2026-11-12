@@ -46,7 +46,6 @@ CREATE INDEX IF NOT EXISTS idx_orders_created_at ON public.orders(created_at DES
 CREATE INDEX IF NOT EXISTS idx_orders_customer_phone ON public.orders(customer_phone);
 CREATE INDEX IF NOT EXISTS idx_orders_razorpay_order_id ON public.orders(razorpay_order_id);
 CREATE INDEX IF NOT EXISTS idx_orders_order_status ON public.orders(order_status);
-CREATE INDEX IF NOT EXISTS idx_orders_is_read ON public.orders(is_read);
 
 -- 2. Payment Records Ledger Table
 CREATE TABLE IF NOT EXISTS public.payment_records (
@@ -215,8 +214,8 @@ export async function ensureCoreTables(): Promise<boolean> {
       const client = await pool.connect();
       try {
         await client.query('BEGIN');
-        await client.query(SCHEMA_SQL);
-        // Ensure unique constraint on deliveries.order_id if table was created in an older run
+
+        // 1. Ensure columns exist on orders table BEFORE any new indices are built
         await client.query(`
           DO $$ 
           BEGIN 
@@ -248,16 +247,26 @@ export async function ensureCoreTables(): Promise<boolean> {
               END IF;
             END IF;
           END $$;
+        `);
 
-          -- Cleanse any legacy fake test orders or mock customers
+        // 2. Ensure core table definitions exist
+        await client.query(SCHEMA_SQL);
+
+        // 3. Create index on is_read now that column is guaranteed to exist
+        await client.query(`CREATE INDEX IF NOT EXISTS idx_orders_is_read ON public.orders(is_read);`);
+
+        // 4. Cleanse any legacy fake test orders or mock customers
+        await client.query(`
           DELETE FROM public.orders WHERE id = 'ord-101' OR order_number = 'PNR-26101' OR customer_name ILIKE '%Aditya Deshmukh%' OR customer_phone = '+91 98223 44556';
           DELETE FROM public.customers WHERE phone = '+91 98223 44556' OR phone = '9822344556' OR name ILIKE '%Aditya Deshmukh%';
         `);
+
         await client.query('COMMIT');
         return true;
       } catch (err: any) {
         await client.query('ROLLBACK');
         console.error('[PostgreSQL Schema Init Error]:', err.message);
+        initPromise = null;
         return false;
       } finally {
         client.release();

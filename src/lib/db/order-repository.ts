@@ -456,7 +456,64 @@ export const orderRepository = {
       return rowToOrder(res.rows[0]);
     } catch (err: any) {
       console.warn('[orderRepository.markOrderAsRead DB Warning]:', err.message);
+      // Auto-heal: If column is missing, add it dynamically and retry
+      if (err.message?.toLowerCase().includes('is_read')) {
+        try {
+          await pool.query(`
+            ALTER TABLE public.orders ADD COLUMN IF NOT EXISTS is_read BOOLEAN NOT NULL DEFAULT FALSE;
+            ALTER TABLE public.orders ADD COLUMN IF NOT EXISTS read_at TIMESTAMPTZ;
+            ALTER TABLE public.orders ADD COLUMN IF NOT EXISTS read_by VARCHAR(100);
+          `);
+          const retry = await pool.query(
+            `UPDATE public.orders
+             SET is_read = TRUE,
+                 read_at = NOW(),
+                 read_by = COALESCE($2, read_by),
+                 updated_at = NOW()
+             WHERE id = $1 OR order_number = $1
+             RETURNING *;`,
+            [orderId, readBy || null]
+          );
+          if (retry.rows.length > 0) return rowToOrder(retry.rows[0]);
+        } catch (retryErr: any) {
+          console.error('[orderRepository.markOrderAsRead Auto-heal Error]:', retryErr.message);
+        }
+      }
       return null;
+    }
+  },
+
+  /**
+   * Mark all unread orders as read (for an outlet or all)
+   */
+  markAllOrdersAsRead: async (outletSlug?: string, readBy?: string): Promise<boolean> => {
+    if (!process.env.DATABASE_URL?.trim()) {
+      return true;
+    }
+    await ensureCoreTables();
+    const pool = getDbPool();
+
+    try {
+      const sql = outletSlug && outletSlug !== 'all'
+        ? `UPDATE public.orders
+           SET is_read = TRUE,
+               read_at = NOW(),
+               read_by = COALESCE($2, read_by),
+               updated_at = NOW()
+           WHERE is_read = FALSE AND outlet_slug = $1;`
+        : `UPDATE public.orders
+           SET is_read = TRUE,
+               read_at = NOW(),
+               read_by = COALESCE($1, read_by),
+               updated_at = NOW()
+           WHERE is_read = FALSE;`;
+
+      const params = outletSlug && outletSlug !== 'all' ? [outletSlug, readBy || null] : [readBy || null];
+      await pool.query(sql, params);
+      return true;
+    } catch (err: any) {
+      console.warn('[orderRepository.markAllOrdersAsRead Warning]:', err.message);
+      return false;
     }
   },
 
