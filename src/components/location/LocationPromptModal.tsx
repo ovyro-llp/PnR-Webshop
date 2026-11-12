@@ -240,26 +240,26 @@ export function LocationPromptModal() {
           <button
             type="button"
             onClick={() => setActiveTab('MAP')}
-            className={`flex-1 py-1.5 rounded-lg flex items-center justify-center gap-1.5 transition cursor-pointer ${
+            className={`flex-1 py-1.5 px-2 rounded-lg flex items-center justify-center gap-1.5 transition cursor-pointer text-center ${
               activeTab === 'MAP'
                 ? 'bg-white text-stone-900 shadow-xs'
                 : 'text-stone-600 hover:text-stone-900'
             }`}
           >
-            <Map className="w-3.5 h-3.5 text-emerald-600" />
-            <span>Map Pin Selection (Recommended)</span>
+            <Map className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+            <span className="truncate">Map Pin (Recommended)</span>
           </button>
           <button
             type="button"
             onClick={() => setActiveTab('LIST')}
-            className={`flex-1 py-1.5 rounded-lg flex items-center justify-center gap-1.5 transition cursor-pointer ${
+            className={`flex-1 py-1.5 px-2 rounded-lg flex items-center justify-center gap-1.5 transition cursor-pointer text-center ${
               activeTab === 'LIST'
                 ? 'bg-white text-stone-900 shadow-xs'
                 : 'text-stone-600 hover:text-stone-900'
             }`}
           >
-            <Store className="w-3.5 h-3.5 text-amber-700" />
-            <span>Choose Bakery Outlet</span>
+            <Store className="w-3.5 h-3.5 text-amber-700 shrink-0" />
+            <span className="truncate">Choose Bakery Outlet</span>
           </button>
         </div>
 
@@ -277,14 +277,15 @@ export function LocationPromptModal() {
 
             {/* 2. Auto-filled Address Fields (Editable by customer) */}
             <div className="bg-white rounded-2xl border border-stone-200 p-3.5 space-y-3 shadow-xs">
-              <div className="flex items-center justify-between">
+              <div className="flex flex-wrap items-center justify-between gap-1.5">
                 <span className="text-[10px] font-bold uppercase tracking-wider text-stone-700 flex items-center gap-1">
-                  <Edit3 className="w-3 h-3 text-amber-600" />
+                  <Edit3 className="w-3 h-3 text-amber-600 shrink-0" />
                   <span>Verify / Edit Address Details</span>
                 </span>
                 {hasMapAutoFilled && (
-                  <span className="text-[10px] font-semibold text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
-                    Auto-filled from map
+                  <span className="text-[10px] font-semibold text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200 flex items-center gap-1">
+                    <Check className="w-3 h-3 text-emerald-600 shrink-0" />
+                    <span>Auto-filled from map</span>
                   </span>
                 )}
               </div>
@@ -324,14 +325,14 @@ export function LocationPromptModal() {
 
               {/* Fulfilling Bakery Kitchen / Outlet Choice with Closest Mention & Recommended Tag */}
               <div className="pt-2 border-t border-stone-100 space-y-1.5">
-                <div className="flex items-center justify-between">
+                <div className="flex flex-wrap items-center justify-between gap-1.5">
                   <label className="block text-[10px] font-bold text-stone-700 uppercase tracking-wider flex items-center gap-1.5">
-                    <Store className="w-3.5 h-3.5 text-amber-700" />
+                    <Store className="w-3.5 h-3.5 text-amber-700 shrink-0" />
                     <span>Fulfilling Bakery Kitchen</span>
                   </label>
-                  <div className="flex items-center gap-1.5">
+                  <div className="flex flex-wrap items-center gap-1.5">
                     <span className="text-[9px] font-bold text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200 flex items-center gap-1">
-                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-600 animate-pulse" />
+                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-600 animate-pulse shrink-0" />
                       <span>Closest: {closestOutlet.name.replace("Puffs 'n' Rolls - ", '')}</span>
                       {closestDistanceKm !== null && <span className="font-mono">({closestDistanceKm} km)</span>}
                     </span>

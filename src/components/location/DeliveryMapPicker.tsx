@@ -181,13 +181,23 @@ export function DeliveryMapPicker({
         }
       });
 
-      // Draggable Delivery Pin
+      // Draggable Delivery Pin (Precision Emerald Marker)
       const deliveryMarker = new google.maps.Marker({
         position: { lat: currentCoords.lat, lng: currentCoords.lng },
         map,
         draggable: true,
         title: 'Your Delivery Location',
-        animation: google.maps.Animation.DROP,
+        icon: {
+          url: 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(`
+            <svg width="38" height="48" viewBox="0 0 38 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M19 1.5C9.335 1.5 1.5 9.335 1.5 19C1.5 30.8 17.5 45.5 18.35 46.5C18.68 46.9 19.32 46.9 19.65 46.5C20.5 45.5 36.5 30.8 36.5 19C36.5 9.335 28.665 1.5 19 1.5Z" fill="#047857" stroke="#FFFFFF" stroke-width="2.5" stroke-linejoin="round"/>
+              <circle cx="19" cy="19" r="6.5" fill="#FFFFFF"/>
+              <circle cx="19" cy="19" r="3" fill="#047857"/>
+            </svg>
+          `),
+          scaledSize: new google.maps.Size(38, 48),
+          anchor: new google.maps.Point(19, 47),
+        },
       });
 
       deliveryMarker.addListener('dragend', () => {
@@ -286,19 +296,21 @@ export function DeliveryMapPicker({
         }
       });
 
-      // Customer Pin Icon
+      // Customer Pin Icon (Precision Symmetric Emerald SVG Marker)
       const customerPinIcon = L.divIcon({
         className: 'custom-customer-icon',
         html: `
-          <div style="position:relative;width:40px;height:48px;">
-            <div style="width:36px;height:36px;background:#047857;border:3px solid #FFFFFF;border-radius:50% 50% 50% 0;transform:rotate(-45deg);box-shadow:0 4px 16px rgba(4,120,87,0.5);display:flex;align-items:center;justify-content:center;">
-              <span style="transform:rotate(45deg);color:white;font-size:16px;">📍</span>
-            </div>
-            <div style="position:absolute;bottom:0px;left:10px;width:16px;height:6px;background:rgba(0,0,0,0.3);border-radius:50%;filter:blur(1px);"></div>
+          <div style="position:relative;width:38px;height:48px;display:flex;align-items:center;justify-content:center;pointer-events:none;">
+            <svg width="38" height="48" viewBox="0 0 38 48" fill="none" xmlns="http://www.w3.org/2000/svg" style="filter:drop-shadow(0 4px 10px rgba(4,120,87,0.45));display:block;">
+              <path d="M19 1.5C9.335 1.5 1.5 9.335 1.5 19C1.5 30.8 17.5 45.5 18.35 46.5C18.68 46.9 19.32 46.9 19.65 46.5C20.5 45.5 36.5 30.8 36.5 19C36.5 9.335 28.665 1.5 19 1.5Z" fill="#047857" stroke="#FFFFFF" stroke-width="2.5" stroke-linejoin="round"/>
+              <circle cx="19" cy="19" r="6.5" fill="#FFFFFF"/>
+              <circle cx="19" cy="19" r="3" fill="#047857"/>
+            </svg>
+            <div style="position:absolute;bottom:0px;left:50%;transform:translateX(-50%);width:16px;height:5px;background:rgba(0,0,0,0.3);border-radius:50%;filter:blur(1px);z-index:-1;"></div>
           </div>
         `,
-        iconSize: [40, 48],
-        iconAnchor: [18, 46],
+        iconSize: [38, 48],
+        iconAnchor: [19, 47],
       });
 
       const deliveryMarker = L.marker([currentCoords.lat, currentCoords.lng], {
@@ -321,6 +333,32 @@ export function DeliveryMapPicker({
       mapInstanceRef.current = map;
       deliveryMarkerRef.current = deliveryMarker;
       setActiveProvider('leaflet');
+
+      // Ensure viewport size & center recalculate properly after modal animations / layout settle
+      setTimeout(() => {
+        if (!isCancelled && mapInstanceRef.current?.invalidateSize) {
+          mapInstanceRef.current.invalidateSize();
+          mapInstanceRef.current.setView([currentCoords.lat, currentCoords.lng], 15, { animate: false });
+        }
+      }, 100);
+
+      setTimeout(() => {
+        if (!isCancelled && mapInstanceRef.current?.invalidateSize) {
+          mapInstanceRef.current.invalidateSize();
+          mapInstanceRef.current.setView([currentCoords.lat, currentCoords.lng], 15, { animate: false });
+        }
+      }, 350);
+    }
+
+    // Attach ResizeObserver to container so map recenters when modal or window resizes
+    let resizeObserver: ResizeObserver | null = null;
+    if (typeof ResizeObserver !== 'undefined' && mapContainerRef.current) {
+      resizeObserver = new ResizeObserver(() => {
+        if (mapInstanceRef.current?.invalidateSize) {
+          mapInstanceRef.current.invalidateSize();
+        }
+      });
+      resizeObserver.observe(mapContainerRef.current);
     }
 
     if (googleApiKey && googleApiKey.trim() !== '') {
@@ -339,6 +377,9 @@ export function DeliveryMapPicker({
 
     return () => {
       isCancelled = true;
+      if (resizeObserver) {
+        resizeObserver.disconnect();
+      }
       if (mapInstanceRef.current && mapInstanceRef.current.remove) {
         try {
           mapInstanceRef.current.remove();
