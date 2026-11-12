@@ -4,7 +4,6 @@ import { orderRepository } from '@/lib/db/order-repository';
 import { orderStore } from '@/lib/store/order-store';
 
 declare global {
-  // eslint-disable-next-line no-var
   var __PNR_SENT_CAPI_EVENTS__: Set<string> | undefined;
 }
 
@@ -163,17 +162,18 @@ export async function sendMetaCAPI(payload: TrackingEventPayload) {
     } catch {}
 
     return { success: res.ok, data: resJson, eventId };
-  } catch (error: any) {
-    console.error('[Meta CAPI Dispatch Error]:', error.message);
+  } catch (error: unknown) {
+    const errorMsg = error instanceof Error ? error.message : String(error);
+    console.error('[Meta CAPI Dispatch Error]:', errorMsg);
     try {
       const fullRecord = {
         ...eventRecord,
         capiStatus: 'FAILED',
-        capiResponse: { error: error.message },
+        capiResponse: { error: errorMsg },
       };
       orderStore.recordMarketingEvent(fullRecord);
       await orderRepository.recordMarketingEvent(fullRecord);
     } catch {}
-    return { success: false, error: error.message, eventId };
+    return { success: false, error: errorMsg, eventId };
   }
 }

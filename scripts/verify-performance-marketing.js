@@ -88,7 +88,7 @@ async function run() {
             if (typeof window.onFbqTrack === 'function') {
               try {
                 window.onFbqTrack(args[0], args[1], args[2], args[3], args[4]);
-              } catch (e) {}
+              } catch {}
             }
             return fn.apply(this, args);
           };

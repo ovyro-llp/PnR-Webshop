@@ -3,17 +3,37 @@ import { TrackingEventPayload } from '@/types';
 // In-Memory registry for current session
 const inMemoryTrackedEvents = new Set<string>();
 
+interface MetaPixelStub {
+  (...args: unknown[]): void;
+  callMethod?: (...args: unknown[]) => void;
+  queue: unknown[];
+  push: unknown;
+  loaded: boolean;
+  version: string;
+}
+
+interface CustomWindow extends Window {
+  fbq?: MetaPixelStub;
+  _fbq?: MetaPixelStub;
+  _initializedPixels?: Set<string>;
+}
+
 /**
  * Ensures Meta Pixel stub is initialized on window immediately
  */
 export function ensureMetaPixelInitialized(pixelId: string) {
   if (typeof window === 'undefined') return;
 
-  const win = window as any;
+  const win = window as unknown as CustomWindow;
   if (!win.fbq) {
-    const n: any = (win.fbq = function (...args: unknown[]) {
-      n.callMethod ? n.callMethod.apply(n, args) : n.queue.push(args);
-    });
+    const n = function (...args: unknown[]) {
+      if (n.callMethod) {
+        n.callMethod(...args);
+      } else {
+        n.queue.push(args);
+      }
+    } as MetaPixelStub;
+    win.fbq = n;
     if (!win._fbq) win._fbq = n;
     n.push = n;
     n.loaded = true;
