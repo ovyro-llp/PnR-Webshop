@@ -136,8 +136,8 @@ export default function HomePage() {
   return (
     <>
       <PageTracker
-        pixelId={nearestOutlet.defaultMetaPixelId}
-        googleAdsId={nearestOutlet.defaultGoogleAdsId}
+        pixelId={nearestOutlet.defaultMetaPixelId || undefined}
+        googleAdsId={nearestOutlet.defaultGoogleAdsId || undefined}
         outletSlug={nearestOutlet.slug}
       />
       <div className="min-h-screen flex flex-col bg-[#FDFCFB] overflow-x-hidden w-full">

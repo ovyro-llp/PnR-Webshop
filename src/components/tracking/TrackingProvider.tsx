@@ -54,10 +54,21 @@ export function TrackingProvider({
   initialOutletSlug,
   initialCampaignSlug,
 }: TrackingProviderProps) {
-  const [pixelId, setPixelId] = useState<string | undefined>(initialPixelId);
-  const [googleAdsId, setGoogleAdsId] = useState<string | undefined>(initialGoogleAdsId);
+  const [globalPixelId, setGlobalPixelId] = useState<string>(initialPixelId || '');
+  const [overridePixelId, setOverridePixelId] = useState<string | undefined>(undefined);
+  const [globalGoogleAdsId, setGlobalGoogleAdsId] = useState<string>(initialGoogleAdsId || '');
+  const [overrideGoogleAdsId, setOverrideGoogleAdsId] = useState<string | undefined>(undefined);
   const [outletSlug, setOutletSlug] = useState<string | undefined>(initialOutletSlug);
   const [campaignSlug, setCampaignSlug] = useState<string | undefined>(initialCampaignSlug);
+
+  const activePixelId = (overridePixelId && overridePixelId.trim()) || globalPixelId || '';
+  const activeGoogleAdsId = (overrideGoogleAdsId && overrideGoogleAdsId.trim()) || globalGoogleAdsId || '';
+
+  // Synchronize if initial server props update
+  useEffect(() => {
+    if (initialPixelId) setGlobalPixelId(initialPixelId);
+    if (initialGoogleAdsId) setGlobalGoogleAdsId(initialGoogleAdsId);
+  }, [initialPixelId, initialGoogleAdsId]);
 
   // Fetch global marketing tags configured directly from the Front-End Admin Panel
   useEffect(() => {
@@ -65,11 +76,11 @@ export function TrackingProvider({
       .then((res) => res.json())
       .then((data) => {
         if (data.success && data.tags) {
-          if (data.tags.globalMetaPixelId) {
-            setPixelId((prev) => prev || data.tags.globalMetaPixelId);
+          if (typeof data.tags.globalMetaPixelId === 'string') {
+            setGlobalPixelId(data.tags.globalMetaPixelId);
           }
-          if (data.tags.globalGoogleAdsId) {
-            setGoogleAdsId((prev) => prev || data.tags.globalGoogleAdsId);
+          if (typeof data.tags.globalGoogleAdsId === 'string') {
+            setGlobalGoogleAdsId(data.tags.globalGoogleAdsId);
           }
         }
       })
@@ -78,20 +89,19 @@ export function TrackingProvider({
 
   // Track single PageView on route or parameter changes (deduplicated)
   useEffect(() => {
-    const activePixel = pixelId;
-    if (!activePixel) return;
+    if (!activePixelId) return;
 
-    ensureMetaPixelInitialized(activePixel);
+    ensureMetaPixelInitialized(activePixelId);
     fireClientPixel(
       'PageView',
       {
         outlet: outletSlug,
         campaign: campaignSlug,
       },
-      activePixel,
+      activePixelId,
       `pv_${outletSlug || 'home'}_${campaignSlug || 'main'}`
     );
-  }, [pixelId, outletSlug, campaignSlug]);
+  }, [activePixelId, outletSlug, campaignSlug]);
 
   const setPageContext = useCallback(
     (ctx: {
@@ -100,8 +110,12 @@ export function TrackingProvider({
       pixelId?: string;
       googleAdsId?: string;
     }) => {
-      if (ctx.pixelId !== undefined) setPixelId(ctx.pixelId);
-      if (ctx.googleAdsId !== undefined) setGoogleAdsId(ctx.googleAdsId);
+      if (ctx.pixelId !== undefined) {
+        setOverridePixelId(ctx.pixelId.trim() ? ctx.pixelId.trim() : undefined);
+      }
+      if (ctx.googleAdsId !== undefined) {
+        setOverrideGoogleAdsId(ctx.googleAdsId.trim() ? ctx.googleAdsId.trim() : undefined);
+      }
       if (ctx.outletSlug !== undefined) setOutletSlug(ctx.outletSlug);
       if (ctx.campaignSlug !== undefined) setCampaignSlug(ctx.campaignSlug);
     },
@@ -117,10 +131,10 @@ export function TrackingProvider({
           campaign: campaignSlug,
           ...data,
         },
-        pixelId
+        activePixelId
       );
     },
-    [outletSlug, campaignSlug, pixelId]
+    [outletSlug, campaignSlug, activePixelId]
   );
 
   const trackAddToCart = useCallback(
@@ -145,11 +159,11 @@ export function TrackingProvider({
           outlet: outletSlug,
           campaign: campaignSlug,
         },
-        pixelId,
+        activePixelId,
         eventId
       );
     },
-    [outletSlug, campaignSlug, pixelId]
+    [outletSlug, campaignSlug, activePixelId]
   );
 
   const trackInitiateCheckout = useCallback(
@@ -174,11 +188,11 @@ export function TrackingProvider({
           outlet: outletSlug,
           campaign: campaignSlug,
         },
-        pixelId,
+        activePixelId,
         eventId
       );
     },
-    [outletSlug, campaignSlug, pixelId]
+    [outletSlug, campaignSlug, activePixelId]
   );
 
   const trackPurchase = useCallback(
@@ -213,20 +227,18 @@ export function TrackingProvider({
       };
 
       // Meta Standard Event: Purchase (Shared eventID with server CAPI for exact deduplication)
-      fireClientPixel('Purchase', payload, pixelId, orderId);
+      fireClientPixel('Purchase', payload, activePixelId, orderId);
 
       // Complementary Sale event in marketing ledger
-      fireClientPixel('Sale', payload, pixelId, `sale_${orderId}`);
+      fireClientPixel('Sale', payload, activePixelId, `sale_${orderId}`);
     },
-    [outletSlug, campaignSlug, pixelId]
+    [outletSlug, campaignSlug, activePixelId]
   );
-
-  const activePixelId = pixelId || '';
 
   const contextValue = useMemo(
     () => ({
       pixelId: activePixelId,
-      googleAdsId,
+      googleAdsId: activeGoogleAdsId,
       outletSlug,
       campaignSlug,
       setPageContext,
@@ -237,7 +249,7 @@ export function TrackingProvider({
     }),
     [
       activePixelId,
-      googleAdsId,
+      activeGoogleAdsId,
       outletSlug,
       campaignSlug,
       setPageContext,
@@ -283,22 +295,22 @@ export function TrackingProvider({
       )}
 
       {/* Dynamic Google Ads Tag Script */}
-      {googleAdsId && (
+      {activeGoogleAdsId && (
         <>
           <Script
-            id={`gtag-src-${googleAdsId}`}
+            id={`gtag-src-${activeGoogleAdsId}`}
             strategy="afterInteractive"
-            src={`https://www.googletagmanager.com/gtag/js?id=${googleAdsId}`}
+            src={`https://www.googletagmanager.com/gtag/js?id=${activeGoogleAdsId}`}
           />
           <Script
-            id={`gtag-init-${googleAdsId}`}
+            id={`gtag-init-${activeGoogleAdsId}`}
             strategy="afterInteractive"
             dangerouslySetInnerHTML={{
               __html: `
                 window.dataLayer = window.dataLayer || [];
                 function gtag(){dataLayer.push(arguments);}
                 gtag('js', new Date());
-                gtag('config', '${googleAdsId}');
+                gtag('config', '${activeGoogleAdsId}');
               `,
             }}
           />

@@ -19,6 +19,12 @@ import { dispatchToMangwale } from '@/lib/logistics/mangwale';
 import { sendMetaCAPI } from '@/lib/tracking/meta-capi';
 import { orderRepository } from '@/lib/db/order-repository';
 import { getPersistedPaymentConfig, savePersistedPaymentConfig } from '@/lib/payments/payment-config-storage';
+import {
+  getPersistedMarketingTags,
+  savePersistedMarketingTags,
+  getPersistedMarketingTagsAsync,
+  savePersistedMarketingTagsAsync,
+} from '@/lib/marketing/marketing-storage';
 
 export const DEFAULT_CATEGORIES: Category[] = [
   {
@@ -301,15 +307,7 @@ if (!globalThis.__PNR_OUTLET_STOCK__ || globalThis.__PNR_OUTLET_STOCK__.length <
 }
 
 if (!globalThis.__PNR_MARKETING_TAGS__) {
-  globalThis.__PNR_MARKETING_TAGS__ = {
-    globalMetaPixelId: process.env.NEXT_PUBLIC_META_PIXEL_ID || process.env.META_PIXEL_ID || '',
-    globalGoogleAdsId: process.env.NEXT_PUBLIC_GOOGLE_ADS_ID || '',
-    globalGtmId: process.env.NEXT_PUBLIC_GTM_ID || '',
-    tiktokPixelId: '',
-    snapchatPixelId: '',
-    metaCapiEnabled: true,
-    customHeaderScript: '',
-  };
+  globalThis.__PNR_MARKETING_TAGS__ = getPersistedMarketingTags();
 }
 
 if (!globalThis.__PNR_MARKETING_EVENTS__) {
@@ -322,6 +320,18 @@ if (!globalThis.__PNR_PAYMENT_CONFIG__) {
 
 // Trigger early pre-hydration from PostgreSQL on container startup
 if (typeof window === 'undefined' && process.env.DATABASE_URL?.trim()) {
+  orderRepository
+    .getMarketingTags()
+    .then((dbTags) => {
+      if (dbTags) {
+        globalThis.__PNR_MARKETING_TAGS__ = getPersistedMarketingTags(dbTags);
+        console.log('[Marketing Tags] Successfully pre-hydrated tracking tags from PostgreSQL on startup.');
+      }
+    })
+    .catch((err: any) => {
+      console.warn('[Marketing Tags Startup Hydration Warning]:', err.message);
+    });
+
   orderRepository
     .getSystemSetting<Partial<PaymentGatewayConfig>>('payment_gateway_config')
     .then((dbConfig) => {
@@ -787,18 +797,17 @@ export const orderStore = {
 
   // Marketing Tags Manager
   getMarketingTags: () => {
+    if (!globalThis.__PNR_MARKETING_TAGS__) {
+      globalThis.__PNR_MARKETING_TAGS__ = getPersistedMarketingTags();
+    }
     return globalThis.__PNR_MARKETING_TAGS__ || {};
   },
 
   getMarketingTagsAsync: async () => {
     try {
-      const dbTags = await orderRepository.getMarketingTags();
-      if (dbTags) {
-        globalThis.__PNR_MARKETING_TAGS__ = {
-          ...globalThis.__PNR_MARKETING_TAGS__,
-          ...dbTags,
-        };
-      }
+      const resolved = await getPersistedMarketingTagsAsync();
+      globalThis.__PNR_MARKETING_TAGS__ = resolved;
+      return resolved;
     } catch (e: any) {
       console.warn('[orderStore.getMarketingTagsAsync DB Warning]:', e.message);
     }
@@ -806,12 +815,16 @@ export const orderStore = {
   },
 
   updateMarketingTags: (tags: Record<string, unknown>) => {
-    globalThis.__PNR_MARKETING_TAGS__ = {
-      ...globalThis.__PNR_MARKETING_TAGS__,
-      ...tags,
-    };
-    orderRepository.saveMarketingTags(globalThis.__PNR_MARKETING_TAGS__).catch(() => {});
-    return globalThis.__PNR_MARKETING_TAGS__;
+    const updated = savePersistedMarketingTags(tags, globalThis.__PNR_MARKETING_TAGS__);
+    globalThis.__PNR_MARKETING_TAGS__ = updated;
+    orderRepository.saveMarketingTags(updated).catch(() => {});
+    return updated;
+  },
+
+  updateMarketingTagsAsync: async (tags: Record<string, unknown>) => {
+    const updated = await savePersistedMarketingTagsAsync(tags, globalThis.__PNR_MARKETING_TAGS__);
+    globalThis.__PNR_MARKETING_TAGS__ = updated;
+    return updated;
   },
 
   // Marketing Events In-Memory Ledger & Deduplication

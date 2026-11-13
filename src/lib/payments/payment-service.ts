@@ -337,7 +337,7 @@ export const paymentService = {
     if (outlet) {
       try {
         const campaign = orderStore.getCampaign(settledOrder.outletSlug, settledOrder.campaignSlug);
-        const tags = orderStore.getMarketingTags();
+        const tags = await orderStore.getMarketingTagsAsync();
         const pixelId = campaign?.metaPixelId || outlet.defaultMetaPixelId || (tags.globalMetaPixelId as string) || '';
         const contentIds = settledOrder.items?.map((i) => i.itemId) || [];
         const contents = settledOrder.items?.map((i) => ({
@@ -500,7 +500,7 @@ export const paymentService = {
 
           try {
             const campaign = orderStore.getCampaign(order.outletSlug, order.campaignSlug);
-            const tags = orderStore.getMarketingTags();
+            const tags = await orderStore.getMarketingTagsAsync();
             const pixelId = campaign?.metaPixelId || outlet.defaultMetaPixelId || (tags.globalMetaPixelId as string) || '';
             await sendMetaCAPI({
               eventName: 'Purchase',

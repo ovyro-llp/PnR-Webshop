@@ -33,8 +33,8 @@ export default async function OutletPage({
   return (
     <>
       <PageTracker
-        pixelId={outlet.defaultMetaPixelId}
-        googleAdsId={outlet.defaultGoogleAdsId}
+        pixelId={outlet.defaultMetaPixelId || undefined}
+        googleAdsId={outlet.defaultGoogleAdsId || undefined}
         outletSlug={outlet.slug}
       />
       <div className="min-h-screen flex flex-col bg-[#FDFCFB] overflow-x-hidden w-full">

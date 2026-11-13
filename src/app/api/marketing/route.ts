@@ -28,7 +28,7 @@ export async function POST(req: NextRequest) {
     const { action, tags, campaignData, campaignId, trackingUpdates } = body;
 
     if (action === 'UPDATE_TAGS') {
-      const updatedTags = orderStore.updateMarketingTags(tags || {});
+      const updatedTags = await orderStore.updateMarketingTagsAsync(tags || {});
       return NextResponse.json({
         success: true,
         tags: updatedTags,

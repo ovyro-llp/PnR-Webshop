@@ -34,8 +34,8 @@ export default async function CampaignLandingPage({
     (i) => !featuredItems.some((f) => f.id === i.id)
   );
 
-  const pixelId = campaign?.metaPixelId || outlet.defaultMetaPixelId;
-  const googleAdsId = campaign?.googleAdsId || outlet.defaultGoogleAdsId;
+  const pixelId = campaign?.metaPixelId || outlet.defaultMetaPixelId || undefined;
+  const googleAdsId = campaign?.googleAdsId || outlet.defaultGoogleAdsId || undefined;
 
   return (
     <>

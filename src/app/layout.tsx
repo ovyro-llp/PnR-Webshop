@@ -7,6 +7,7 @@ import { CartProvider } from '@/context/CartContext';
 import { LocationProvider } from '@/context/LocationContext';
 import { CustomerLoginModal } from '@/components/auth/CustomerLoginModal';
 import { LocationPromptModal } from '@/components/location/LocationPromptModal';
+import { orderStore } from '@/lib/store/order-store';
 
 const geistSans = Geist({
   variable: '--font-geist-sans',
@@ -37,11 +38,15 @@ export const viewport: Viewport = {
   userScalable: false,
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  const tags = await orderStore.getMarketingTagsAsync();
+  const initialPixelId = (tags.globalMetaPixelId as string) || '';
+  const initialGoogleAdsId = (tags.globalGoogleAdsId as string) || '';
+
   return (
     <html
       lang="en"
@@ -50,7 +55,10 @@ export default function RootLayout({
       <body className="min-h-full flex flex-col bg-[#FDFCFB] text-stone-900 font-sans selection:bg-stone-200 overflow-x-hidden w-full">
         <AuthProvider>
           <LocationProvider>
-            <TrackingProvider>
+            <TrackingProvider
+              initialPixelId={initialPixelId}
+              initialGoogleAdsId={initialGoogleAdsId}
+            >
               <CartProvider>
                 {children}
                 <CustomerLoginModal />
