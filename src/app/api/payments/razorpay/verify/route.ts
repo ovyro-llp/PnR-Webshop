@@ -8,7 +8,7 @@ export async function POST(req: NextRequest) {
 
     if (!razorpay_order_id || !razorpay_payment_id || !razorpay_signature) {
       return NextResponse.json(
-        { success: false, message: 'Missing Razorpay payment verification parameters' },
+        { success: false, message: 'Missing payment verification parameters' },
         { status: 400 }
       );
     }

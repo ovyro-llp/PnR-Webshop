@@ -122,7 +122,7 @@ export function OrderTrackingClient({
       desc: order.mangwale?.riderName
         ? `Rider: ${order.mangwale.riderName}`
         : order.mangwale?.taskId
-        ? 'Dispatched to Mangwale'
+        ? 'Dispatched for Delivery'
         : 'Awaiting dispatch',
       icon: Truck,
       completed: ['DISPATCHED', 'OUT_FOR_DELIVERY', 'DELIVERED'].includes(order.orderStatus),
@@ -286,7 +286,7 @@ export function OrderTrackingClient({
                     <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
                   </div>
                   <h4 className="text-base sm:text-lg font-serif font-bold text-white">
-                    Track Your Delivery on Mangwale Map
+                    Track Your Delivery on Live GPS Map
                   </h4>
                 </div>
               </div>
@@ -306,7 +306,7 @@ export function OrderTrackingClient({
             </div>
 
             <p className="text-xs text-stone-300 leading-relaxed">
-              Real-time driver location and delivery ETA powered by <strong>Mangwale Express Logistics</strong>.
+              Real-time delivery partner location and estimated doorstep arrival.
             </p>
 
             <div className="p-3 bg-stone-950/60 rounded-xl border border-stone-800/80 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 text-xs">
@@ -349,7 +349,7 @@ export function OrderTrackingClient({
                   </p>
                 ) : (
                   <p className="text-[11px] text-stone-400">
-                    Awaiting driver assignment from Mangwale
+                    Awaiting delivery partner assignment
                   </p>
                 )}
               </div>
@@ -370,13 +370,13 @@ export function OrderTrackingClient({
             <div className="p-4 bg-white rounded-2xl border border-stone-200/80 flex flex-wrap items-center justify-between gap-3 text-xs">
               <div>
                 <span className="text-[10px] uppercase tracking-wider text-stone-400 font-medium">
-                  Logistics Partner
+                  Delivery Service
                 </span>
                 <p className="font-bold text-stone-900">
-                  Mangwale Express Delivery
+                  Direct Bakery Express Delivery
                 </p>
                 <p className="text-[11px] text-stone-500 mt-0.5">
-                  Preparing order for dispatch to Mangwale
+                  Preparing fresh bakes for immediate doorstep dispatch
                 </p>
               </div>
             </div>

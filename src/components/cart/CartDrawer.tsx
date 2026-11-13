@@ -293,7 +293,7 @@ export function CartDrawer({ outletSlug, campaignSlug }: CartDrawerProps) {
       const RazorpayConstructor = (window as any).Razorpay;
       if (!RazorpayConstructor) {
         setIsSubmitting(false);
-        setSubmitError('Payment provider not available');
+        setSubmitError('Payment gateway temporarily unavailable. Please try again.');
         return;
       }
 
@@ -834,7 +834,7 @@ export function CartDrawer({ outletSlug, campaignSlug }: CartDrawerProps) {
                   </div>
 
                   <div className="space-y-2">
-                    {/* Instant Online Payment Option (Razorpay - 100% Prepaid) */}
+                    {/* Instant Online Payment Option (100% Prepaid) */}
                     <div
                       className="w-full p-3.5 rounded-2xl border text-left border-stone-900 bg-white ring-2 ring-stone-900/10 shadow-xs flex items-start gap-3"
                     >
@@ -846,10 +846,10 @@ export function CartDrawer({ outletSlug, campaignSlug }: CartDrawerProps) {
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center justify-between gap-1">
                           <span className="text-xs font-bold text-stone-900">
-                            Razorpay
+                            Instant Online Payment
                           </span>
                           <span className="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-200 shrink-0">
-                            Prepaid Online
+                            100% Secure
                           </span>
                         </div>
                         <p className="text-[11px] text-stone-500 mt-0.5">
@@ -879,7 +879,7 @@ export function CartDrawer({ outletSlug, campaignSlug }: CartDrawerProps) {
                   </div>
                   <div className="flex justify-between text-stone-500 items-center">
                     <div className="flex items-center gap-1.5">
-                      <span>Mangwale Doorstep Delivery</span>
+                      <span>Direct Doorstep Delivery</span>
                       {deliveryQuote?.distanceKm && (
                         <span className="text-[10px] font-mono bg-stone-100 text-stone-700 px-1.5 py-0.5 rounded font-semibold">
                           {Number(deliveryQuote.distanceKm).toFixed(1)} km
@@ -927,7 +927,7 @@ export function CartDrawer({ outletSlug, campaignSlug }: CartDrawerProps) {
                     <ArrowRight className="w-3.5 h-3.5" />
                   </button>
                   <p className="text-[10px] text-amber-900 font-semibold text-center flex items-center justify-center gap-1">
-                    <span>* Required for 30–45m Mangwale rider delivery</span>
+                    <span>* Exact map pinpoint ensures guaranteed 25–40m doorstep bakery dispatch</span>
                   </p>
                 </>
               ) : (
@@ -938,10 +938,10 @@ export function CartDrawer({ outletSlug, campaignSlug }: CartDrawerProps) {
                   className="w-full py-3.5 bg-[#1C1917] hover:bg-stone-800 active:scale-[0.99] text-white rounded-full font-bold text-xs uppercase tracking-wider transition shadow-sm flex items-center justify-center gap-2 disabled:opacity-60 cursor-pointer"
                 >
                   {isSubmitting ? (
-                    <span>Opening Razorpay Checkout...</span>
+                    <span>Opening Secure Checkout...</span>
                   ) : (
                     <>
-                      <span>Pay with Razorpay • ₹{total}</span>
+                      <span>Pay Securely • ₹{total}</span>
                       <ArrowRight className="w-3.5 h-3.5" />
                     </>
                   )}
@@ -950,7 +950,7 @@ export function CartDrawer({ outletSlug, campaignSlug }: CartDrawerProps) {
 
               <div className="flex items-center justify-center gap-1.5 text-[10px] text-stone-400 text-center">
                 <ShieldCheck className="w-3 h-3 text-stone-400" />
-                <span>100% Quality Guaranteed • Fresh Oven Bakes • Secure Razorpay Payment</span>
+                <span>100% Quality Guaranteed • Fresh Oven Bakes • 256-Bit SSL Encrypted Payment</span>
               </div>
             </div>
           )}
@@ -980,7 +980,7 @@ export function CartDrawer({ outletSlug, campaignSlug }: CartDrawerProps) {
             <div className="p-2.5 bg-amber-50 border border-amber-200/80 rounded-2xl flex items-center gap-2 text-xs text-amber-900">
               <MapPin className="w-3.5 h-3.5 text-amber-600 shrink-0" />
               <span>
-                <strong>Required for Delivery:</strong> Pin your exact doorstep for 30–45m rider delivery.
+                <strong>Required for Delivery:</strong> Pin your exact doorstep for 25–40m express bakery delivery.
               </span>
             </div>
 

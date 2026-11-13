@@ -230,7 +230,7 @@ export default function AccountPage() {
                               target="_blank"
                               rel="noopener noreferrer"
                               className="px-3 py-1.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition"
-                              title="Track delivery on Mangwale Live GPS Map"
+                              title="Track delivery on Live GPS Map"
                             >
                               <Truck className="w-3.5 h-3.5 text-emerald-600" />
                               <span>Live Map</span>

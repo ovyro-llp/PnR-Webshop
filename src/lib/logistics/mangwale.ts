@@ -224,7 +224,7 @@ export async function getMangwaleDeliveryQuote({
             priceBreakdown: localRateCard.priceBreakdown,
             estimatedMinutes: localRateCard.estimatedMinutes,
             source: 'MANGWALE_LIVE_API',
-            message: 'Selected location is outside active Mangwale delivery zones in Nashik.',
+            message: 'Selected location is outside active delivery zones in Nashik.',
           };
         }
       }

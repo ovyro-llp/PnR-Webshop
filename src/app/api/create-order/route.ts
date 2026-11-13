@@ -47,7 +47,7 @@ export async function POST(req: NextRequest) {
     });
   } catch (error: unknown) {
     console.error('Razorpay create-order legacy endpoint error:', error);
-    const message = error instanceof Error ? error.message : 'Failed to create Razorpay order';
+    const message = error instanceof Error ? error.message : 'Failed to create payment order';
     return NextResponse.json({ error: message }, { status: 500 });
   }
 }

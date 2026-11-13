@@ -83,7 +83,7 @@ export function RazorpayCheckoutButton({
       // 2. Load Razorpay script
       const scriptReady = await loadScript();
       if (!scriptReady) {
-        throw new Error('Razorpay SDK failed to load. Please check your network connection.');
+        throw new Error('Payment gateway SDK failed to load. Please check your network connection.');
       }
 
       const keyId =
@@ -191,7 +191,7 @@ export function RazorpayCheckoutButton({
             <span>Processing...</span>
           </>
         ) : (
-          children || <span>Pay with Razorpay</span>
+          children || <span>Pay Securely Online</span>
         )}
       </button>
       {errorMessage && (
