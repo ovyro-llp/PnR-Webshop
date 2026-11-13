@@ -58,8 +58,6 @@ export async function POST(req: NextRequest) {
       campaign?.metaPixelId ||
       outlet?.defaultMetaPixelId ||
       (tags.globalMetaPixelId as string) ||
-      process.env.META_PIXEL_ID ||
-      process.env.NEXT_PUBLIC_META_PIXEL_ID ||
       '';
 
     // Hash user data for privacy & match quality

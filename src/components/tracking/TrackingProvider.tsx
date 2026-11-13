@@ -59,28 +59,26 @@ export function TrackingProvider({
   const [outletSlug, setOutletSlug] = useState<string | undefined>(initialOutletSlug);
   const [campaignSlug, setCampaignSlug] = useState<string | undefined>(initialCampaignSlug);
 
-  // If no initial pixel ID passed, fetch global marketing tags from API
+  // Fetch global marketing tags configured directly from the Front-End Admin Panel
   useEffect(() => {
-    if (!pixelId) {
-      fetch('/api/marketing')
-        .then((res) => res.json())
-        .then((data) => {
-          if (data.success && data.tags) {
-            if (data.tags.globalMetaPixelId) {
-              setPixelId((prev) => prev || data.tags.globalMetaPixelId);
-            }
-            if (data.tags.globalGoogleAdsId) {
-              setGoogleAdsId((prev) => prev || data.tags.globalGoogleAdsId);
-            }
+    fetch('/api/marketing')
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.success && data.tags) {
+          if (data.tags.globalMetaPixelId) {
+            setPixelId((prev) => prev || data.tags.globalMetaPixelId);
           }
-        })
-        .catch(() => {});
-    }
-  }, [pixelId]);
+          if (data.tags.globalGoogleAdsId) {
+            setGoogleAdsId((prev) => prev || data.tags.globalGoogleAdsId);
+          }
+        }
+      })
+      .catch(() => {});
+  }, []);
 
   // Track single PageView on route or parameter changes (deduplicated)
   useEffect(() => {
-    const activePixel = pixelId || process.env.NEXT_PUBLIC_META_PIXEL_ID;
+    const activePixel = pixelId;
     if (!activePixel) return;
 
     ensureMetaPixelInitialized(activePixel);
@@ -223,7 +221,7 @@ export function TrackingProvider({
     [outletSlug, campaignSlug, pixelId]
   );
 
-  const activePixelId = pixelId || process.env.NEXT_PUBLIC_META_PIXEL_ID || '';
+  const activePixelId = pixelId || '';
 
   const contextValue = useMemo(
     () => ({

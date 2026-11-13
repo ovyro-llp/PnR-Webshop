@@ -43,12 +43,14 @@ export function hashPhoneForMeta(rawPhone: string): string | undefined {
  * Enforces server-side deduplication using event_name and orderId/eventId.
  */
 export async function sendMetaCAPI(payload: TrackingEventPayload) {
-  const pixelId = payload.pixelId || process.env.META_PIXEL_ID || process.env.NEXT_PUBLIC_META_PIXEL_ID;
-  const accessToken = process.env.META_CAPI_ACCESS_TOKEN;
+  // Authoritatively load front-end configured marketing tags
+  const tags = await orderStore.getMarketingTagsAsync();
+  const pixelId = payload.pixelId || (tags.globalMetaPixelId as string) || '';
+  const accessToken = (tags.metaCapiAccessToken as string) || process.env.META_CAPI_ACCESS_TOKEN;
   const eventId = payload.orderId || payload.eventId || `evt_${Date.now()}_${Math.random().toString(36).substring(7)}`;
 
   if (!pixelId) {
-    console.log('[Meta CAPI] No Meta Pixel ID configured, skipping server CAPI dispatch');
+    console.log('[Meta CAPI] No Meta Pixel ID configured in front-end, skipping server CAPI dispatch');
     return { success: false, error: 'No Pixel ID configured', eventId };
   }
 

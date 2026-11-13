@@ -129,7 +129,7 @@ export function fireClientPixel(
     dataLayer?: unknown[];
   };
 
-  const activePixel = pixelId || process.env.NEXT_PUBLIC_META_PIXEL_ID;
+  const activePixel = pixelId;
   if (activePixel) {
     ensureMetaPixelInitialized(activePixel);
   }
