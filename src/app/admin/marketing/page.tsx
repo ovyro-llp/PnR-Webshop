@@ -339,7 +339,7 @@ export default function MarketingViewPage() {
                     type="text"
                     value={tags.globalMetaPixelId}
                     onChange={(e) => setTags({ ...tags, globalMetaPixelId: e.target.value })}
-                    placeholder="e.g. 999888777666555"
+                    placeholder="Enter your Meta Pixel ID (e.g. 123456789012345)"
                     className="w-full bg-stone-50 border border-stone-200 rounded-xl px-3.5 py-2 text-xs font-mono text-stone-900 focus:outline-none focus:border-stone-500"
                   />
                   <span className="text-[10px] text-stone-500 mt-1 block">

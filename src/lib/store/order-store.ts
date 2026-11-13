@@ -302,9 +302,9 @@ if (!globalThis.__PNR_OUTLET_STOCK__ || globalThis.__PNR_OUTLET_STOCK__.length <
 
 if (!globalThis.__PNR_MARKETING_TAGS__) {
   globalThis.__PNR_MARKETING_TAGS__ = {
-    globalMetaPixelId: '999888777666555',
-    globalGoogleAdsId: 'AW-987654300',
-    globalGtmId: 'GTM-PNR2026',
+    globalMetaPixelId: process.env.NEXT_PUBLIC_META_PIXEL_ID || process.env.META_PIXEL_ID || '',
+    globalGoogleAdsId: process.env.NEXT_PUBLIC_GOOGLE_ADS_ID || '',
+    globalGtmId: process.env.NEXT_PUBLIC_GTM_ID || '',
     tiktokPixelId: '',
     snapchatPixelId: '',
     metaCapiEnabled: true,

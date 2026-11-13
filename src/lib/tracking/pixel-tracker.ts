@@ -129,27 +129,21 @@ export function fireClientPixel(
     dataLayer?: unknown[];
   };
 
-  const activePixel = pixelId || '999888777666555';
-  ensureMetaPixelInitialized(activePixel);
+  const activePixel = pixelId || process.env.NEXT_PUBLIC_META_PIXEL_ID;
+  if (activePixel) {
+    ensureMetaPixelInitialized(activePixel);
+  }
 
   try {
     // Meta Pixel Client Dispatch with eventID for deduplication
-    if (typeof win.fbq === 'function') {
+    if (typeof win.fbq === 'function' && activePixel) {
       const options = eventId ? { eventID: eventId } : undefined;
-      if (pixelId) {
-        if (options) {
-          win.fbq('trackSingle', pixelId, eventName, data, options);
-        } else {
-          win.fbq('trackSingle', pixelId, eventName, data);
-        }
+      if (options) {
+        win.fbq('trackSingle', activePixel, eventName, data, options);
       } else {
-        if (options) {
-          win.fbq('track', eventName, data, options);
-        } else {
-          win.fbq('track', eventName, data);
-        }
+        win.fbq('trackSingle', activePixel, eventName, data);
       }
-      console.log(`[Meta Pixel Client] ${eventName} (eventID: ${eventId || 'none'})`, { pixelId, data });
+      console.log(`[Meta Pixel Client] ${eventName} (eventID: ${eventId || 'none'})`, { pixelId: activePixel, data });
     }
 
     // Google Ads / Analytics Dispatch

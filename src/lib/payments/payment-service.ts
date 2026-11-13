@@ -338,7 +338,7 @@ export const paymentService = {
       try {
         const campaign = orderStore.getCampaign(settledOrder.outletSlug, settledOrder.campaignSlug);
         const tags = orderStore.getMarketingTags();
-        const pixelId = campaign?.metaPixelId || outlet.defaultMetaPixelId || (tags.globalMetaPixelId as string) || '999888777666555';
+        const pixelId = campaign?.metaPixelId || outlet.defaultMetaPixelId || (tags.globalMetaPixelId as string) || process.env.META_PIXEL_ID || process.env.NEXT_PUBLIC_META_PIXEL_ID;
         const contentIds = settledOrder.items?.map((i) => i.itemId) || [];
         const contents = settledOrder.items?.map((i) => ({
           id: i.itemId,
@@ -349,7 +349,7 @@ export const paymentService = {
         // Meta standard Purchase event (Server CAPI)
         await sendMetaCAPI({
           eventName: 'Purchase',
-          pixelId,
+          pixelId: pixelId || '',
           outletSlug: settledOrder.outletSlug,
           campaignSlug: settledOrder.campaignSlug,
           value: settledOrder.total,
@@ -369,7 +369,7 @@ export const paymentService = {
           orderId: settledOrder.orderNumber,
           eventName: 'Sale',
           eventId: `sale_${settledOrder.orderNumber}`,
-          pixelId,
+          pixelId: pixelId || '',
           outletSlug: settledOrder.outletSlug,
           campaignSlug: settledOrder.campaignSlug,
           value: settledOrder.total,
@@ -501,10 +501,10 @@ export const paymentService = {
           try {
             const campaign = orderStore.getCampaign(order.outletSlug, order.campaignSlug);
             const tags = orderStore.getMarketingTags();
-            const pixelId = campaign?.metaPixelId || outlet.defaultMetaPixelId || (tags.globalMetaPixelId as string) || '999888777666555';
+            const pixelId = campaign?.metaPixelId || outlet.defaultMetaPixelId || (tags.globalMetaPixelId as string) || process.env.META_PIXEL_ID || process.env.NEXT_PUBLIC_META_PIXEL_ID;
             await sendMetaCAPI({
               eventName: 'Purchase',
-              pixelId,
+              pixelId: pixelId || '',
               outletSlug: order.outletSlug,
               campaignSlug: order.campaignSlug,
               value: order.total,

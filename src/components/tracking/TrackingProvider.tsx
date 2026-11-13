@@ -80,7 +80,9 @@ export function TrackingProvider({
 
   // Track single PageView on route or parameter changes (deduplicated)
   useEffect(() => {
-    const activePixel = pixelId || '999888777666555';
+    const activePixel = pixelId || process.env.NEXT_PUBLIC_META_PIXEL_ID;
+    if (!activePixel) return;
+
     ensureMetaPixelInitialized(activePixel);
     fireClientPixel(
       'PageView',
@@ -221,7 +223,7 @@ export function TrackingProvider({
     [outletSlug, campaignSlug, pixelId]
   );
 
-  const activePixelId = pixelId || '999888777666555';
+  const activePixelId = pixelId || process.env.NEXT_PUBLIC_META_PIXEL_ID || '';
 
   const contextValue = useMemo(
     () => ({

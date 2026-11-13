@@ -58,7 +58,9 @@ export async function POST(req: NextRequest) {
       campaign?.metaPixelId ||
       outlet?.defaultMetaPixelId ||
       (tags.globalMetaPixelId as string) ||
-      '999888777666555';
+      process.env.META_PIXEL_ID ||
+      process.env.NEXT_PUBLIC_META_PIXEL_ID ||
+      '';
 
     // Hash user data for privacy & match quality
     const hashedPhone = userData?.phone ? hashPhoneForMeta(userData.phone) : undefined;

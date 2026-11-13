@@ -43,9 +43,14 @@ export function hashPhoneForMeta(rawPhone: string): string | undefined {
  * Enforces server-side deduplication using event_name and orderId/eventId.
  */
 export async function sendMetaCAPI(payload: TrackingEventPayload) {
-  const pixelId = payload.pixelId || process.env.META_PIXEL_ID || '999888777666555';
+  const pixelId = payload.pixelId || process.env.META_PIXEL_ID || process.env.NEXT_PUBLIC_META_PIXEL_ID;
   const accessToken = process.env.META_CAPI_ACCESS_TOKEN;
   const eventId = payload.orderId || payload.eventId || `evt_${Date.now()}_${Math.random().toString(36).substring(7)}`;
+
+  if (!pixelId) {
+    console.log('[Meta CAPI] No Meta Pixel ID configured, skipping server CAPI dispatch');
+    return { success: false, error: 'No Pixel ID configured', eventId };
+  }
 
   // Strict Server-Side Deduplication Guard
   const dedupKey = `${payload.eventName}_${eventId}`;
