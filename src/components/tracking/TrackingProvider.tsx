@@ -265,8 +265,9 @@ export function TrackingProvider({
       {/* Dynamic Meta Pixel Script - Injected Once, Single PageView */}
       {activePixelId && (
         <>
-          <script
+          <Script
             id={`meta-pixel-${activePixelId}`}
+            strategy="afterInteractive"
             dangerouslySetInnerHTML={{
               __html: `
                 !function(f,b,e,v,n,t,s)
@@ -278,6 +279,7 @@ export function TrackingProvider({
                 s.parentNode.insertBefore(t,s)}(window, document,'script',
                 'https://connect.facebook.net/en_US/fbevents.js');
                 fbq('init', '${activePixelId}');
+                fbq('track', 'PageView');
               `,
             }}
           />

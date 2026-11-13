@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { CampaignAnalytics } from '@/types';
+import { extractMetaPixelId } from '@/lib/tracking/pixel-utils';
 import {
   SlidersHorizontal,
   Copy,
@@ -200,13 +201,21 @@ export default function MarketingViewPage() {
     setIsSaving(true);
     setStatusMessage('');
 
+    const cleanPixelId = extractMetaPixelId(tags.globalMetaPixelId);
+    const sanitizedTags = {
+      ...tags,
+      globalMetaPixelId: cleanPixelId,
+    };
+    // Keep local UI state in sync with sanitized pixel ID
+    setTags(sanitizedTags);
+
     try {
       const res = await fetch('/api/marketing', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           action: 'UPDATE_TAGS',
-          tags,
+          tags: sanitizedTags,
         }),
       });
       const data = await res.json();
@@ -331,18 +340,30 @@ export default function MarketingViewPage() {
 
               <div className="space-y-3">
                 <div>
-                  <label className="text-xs text-stone-700 block font-semibold mb-1">
-                    Global Meta Pixel ID
-                  </label>
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="text-xs text-stone-700 block font-semibold">
+                      Global Meta Pixel ID
+                    </label>
+                    {tags.globalMetaPixelId && (
+                      <span className="text-[10px] text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200 font-mono font-semibold">
+                        ID: {extractMetaPixelId(tags.globalMetaPixelId)}
+                      </span>
+                    )}
+                  </div>
                   <input
                     type="text"
                     value={tags.globalMetaPixelId}
-                    onChange={(e) => setTags({ ...tags, globalMetaPixelId: e.target.value })}
-                    placeholder="Enter your Meta Pixel ID (e.g. 123456789012345)"
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      // If user pastes full code snippet, auto-extract the numeric ID immediately
+                      const extracted = extractMetaPixelId(val);
+                      setTags({ ...tags, globalMetaPixelId: val.includes('<script') || val.includes('fbq(') ? extracted : val });
+                    }}
+                    placeholder="Enter your Meta Pixel ID or paste Meta Pixel code snippet"
                     className="w-full bg-stone-50 border border-stone-200 rounded-xl px-3.5 py-2 text-xs font-mono text-stone-900 focus:outline-none focus:border-stone-500"
                   />
                   <span className="text-[10px] text-stone-500 mt-1 block">
-                    Fires standard PageView, ViewContent, AddToCart, InitiateCheckout &amp; Purchase events.
+                    Accepts numeric ID (e.g. 1234567890) or full Meta Pixel base code snippet. Automatically sanitized.
                   </span>
                 </div>
 

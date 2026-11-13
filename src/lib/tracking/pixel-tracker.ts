@@ -1,4 +1,5 @@
 import { TrackingEventPayload } from '@/types';
+import { extractMetaPixelId } from '@/lib/tracking/pixel-utils';
 
 // In-Memory registry for current session
 const inMemoryTrackedEvents = new Set<string>();
@@ -51,11 +52,12 @@ export function ensureMetaPixelInitialized(pixelId: string) {
     }
   }
 
-  if (pixelId && (!win._initializedPixels || !win._initializedPixels.has(pixelId))) {
+  const cleanId = extractMetaPixelId(pixelId);
+  if (cleanId && (!win._initializedPixels || !win._initializedPixels.has(cleanId))) {
     if (!win._initializedPixels) win._initializedPixels = new Set<string>();
-    win._initializedPixels.add(pixelId);
-    win.fbq('init', pixelId);
-    console.log(`[Meta Pixel Initialized] Pixel ID: ${pixelId}`);
+    win._initializedPixels.add(cleanId);
+    win.fbq('init', cleanId);
+    console.log(`[Meta Pixel Initialized] Pixel ID: ${cleanId}`);
   }
 }
 
@@ -110,9 +112,11 @@ export function fireClientPixel(
 ) {
   if (typeof window === 'undefined') return;
 
-  // Compute unique deduplication key
+  const activePixel = extractMetaPixelId(pixelId);
+
+  // Compute unique deduplication key scoped to active pixel
   const uniqueKey = eventId || (data.order_id as string) || (data.orderNumber as string);
-  const dedupKey = uniqueKey ? `${eventName}_${uniqueKey}` : '';
+  const dedupKey = uniqueKey ? `${eventName}_${uniqueKey}_${activePixel || 'default'}` : '';
 
   // Prevent duplicate firing if already tracked
   if (dedupKey && isClientEventTracked(dedupKey)) {
@@ -129,7 +133,6 @@ export function fireClientPixel(
     dataLayer?: unknown[];
   };
 
-  const activePixel = pixelId;
   if (activePixel) {
     ensureMetaPixelInitialized(activePixel);
   }

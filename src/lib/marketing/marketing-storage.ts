@@ -1,6 +1,9 @@
 import fs from 'fs';
 import path from 'path';
 import { orderRepository } from '@/lib/db/order-repository';
+import { extractMetaPixelId } from '@/lib/tracking/pixel-utils';
+
+export { extractMetaPixelId };
 
 export interface MarketingTagsConfig {
   globalMetaPixelId: string;
@@ -17,7 +20,7 @@ export interface MarketingTagsConfig {
 const CONFIG_FILE_PATH = path.join(process.cwd(), 'src/lib/data/marketing-tags.json');
 
 const DEFAULT_MARKETING_TAGS: MarketingTagsConfig = {
-  globalMetaPixelId: process.env.NEXT_PUBLIC_META_PIXEL_ID || process.env.META_PIXEL_ID || '',
+  globalMetaPixelId: extractMetaPixelId(process.env.NEXT_PUBLIC_META_PIXEL_ID || process.env.META_PIXEL_ID || ''),
   globalGoogleAdsId: process.env.NEXT_PUBLIC_GOOGLE_ADS_ID || '',
   globalGtmId: process.env.NEXT_PUBLIC_GTM_ID || '',
   tiktokPixelId: '',
@@ -43,11 +46,17 @@ export function getPersistedMarketingTags(
     console.warn('[MarketingStorage] Failed to read marketing-tags.json:', err.message);
   }
 
-  return {
+  const merged = {
     ...DEFAULT_MARKETING_TAGS,
     ...fileConfig,
     ...overrideConfig,
   };
+
+  if (merged.globalMetaPixelId) {
+    merged.globalMetaPixelId = extractMetaPixelId(merged.globalMetaPixelId);
+  }
+
+  return merged;
 }
 
 /**
@@ -57,11 +66,23 @@ export function savePersistedMarketingTags(
   updates: Partial<MarketingTagsConfig>,
   current?: Partial<MarketingTagsConfig>
 ): MarketingTagsConfig {
+  const sanitizedUpdates = { ...updates };
+  if (sanitizedUpdates.globalMetaPixelId !== undefined) {
+    sanitizedUpdates.globalMetaPixelId = extractMetaPixelId(sanitizedUpdates.globalMetaPixelId);
+  }
+  // If no explicit pixel ID was provided but customHeaderScript contains a pixel script, extract it as fallback
+  if (!sanitizedUpdates.globalMetaPixelId && sanitizedUpdates.customHeaderScript) {
+    const extracted = extractMetaPixelId(sanitizedUpdates.customHeaderScript);
+    if (extracted) {
+      sanitizedUpdates.globalMetaPixelId = extracted;
+    }
+  }
+
   const merged: MarketingTagsConfig = {
     ...DEFAULT_MARKETING_TAGS,
     ...getPersistedMarketingTags(),
     ...current,
-    ...updates,
+    ...sanitizedUpdates,
   };
 
   try {

@@ -33,6 +33,8 @@ import {
   Tag,
   FolderTree,
   ChevronRight,
+  RotateCcw,
+  Archive,
 } from 'lucide-react';
 import Image from 'next/image';
 
@@ -98,6 +100,7 @@ export default function OutletInventoryPage() {
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [selectedCategory, setSelectedCategory] = useState<string>('ALL');
   const [selectedSubCategory, setSelectedSubCategory] = useState<string>('ALL');
+  const [catalogViewStatus, setCatalogViewStatus] = useState<'active' | 'archived'>('active');
 
   // Master Catalog Search & Filter inside Assign Drawer for Outlet Manager
   const [drawerSearchQuery, setDrawerSearchQuery] = useState<string>('');
@@ -173,7 +176,7 @@ export default function OutletInventoryPage() {
 
   const fetchMasterProducts = async () => {
     try {
-      const res = await fetch('/api/products');
+      const res = await fetch('/api/products?includeArchived=true');
       const data = await res.json();
       if (data.success && data.products) {
         setMasterProducts(data.products);
@@ -724,6 +727,30 @@ export default function OutletInventoryPage() {
     }
   };
 
+  // Restore / Unarchive Master Product
+  const handleRestoreProduct = async (id: string, name: string) => {
+    try {
+      const res = await fetch('/api/products', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'RESTORE_PRODUCT',
+          id,
+        }),
+      });
+
+      const data = await res.json();
+      if (data.success) {
+        setStatusMessage(`✓ Product "${name}" restored to active catalog`);
+        fetchMasterProducts();
+        fetchInventory(selectedOutlet);
+        setTimeout(() => setStatusMessage(''), 3000);
+      }
+    } catch (err) {
+      console.error('Restore error', err);
+    }
+  };
+
   // Filter Active Stock Items
   const filteredStockItems = stockItems.filter((item) => {
     const matchesSearch =
@@ -735,8 +762,15 @@ export default function OutletInventoryPage() {
 
   const activeSubCategoryParent = categories.find((c) => c.id === selectedCategoryForSub);
 
+  const activeMasterCount = masterProducts.filter((p) => !p.isArchived).length;
+  const archivedMasterCount = masterProducts.filter((p) => Boolean(p.isArchived)).length;
+
   // Filter Master Products
   const filteredMasterProducts = masterProducts.filter((product) => {
+    const isArchived = Boolean(product.isArchived);
+    if (catalogViewStatus === 'archived' && !isArchived) return false;
+    if (catalogViewStatus === 'active' && isArchived) return false;
+
     const matchesSearch =
       product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       product.category.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -749,6 +783,7 @@ export default function OutletInventoryPage() {
 
   // Filter Master Products inside Assign Drawer for Outlet Manager
   const filteredDrawerProducts = masterProducts.filter((product) => {
+    if (product.isArchived) return false;
     const matchesSearch =
       !drawerSearchQuery ||
       product.name.toLowerCase().includes(drawerSearchQuery.toLowerCase()) ||
@@ -1126,7 +1161,34 @@ export default function OutletInventoryPage() {
               </p>
             </div>
 
-            <div className="flex items-center gap-2 shrink-0">
+            <div className="flex flex-wrap items-center gap-2 shrink-0">
+              {/* Active vs Archived Filter Pill */}
+              <div className="flex items-center gap-1 bg-stone-100 p-1 rounded-full border border-stone-200">
+                <button
+                  type="button"
+                  onClick={() => setCatalogViewStatus('active')}
+                  className={`px-3 py-1.5 rounded-full text-xs font-semibold transition cursor-pointer ${
+                    catalogViewStatus === 'active'
+                      ? 'bg-[#1C1917] text-white shadow-xs'
+                      : 'text-stone-600 hover:text-stone-900'
+                  }`}
+                >
+                  Active ({activeMasterCount})
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setCatalogViewStatus('archived')}
+                  className={`px-3 py-1.5 rounded-full text-xs font-semibold transition flex items-center gap-1.5 cursor-pointer ${
+                    catalogViewStatus === 'archived'
+                      ? 'bg-amber-700 text-white shadow-xs'
+                      : 'text-stone-600 hover:text-stone-900'
+                  }`}
+                >
+                  <Archive className="w-3.5 h-3.5" />
+                  <span>Archived ({archivedMasterCount})</span>
+                </button>
+              </div>
+
               <button
                 type="button"
                 onClick={() => setIsCategoryModalOpen(true)}
@@ -1225,8 +1287,25 @@ export default function OutletInventoryPage() {
             })()}
 
           {/* Master Products Table / Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {filteredMasterProducts.map((product) => (
+          {filteredMasterProducts.length === 0 ? (
+            <div className="bg-white rounded-3xl border border-stone-200/90 p-12 text-center space-y-3">
+              <div className="w-12 h-12 rounded-full bg-stone-100 flex items-center justify-center mx-auto text-stone-400">
+                <Package className="w-6 h-6" />
+              </div>
+              <h3 className="font-serif font-bold text-stone-900 text-base">
+                {catalogViewStatus === 'archived'
+                  ? 'No Archived Products'
+                  : 'No Master Products Found'}
+              </h3>
+              <p className="text-stone-500 text-xs max-w-sm mx-auto">
+                {catalogViewStatus === 'archived'
+                  ? 'There are currently no archived products. Any products you archive from the active catalog will appear here and can be restored at any time.'
+                  : 'No products match your active search or category filters.'}
+              </p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {filteredMasterProducts.map((product) => (
               <div
                 key={product.id}
                 className="bg-white rounded-3xl border border-stone-200/90 p-4 shadow-[0_2px_8px_rgba(0,0,0,0.02)] flex flex-col justify-between gap-3"
@@ -1297,28 +1376,54 @@ export default function OutletInventoryPage() {
                 </div>
 
                 {/* Edit & Archive Actions */}
-                <div className="flex items-center justify-end gap-2 pt-2 border-t border-stone-100">
-                  <button
-                    onClick={() => setEditingProduct(product)}
-                    className="px-3 py-1 rounded-xl bg-stone-50 hover:bg-stone-100 text-stone-700 text-xs font-medium border border-stone-200 transition flex items-center gap-1 cursor-pointer"
-                  >
-                    <Edit2 className="w-3 h-3 text-stone-500" />
-                    <span>Edit</span>
-                  </button>
+                <div className="flex items-center justify-between gap-2 pt-2 border-t border-stone-100">
+                  {product.isArchived ? (
+                    <span className="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full bg-amber-50 text-amber-800 border border-amber-200">
+                      Archived
+                    </span>
+                  ) : (
+                    <span className="text-[10px] text-stone-400 font-mono">
+                      Active
+                    </span>
+                  )}
 
-                  <button
-                    onClick={() => handleDeleteProduct(product.id, product.name)}
-                    className="p-1.5 text-stone-400 hover:text-rose-600 hover:bg-rose-50 rounded-xl transition cursor-pointer"
-                    title="Archive Product"
-                  >
-                    <Trash2 className="w-3.5 h-3.5" />
-                  </button>
+                  <div className="flex items-center gap-1.5">
+                    {product.isArchived ? (
+                      <button
+                        onClick={() => handleRestoreProduct(product.id, product.name)}
+                        className="px-3 py-1 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold transition flex items-center gap-1 shadow-xs cursor-pointer"
+                        title="Restore to Active Catalog"
+                      >
+                        <RotateCcw className="w-3 h-3" />
+                        <span>Restore Product</span>
+                      </button>
+                    ) : (
+                      <>
+                        <button
+                          onClick={() => setEditingProduct(product)}
+                          className="px-3 py-1 rounded-xl bg-stone-50 hover:bg-stone-100 text-stone-700 text-xs font-medium border border-stone-200 transition flex items-center gap-1 cursor-pointer"
+                        >
+                          <Edit2 className="w-3 h-3 text-stone-500" />
+                          <span>Edit</span>
+                        </button>
+
+                        <button
+                          onClick={() => handleDeleteProduct(product.id, product.name)}
+                          className="p-1.5 text-stone-400 hover:text-rose-600 hover:bg-rose-50 rounded-xl transition cursor-pointer"
+                          title="Archive Product"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </>
+                    )}
+                  </div>
                 </div>
               </div>
             ))}
           </div>
-        </div>
-      )}
+        )}
+      </div>
+    )}
 
 
 

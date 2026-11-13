@@ -1,5 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { orderStore } from '@/lib/store/order-store';
+import { extractMetaPixelId } from '@/lib/marketing/marketing-storage';
+
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
 
 export async function GET() {
   try {

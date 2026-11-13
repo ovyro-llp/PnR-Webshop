@@ -933,13 +933,17 @@ export const orderStore = {
     search?: string;
     outletSlug?: string;
     isVeg?: boolean;
+    status?: 'active' | 'archived' | 'all';
   }): MenuItem[] => {
     if (!globalThis.__PNR_MASTER_PRODUCTS__ || globalThis.__PNR_MASTER_PRODUCTS__.length < 20) {
       globalThis.__PNR_MASTER_PRODUCTS__ = [...MENU_ITEMS];
     }
-    let list = (globalThis.__PNR_MASTER_PRODUCTS__ || MENU_ITEMS).filter(
-      (item) => !item.isArchived
-    );
+    const filterStatus = options?.status || 'active';
+    let list = (globalThis.__PNR_MASTER_PRODUCTS__ || MENU_ITEMS).filter((item) => {
+      if (filterStatus === 'active') return !item.isArchived;
+      if (filterStatus === 'archived') return Boolean(item.isArchived);
+      return true;
+    });
 
     if (options?.category && options.category !== 'ALL') {
       list = list.filter((item) => item.category === options.category);
@@ -973,6 +977,7 @@ export const orderStore = {
     search?: string;
     outletSlug?: string;
     isVeg?: boolean;
+    status?: 'active' | 'archived' | 'all';
   }): Promise<MenuItem[]> => {
     try {
       const dbProducts = await orderRepository.getMasterProducts();
@@ -1145,6 +1150,18 @@ export const orderStore = {
         }
       });
 
+      return true;
+    }
+    return false;
+  },
+
+  restoreMasterProduct: (id: string): boolean => {
+    const list = globalThis.__PNR_MASTER_PRODUCTS__ || [];
+    const idx = list.findIndex((item) => item.id === id);
+    if (idx !== -1) {
+      list[idx].isArchived = false;
+      globalThis.__PNR_MASTER_PRODUCTS__ = list;
+      orderRepository.saveMasterProducts(list).catch(() => {});
       return true;
     }
     return false;

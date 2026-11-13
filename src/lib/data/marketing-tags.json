@@ -1,10 +1,10 @@
 {
-  "globalMetaPixelId": "778899001122334",
+  "globalMetaPixelId": "",
   "globalGoogleAdsId": "",
   "globalGtmId": "",
   "tiktokPixelId": "",
   "snapchatPixelId": "",
   "metaCapiEnabled": true,
-  "metaCapiAccessToken": "EAABcd123_live_access_token",
+  "metaCapiAccessToken": "",
   "customHeaderScript": ""
 }

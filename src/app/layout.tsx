@@ -38,6 +38,9 @@ export const viewport: Viewport = {
   userScalable: false,
 };
 
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 export default async function RootLayout({
   children,
 }: {
@@ -52,6 +55,14 @@ export default async function RootLayout({
       lang="en"
       className={`${geistSans.variable} ${geistMono.variable} ${playfair.variable} h-full antialiased`}
     >
+      <head>
+        {tags.customHeaderScript ? (
+          <div
+            dangerouslySetInnerHTML={{ __html: tags.customHeaderScript }}
+            style={{ display: 'contents' }}
+          />
+        ) : null}
+      </head>
       <body className="min-h-full flex flex-col bg-[#FDFCFB] text-stone-900 font-sans selection:bg-stone-200 overflow-x-hidden w-full">
         <AuthProvider>
           <LocationProvider>

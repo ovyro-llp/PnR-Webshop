@@ -9,12 +9,15 @@ export async function GET(req: NextRequest) {
     const outletSlug = searchParams.get('outlet') || undefined;
     const isVegParam = searchParams.get('isVeg');
     const isVeg = isVegParam !== null ? isVegParam === 'true' : undefined;
+    const statusParam = searchParams.get('status') as 'active' | 'archived' | 'all' | null;
+    const status = statusParam || (searchParams.get('includeArchived') === 'true' ? 'all' : 'active');
 
     const products = await orderStore.getMasterProductsAsync({
       category,
       search,
       outletSlug,
       isVeg,
+      status,
     });
 
     return NextResponse.json({
@@ -78,7 +81,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Action 3: Delete / Archive Master Product
-    if (action === 'DELETE_PRODUCT') {
+    if (action === 'DELETE_PRODUCT' || action === 'ARCHIVE_PRODUCT') {
       if (!id) {
         return NextResponse.json(
           { success: false, error: 'Product id is required' },
@@ -90,6 +93,22 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({
         success,
         message: success ? 'Product archived from catalog' : 'Product not found',
+      });
+    }
+
+    // Action 3b: Restore / Unarchive Master Product
+    if (action === 'RESTORE_PRODUCT' || action === 'UNARCHIVE_PRODUCT') {
+      if (!id) {
+        return NextResponse.json(
+          { success: false, error: 'Product id is required' },
+          { status: 400 }
+        );
+      }
+
+      const success = orderStore.restoreMasterProduct(id);
+      return NextResponse.json({
+        success,
+        message: success ? 'Product restored to active catalog' : 'Product not found',
       });
     }
 
