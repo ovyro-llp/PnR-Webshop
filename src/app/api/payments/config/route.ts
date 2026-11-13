@@ -107,24 +107,24 @@ export async function POST(req: NextRequest) {
 
     if (isEnabled !== undefined) updates.isEnabled = Boolean(isEnabled);
 
-    // If live credentials are provided or present, automatically activate LIVE mode!
-    const isLiveInput = Boolean(
-      (typeof updates.liveKeyId === 'string' && updates.liveKeyId.startsWith('rzp_live_')) ||
-      (typeof updates.razorpayKeyId === 'string' && updates.razorpayKeyId.startsWith('rzp_live_')) ||
-      (typeof liveKeyId === 'string' && liveKeyId.startsWith('rzp_live_')) ||
-      (typeof razorpayKeyId === 'string' && razorpayKeyId.startsWith('rzp_live_'))
-    );
-
-    if (isLiveInput) {
-      updates.testMode = false;
-      if (updates.liveKeyId) {
-        updates.razorpayKeyId = updates.liveKeyId;
-      }
-      if (updates.liveKeySecret) {
-        updates.razorpayKeySecret = updates.liveKeySecret;
-      }
-    } else if (testMode !== undefined) {
+    // Explicit Admin testMode takes absolute precedence!
+    if (testMode !== undefined) {
       updates.testMode = Boolean(testMode);
+    } else {
+      const isNewLiveInput = Boolean(
+        (typeof updates.liveKeyId === 'string' && updates.liveKeyId.startsWith('rzp_live_')) ||
+        (typeof updates.razorpayKeyId === 'string' && updates.razorpayKeyId.startsWith('rzp_live_'))
+      );
+      if (isNewLiveInput) {
+        updates.testMode = false;
+      }
+    }
+
+    if (updates.liveKeyId) {
+      updates.razorpayKeyId = updates.liveKeyId;
+    }
+    if (updates.liveKeySecret) {
+      updates.razorpayKeySecret = updates.liveKeySecret;
     }
 
     if (businessName !== undefined && businessName.trim() !== '') {

@@ -24,15 +24,18 @@ function updateEnvLocalFile(updates: Record<string, string>) {
         modified += `\n${key}=${value}`;
       }
       // CRITICAL: NEVER overwrite an existing live credential in process.env with a test/empty fallback!
-      const currentEnvVal = process.env[key];
-      const isExistingLiveCred = Boolean(
-        currentEnvVal &&
-          (currentEnvVal.startsWith('rzp_live_') || (key === 'RAZORPAY_ENV' && currentEnvVal === 'live'))
-      );
-      const isNewValueTestOrEmpty = !value || value.startsWith('rzp_test_') || value === 'test';
-
-      if (!isExistingLiveCred || !isNewValueTestOrEmpty) {
+      if (key === 'RAZORPAY_ENV') {
         process.env[key] = value;
+      } else {
+        const currentEnvVal = process.env[key];
+        const isExistingLiveCred = Boolean(
+          currentEnvVal && currentEnvVal.startsWith('rzp_live_')
+        );
+        const isNewValueTestOrEmpty = !value || value.startsWith('rzp_test_') || value === 'test';
+
+        if (!isExistingLiveCred || !isNewValueTestOrEmpty) {
+          process.env[key] = value;
+        }
       }
     }
 
@@ -260,11 +263,15 @@ export function savePersistedPaymentConfig(
     merged.liveKeySecret
   );
 
-  // If live credentials are provided or active, default to LIVE mode unless explicitly toggled
-  if (updates.liveKeyId?.startsWith('rzp_live_') || updates.razorpayKeyId?.startsWith('rzp_live_')) {
-    merged.testMode = false;
-  } else if (updates.testMode !== undefined) {
+  // Explicit Admin Toggle is the sole authority for Environment Mode!
+  if (updates.testMode !== undefined) {
     merged.testMode = Boolean(updates.testMode);
+  } else if (
+    updates.liveKeyId?.startsWith('rzp_live_') &&
+    current.liveKeyId !== updates.liveKeyId
+  ) {
+    // Only default to live mode if admin is newly providing a live key and testMode was not specified
+    merged.testMode = false;
   }
 
   // STRICT PRODUCTION INTEGRITY:

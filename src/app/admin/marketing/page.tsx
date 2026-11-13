@@ -127,7 +127,6 @@ export default function MarketingViewPage() {
     setStatusMessage(newTestMode ? 'Switching to Sandbox Test Mode...' : 'Activating Live Production Mode...');
     try {
       const payload = {
-        ...paymentConfig,
         testMode: newTestMode,
       };
       const res = await fetch('/api/payments/config', {
@@ -144,6 +143,8 @@ export default function MarketingViewPage() {
         );
         fetchPaymentConfig();
         setTimeout(() => setStatusMessage(''), 4000);
+      } else {
+        setStatusMessage(data.error || 'Failed to switch environment mode');
       }
     } catch (err) {
       console.error('Failed to toggle mode:', err);
@@ -225,11 +226,9 @@ export default function MarketingViewPage() {
     setIsSavingPayment(true);
     setStatusMessage('');
     try {
-      const isLiveKeyEntered = Boolean(paymentConfig.liveKeyId && paymentConfig.liveKeyId.startsWith('rzp_live_'));
       const payload = {
         ...paymentConfig,
-        // If live credentials are provided or entered, guarantee live mode is activated
-        testMode: isLiveKeyEntered ? false : paymentConfig.testMode,
+        testMode: paymentConfig.testMode,
       };
       const res = await fetch('/api/payments/config', {
         method: 'POST',
@@ -939,7 +938,6 @@ export default function MarketingViewPage() {
                         setPaymentConfig({
                           ...paymentConfig,
                           liveKeyId: val,
-                          ...(val.startsWith('rzp_live_') ? { testMode: false } : {}),
                         });
                       }}
                       placeholder="rzp_live_..."
