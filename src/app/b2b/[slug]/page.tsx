@@ -520,12 +520,12 @@ export default function B2BClientPortalPage({
           <div className="flex items-center gap-2 sm:gap-3">
             {/* Pre-Locked Department Badge (Strictly Non-Editable) */}
             <div className="flex items-center gap-1.5 px-3 py-1 bg-emerald-50 border border-emerald-300/80 rounded-full shadow-2xs">
-              <Lock className="w-3 h-3 text-emerald-700" />
+              <Lock className="w-3 h-3 text-emerald-700 shrink-0" />
               <div className="text-left">
                 <span className="hidden sm:inline text-[9px] uppercase font-bold text-emerald-800 tracking-wider mr-1">
                   Department:
                 </span>
-                <span className="text-xs font-bold text-emerald-950">
+                <span className="text-xs font-bold text-emerald-950 truncate max-w-[100px] sm:max-w-none block sm:inline">
                   {session.departmentName}
                 </span>
               </div>
@@ -633,12 +633,12 @@ export default function B2BClientPortalPage({
               )}
             </div>
 
-            {/* 3-Way Dietary Filter Controls (Exact B2C Match) */}
-            <div className="inline-flex items-center p-1 bg-white border border-stone-200/90 rounded-2xl shadow-2xs self-start md:self-auto">
+            {/* 3-Way Dietary Filter Controls (Exact B2C Match, Full-Width on Phone) */}
+            <div className="flex items-center p-1 bg-white border border-stone-200/90 rounded-2xl shadow-2xs w-full sm:w-auto">
               <button
                 type="button"
                 onClick={() => setDietaryFilter('ALL')}
-                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 cursor-pointer ${
+                className={`flex-1 sm:flex-none justify-center px-3 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 cursor-pointer ${
                   dietaryFilter === 'ALL'
                     ? 'bg-stone-900 text-white shadow-xs'
                     : 'text-stone-600 hover:text-stone-900'
@@ -651,7 +651,7 @@ export default function B2BClientPortalPage({
               <button
                 type="button"
                 onClick={() => setDietaryFilter('VEG')}
-                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 cursor-pointer ${
+                className={`flex-1 sm:flex-none justify-center px-3 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 cursor-pointer ${
                   dietaryFilter === 'VEG'
                     ? 'bg-emerald-600 text-white shadow-xs'
                     : 'text-emerald-800 hover:text-emerald-950 bg-emerald-50/50'
@@ -668,7 +668,7 @@ export default function B2BClientPortalPage({
               <button
                 type="button"
                 onClick={() => setDietaryFilter('NON_VEG')}
-                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 cursor-pointer ${
+                className={`flex-1 sm:flex-none justify-center px-3 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 cursor-pointer ${
                   dietaryFilter === 'NON_VEG'
                     ? 'bg-rose-700 text-white shadow-xs'
                     : 'text-rose-800 hover:text-rose-950 bg-rose-50/50'
@@ -684,8 +684,8 @@ export default function B2BClientPortalPage({
             </div>
           </div>
 
-          {/* Category Navigation Pills */}
-          <div className="flex items-center gap-1.5 overflow-x-auto pb-1 max-w-full">
+          {/* Category Navigation Pills (Mobile Edge-to-Edge Scroll) */}
+          <div className="flex items-center gap-1.5 overflow-x-auto scrollbar-none pb-1 max-w-full -mx-4 px-4 sm:mx-0 sm:px-0">
             {categories.map((cat) => {
               const count =
                 cat === 'ALL'
@@ -834,13 +834,13 @@ export default function B2BClientPortalPage({
                           <span>Add</span>
                         </button>
                       ) : (
-                        <div className="flex items-center gap-1.5 bg-stone-100 px-2 py-1 rounded-full border border-stone-200">
+                        <div className="flex items-center gap-1 bg-stone-100 p-1 rounded-full border border-stone-200">
                           <button
                             type="button"
                             onClick={() => updateQuantity(item.id, currentQty - 1)}
-                            className="text-stone-600 hover:text-stone-950 p-0.5 cursor-pointer"
+                            className="w-7 h-7 flex items-center justify-center rounded-full bg-white text-stone-700 hover:text-stone-950 shadow-2xs cursor-pointer active:scale-95"
                           >
-                            <Minus className="w-3 h-3" />
+                            <Minus className="w-3.5 h-3.5" />
                           </button>
                           <input
                             type="number"
@@ -855,9 +855,9 @@ export default function B2BClientPortalPage({
                           <button
                             type="button"
                             onClick={() => updateQuantity(item.id, currentQty + 1)}
-                            className="text-stone-600 hover:text-stone-950 p-0.5 cursor-pointer"
+                            className="w-7 h-7 flex items-center justify-center rounded-full bg-[#1C1917] text-white shadow-2xs cursor-pointer active:scale-95"
                           >
-                            <Plus className="w-3 h-3" />
+                            <Plus className="w-3.5 h-3.5" />
                           </button>
                         </div>
                       )}

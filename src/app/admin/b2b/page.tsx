@@ -642,23 +642,23 @@ export default function AdminB2BPage() {
         </div>
       </div>
 
-      {/* Navigation Sub-Tabs */}
-      <div className="flex items-center gap-2 border-b border-stone-200 pb-2 overflow-x-auto scrollbar-none">
+      {/* Navigation Sub-Tabs (Mobile-Friendly Horizontal Scroll) */}
+      <div className="flex items-center gap-2 border-b border-stone-200 pb-2 overflow-x-auto scrollbar-none flex-nowrap -mx-4 px-4 sm:mx-0 sm:px-0">
         <button
           onClick={() => setActiveTab('ORDERS')}
-          className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 whitespace-nowrap ${
+          className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 whitespace-nowrap shrink-0 ${
             activeTab === 'ORDERS'
               ? 'bg-stone-900 text-white shadow-sm'
               : 'bg-stone-100 text-stone-600 hover:bg-stone-200'
           }`}
         >
           <ChefHat className="w-4 h-4 text-amber-400" />
-          <span>⚡ Live Orders & Kitchen Bake Sheet ({orders.length})</span>
+          <span>⚡ Kitchen Orders & Bake Sheet ({orders.length})</span>
         </button>
 
         <button
           onClick={() => setActiveTab('CLIENTS')}
-          className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 whitespace-nowrap ${
+          className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 whitespace-nowrap shrink-0 ${
             activeTab === 'CLIENTS'
               ? 'bg-stone-900 text-white shadow-sm'
               : 'bg-stone-100 text-stone-600 hover:bg-stone-200'
@@ -670,7 +670,7 @@ export default function AdminB2BPage() {
 
         <button
           onClick={() => setActiveTab('CATALOG')}
-          className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 whitespace-nowrap ${
+          className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 whitespace-nowrap shrink-0 ${
             activeTab === 'CATALOG'
               ? 'bg-stone-900 text-white shadow-sm'
               : 'bg-stone-100 text-stone-600 hover:bg-stone-200'
@@ -682,7 +682,7 @@ export default function AdminB2BPage() {
 
         <button
           onClick={() => setActiveTab('USERS')}
-          className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 whitespace-nowrap ${
+          className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 whitespace-nowrap shrink-0 ${
             activeTab === 'USERS'
               ? 'bg-stone-900 text-white shadow-sm'
               : 'bg-stone-100 text-stone-600 hover:bg-stone-200'
@@ -697,43 +697,70 @@ export default function AdminB2BPage() {
       {/* TAB 1: Live Orders & Kitchen Aggregation                           */}
       {/* =================================================================== */}
       {activeTab === 'ORDERS' && (
-        <div className="space-y-6">
-          {/* Controls Bar */}
-          <div className="bg-white rounded-xl border border-stone-200 p-4 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
-            {/* Date Presets */}
-            <div className="flex flex-wrap items-center gap-2">
-              <span className="text-xs font-bold text-stone-500 uppercase mr-1 flex items-center gap-1">
-                <Filter className="w-3.5 h-3.5" /> Date:
+        <div className="space-y-4 sm:space-y-6">
+          {/* 1. Prominent Today Date Banner & Kitchen Controls */}
+          <div className="bg-white rounded-2xl border border-stone-200 p-4 sm:p-5 shadow-sm space-y-3">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div>
+                <span className="text-[10px] font-bold uppercase tracking-widest text-amber-800 flex items-center gap-1.5">
+                  <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                  Bakery Kitchen Operations
+                </span>
+                <h2 className="text-lg sm:text-2xl font-black text-stone-900 mt-0.5">
+                  {dateFilterPreset === 'TODAY'
+                    ? `Today's Shift — ${new Date().toLocaleDateString('en-IN', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' })}`
+                    : dateFilterPreset === 'TOMORROW'
+                    ? `Tomorrow's Shift — ${new Date(Date.now() + 24 * 60 * 60 * 1000).toLocaleDateString('en-IN', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' })}`
+                    : dateFilterPreset === 'CUSTOM'
+                    ? `Orders for ${selectedDate}`
+                    : "All Active Requisition Orders"}
+                </h2>
+              </div>
+
+              {/* Quick Print Button */}
+              <button
+                onClick={() => window.print()}
+                className="self-start sm:self-auto px-3.5 py-2 bg-stone-900 hover:bg-black text-white text-xs font-bold rounded-xl flex items-center gap-2 shadow-sm cursor-pointer"
+              >
+                <Printer className="w-3.5 h-3.5 text-amber-300" />
+                <span>Print Production Sheets</span>
+              </button>
+            </div>
+
+            {/* Date Switcher Pills (Mobile-Friendly) */}
+            <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-stone-100">
+              <span className="text-[11px] font-bold text-stone-500 uppercase mr-1 flex items-center gap-1">
+                <Filter className="w-3.5 h-3.5" /> Filter Date:
               </span>
               <button
+                onClick={() => handleDatePreset('TODAY')}
+                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                  dateFilterPreset === 'TODAY'
+                    ? 'bg-amber-800 text-white shadow-sm'
+                    : 'bg-stone-100 text-stone-700 hover:bg-stone-200'
+                }`}
+              >
+                ⚡ Today's Orders
+              </button>
+              <button
+                onClick={() => handleDatePreset('TOMORROW')}
+                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                  dateFilterPreset === 'TOMORROW'
+                    ? 'bg-amber-800 text-white shadow-sm'
+                    : 'bg-stone-100 text-stone-700 hover:bg-stone-200'
+                }`}
+              >
+                ⚡ Tomorrow's Shift
+              </button>
+              <button
                 onClick={() => handleDatePreset('ALL')}
-                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
                   dateFilterPreset === 'ALL'
                     ? 'bg-stone-900 text-white shadow-sm'
                     : 'bg-stone-100 text-stone-700 hover:bg-stone-200'
                 }`}
               >
-                All Dates (All Orders)
-              </button>
-              <button
-                onClick={() => handleDatePreset('TOMORROW')}
-                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
-                  dateFilterPreset === 'TOMORROW'
-                    ? 'bg-stone-900 text-white shadow-sm'
-                    : 'bg-stone-100 text-stone-700 hover:bg-stone-200'
-                }`}
-              >
-                Tomorrow's Shift
-              </button>
-              <button
-                onClick={() => handleDatePreset('TODAY')}
-                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
-                  dateFilterPreset === 'TODAY'
-                    ? 'bg-stone-900 text-white shadow-sm'
-                    : 'bg-stone-100 text-stone-700 hover:bg-stone-200'
-                }`}
-              >
-                Today
+                All Dates ({orders.length})
               </button>
 
               {/* Custom Date Input */}
@@ -744,59 +771,18 @@ export default function AdminB2BPage() {
                   setDateFilterPreset('CUSTOM');
                   setSelectedDate(e.target.value || 'ALL');
                 }}
-                className="px-2.5 py-1.5 bg-stone-50 border border-stone-300 rounded-lg text-xs font-semibold text-stone-900"
+                className="px-2.5 py-1.5 bg-stone-50 border border-stone-300 rounded-xl text-xs font-semibold text-stone-900"
               />
 
               <button
                 onClick={fetchAggregation}
                 title="Refresh live orders"
-                className="p-1.5 text-stone-500 hover:text-stone-900 hover:bg-stone-100 rounded-lg ml-1"
+                className="p-1.5 text-stone-500 hover:text-stone-900 hover:bg-stone-100 rounded-lg ml-auto cursor-pointer"
               >
                 <RefreshCw className="w-4 h-4" />
               </button>
             </div>
-
-            {/* Quick Actions */}
-            <div className="flex items-center gap-2">
-              <button
-                onClick={() => window.print()}
-                className="px-4 py-2 bg-stone-900 hover:bg-black text-white text-xs font-bold rounded-xl flex items-center gap-2 shadow-sm"
-              >
-                <Printer className="w-3.5 h-3.5" />
-                <span>Print Production Sheets</span>
-              </button>
-            </div>
           </div>
-
-          {/* Quick Metrics */}
-          {billingSummary && (
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              <div className="bg-white p-4 rounded-xl border border-stone-200 shadow-sm">
-                <span className="text-[10px] uppercase font-bold text-stone-400 block">
-                  Active Requisitions
-                </span>
-                <span className="text-2xl font-black text-stone-900">
-                  {orders.length} Orders
-                </span>
-              </div>
-              <div className="bg-white p-4 rounded-xl border border-stone-200 shadow-sm">
-                <span className="text-[10px] uppercase font-bold text-stone-400 block">
-                  Total Baking Units
-                </span>
-                <span className="text-2xl font-black text-amber-700">
-                  {billingSummary.totalUnits} Units
-                </span>
-              </div>
-              <div className="bg-white p-4 rounded-xl border border-stone-200 shadow-sm">
-                <span className="text-[10px] uppercase font-bold text-stone-400 block">
-                  Contracted Value
-                </span>
-                <span className="text-2xl font-black text-emerald-700">
-                  ₹{billingSummary.totalRevenue.toFixed(2)}
-                </span>
-              </div>
-            </div>
-          )}
 
           {/* =============================================================== */}
           {/* 📋 LIVE REQUISITIONS & ORDERS TABLE (The Primary View)          */}
@@ -832,23 +818,18 @@ export default function AdminB2BPage() {
                     key={order.id}
                     className="p-5 hover:bg-stone-50/60 transition-colors space-y-3"
                   >
-                    {/* Header Row */}
-                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-stone-100 pb-3">
+                    {/* Header Row: Focus on Client & Department */}
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 border-b border-stone-100 pb-3">
                       <div>
-                        <div className="flex items-center gap-2">
-                          <span className="font-mono text-xs font-black text-stone-900 bg-stone-100 px-2.5 py-1 rounded-md">
-                            {order.orderNumber}
-                          </span>
-                          <span className="text-xs text-stone-500">
-                            Placed: {new Date(order.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                          </span>
-                        </div>
-                        <div className="flex items-center gap-2 mt-1.5">
-                          <span className="text-sm font-black text-stone-900">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className="text-base sm:text-lg font-black text-stone-900 tracking-tight">
                             {order.clientName}
                           </span>
-                          <span className="text-xs font-bold text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
+                          <span className="text-xs sm:text-sm font-bold text-emerald-800 bg-emerald-50 border border-emerald-200 px-2.5 py-0.5 rounded-lg">
                             Dept: {order.departmentName}
+                          </span>
+                          <span className="text-[11px] font-mono text-stone-400 bg-stone-100 px-2 py-0.5 rounded">
+                            #{order.orderNumber}
                           </span>
                         </div>
                       </div>
@@ -903,65 +884,36 @@ export default function AdminB2BPage() {
                       </div>
                     </div>
 
-                    {/* Delivery Shift & Metadata */}
-                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs bg-stone-50 p-2.5 rounded-xl border border-stone-200">
-                      <div>
-                        <span className="text-stone-400 block text-[10px] font-bold uppercase">
-                          Delivery Date
-                        </span>
-                        <span className="font-bold text-stone-900">
-                          {order.deliveryDate}
-                        </span>
-                      </div>
-                      <div>
-                        <span className="text-stone-400 block text-[10px] font-bold uppercase">
-                          Time Slot
-                        </span>
-                        <span className="font-bold text-stone-900">
-                          {order.deliveryTimeSlot}
-                        </span>
-                      </div>
-                      <div>
-                        <span className="text-stone-400 block text-[10px] font-bold uppercase">
-                          Total Units
-                        </span>
-                        <span className="font-bold text-amber-800">
-                          {order.totalQuantity} units ({order.totalItems} items)
-                        </span>
-                      </div>
-                      <div>
-                        <span className="text-stone-400 block text-[10px] font-bold uppercase">
-                          Billing Total
-                        </span>
-                        <span className="font-black text-emerald-800">
-                          ₹{order.totalAmount.toFixed(2)}
-                        </span>
-                      </div>
-                    </div>
+                    {/* MAIN FOCUS: Products & Quantities in High-Contrast Prominent Rows */}
+                    <div className="bg-white rounded-xl border-2 border-stone-200 divide-y divide-stone-100 overflow-hidden shadow-2xs">
+                      {order.items.map((item, idx) => (
+                        <div
+                          key={idx}
+                          className="p-3 sm:p-4 flex items-center justify-between gap-3 hover:bg-stone-50/70 transition-colors"
+                        >
+                          <div className="flex items-center gap-3">
+                            <span className="w-3 h-3 rounded-full bg-emerald-600 shrink-0" />
+                            <div>
+                              <h4 className="text-base sm:text-lg font-black text-stone-900 leading-tight">
+                                {item.productName}
+                              </h4>
+                              <span className="text-[11px] text-stone-500 font-medium uppercase tracking-wider">
+                                {item.category}
+                              </span>
+                            </div>
+                          </div>
 
-                    {/* Ordered Items Pill Cloud */}
-                    <div className="space-y-1">
-                      <span className="text-[10px] uppercase font-bold text-stone-400 block">
-                        Requested Products & Quantities:
-                      </span>
-                      <div className="flex flex-wrap items-center gap-1.5">
-                        {order.items.map((item, idx) => (
-                          <span
-                            key={idx}
-                            className="px-2.5 py-1 bg-white border border-stone-200 rounded-lg text-xs font-medium text-stone-800"
-                          >
-                            <span className="font-bold text-stone-900">
-                              {item.productName}:
-                            </span>{' '}
-                            <span className="font-black text-amber-800">
-                              {item.quantity} {item.unit}
-                            </span>{' '}
-                            <span className="text-stone-400 text-[10px]">
-                              (@ ₹{item.b2bPrice})
+                          {/* Large, high-visibility quantity badge */}
+                          <div className="flex items-baseline gap-1.5 bg-[#FAF8F5] border-2 border-stone-900 px-4 py-1.5 rounded-xl shrink-0 shadow-xs">
+                            <span className="text-xl sm:text-2xl font-black text-stone-900 font-mono">
+                              {item.quantity}
                             </span>
-                          </span>
-                        ))}
-                      </div>
+                            <span className="text-xs font-bold text-stone-600 uppercase">
+                              {item.unit}
+                            </span>
+                          </div>
+                        </div>
+                      ))}
                     </div>
 
                     {/* Order Notes */}
@@ -1001,41 +953,45 @@ export default function AdminB2BPage() {
             ) : (
               <div className="divide-y divide-stone-100">
                 {kitchenSheet.map((item, idx) => (
-                  <div key={idx} className="p-4 hover:bg-stone-50/50 transition-colors">
-                    <div className="flex items-center justify-between mb-2">
-                      <div className="flex items-center gap-2">
-                        <span className="text-xs px-2 py-0.5 rounded bg-stone-100 text-stone-700 font-bold uppercase text-[10px]">
+                  <div key={idx} className="p-4 sm:p-5 hover:bg-amber-50/20 transition-colors space-y-3">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                      <div>
+                        <span className="text-[10px] px-2 py-0.5 rounded bg-stone-100 text-stone-700 font-bold uppercase tracking-wider">
                           {item.category}
                         </span>
-                        <h4 className="text-base font-black text-stone-900">
+                        <h4 className="text-lg sm:text-xl font-black text-stone-900 mt-1 leading-tight">
                           {item.productName}
                         </h4>
                       </div>
 
-                      <div className="flex items-baseline gap-1">
-                        <span className="text-xl font-black text-amber-900">
+                      {/* Large Oven Total Badge */}
+                      <div className="flex items-baseline gap-2 bg-amber-50 border-2 border-amber-600 px-4 py-2 rounded-xl self-start sm:self-auto shrink-0 shadow-xs">
+                        <span className="text-xs uppercase font-extrabold text-amber-800">
+                          Total To Bake:
+                        </span>
+                        <span className="text-2xl sm:text-3xl font-black text-amber-950 font-mono">
                           {item.totalQuantity}
                         </span>
-                        <span className="text-xs font-bold text-stone-500 uppercase">
+                        <span className="text-xs font-bold text-amber-800 uppercase">
                           {item.unit}
                         </span>
                       </div>
                     </div>
 
                     {/* Department breakdown pills */}
-                    <div className="flex flex-wrap items-center gap-2">
+                    <div className="flex flex-wrap items-center gap-2 pt-1 border-t border-stone-100">
                       <span className="text-[10px] uppercase font-bold text-stone-400">
                         Department Breakdown:
                       </span>
                       {item.departments.map((dept, dIdx) => (
                         <span
                           key={dIdx}
-                          className="px-2.5 py-1 bg-stone-100 border border-stone-200 rounded-lg text-xs font-medium text-stone-800"
+                          className="px-3 py-1 bg-white border border-stone-200 rounded-lg text-xs font-medium text-stone-800 shadow-2xs"
                         >
                           <span className="font-bold text-stone-900">
-                            {dept.clientName} ({dept.departmentName}):
+                            {dept.clientName} <span className="text-stone-500">({dept.departmentName})</span>:
                           </span>{' '}
-                          <span className="text-amber-800 font-extrabold">
+                          <span className="text-amber-900 font-black font-mono ml-1">
                             {dept.quantity} {item.unit}
                           </span>
                         </span>
@@ -1083,16 +1039,17 @@ export default function AdminB2BPage() {
                     </span>
                   </div>
 
-                  <div className="space-y-1 text-xs">
+                  <div className="space-y-1.5 text-xs">
                     {slip.items.map((i, iIdx) => (
                       <div
                         key={iIdx}
-                        className="flex items-center justify-between py-0.5"
+                        className="flex items-center justify-between py-1.5 px-2.5 rounded-lg bg-white border border-stone-200/80 shadow-2xs"
                       >
-                        <span className="text-stone-700">{i.productName}</span>
-                        <span className="font-bold text-stone-900">
-                          {i.quantity} {i.unit}
-                        </span>
+                        <span className="text-stone-900 font-bold">{i.productName}</span>
+                        <div className="flex items-baseline gap-1 font-mono font-black text-stone-900 text-sm">
+                          <span>{i.quantity}</span>
+                          <span className="text-[11px] font-semibold text-stone-500 uppercase">{i.unit}</span>
+                        </div>
                       </div>
                     ))}
                   </div>
