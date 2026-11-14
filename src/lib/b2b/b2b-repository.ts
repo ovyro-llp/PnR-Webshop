@@ -1118,8 +1118,8 @@ export const b2bRepository = {
     const orderNumber = `B2B-${client.slug.toUpperCase()}-${data.deliveryDate.replace(/-/g, '')}-${Math.floor(100 + Math.random() * 900)}`;
     const id = crypto.randomUUID();
 
-    const departments = await b2bRepository.getDepartmentsByClientId(client.id);
-    const matchedDept = departments.find((d) => d.id === data.departmentId);
+    const departments = await b2bRepository.getDepartmentsByClient(client.id);
+    const matchedDept = departments.find((d: B2BDepartment) => d.id === data.departmentId);
     const departmentName = matchedDept?.name || 'Corporate Requisitions';
 
     const newOrder: B2BOrder = {
