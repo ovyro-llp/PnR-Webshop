@@ -445,6 +445,8 @@ export const orderStore = {
       outletSlug: normalizedSlug,
       id: `ord-${Date.now()}`,
       orderNumber,
+      deliveryFee: 0, // Delivery fee is absorbed and never charged to the customer
+      total: Math.max(0, Number(orderData.subtotal) - Number(orderData.discount || 0)),
       orderStatus: 'RECEIVED',
       paymentStatus: orderData.paymentStatus || 'COMPLETED',
       mangwale: {

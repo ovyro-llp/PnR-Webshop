@@ -115,8 +115,8 @@ export const paymentService = {
       items: items || [],
       subtotal: Number(input.subtotal || amount),
       discount: Number(input.discount || 0),
-      deliveryFee: Number(input.deliveryFee || 0),
-      total: Number(input.total || amount),
+      deliveryFee: 0,
+      total: Math.max(0, Number(input.subtotal || amount) - Number(input.discount || 0)),
       paymentMethod: 'UPI',
       paymentStatus: 'PENDING',
       orderStatus: 'AWAITING_PAYMENT',
@@ -213,8 +213,8 @@ export const paymentService = {
         existingOrder.items = orderPayload.items || existingOrder.items;
         existingOrder.subtotal = orderPayload.subtotal ?? existingOrder.subtotal;
         existingOrder.discount = orderPayload.discount ?? existingOrder.discount;
-        existingOrder.deliveryFee = orderPayload.deliveryFee !== undefined ? Number(orderPayload.deliveryFee) : existingOrder.deliveryFee;
-        existingOrder.total = orderPayload.total ?? existingOrder.total;
+        existingOrder.deliveryFee = 0;
+        existingOrder.total = Math.max(0, Number(existingOrder.subtotal) - Number(existingOrder.discount || 0));
         existingOrder.paymentMethod = orderPayload.paymentMethod || 'UPI';
       }
 
@@ -222,15 +222,17 @@ export const paymentService = {
     } else if (orderPayload) {
       // Create new confirmed order if draft wasn't present
       const normalizedSlug = orderStore.normalizeOutletSlug(orderPayload.outletSlug);
+      const settledSubtotal = Number(orderPayload.subtotal);
+      const settledDiscount = Number(orderPayload.discount || 0);
       settledOrder = await orderStore.createOrder({
         outletSlug: normalizedSlug,
         campaignSlug: orderPayload.campaignSlug,
         customer: orderPayload.customer,
         items: orderPayload.items,
-        subtotal: Number(orderPayload.subtotal),
-        discount: Number(orderPayload.discount || 0),
-        deliveryFee: Number(orderPayload.deliveryFee || 0),
-        total: Number(orderPayload.total),
+        subtotal: settledSubtotal,
+        discount: settledDiscount,
+        deliveryFee: 0,
+        total: Math.max(0, settledSubtotal - settledDiscount),
         paymentMethod: orderPayload.paymentMethod || 'UPI',
         paymentStatus: 'COMPLETED',
         razorpayOrderId: razorpay_order_id,

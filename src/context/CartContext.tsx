@@ -165,9 +165,9 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   const itemCount = items.reduce((sum, i) => sum + i.quantity, 0);
   const subtotal = items.reduce((sum, i) => sum + i.item.price * i.quantity, 0);
   const discount = Math.round((subtotal * discountPercent) / 100);
-  // Delivery Fee: Paid directly by the customer based on the Mangwale rate card
-  const deliveryFee = subtotal > 0 ? (customDeliveryFee !== null ? customDeliveryFee : 35) : 0;
-  const total = Math.max(0, subtotal - discount + deliveryFee);
+  // Delivery Fee: 100% Free Doorstep Delivery for customers (delivery fee is never charged to the customer)
+  const deliveryFee = 0;
+  const total = Math.max(0, subtotal - discount);
 
   const submitOrder = async (
     outletSlug: string,
@@ -292,8 +292,8 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         itemCount,
         subtotal,
         discount,
-        deliveryFee,
-        setDeliveryFee: (fee: number) => setCustomDeliveryFee(Math.max(0, Math.round(fee))),
+        deliveryFee: 0,
+        setDeliveryFee: () => setCustomDeliveryFee(0),
         deliveryQuote,
         setDeliveryQuote,
         total,

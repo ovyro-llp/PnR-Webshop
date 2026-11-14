@@ -31,15 +31,19 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    const orderSubtotal = Number(subtotal);
+    const orderDiscount = Number(discount || 0);
+    const orderTotal = Math.max(0, orderSubtotal - orderDiscount);
+
     const order = await orderStore.createOrder({
       outletSlug,
       campaignSlug,
       customer,
       items,
-      subtotal: Number(subtotal),
-      discount: Number(discount || 0),
-      deliveryFee: Number(deliveryFee || 0),
-      total: Number(total),
+      subtotal: orderSubtotal,
+      discount: orderDiscount,
+      deliveryFee: 0,
+      total: orderTotal,
       paymentMethod: paymentMethod || 'UPI',
     });
 

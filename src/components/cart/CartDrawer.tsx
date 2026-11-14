@@ -58,6 +58,7 @@ export function CartDrawer({ outletSlug, campaignSlug }: CartDrawerProps) {
     itemCount,
     subtotal,
     discount,
+    appliedCoupon,
     deliveryFee,
     setDeliveryFee,
     deliveryQuote,
@@ -148,8 +149,8 @@ export function CartDrawer({ outletSlug, campaignSlug }: CartDrawerProps) {
           );
           if (res.ok && isCurrent) {
             const data = await res.json();
-            if (data && typeof data.deliveryFee === 'number') {
-              setDeliveryFee(data.deliveryFee);
+            if (data) {
+              setDeliveryFee(0);
               setDeliveryQuote(data);
             }
           }
@@ -260,7 +261,7 @@ export function CartDrawer({ outletSlug, campaignSlug }: CartDrawerProps) {
           amount: total,
           subtotal,
           discount,
-          deliveryFee,
+          deliveryFee: 0,
           total,
           outletSlug: effectiveOutletSlug,
           campaignSlug,
@@ -877,6 +878,12 @@ export function CartDrawer({ outletSlug, campaignSlug }: CartDrawerProps) {
                     <span>Items Subtotal</span>
                     <span>₹{subtotal}</span>
                   </div>
+                  {discount > 0 && (
+                    <div className="flex justify-between text-emerald-700 font-semibold">
+                      <span>Promo Discount {appliedCoupon ? `(${appliedCoupon})` : ''}</span>
+                      <span>-₹{discount}</span>
+                    </div>
+                  )}
                   <div className="flex justify-between text-stone-500 items-center">
                     <div className="flex items-center gap-1.5">
                       <span>Direct Doorstep Delivery</span>
@@ -886,14 +893,19 @@ export function CartDrawer({ outletSlug, campaignSlug }: CartDrawerProps) {
                         </span>
                       )}
                     </div>
-                    <span className="font-semibold text-stone-800">₹{deliveryFee}</span>
-                  </div>
-                  {deliveryQuote?.priceBreakdown && (
-                    <div className="text-[10px] text-stone-400 pl-0.5 flex items-center justify-between">
-                      <span>Rate: ₹{deliveryQuote.priceBreakdown.deliveryFare} fare + ₹{deliveryQuote.priceBreakdown.platformFee} platform + 5% GST</span>
-                      <span className="text-emerald-700 font-medium">⚡ ~{deliveryQuote.estimatedMinutes || 30}m Express</span>
+                    <div className="flex items-center gap-1.5 font-semibold">
+                      {deliveryQuote?.deliveryFee && deliveryQuote.deliveryFee > 0 ? (
+                        <span className="line-through text-stone-400 font-normal text-[11px]">
+                          ₹{deliveryQuote.deliveryFee}
+                        </span>
+                      ) : null}
+                      <span className="font-bold text-emerald-700">FREE</span>
                     </div>
-                  )}
+                  </div>
+                  <div className="text-[10px] text-emerald-700 font-medium pl-0.5 flex items-center justify-between">
+                    <span>⚡ 100% Free Doorstep Delivery</span>
+                    <span>~{deliveryQuote?.estimatedMinutes || 30}m Express</span>
+                  </div>
                   <div className="pt-2 border-t border-stone-100 flex justify-between font-bold text-sm text-stone-900">
                     <span>Total Amount</span>
                     <span>₹{total}</span>
@@ -1006,12 +1018,12 @@ export function CartDrawer({ outletSlug, campaignSlug }: CartDrawerProps) {
                 setDeliveryAddress(data.street || data.formattedAddress);
                 if (data.area) setDeliveryArea(data.area);
 
-                // Immediate calculation with official Mangwale rate card
+                // Immediate calculation with official rate card
                 const dist = data.distanceKm || 2.5;
                 const fare = Math.max(20, Math.round(dist * 10 * 100) / 100);
                 const sub = fare + 10;
                 const calculatedFee = Math.round(sub * 1.05);
-                setDeliveryFee(calculatedFee);
+                setDeliveryFee(0); // Free doorstep delivery for customers
                 setDeliveryQuote({
                   distanceKm: dist,
                   deliveryFee: calculatedFee,
