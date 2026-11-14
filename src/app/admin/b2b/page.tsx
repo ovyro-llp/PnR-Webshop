@@ -328,7 +328,12 @@ export default function AdminB2BPage() {
 
       if (res.ok) {
         setIsEditClientModalOpen(false);
-        await fetchClients();
+        await Promise.all([
+          fetchClients(),
+          fetchAggregation(),
+          fetchDeptAndUsers(),
+          fetchCatalog(),
+        ]);
       } else {
         const data = await res.json();
         alert(data.error || 'Failed to update client.');
@@ -823,7 +828,7 @@ export default function AdminB2BPage() {
                       <div>
                         <div className="flex items-center gap-2 flex-wrap">
                           <span className="text-base sm:text-lg font-black text-stone-900 tracking-tight">
-                            {order.clientName}
+                            {clients.find((c) => c.id === order.clientId)?.name || order.clientName}
                           </span>
                           <span className="text-xs sm:text-sm font-bold text-emerald-800 bg-emerald-50 border border-emerald-200 px-2.5 py-0.5 rounded-lg">
                             Dept: {order.departmentName}

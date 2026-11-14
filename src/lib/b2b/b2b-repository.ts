@@ -382,6 +382,51 @@ export const b2bRepository = {
     };
   },
 
+  getClientById: async (id: string): Promise<B2BClient | null> => {
+    if (process.env.DATABASE_URL && process.env.DATABASE_URL.trim()) {
+      try {
+        await ensureCoreTables();
+        const pool = getDbPool();
+        const res = await pool.query(
+          `SELECT c.*,
+            (SELECT COUNT(*) FROM public.b2b_departments d WHERE d.client_id = c.id) as dept_count,
+            (SELECT COUNT(*) FROM public.b2b_client_catalog p WHERE p.client_id = c.id AND p.is_active = true) as prod_count
+           FROM public.b2b_clients c 
+           WHERE c.id = $1 LIMIT 1;`,
+          [id]
+        );
+        if (res.rows.length === 0) return null;
+        const row = res.rows[0];
+        return {
+          id: row.id,
+          slug: row.slug,
+          name: row.name,
+          contactPerson: row.contact_person,
+          phone: row.phone,
+          email: row.email,
+          billingAddress: row.billing_address,
+          fulfillingOutletSlug: row.fulfilling_outlet_slug || 'cycle-circle',
+          isActive: row.is_active,
+          createdAt: row.created_at,
+          updatedAt: row.updated_at,
+          departmentCount: Number(row.dept_count || 0),
+          productCount: Number(row.prod_count || 0),
+        };
+      } catch (err: any) {
+        console.warn('[b2bRepository.getClientById DB Warning]:', err.message);
+      }
+    }
+
+    const store = getMemoryStore();
+    const found = store.clients.find((c) => c.id === id);
+    if (!found) return null;
+    return {
+      ...found,
+      departmentCount: store.departments.filter((d) => d.clientId === found.id).length,
+      productCount: store.catalogs.filter((p) => p.clientId === found.id && p.isActive).length,
+    };
+  },
+
   createClient: async (data: {
     slug: string;
     name: string;
@@ -499,6 +544,12 @@ export const b2bRepository = {
         );
         if (res.rows.length === 0) return null;
         const row = res.rows[0];
+        if (data.name) {
+          await pool.query(
+            `UPDATE public.b2b_orders SET client_name = $1 WHERE client_id = $2;`,
+            [data.name.trim(), id]
+          ).catch(() => {});
+        }
         return {
           id: row.id,
           slug: row.slug,
@@ -521,8 +572,22 @@ export const b2bRepository = {
     const client = store.clients.find((c) => c.id === id);
     if (!client) return null;
 
-    if (data.name !== undefined) client.name = data.name.trim();
-    if (data.slug !== undefined) client.slug = data.slug.toLowerCase().replace(/[^a-z0-9_-]/g, '-').trim();
+    if (data.name !== undefined) {
+      client.name = data.name.trim();
+      for (const order of store.orders) {
+        if (order.clientId === id) {
+          order.clientName = client.name;
+        }
+      }
+    }
+    if (data.slug !== undefined) {
+      client.slug = data.slug.toLowerCase().replace(/[^a-z0-9_-]/g, '-').trim();
+      for (const order of store.orders) {
+        if (order.clientId === id) {
+          order.clientSlug = client.slug;
+        }
+      }
+    }
     if (data.contactPerson !== undefined) client.contactPerson = data.contactPerson.trim();
     if (data.phone !== undefined) client.phone = data.phone.trim();
     if (data.email !== undefined) client.email = data.email.trim();
@@ -1282,10 +1347,10 @@ export const b2bRepository = {
         const user = store.users.find((u) => u.id === o.clientUserId);
         return {
           ...o,
-          clientName: o.clientName || client?.name || 'Corporate Client',
-          clientSlug: o.clientSlug || client?.slug,
-          departmentName: o.departmentName || dept?.name || 'Requisition Department',
-          requisitionerName: o.requisitionerName || user?.name || 'Requisition Officer',
+          clientName: client?.name || o.clientName || 'Corporate Client',
+          clientSlug: client?.slug || o.clientSlug,
+          departmentName: dept?.name || o.departmentName || 'Requisition Department',
+          requisitionerName: user?.name || o.requisitionerName || 'Requisition Officer',
         };
       });
   },

@@ -91,6 +91,9 @@ export default function B2BClientPortalPage({
   const [orderHistory, setOrderHistory] = useState<B2BOrder[]>([]);
   const [isLoadingHistory, setIsLoadingHistory] = useState(false);
 
+  // Dynamic client organization name (dynamically prioritizes live client record, then session, then slug)
+  const displayClientName = clientData?.name || session?.clientName || clientSlug.toUpperCase();
+
   // 1. Check existing session on load
   useEffect(() => {
     async function checkSession() {
@@ -123,6 +126,12 @@ export default function B2BClientPortalPage({
           const data = await res.json();
           setClientData(data.client);
           setCatalog(data.catalog || []);
+          // Dynamically synchronize active session with updated organization name
+          if (data.client?.name) {
+            setSession((prev) =>
+              prev ? { ...prev, clientName: data.client.name, clientSlug: data.client.slug } : null
+            );
+          }
         } else {
           setClientData({
             name: clientSlug.toUpperCase(),
@@ -395,7 +404,7 @@ export default function B2BClientPortalPage({
             {/* Client Badge */}
             <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white border border-stone-200 text-xs text-stone-800 font-semibold shadow-2xs">
               <Building2 className="w-3.5 h-3.5 text-amber-700" />
-              <span>{clientData?.name || clientSlug.toUpperCase()}</span>
+              <span>{displayClientName}</span>
             </div>
           </div>
 
@@ -511,7 +520,7 @@ export default function B2BClientPortalPage({
                 Corporate Supply
               </span>
               <span className="text-xs font-serif font-bold text-stone-900">
-                {session.clientName}
+                {displayClientName}
               </span>
             </div>
           </div>
@@ -579,7 +588,7 @@ export default function B2BClientPortalPage({
               </div>
 
               <h1 className="text-2xl sm:text-3xl font-serif font-bold text-stone-900 tracking-tight">
-                {session.clientName} Requisitions
+                {displayClientName} Requisitions
               </h1>
               <p className="text-xs sm:text-sm text-stone-500 leading-relaxed">
                 Fresh bakery supply direct from our commercial baking ovens to{' '}
@@ -732,7 +741,7 @@ export default function B2BClientPortalPage({
               No items match this filter
             </h3>
             <p className="text-xs text-stone-500 max-w-md mx-auto">
-              Try adjusting your category selection or dietary filter. If your department requires a product not listed here, contact PnR Bakery Admin to add it to {session.clientName}'s approved catalog.
+              Try adjusting your category selection or dietary filter. If your department requires a product not listed here, contact PnR Bakery Admin to add it to {displayClientName}'s approved catalog.
             </p>
           </div>
         ) : (
@@ -1061,7 +1070,7 @@ export default function B2BClientPortalPage({
                 </span>
               </div>
               <p className="text-[10px] text-stone-400">
-                Invoiced directly to {session.clientName} corporate account under contracted monthly terms.
+                Invoiced directly to {displayClientName} corporate account under contracted monthly terms.
               </p>
 
               <button
