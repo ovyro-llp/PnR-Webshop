@@ -7,7 +7,6 @@ import { useRouter } from 'next/navigation';
 import { useCart } from '@/context/CartContext';
 import { useAuth } from '@/context/AuthContext';
 import { useLocation } from '@/context/LocationContext';
-import { Outlet } from '@/types';
 import { OUTLETS } from '@/lib/data/mock-data';
 import {
   ShoppingBag,
@@ -17,12 +16,15 @@ import {
   Menu,
   X,
   Phone,
-  Store,
   Sparkles,
   ChevronRight,
-  ShieldCheck,
-  Compass,
-  Navigation,
+  Search,
+  Cake,
+  Cookie,
+  Flame,
+  Package,
+  Layers,
+  ArrowRight,
 } from 'lucide-react';
 
 interface NavbarProps {
@@ -30,35 +32,82 @@ interface NavbarProps {
   currentCampaignSlug?: string;
 }
 
+interface CategoryNavDef {
+  id: string;
+  name: string;
+  count: number;
+  description: string;
+  subCategoriesPreview: string[];
+  iconType: 'cake' | 'pastry' | 'puff' | 'cookie' | 'tea-cake' | 'bread';
+}
+
+const CATEGORY_DIRECTORY: CategoryNavDef[] = [
+  {
+    id: 'cat-celebration-cakes',
+    name: 'Celebration Cakes',
+    count: 79,
+    description: 'Fresh artisanal cakes in 1/2 KG & 1 KG',
+    subCategoriesPreview: ['Chocolate', 'Signature', 'Fruit & Berry', 'Cheesecakes', 'Sin Cakes'],
+    iconType: 'cake',
+  },
+  {
+    id: 'cat-pastries-desserts',
+    name: 'Pastries & Desserts',
+    count: 51,
+    description: 'Decadent individual pastries, mousses & doughnuts',
+    subCategoriesPreview: ['Small Pastries', 'Large Pastries', 'Cheese Pastries', 'Doughnuts'],
+    iconType: 'pastry',
+  },
+  {
+    id: 'cat-puffs-savories',
+    name: 'Puffs, Rolls & Savories',
+    count: 32,
+    description: 'Flaky bakery puffs, savory rolls & croissants',
+    subCategoriesPreview: ['Puffs & Patties', 'Savory Rolls', 'Croissants', 'Fried Snacks'],
+    iconType: 'puff',
+  },
+  {
+    id: 'cat-high-tea',
+    name: 'Khari, Cookies & High Tea',
+    count: 21,
+    description: 'Crispy special khari, sweet rusk toast & cookies',
+    subCategoriesPreview: ['Special Khari', 'Rusk Toast', 'Healthy Cookies', 'Eggless'],
+    iconType: 'cookie',
+  },
+  {
+    id: 'cat-tea-time-cakes',
+    name: 'Tea-Time Cakes & Brownies',
+    count: 16,
+    description: 'Traditional mawa cakes, fudgy brownies & muffins',
+    subCategoriesPreview: ['Mawa Cakes', 'Brownies', 'Loaves', 'Muffins'],
+    iconType: 'tea-cake',
+  },
+  {
+    id: 'cat-breads-daily',
+    name: 'Breads & Daily Bakes',
+    count: 14,
+    description: 'Fresh sandwich loaves, sourdough, pav & buns',
+    subCategoriesPreview: ['Sandwich Loaves', 'Flavored Breads', 'Ladi Paav', 'Daily Buns'],
+    iconType: 'bread',
+  },
+];
+
 export function Navbar({ currentOutletSlug, currentCampaignSlug }: NavbarProps) {
   const router = useRouter();
-  const { itemCount, setIsCartOpen, setCartOutletSlug } = useCart();
+  const { itemCount, total, setIsCartOpen } = useCart();
   const { user, isCustomer, openCustomerLogin } = useAuth();
   const {
     nearestOutlet,
-    allOutlets,
-    switchOutlet,
     openLocationModal,
-    distanceKm,
     deliveryAddress,
     deliveryArea,
-    deliveryCoordinates,
   } = useLocation();
-  const [categories, setCategories] = useState<{ id: string; name: string }[]>([]);
+
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const [navSearch, setNavSearch] = useState('');
+  const [selectedDietary, setSelectedDietary] = useState<'ALL' | 'VEG' | 'NON_VEG'>('ALL');
 
-  useEffect(() => {
-    fetch('/api/categories')
-      .then((res) => res.json())
-      .then((data) => {
-        if (data.success && data.categories) {
-          setCategories(data.categories);
-        }
-      })
-      .catch(() => {});
-  }, []);
-
-  // Lock body scroll and prevent background wobble when mobile drawer is open
+  // Lock body scroll and prevent background bounce when mobile drawer is open
   useEffect(() => {
     if (isDrawerOpen) {
       const prevOverflow = document.body.style.overflow;
@@ -72,11 +121,74 @@ export function Navbar({ currentOutletSlug, currentCampaignSlug }: NavbarProps) 
     }
   }, [isDrawerOpen]);
 
-  // Authoritative outlet for this customer is their nearest bakery (dynamic hotline)
+  // Authoritative outlet for this customer
   const effectiveOutlet =
     nearestOutlet ||
     (currentOutletSlug && OUTLETS.find((o) => o.slug === currentOutletSlug)) ||
     OUTLETS[0];
+
+  const handleCategoryClick = (categoryName: string) => {
+    setIsDrawerOpen(false);
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(
+        new CustomEvent('pnr-select-category', { detail: { category: categoryName } })
+      );
+      if (window.location.pathname === '/') {
+        document.getElementById('bakery-catalog')?.scrollIntoView({ behavior: 'smooth' });
+      } else {
+        router.push('/#bakery-catalog');
+      }
+    }
+  };
+
+  const handleSearchSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsDrawerOpen(false);
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(
+        new CustomEvent('pnr-set-search', { detail: { query: navSearch.trim() } })
+      );
+      if (window.location.pathname === '/') {
+        document.getElementById('bakery-catalog')?.scrollIntoView({ behavior: 'smooth' });
+      } else {
+        router.push('/#bakery-catalog');
+      }
+    }
+  };
+
+  const handleDietaryClick = (dietary: 'ALL' | 'VEG' | 'NON_VEG') => {
+    setSelectedDietary(dietary);
+    setIsDrawerOpen(false);
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(
+        new CustomEvent('pnr-set-dietary', { detail: { dietary } })
+      );
+      if (window.location.pathname === '/') {
+        document.getElementById('bakery-catalog')?.scrollIntoView({ behavior: 'smooth' });
+      } else {
+        router.push('/#bakery-catalog');
+      }
+    }
+  };
+
+  const renderCategoryIcon = (type: CategoryNavDef['iconType']) => {
+    switch (type) {
+      case 'cake':
+        return <Cake className="w-5 h-5 text-amber-700" />;
+      case 'pastry':
+        return <Sparkles className="w-5 h-5 text-amber-600" />;
+      case 'puff':
+        return <Flame className="w-5 h-5 text-rose-600" />;
+      case 'cookie':
+        return <Cookie className="w-5 h-5 text-amber-800" />;
+      case 'tea-cake':
+        return <Cake className="w-5 h-5 text-stone-700" />;
+      case 'bread':
+        return <Package className="w-5 h-5 text-amber-700" />;
+      default:
+        return <Sparkles className="w-5 h-5 text-amber-700" />;
+    }
+  };
 
   return (
     <>
@@ -88,14 +200,16 @@ export function Navbar({ currentOutletSlug, currentCampaignSlug }: NavbarProps) 
 
         <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 h-14 sm:h-16 flex items-center justify-between gap-2 sm:gap-4 w-full">
           {/* Left: Mobile-Only Hamburger Toggle & Brand Logo */}
-          <div className="flex items-center gap-1.5 sm:gap-3 shrink-0">
-            {/* Mobile-Only Hamburger Toggle (Hidden on Desktop) */}
+          <div className="flex items-center gap-2 sm:gap-3 shrink-0">
+            {/* Mobile Hamburger Toggle for Product Navigation */}
             <button
               onClick={() => setIsDrawerOpen(true)}
-              className="md:hidden p-1.5 sm:p-2 -ml-1 rounded-xl text-stone-800 hover:bg-stone-100 transition active:scale-95 flex items-center justify-center cursor-pointer"
-              aria-label="Open Mobile Menu"
+              className="md:hidden p-2 -ml-1 rounded-xl text-stone-900 hover:bg-stone-100 transition active:scale-95 flex items-center gap-1.5 cursor-pointer bg-stone-100/80 border border-stone-200/80 shadow-2xs"
+              aria-label="Open Products Navigation Menu"
+              title="Browse Bakery Menu"
             >
-              <Menu className="w-5 h-5 stroke-[2.2]" />
+              <Menu className="w-4 h-4 stroke-[2.2]" />
+              <span className="text-[11px] font-bold text-stone-800 pr-0.5">Menu</span>
             </button>
 
             {/* Brand Logo */}
@@ -111,27 +225,6 @@ export function Navbar({ currentOutletSlug, currentCampaignSlug }: NavbarProps) 
                 />
               </div>
             </Link>
-          </div>
-
-          {/* Center-Left: Nearest Bakery Indicator (No other outlets exposed) */}
-          <div className="flex items-center max-w-[170px] sm:max-w-xs shrink min-w-0">
-            <button
-              type="button"
-              onClick={openLocationModal}
-              className="relative flex items-center bg-white border border-stone-200/90 hover:border-stone-400 rounded-full px-2.5 sm:px-3 py-1 text-xs text-stone-700 transition shadow-xs cursor-pointer group truncate"
-              title="Your assigned nearest bakery based on location. Click to update location."
-            >
-              <MapPin className="w-3.5 h-3.5 text-amber-700 mr-1.5 shrink-0 group-hover:scale-110 transition-transform" />
-              <div className="truncate text-left">
-                <span className="font-semibold text-[10px] sm:text-xs text-stone-900 block truncate">
-                  {deliveryAddress ? deliveryAddress.split(',')[0] : effectiveOutlet.name.replace("Puffs 'n' Rolls - ", '')}
-                </span>
-                <span className="text-[9px] text-stone-500 font-mono hidden sm:block truncate">
-                  {effectiveOutlet.name.replace("Puffs 'n' Rolls - ", '')} {distanceKm ? `• ${distanceKm} km` : '• Fresh Oven'}
-                </span>
-              </div>
-              <ChevronDown className="w-3 h-3 text-stone-400 ml-1.5 shrink-0" />
-            </button>
           </div>
 
           {/* Desktop Direct Navigation (Hidden on Mobile, Visible on Desktop) */}
@@ -150,11 +243,24 @@ export function Navbar({ currentOutletSlug, currentCampaignSlug }: NavbarProps) 
             </a>
             <button
               type="button"
-              onClick={openLocationModal}
-              className="hover:text-stone-950 transition flex items-center gap-1 cursor-pointer"
+              onClick={() => handleCategoryClick('Celebration Cakes')}
+              className="hover:text-stone-950 transition font-medium cursor-pointer"
             >
-              <Navigation className="w-3 h-3 text-amber-700" />
-              <span>Change Location</span>
+              Cakes
+            </button>
+            <button
+              type="button"
+              onClick={() => handleCategoryClick('Puffs, Rolls & Savories')}
+              className="hover:text-stone-950 transition font-medium cursor-pointer"
+            >
+              Puffs & Rolls
+            </button>
+            <button
+              type="button"
+              onClick={() => handleCategoryClick('Pastries & Desserts')}
+              className="hover:text-stone-950 transition font-medium cursor-pointer"
+            >
+              Pastries
             </button>
             <a
               href={`tel:${effectiveOutlet.phone}`}
@@ -166,8 +272,28 @@ export function Navbar({ currentOutletSlug, currentCampaignSlug }: NavbarProps) 
             </a>
           </nav>
 
-          {/* Right: Customer & Cart Actions */}
+          {/* Right: Location & Profile Cluster + Cart Action */}
           <div className="flex items-center gap-1.5 sm:gap-2.5 shrink-0">
+            {/* Location & Location Selection Button (Located exclusively at top-right of profile section) */}
+            <button
+              type="button"
+              onClick={openLocationModal}
+              className="flex items-center bg-white border border-stone-200/90 hover:border-stone-400 rounded-full px-2.5 sm:px-3 py-1.5 text-xs text-stone-700 transition shadow-2xs cursor-pointer group max-w-[120px] sm:max-w-[180px] active:scale-95"
+              title="Your delivery location & outlet. Click to update location."
+            >
+              <MapPin className="w-3.5 h-3.5 text-amber-700 mr-1 shrink-0 group-hover:scale-110 transition-transform" />
+              <div className="truncate text-left min-w-0">
+                <span className="font-bold text-[10px] sm:text-xs text-stone-900 block truncate leading-tight">
+                  {deliveryArea || (deliveryAddress ? deliveryAddress.split(',')[0] : effectiveOutlet.area)}
+                </span>
+                <span className="text-[9px] text-stone-400 font-mono hidden sm:block truncate leading-none">
+                  {effectiveOutlet.name.replace("Puffs 'n' Rolls - ", '')}
+                </span>
+              </div>
+              <ChevronDown className="w-3 h-3 text-stone-400 ml-1 shrink-0" />
+            </button>
+
+            {/* Profile / Account Trigger */}
             {user && isCustomer ? (
               <Link
                 href="/account"
@@ -177,7 +303,7 @@ export function Navbar({ currentOutletSlug, currentCampaignSlug }: NavbarProps) 
                 <div className="w-4 h-4 rounded-full bg-[#1C1917] text-white flex items-center justify-center text-[9px] font-bold">
                   {user.name.charAt(0)}
                 </div>
-                <span className="truncate max-w-[65px] sm:max-w-none">{user.name.split(' ')[0]}</span>
+                <span className="hidden sm:inline truncate max-w-[65px] sm:max-w-none">{user.name.split(' ')[0]}</span>
               </Link>
             ) : (
               <button
@@ -186,17 +312,18 @@ export function Navbar({ currentOutletSlug, currentCampaignSlug }: NavbarProps) 
                 className="flex items-center gap-1 px-2.5 sm:px-3 py-1.5 rounded-full text-stone-800 hover:text-stone-950 text-xs font-semibold transition cursor-pointer border border-stone-200 bg-white hover:bg-stone-50 shadow-2xs active:scale-95"
               >
                 <User className="w-3.5 h-3.5 text-amber-700" />
-                <span>Sign In</span>
+                <span className="hidden sm:inline">Sign In</span>
               </button>
             )}
 
-            {/* Cart Trigger */}
+            {/* Bag / Cart Trigger */}
             <button
               onClick={() => setIsCartOpen(true)}
-              className="relative px-2.5 sm:px-4 py-1.5 sm:py-2 rounded-full bg-[#1C1917] hover:bg-stone-800 active:scale-95 text-white font-medium text-xs flex items-center gap-1.5 transition shadow-xs cursor-pointer"
+              className="relative p-2 sm:px-4 sm:py-2 rounded-full bg-[#1C1917] hover:bg-stone-800 active:scale-95 text-white font-medium text-xs flex items-center gap-1.5 transition shadow-xs cursor-pointer"
+              aria-label="View Shopping Bag"
             >
-              <ShoppingBag className="w-3.5 h-3.5 text-stone-300" />
-              <span className="hidden sm:inline tracking-wide">Bag</span>
+              <ShoppingBag className="w-4 h-4 sm:w-3.5 sm:h-3.5 text-stone-300" />
+              <span className="hidden sm:inline tracking-wide font-semibold">Bag</span>
               {itemCount > 0 && (
                 <span className="bg-white text-stone-900 font-bold text-[10px] px-1.5 py-0.2 rounded-full min-w-[16px] text-center">
                   {itemCount}
@@ -208,7 +335,9 @@ export function Navbar({ currentOutletSlug, currentCampaignSlug }: NavbarProps) 
       </header>
 
       {/* =========================================================================
-          MOBILE-ONLY CUSTOMER SLIDE-OVER DRAWER
+          MOBILE PRODUCT NAVIGATION MENU (PURE PRODUCT FOCUS)
+          - NO location cards, NO outlet switchers, NO checkout flows
+          - 100% focused on finding, exploring, and navigating bakery products
          ========================================================================= */}
       {isDrawerOpen && (
         <div className="md:hidden fixed inset-0 z-50 overflow-hidden touch-none">
@@ -220,19 +349,19 @@ export function Navbar({ currentOutletSlug, currentCampaignSlug }: NavbarProps) 
 
           {/* Drawer Panel */}
           <div className="fixed inset-y-0 left-0 max-w-full flex">
-            <div className="w-[85vw] max-w-xs sm:max-w-sm bg-[#FAF8F5] shadow-2xl flex flex-col justify-between border-r border-stone-200 animate-in slide-in-from-left duration-250 overscroll-contain touch-pan-y">
+            <div className="w-[88vw] max-w-sm bg-[#FAF8F5] shadow-2xl flex flex-col justify-between border-r border-stone-200 animate-in slide-in-from-left duration-250 overscroll-contain touch-pan-y">
               {/* Header */}
-              <div className="p-4 sm:p-5 border-b border-stone-200 bg-white flex items-center justify-between">
+              <div className="p-4 border-b border-stone-200 bg-white flex items-center justify-between">
                 <div className="flex items-center gap-2.5">
                   <div className="w-8 h-8 rounded-xl bg-[#1C1917] text-white flex items-center justify-center font-serif font-bold text-xs shadow-xs">
                     P&amp;R
                   </div>
                   <div>
                     <span className="font-serif font-bold text-stone-900 text-sm block">
-                      Puffs &apos;n&apos; Rolls
+                      Bakery Catalog
                     </span>
                     <span className="text-[10px] font-mono uppercase text-stone-400 block -mt-0.5">
-                      Artisanal Bakery Nashik
+                      213 Fresh Counter Items
                     </span>
                   </div>
                 </div>
@@ -240,269 +369,187 @@ export function Navbar({ currentOutletSlug, currentCampaignSlug }: NavbarProps) 
                 <button
                   onClick={() => setIsDrawerOpen(false)}
                   className="p-1.5 text-stone-400 hover:text-stone-800 rounded-full hover:bg-stone-100 transition cursor-pointer"
-                  aria-label="Close Navigation"
+                  aria-label="Close Product Navigation"
                 >
                   <X className="w-5 h-5" />
                 </button>
               </div>
 
-              {/* Scrollable Nav Content */}
-              <div className="flex-1 overflow-y-auto p-4 sm:p-5 space-y-4 text-stone-800 text-xs overscroll-contain touch-pan-y">
-                {/* 0. CUSTOMER ACCOUNT & SIGN IN BANNER */}
-                <div className="p-3 bg-stone-900 text-white rounded-2xl shadow-xs flex items-center justify-between gap-3">
-                  <div className="flex items-center gap-2.5 min-w-0">
-                    <div className="w-8 h-8 rounded-xl bg-amber-400 text-stone-950 flex items-center justify-center font-bold text-xs shrink-0">
-                      {user && isCustomer ? user.name.charAt(0) : <User className="w-4 h-4 text-stone-900" />}
-                    </div>
-                    <div className="min-w-0">
-                      {user && isCustomer ? (
-                        <>
-                          <span className="font-bold text-xs block text-white truncate">{user.name}</span>
-                          <span className="text-[10px] text-stone-400 font-mono block">+91 {(user as any).phone || 'Customer'}</span>
-                        </>
-                      ) : (
-                        <>
-                          <span className="font-bold text-xs block text-white">Customer Account</span>
-                          <span className="text-[10px] text-stone-400 block">Sign in to track orders</span>
-                        </>
-                      )}
-                    </div>
-                  </div>
-
-                  {user && isCustomer ? (
-                    <Link
-                      href="/account"
-                      onClick={() => setIsDrawerOpen(false)}
-                      className="px-3 py-1.5 bg-white/10 hover:bg-white/20 text-white rounded-xl text-[11px] font-semibold transition shrink-0"
-                    >
-                      Orders
-                    </Link>
-                  ) : (
+              {/* Scrollable Products Navigation Body */}
+              <div className="flex-1 overflow-y-auto p-4 space-y-4 text-stone-800 text-xs overscroll-contain touch-pan-y">
+                {/* 1. Fast Product Search Input */}
+                <form onSubmit={handleSearchSubmit} className="relative">
+                  <Search className="absolute left-3 top-2.5 w-4 h-4 text-stone-400" />
+                  <input
+                    type="text"
+                    value={navSearch}
+                    onChange={(e) => setNavSearch(e.target.value)}
+                    placeholder="Search cakes, puffs, cookies..."
+                    className="w-full pl-9 pr-8 py-2.5 bg-white border border-stone-200 rounded-xl text-xs placeholder:text-stone-400 focus:outline-none focus:ring-1 focus:ring-stone-900 focus:border-stone-900 transition shadow-2xs"
+                  />
+                  {navSearch && (
                     <button
                       type="button"
-                      onClick={() => {
-                        setIsDrawerOpen(false);
-                        openCustomerLogin();
-                      }}
-                      className="px-3 py-1.5 bg-amber-400 hover:bg-amber-300 text-stone-950 rounded-xl text-[11px] font-bold shadow-xs transition shrink-0 cursor-pointer"
+                      onClick={() => setNavSearch('')}
+                      className="absolute right-2.5 top-2.5 text-stone-400 hover:text-stone-700 p-0.5 rounded-full cursor-pointer"
                     >
-                      Sign In
+                      <X className="w-3.5 h-3.5" />
                     </button>
                   )}
-                </div>
+                </form>
 
-                {/* 1. TOP CARD: Customer's Delivery Location (Address + Update Location link) */}
-                <div className="p-3.5 bg-white rounded-2xl border border-stone-200/90 shadow-2xs space-y-2.5">
-                  <div className="flex items-center justify-between">
-                    <span className="text-[10px] uppercase font-mono text-amber-800 font-bold tracking-wider flex items-center gap-1.5">
-                      <MapPin className="w-3.5 h-3.5 text-amber-700" />
-                      Your Delivery Location
-                    </span>
-                    {deliveryCoordinates ? (
-                      <span className="text-[9px] font-bold text-emerald-800 bg-emerald-100/80 px-2 py-0.5 rounded-full border border-emerald-200">
-                        GPS Locked
-                      </span>
-                    ) : (
-                      <span className="text-[9px] font-semibold text-stone-600 bg-stone-100 px-2 py-0.5 rounded-full">
-                        Nashik
-                      </span>
-                    )}
-                  </div>
-                  <div>
-                    <p className="font-semibold text-stone-900 text-xs leading-snug line-clamp-2">
-                      {deliveryAddress || 'Nashik Doorstep Location'}
-                    </p>
-                    {deliveryArea && (
-                      <p className="text-[10px] text-stone-500 mt-0.5 truncate">
-                        {deliveryArea}
-                      </p>
-                    )}
-                  </div>
-                  <div className="pt-2 flex items-center justify-between text-[11px] border-t border-stone-100">
-                    <span className="text-stone-400 text-[10px]">
-                      Doorstep GPS verified
-                    </span>
+                {/* 2. Dietary Preference Selector */}
+                <div className="space-y-1.5">
+                  <span className="text-[10px] uppercase font-bold text-stone-400 tracking-wider block">
+                    Dietary Filter
+                  </span>
+                  <div className="grid grid-cols-3 gap-1 bg-white p-1 rounded-xl border border-stone-200/90 shadow-2xs text-[11px] font-bold">
                     <button
                       type="button"
-                      onClick={() => {
-                        setIsDrawerOpen(false);
-                        openLocationModal();
-                      }}
-                      className="text-amber-800 hover:text-amber-950 font-bold text-xs underline underline-offset-2 cursor-pointer flex items-center gap-1"
+                      onClick={() => handleDietaryClick('ALL')}
+                      className={`py-1.5 px-2 rounded-lg text-center transition cursor-pointer ${
+                        selectedDietary === 'ALL'
+                          ? 'bg-stone-900 text-white shadow-xs'
+                          : 'text-stone-600 hover:bg-stone-100'
+                      }`}
                     >
-                      <Navigation className="w-3 h-3 text-amber-700" />
-                      <span>Update Location</span>
+                      All Items
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleDietaryClick('VEG')}
+                      className={`py-1.5 px-2 rounded-lg text-center transition cursor-pointer flex items-center justify-center gap-1 ${
+                        selectedDietary === 'VEG'
+                          ? 'bg-emerald-600 text-white shadow-xs'
+                          : 'text-emerald-800 hover:bg-emerald-50'
+                      }`}
+                    >
+                      <span className={`w-1.5 h-1.5 rounded-full ${selectedDietary === 'VEG' ? 'bg-white' : 'bg-emerald-600'}`} />
+                      <span>Veg</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleDietaryClick('NON_VEG')}
+                      className={`py-1.5 px-2 rounded-lg text-center transition cursor-pointer flex items-center justify-center gap-1 ${
+                        selectedDietary === 'NON_VEG'
+                          ? 'bg-rose-700 text-white shadow-xs'
+                          : 'text-rose-800 hover:bg-rose-50'
+                      }`}
+                    >
+                      <span className={`w-1.5 h-1.5 rounded-full ${selectedDietary === 'NON_VEG' ? 'bg-white' : 'bg-rose-600'}`} />
+                      <span>Non-Veg</span>
                     </button>
                   </div>
                 </div>
 
-                {/* 2. BELOW CARD: Fulfilling Bakery Kitchen with customizable outlet choice */}
-                <div className="p-3.5 bg-stone-50/90 rounded-2xl border border-stone-200/90 space-y-2.5">
-                  <div className="flex items-center justify-between">
-                    <span className="text-[10px] uppercase font-mono text-stone-600 font-bold tracking-wider flex items-center gap-1.5">
-                      <Store className="w-3.5 h-3.5 text-stone-700" />
-                      Fulfilling Bakery Kitchen
-                    </span>
-                    <span className="text-[10px] font-medium text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full">
-                      ● Baking Fresh
-                    </span>
-                  </div>
-                  <div>
-                    <div className="flex items-center justify-between">
-                      <p className="font-serif font-bold text-stone-900 text-sm">
-                        {effectiveOutlet.name}
-                      </p>
-                      {distanceKm && (
-                        <span className="text-[10px] font-mono text-stone-600 bg-white px-2 py-0.5 rounded-md border border-stone-200">
-                          {distanceKm} km
-                        </span>
-                      )}
-                    </div>
-                    <p className="text-[11px] text-stone-500 mt-0.5 line-clamp-2">
-                      {effectiveOutlet.address}
-                    </p>
-                  </div>
-
-                  {/* Switch outlet dropdown for customer choice */}
-                  <div className="pt-2 border-t border-stone-200/80 space-y-1">
-                    <label className="block text-[9px] uppercase font-bold text-stone-500 tracking-wider">
-                      Switch Fulfilling Kitchen:
-                    </label>
-                    <select
-                      value={effectiveOutlet.slug}
-                      onChange={(e) => {
-                        const newSlug = e.target.value;
-                        switchOutlet(newSlug);
-                        setCartOutletSlug(newSlug);
-                      }}
-                      className="w-full px-2.5 py-1.5 bg-white border border-stone-300 rounded-xl text-xs font-semibold text-stone-900 focus:outline-none cursor-pointer"
+                {/* 3. Quick Navigation Shortcuts */}
+                <div className="space-y-1.5">
+                  <span className="text-[10px] uppercase font-bold text-stone-400 tracking-wider block">
+                    Quick Jump
+                  </span>
+                  <div className="grid grid-cols-2 gap-2">
+                    <button
+                      type="button"
+                      onClick={() => handleCategoryClick('All')}
+                      className="p-2.5 rounded-xl bg-white border border-stone-200/90 text-stone-800 hover:border-stone-400 transition text-left cursor-pointer flex items-center justify-between shadow-2xs group"
                     >
-                      {allOutlets.map((outlet) => (
-                        <option key={outlet.slug} value={outlet.slug}>
-                          {outlet.name} — {outlet.area}
-                        </option>
-                      ))}
-                    </select>
+                      <div className="flex items-center gap-2">
+                        <Layers className="w-4 h-4 text-amber-700 group-hover:scale-110 transition-transform" />
+                        <span className="text-xs font-semibold">All Bakes</span>
+                      </div>
+                      <span className="text-[10px] font-mono text-stone-400">213</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleCategoryClick('Celebration Cakes')}
+                      className="p-2.5 rounded-xl bg-white border border-stone-200/90 text-stone-800 hover:border-stone-400 transition text-left cursor-pointer flex items-center justify-between shadow-2xs group"
+                    >
+                      <div className="flex items-center gap-2">
+                        <Cake className="w-4 h-4 text-amber-700 group-hover:scale-110 transition-transform" />
+                        <span className="text-xs font-semibold">Cakes</span>
+                      </div>
+                      <span className="text-[10px] font-mono text-emerald-700 font-bold bg-emerald-50 px-1.5 py-0.5 rounded-md">79</span>
+                    </button>
                   </div>
                 </div>
 
-                {/* Section: Quick Links */}
-                <div className="space-y-1">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setIsDrawerOpen(false);
-                      if (typeof window !== 'undefined') {
-                        if (window.location.pathname === '/') {
-                          document.getElementById('bakery-catalog')?.scrollIntoView({ behavior: 'smooth' });
-                        } else {
-                          router.push('/#bakery-catalog');
-                        }
-                      }
-                    }}
-                    className="w-full p-2.5 rounded-xl bg-stone-900 text-white font-medium flex items-center justify-between shadow-xs cursor-pointer"
-                  >
-                    <div className="flex items-center gap-2">
-                      <Store className="w-3.5 h-3.5 text-amber-400" />
-                      <span>Order from {effectiveOutlet.name.replace("Puffs 'n' Rolls - ", '')}</span>
-                    </div>
-                    <ChevronRight className="w-3.5 h-3.5 text-stone-400" />
-                  </button>
-
-                  <button
-                    onClick={() => {
-                      setIsDrawerOpen(false);
-                      openLocationModal();
-                    }}
-                    className="w-full p-2.5 rounded-xl bg-white hover:bg-stone-100 border border-stone-200 text-stone-700 font-medium flex items-center justify-between cursor-pointer"
-                  >
-                    <div className="flex items-center gap-2">
-                      <Navigation className="w-3.5 h-3.5 text-amber-700" />
-                      <span>Detect Nearest Bakery</span>
-                    </div>
-                    <span className="text-[10px] text-stone-400 font-mono">GPS</span>
-                  </button>
-                </div>
-
-                {/* Section: Bakery Menu Categories */}
-                <div className="space-y-2">
-                  <p className="text-[10px] font-bold uppercase tracking-wider text-stone-400">
-                    Artisanal Categories
-                  </p>
-                  <div className="grid grid-cols-2 gap-1.5">
-                    {(categories.length > 0
-                      ? categories.map((c) => c.name)
-                      : [
-                          'Puffs & Patties',
-                          'Savory Rolls',
-                          'Cakes & Pastries',
-                          'Snack Combos',
-                          'Breads & Buns',
-                          'Beverages',
-                        ]
-                    ).map((cat) => (
+                {/* 4. Artisanal Product Categories List */}
+                <div className="space-y-2 pt-1">
+                  <span className="text-[10px] uppercase font-bold text-stone-400 tracking-wider block">
+                    Product Categories
+                  </span>
+                  <div className="space-y-2">
+                    {CATEGORY_DIRECTORY.map((cat) => (
                       <button
-                        key={cat}
-                        onClick={() => {
-                          setIsDrawerOpen(false);
-                          if (typeof window !== 'undefined') {
-                            window.dispatchEvent(
-                              new CustomEvent('pnr-select-category', { detail: { category: cat } })
-                            );
-                            if (window.location.pathname === '/') {
-                              document.getElementById('bakery-catalog')?.scrollIntoView({ behavior: 'smooth' });
-                            } else {
-                              router.push('/#bakery-catalog');
-                            }
-                          }
-                        }}
-                        className="p-2 rounded-xl bg-white border border-stone-200/80 text-[11px] font-medium text-stone-700 hover:border-stone-400 hover:bg-stone-50 transition text-left cursor-pointer truncate"
+                        key={cat.id}
+                        type="button"
+                        onClick={() => handleCategoryClick(cat.name)}
+                        className="w-full p-3 bg-white hover:bg-stone-50 rounded-2xl border border-stone-200/90 text-left transition shadow-2xs flex items-center justify-between gap-3 group active:scale-[0.99] cursor-pointer"
                       >
-                        {cat}
+                        <div className="flex items-start gap-3 min-w-0">
+                          <div className="w-9 h-9 rounded-xl bg-stone-100 flex items-center justify-center shrink-0 mt-0.5 group-hover:bg-amber-50 group-hover:text-amber-800 transition">
+                            {renderCategoryIcon(cat.iconType)}
+                          </div>
+                          <div className="min-w-0">
+                            <span className="font-bold text-xs text-stone-900 block truncate group-hover:text-amber-900 transition">
+                              {cat.name}
+                            </span>
+                            <span className="text-[10px] text-stone-500 block truncate mt-0.5">
+                              {cat.description}
+                            </span>
+                            <div className="flex items-center gap-1 mt-1.5 overflow-hidden">
+                              {cat.subCategoriesPreview.slice(0, 3).map((sub) => (
+                                <span
+                                  key={sub}
+                                  className="text-[9px] font-medium text-stone-500 bg-stone-100 px-1.5 py-0.5 rounded-md truncate"
+                                >
+                                  {sub}
+                                </span>
+                              ))}
+                            </div>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-1.5 shrink-0">
+                          <span className="text-[10px] font-mono font-bold text-stone-600 bg-stone-100 px-2 py-0.5 rounded-full">
+                            {cat.count}
+                          </span>
+                          <ChevronRight className="w-4 h-4 text-stone-400 group-hover:text-stone-800 group-hover:translate-x-0.5 transition" />
+                        </div>
                       </button>
                     ))}
                   </div>
                 </div>
-
-                {/* Section: Direct Bakery Hotline */}
-                <div className="p-3 bg-amber-50/60 rounded-2xl border border-amber-200/70 space-y-1">
-                  <span className="text-[10px] uppercase font-mono text-amber-900 font-bold block">
-                    Direct Kitchen Hotline
-                  </span>
-                  <a
-                    href={`tel:${effectiveOutlet.phone}`}
-                    className="font-mono text-xs font-bold text-stone-900 flex items-center gap-1.5 hover:underline"
-                  >
-                    <Phone className="w-3.5 h-3.5 text-amber-800" />
-                    <span>{effectiveOutlet.phone}</span>
-                  </a>
-                  <p className="text-[10px] text-stone-500">
-                    Live from {effectiveOutlet.openingHours}
-                  </p>
-                </div>
               </div>
 
-              {/* Drawer Footer */}
-              <div className="p-4 border-t border-stone-200 bg-white space-y-2">
-                {user && isCustomer ? (
-                  <Link
-                    href="/account"
-                    onClick={() => setIsDrawerOpen(false)}
-                    className="w-full py-2.5 px-3 bg-stone-100 hover:bg-stone-200 text-stone-900 rounded-xl font-medium text-xs flex items-center justify-center gap-2 transition"
+              {/* Drawer Footer: Pure Product / Bag Action */}
+              <div className="p-4 border-t border-stone-200 bg-white">
+                {itemCount > 0 ? (
+                  <button
+                    onClick={() => {
+                      setIsDrawerOpen(false);
+                      setIsCartOpen(true);
+                    }}
+                    className="w-full py-3 px-4 bg-[#1C1917] hover:bg-stone-800 active:scale-[0.99] text-white rounded-2xl font-bold text-xs flex items-center justify-between transition shadow-md cursor-pointer"
                   >
-                    <User className="w-3.5 h-3.5" />
-                    <span>My Account ({user.name.split(' ')[0]})</span>
-                  </Link>
+                    <div className="flex items-center gap-2">
+                      <ShoppingBag className="w-4 h-4 text-amber-400" />
+                      <span>View Bag ({itemCount} {itemCount === 1 ? 'item' : 'items'})</span>
+                    </div>
+                    <div className="flex items-center gap-1 font-mono">
+                      <span>₹{total}</span>
+                      <ArrowRight className="w-3.5 h-3.5 ml-1" />
+                    </div>
+                  </button>
                 ) : (
                   <button
                     onClick={() => {
                       setIsDrawerOpen(false);
-                      openCustomerLogin();
+                      document.getElementById('bakery-catalog')?.scrollIntoView({ behavior: 'smooth' });
                     }}
-                    className="w-full py-2.5 px-3 bg-[#1C1917] hover:bg-stone-800 text-white rounded-xl font-medium text-xs flex items-center justify-center gap-2 transition cursor-pointer"
+                    className="w-full py-3 px-4 bg-stone-900 hover:bg-stone-800 text-white rounded-2xl font-bold text-xs flex items-center justify-center gap-2 transition shadow-xs cursor-pointer"
                   >
-                    <User className="w-3.5 h-3.5" />
-                    <span>Customer Sign In</span>
+                    <Sparkles className="w-4 h-4 text-amber-400" />
+                    <span>Browse All 213 Bakery Items</span>
                   </button>
                 )}
               </div>

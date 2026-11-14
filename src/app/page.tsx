@@ -82,7 +82,7 @@ export default function HomePage() {
     };
   }, [nearestOutlet.slug]);
 
-  // Listen to drawer category selection events (no redirects!)
+  // Listen to drawer product navigation & category selection events
   useEffect(() => {
     const handleCategorySelect = (e: Event) => {
       const customEvent = e as CustomEvent<{ category: string }>;
@@ -91,9 +91,27 @@ export default function HomePage() {
         document.getElementById('bakery-catalog')?.scrollIntoView({ behavior: 'smooth' });
       }
     };
+    const handleDietarySelect = (e: Event) => {
+      const customEvent = e as CustomEvent<{ dietary: DietaryFilterType }>;
+      if (customEvent.detail?.dietary) {
+        setDietaryFilter(customEvent.detail.dietary);
+        document.getElementById('bakery-catalog')?.scrollIntoView({ behavior: 'smooth' });
+      }
+    };
+    const handleSearch = (e: Event) => {
+      const customEvent = e as CustomEvent<{ query: string }>;
+      if (customEvent.detail?.query !== undefined) {
+        setSearchQuery(customEvent.detail.query);
+        document.getElementById('bakery-catalog')?.scrollIntoView({ behavior: 'smooth' });
+      }
+    };
     window.addEventListener('pnr-select-category', handleCategorySelect);
+    window.addEventListener('pnr-set-dietary', handleDietarySelect);
+    window.addEventListener('pnr-set-search', handleSearch);
     return () => {
       window.removeEventListener('pnr-select-category', handleCategorySelect);
+      window.removeEventListener('pnr-set-dietary', handleDietarySelect);
+      window.removeEventListener('pnr-set-search', handleSearch);
     };
   }, []);
 
@@ -143,8 +161,8 @@ export default function HomePage() {
       <div className="min-h-screen flex flex-col bg-[#FDFCFB] overflow-x-hidden w-full">
         <Navbar currentOutletSlug={nearestOutlet.slug} />
 
-        {/* Top Compact Outlet & Doorstep Delivery Status Bar */}
-        <div className="bg-[#FAF8F5] border-b border-stone-200/80 py-2.5 px-4 sm:px-6 lg:px-8">
+        {/* Top Compact Outlet & Doorstep Delivery Status Bar (Desktop only, mobile location is exclusively at top-right navbar) */}
+        <div className="hidden sm:block bg-[#FAF8F5] border-b border-stone-200/80 py-2.5 px-4 sm:px-6 lg:px-8">
           <div className="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-3">
             <div className="flex items-center gap-2 min-w-0">
               <span className="w-2.5 h-2.5 rounded-full bg-emerald-600 animate-pulse shrink-0" />
@@ -152,7 +170,7 @@ export default function HomePage() {
                 Dispatched fresh from <strong className="font-semibold text-stone-900">{nearestOutlet.name}</strong> ({nearestOutlet.area})
               </p>
               {distanceKm && (
-                <span className="text-[10px] font-mono text-stone-600 bg-stone-100 px-2 py-0.5 rounded-full border border-stone-200 shrink-0 hidden sm:inline">
+                <span className="text-[10px] font-mono text-stone-600 bg-stone-100 px-2 py-0.5 rounded-full border border-stone-200 shrink-0">
                   {distanceKm} km
                 </span>
               )}
