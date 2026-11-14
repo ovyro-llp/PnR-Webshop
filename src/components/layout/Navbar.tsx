@@ -350,17 +350,28 @@ export function Navbar({ currentOutletSlug, currentCampaignSlug }: NavbarProps) 
           {/* Drawer Panel */}
           <div className="fixed inset-y-0 left-0 max-w-full flex">
             <div className="w-[88vw] max-w-sm bg-[#FAF8F5] shadow-2xl flex flex-col justify-between border-r border-stone-200 animate-in slide-in-from-left duration-250 overscroll-contain touch-pan-y">
-              {/* Header */}
+              {/* Header with Official Puffs 'n' Rolls Brand Logo */}
               <div className="p-4 border-b border-stone-200 bg-white flex items-center justify-between">
-                <div className="flex items-center gap-2.5">
-                  <div className="w-8 h-8 rounded-xl bg-[#1C1917] text-white flex items-center justify-center font-serif font-bold text-xs shadow-xs">
-                    P&amp;R
-                  </div>
-                  <div>
-                    <span className="font-serif font-bold text-stone-900 text-sm block">
+                <div className="flex items-center gap-3 min-w-0">
+                  <Link
+                    href="/"
+                    onClick={() => setIsDrawerOpen(false)}
+                    className="relative w-11 h-11 shrink-0 transition-transform active:scale-95 flex items-center justify-center bg-white rounded-2xl border border-stone-200/90 p-1 shadow-2xs hover:border-stone-400"
+                    title="Puffs 'n' Rolls Home"
+                  >
+                    <Image
+                      src="https://puffsnrolls.com/wp-content/uploads/2025/12/banner-logo.png"
+                      alt="Puffs 'n' Rolls Logo"
+                      fill
+                      sizes="44px"
+                      className="object-contain"
+                    />
+                  </Link>
+                  <div className="min-w-0">
+                    <span className="font-serif font-bold text-stone-900 text-sm block leading-tight truncate">
                       Bakery Catalog
                     </span>
-                    <span className="text-[10px] font-mono uppercase text-stone-400 block -mt-0.5">
+                    <span className="text-[10px] font-mono uppercase text-stone-400 block mt-0.5 truncate">
                       213 Fresh Counter Items
                     </span>
                   </div>
@@ -368,7 +379,7 @@ export function Navbar({ currentOutletSlug, currentCampaignSlug }: NavbarProps) 
 
                 <button
                   onClick={() => setIsDrawerOpen(false)}
-                  className="p-1.5 text-stone-400 hover:text-stone-800 rounded-full hover:bg-stone-100 transition cursor-pointer"
+                  className="p-1.5 text-stone-400 hover:text-stone-800 rounded-full hover:bg-stone-100 transition cursor-pointer shrink-0"
                   aria-label="Close Product Navigation"
                 >
                   <X className="w-5 h-5" />
