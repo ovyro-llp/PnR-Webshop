@@ -30,6 +30,9 @@ yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
 
+# raw photo assets
+/2026 NEW CAKES/
+
 # env files
 .env
 .env*

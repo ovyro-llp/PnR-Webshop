@@ -198,6 +198,18 @@ if (!globalThis.__PNR_OUTLETS__) {
 }
 if (!globalThis.__PNR_MASTER_PRODUCTS__ || globalThis.__PNR_MASTER_PRODUCTS__.length < 20) {
   globalThis.__PNR_MASTER_PRODUCTS__ = [...MENU_ITEMS];
+} else {
+  // Sync authentic bakery photos from MENU_ITEMS into active in-memory cache
+  globalThis.__PNR_MASTER_PRODUCTS__.forEach((item) => {
+    const fresh = MENU_ITEMS.find((m) => m.id === item.id);
+    if (
+      fresh?.image &&
+      fresh.image.startsWith('/images/cakes/') &&
+      (!item.image || item.image.includes('unsplash.com'))
+    ) {
+      item.image = fresh.image;
+    }
+  });
 }
 globalThis.__PNR_CATEGORIES__ = [...DEFAULT_CATEGORIES];
 
@@ -984,6 +996,22 @@ export const orderStore = {
     try {
       const dbProducts = await orderRepository.getMasterProducts();
       if (dbProducts && Array.isArray(dbProducts) && dbProducts.length > 20) {
+        let hasImageUpdates = false;
+        dbProducts.forEach((dbItem) => {
+          const masterItem = MENU_ITEMS.find((m) => m.id === dbItem.id);
+          if (
+            masterItem?.image &&
+            masterItem.image.startsWith('/images/cakes/') &&
+            (!dbItem.image || dbItem.image.includes('unsplash.com'))
+          ) {
+            dbItem.image = masterItem.image;
+            hasImageUpdates = true;
+          }
+        });
+
+        if (hasImageUpdates) {
+          orderRepository.saveMasterProducts(dbProducts).catch(() => {});
+        }
         globalThis.__PNR_MASTER_PRODUCTS__ = dbProducts;
       } else {
         if (!globalThis.__PNR_MASTER_PRODUCTS__ || globalThis.__PNR_MASTER_PRODUCTS__.length < 20) {

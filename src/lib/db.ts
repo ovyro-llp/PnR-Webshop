@@ -1,8 +1,39 @@
+import fs from 'fs';
+import path from 'path';
 import { Pool } from 'pg';
 import { MediaUpload } from '@/types';
 import { ensureCoreTables } from '@/lib/db/init-schema';
 
 export { ensureCoreTables };
+
+function getLocalCakeMedia(): MediaUpload[] {
+  try {
+    const dir = path.join(process.cwd(), 'public/images/cakes');
+    if (!fs.existsSync(dir)) return [];
+    const files = fs.readdirSync(dir).filter((f) => f.endsWith('.webp'));
+    return files.map((f) => {
+      const stat = fs.statSync(path.join(dir, f));
+      const cleanName = f
+        .replace(/\.webp$/, '')
+        .replace(/-/g, ' ')
+        .replace(/\b\w/g, (c) => c.toUpperCase());
+      return {
+        id: `local-cake-${f.replace(/\.webp$/, '')}`,
+        filename: f,
+        mimeType: 'image/webp',
+        byteSize: stat.size,
+        url: `/images/cakes/${f}`,
+        title: `${cleanName} (Celebration Cake)`,
+        altText: cleanName,
+        category: 'cakes',
+        createdAt: stat.birthtime ? new Date(stat.birthtime).toISOString() : new Date().toISOString(),
+        updatedAt: stat.mtime ? new Date(stat.mtime).toISOString() : new Date().toISOString(),
+      };
+    });
+  } catch {
+    return [];
+  }
+}
 
 declare global {
   // eslint-disable-next-line no-var
@@ -75,9 +106,10 @@ export async function ensureMediaTable(): Promise<void> {
   return globalThis.__PNR_PG_INIT_PROMISE__;
 }
 
-export async function getMediaUploads(limit = 50): Promise<MediaUpload[]> {
+export async function getMediaUploads(limit = 100): Promise<MediaUpload[]> {
+  const localCakes = getLocalCakeMedia();
   if (!process.env.DATABASE_URL || !process.env.DATABASE_URL.trim()) {
-    return [];
+    return localCakes.slice(0, limit);
   }
   await ensureMediaTable();
   const pool = getDbPool();
@@ -90,7 +122,7 @@ export async function getMediaUploads(limit = 50): Promise<MediaUpload[]> {
       [limit]
     );
 
-    return res.rows.map((row) => ({
+    const dbMedia: MediaUpload[] = res.rows.map((row) => ({
       id: row.id,
       filename: row.filename,
       mimeType: row.mime_type,
@@ -102,9 +134,11 @@ export async function getMediaUploads(limit = 50): Promise<MediaUpload[]> {
       createdAt: row.created_at ? new Date(row.created_at).toISOString() : new Date().toISOString(),
       updatedAt: row.updated_at ? new Date(row.updated_at).toISOString() : new Date().toISOString(),
     }));
+
+    return [...dbMedia, ...localCakes].slice(0, limit);
   } catch (err: any) {
     console.warn('[Railway PostgreSQL getMediaUploads Warning]:', err.message);
-    return [];
+    return localCakes.slice(0, limit);
   }
 }
 
