@@ -243,6 +243,37 @@ export default function AdminB2BPage() {
     }
   };
 
+  // Delete Client
+  const handleDeleteClient = async (clientId: string, clientName: string) => {
+    if (
+      !confirm(
+        `Are you sure you want to delete corporate client "${clientName}"?\n\nThis will permanently delete the client, all its departments, custom catalog pricing, employee logins, and orders.`
+      )
+    ) {
+      return;
+    }
+
+    try {
+      const res = await fetch(`/api/b2b/admin/clients?clientId=${clientId}`, {
+        method: 'DELETE',
+      });
+
+      if (res.ok) {
+        const remaining = clients.filter((c) => c.id !== clientId);
+        setClients(remaining);
+        if (selectedClientId === clientId) {
+          setSelectedClientId(remaining.length > 0 ? remaining[0].id : '');
+        }
+        await fetchClients();
+      } else {
+        const data = await res.json();
+        alert(data.error || 'Failed to delete client.');
+      }
+    } catch (err: any) {
+      alert(err.message || 'Error deleting client.');
+    }
+  };
+
   // Handle Price Save
   const handleSavePrice = async (itemId: string) => {
     const parsed = parseFloat(editingPriceValue);
@@ -804,9 +835,18 @@ export default function AdminB2BPage() {
                       slug: {client.slug}
                     </span>
                   </div>
-                  <span className="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase bg-emerald-100 text-emerald-800">
-                    Active
-                  </span>
+                  <div className="flex items-center gap-1.5">
+                    <span className="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase bg-emerald-100 text-emerald-800">
+                      Active
+                    </span>
+                    <button
+                      onClick={() => handleDeleteClient(client.id, client.name)}
+                      title={`Delete ${client.name}`}
+                      className="p-1.5 text-stone-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
                 </div>
 
                 <div className="space-y-1.5 text-xs text-stone-600">

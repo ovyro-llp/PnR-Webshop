@@ -460,14 +460,29 @@ export const b2bRepository = {
       try {
         await ensureCoreTables();
         const pool = getDbPool();
-        await pool.query(`DELETE FROM public.b2b_clients WHERE id = $1;`, [clientId]);
-        return true;
+        const client = await pool.connect();
+        try {
+          await client.query('BEGIN');
+          await client.query(`DELETE FROM public.b2b_orders WHERE client_id = $1;`, [clientId]);
+          await client.query(`DELETE FROM public.b2b_client_catalog WHERE client_id = $1;`, [clientId]);
+          await client.query(`DELETE FROM public.b2b_client_users WHERE client_id = $1;`, [clientId]);
+          await client.query(`DELETE FROM public.b2b_departments WHERE client_id = $1;`, [clientId]);
+          await client.query(`DELETE FROM public.b2b_clients WHERE id = $1;`, [clientId]);
+          await client.query('COMMIT');
+          return true;
+        } catch (e) {
+          await client.query('ROLLBACK');
+          throw e;
+        } finally {
+          client.release();
+        }
       } catch (err: any) {
         console.warn('[b2bRepository.deleteClient DB Warning]:', err.message);
       }
     }
 
     const store = getMemoryStore();
+    store.orders = store.orders.filter((o) => o.clientId !== clientId);
     store.clients = store.clients.filter((c) => c.id !== clientId);
     store.departments = store.departments.filter((d) => d.clientId !== clientId);
     store.catalogs = store.catalogs.filter((p) => p.clientId !== clientId);
