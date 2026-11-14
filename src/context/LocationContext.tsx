@@ -102,7 +102,7 @@ export function LocationProvider({ children }: { children: React.ReactNode }) {
       if (!prompted) {
         if (typeof window !== 'undefined') {
           const path = window.location.pathname;
-          if (path.startsWith('/admin') || path.startsWith('/login')) {
+          if (path.startsWith('/admin') || path.startsWith('/login') || path.startsWith('/b2b')) {
             return;
           }
         }

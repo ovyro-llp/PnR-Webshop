@@ -170,6 +170,38 @@ export const PERMISSION_CATEGORIES: PermissionCategory[] = [
       },
     ],
   },
+  {
+    id: 'b2b',
+    title: 'B2B Corporate Operations',
+    description: 'Corporate client accounts, department requisitions, custom pricing, and kitchen production sheets',
+    permissions: [
+      {
+        id: 'b2b:view',
+        label: 'View B2B Orders & Hub',
+        description: 'Access the B2B operations tab, daily orders, and client accounts',
+      },
+      {
+        id: 'b2b:manage_clients',
+        label: 'Manage Corporate Clients & Departments',
+        description: 'Create clients, custom slugs, departments, and issue client login credentials',
+      },
+      {
+        id: 'b2b:manage_pricing',
+        label: 'Manage Dynamic Catalogs & B2B Pricing',
+        description: 'Assign products to clients and set custom negotiated contracted prices',
+      },
+      {
+        id: 'b2b:manage_orders',
+        label: 'Process & Update B2B Orders',
+        description: 'Confirm, update status, and dispatch department requisition orders',
+      },
+      {
+        id: 'b2b:kitchen_aggregate',
+        label: 'Aggregate Kitchen Bake Sheets',
+        description: 'Generate consolidated production sheets combining common items across all departments',
+      },
+    ],
+  },
 ];
 
 /**
@@ -208,6 +240,11 @@ export const ROLE_DEFINITIONS: Record<EmployeeRole, RoleDefinition> = {
       'staff:manage_roles',
       'analytics:view_outlet',
       'analytics:view_financials',
+      'b2b:view',
+      'b2b:manage_clients',
+      'b2b:manage_pricing',
+      'b2b:manage_orders',
+      'b2b:kitchen_aggregate',
     ],
   },
   OUTLET_MANAGER: {
@@ -276,6 +313,28 @@ export const ROLE_DEFINITIONS: Record<EmployeeRole, RoleDefinition> = {
       'analytics:view_financials',
       'orders:view',
       'outlets:view',
+    ],
+  },
+  B2B_MANAGER: {
+    id: 'B2B_MANAGER',
+    name: 'B2B Accounts & Corporate Manager',
+    shortName: 'B2B Manager',
+    description: 'Manages corporate client accounts, department requisitions, client-specific dynamic pricing, and daily consolidated kitchen production sheets.',
+    typicalStaff: 'Corporate Sales Lead, Key Account Executive, Kitchen Dispatch Lead',
+    scope: 'ALL_OUTLETS',
+    badge: {
+      bg: 'bg-purple-100',
+      text: 'text-purple-900',
+      border: 'border-purple-300',
+    },
+    permissions: [
+      'b2b:view',
+      'b2b:manage_clients',
+      'b2b:manage_pricing',
+      'b2b:manage_orders',
+      'b2b:kitchen_aggregate',
+      'orders:view',
+      'inventory:view',
     ],
   },
 };

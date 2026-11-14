@@ -21,6 +21,7 @@ import {
   Shield,
   Truck,
   Image as ImageIcon,
+  Briefcase,
 } from 'lucide-react';
 import OrderSoundAlertManager from '@/components/admin/OrderSoundAlertManager';
 
@@ -90,6 +91,13 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       icon: ImageIcon,
       permission: 'inventory:view' as Permission,
     },
+    {
+      label: 'B2B Orders',
+      shortLabel: 'B2B',
+      href: '/admin/b2b',
+      icon: Briefcase,
+      permission: 'b2b:view' as Permission,
+    },
   ];
 
   const navItems = useMemo(
@@ -132,6 +140,10 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       return;
     }
     if (pathname.startsWith('/admin/media') && !hasPermission(userRole, 'inventory:view')) {
+      router.push('/admin');
+      return;
+    }
+    if (pathname.startsWith('/admin/b2b') && !hasPermission(userRole, 'b2b:view')) {
       router.push('/admin');
       return;
     }

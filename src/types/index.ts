@@ -2,7 +2,8 @@ export type EmployeeRole =
   | 'SUPER_ADMIN'
   | 'OUTLET_MANAGER'
   | 'KITCHEN_STAFF'
-  | 'MARKETING_MANAGER';
+  | 'MARKETING_MANAGER'
+  | 'B2B_MANAGER';
 
 export type Permission =
   // Orders & Dispatch
@@ -29,7 +30,13 @@ export type Permission =
   | 'staff:manage_roles'
   // Financials & Analytics
   | 'analytics:view_outlet'
-  | 'analytics:view_financials';
+  | 'analytics:view_financials'
+  // B2B Corporate Operations
+  | 'b2b:view'
+  | 'b2b:manage_clients'
+  | 'b2b:manage_pricing'
+  | 'b2b:manage_orders'
+  | 'b2b:kitchen_aggregate';
 
 export interface MangwaleOutletConfig {
   apiKey: string;
@@ -395,4 +402,126 @@ export interface OutletAnalytics {
   activeDeliveryCount: number;
   topSellingItems: { name: string; quantity: number; revenue: number }[];
   hourlyTrend: { hour: string; orders: number; revenue: number }[];
+}
+
+// =========================================================================
+// B2B Corporate Operations Interfaces
+// =========================================================================
+
+export interface B2BClient {
+  id: string;
+  slug: string;
+  name: string;
+  contactPerson?: string;
+  phone?: string;
+  email?: string;
+  billingAddress?: string;
+  fulfillingOutletSlug: string;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+  departmentCount?: number;
+  productCount?: number;
+}
+
+export interface B2BDepartment {
+  id: string;
+  clientId: string;
+  name: string;
+  code?: string;
+  contactPerson?: string;
+  phone?: string;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface B2BClientCatalogItem {
+  id: string;
+  clientId: string;
+  productId?: string;
+  productName: string;
+  category: string;
+  unit: string;
+  b2bPrice: number;
+  imageUrl?: string;
+  isActive: boolean;
+  displayOrder: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface B2BClientUser {
+  id: string;
+  clientId: string;
+  departmentId: string;
+  departmentName?: string;
+  name: string;
+  username: string;
+  isActive: boolean;
+  lastLogin?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface B2BOrderItem {
+  productId?: string;
+  productName: string;
+  category: string;
+  unit: string;
+  b2bPrice: number;
+  quantity: number;
+  subtotal: number;
+}
+
+export interface B2BOrder {
+  id: string;
+  orderNumber: string;
+  clientId: string;
+  clientName?: string;
+  clientSlug?: string;
+  departmentId: string;
+  departmentName?: string;
+  clientUserId?: string;
+  requisitionerName?: string;
+  deliveryDate: string; // YYYY-MM-DD
+  deliveryTimeSlot: string;
+  status: 'RECEIVED' | 'CONFIRMED' | 'BAKING' | 'PACKED' | 'DELIVERED' | 'CANCELLED';
+  items: B2BOrderItem[];
+  totalItems: number;
+  totalQuantity: number;
+  totalAmount: number;
+  notes?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface B2BKitchenAggregateItem {
+  productName: string;
+  category: string;
+  unit: string;
+  totalQuantity: number;
+  departments: {
+    departmentName: string;
+    clientName: string;
+    quantity: number;
+    orderNumber: string;
+  }[];
+}
+
+export interface B2BDepartmentPackingSlip {
+  orderId: string;
+  orderNumber: string;
+  clientName: string;
+  departmentName: string;
+  deliveryDate: string;
+  deliveryTimeSlot: string;
+  notes?: string;
+  items: {
+    productName: string;
+    quantity: number;
+    unit: string;
+    category: string;
+  }[];
+  totalUnits: number;
 }

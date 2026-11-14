@@ -205,3 +205,100 @@ CREATE TABLE IF NOT EXISTS public.system_settings (
     value JSONB NOT NULL,
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
+
+-- =========================================================================
+-- B2B Corporate Operations & Requisition Engine
+-- =========================================================================
+
+-- 10. B2B Corporate Clients
+CREATE TABLE IF NOT EXISTS public.b2b_clients (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    slug VARCHAR(100) UNIQUE NOT NULL,
+    name VARCHAR(255) NOT NULL,
+    contact_person VARCHAR(255),
+    phone VARCHAR(50),
+    email VARCHAR(255),
+    billing_address TEXT,
+    fulfilling_outlet_slug VARCHAR(100) DEFAULT 'cycle-circle',
+    is_active BOOLEAN NOT NULL DEFAULT TRUE,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_b2b_clients_slug ON public.b2b_clients(slug);
+
+-- 11. B2B Client Departments (Managed by PnR Admin)
+CREATE TABLE IF NOT EXISTS public.b2b_departments (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    client_id UUID NOT NULL REFERENCES public.b2b_clients(id) ON DELETE CASCADE,
+    name VARCHAR(255) NOT NULL,
+    code VARCHAR(50),
+    contact_person VARCHAR(255),
+    phone VARCHAR(50),
+    is_active BOOLEAN NOT NULL DEFAULT TRUE,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_b2b_departments_client_id ON public.b2b_departments(client_id);
+
+-- 12. B2B Client-Specific Product Catalog & Contract Pricing
+CREATE TABLE IF NOT EXISTS public.b2b_client_catalog (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    client_id UUID NOT NULL REFERENCES public.b2b_clients(id) ON DELETE CASCADE,
+    product_id VARCHAR(100),
+    product_name VARCHAR(255) NOT NULL,
+    category VARCHAR(100) DEFAULT 'General',
+    unit VARCHAR(50) DEFAULT 'pcs',
+    b2b_price NUMERIC(10, 2) NOT NULL DEFAULT 0.00,
+    image_url TEXT,
+    is_active BOOLEAN NOT NULL DEFAULT TRUE,
+    display_order INTEGER DEFAULT 0,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    CONSTRAINT uq_client_catalog_item UNIQUE (client_id, product_name)
+);
+
+CREATE INDEX IF NOT EXISTS idx_b2b_client_catalog_client ON public.b2b_client_catalog(client_id);
+
+-- 13. B2B Authorized Client Employees (Credentials with Pre-Locked Department)
+CREATE TABLE IF NOT EXISTS public.b2b_client_users (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    client_id UUID NOT NULL REFERENCES public.b2b_clients(id) ON DELETE CASCADE,
+    department_id UUID NOT NULL REFERENCES public.b2b_departments(id) ON DELETE CASCADE,
+    name VARCHAR(255) NOT NULL,
+    username VARCHAR(100) NOT NULL,
+    password_hash VARCHAR(255) NOT NULL,
+    is_active BOOLEAN NOT NULL DEFAULT TRUE,
+    last_login TIMESTAMPTZ,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    UNIQUE(client_id, username)
+);
+
+CREATE INDEX IF NOT EXISTS idx_b2b_client_users_client_id ON public.b2b_client_users(client_id);
+CREATE INDEX IF NOT EXISTS idx_b2b_client_users_dept_id ON public.b2b_client_users(department_id);
+
+-- 14. B2B Daily Requisition Orders
+CREATE TABLE IF NOT EXISTS public.b2b_orders (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    order_number VARCHAR(50) UNIQUE NOT NULL,
+    client_id UUID NOT NULL REFERENCES public.b2b_clients(id) ON DELETE RESTRICT,
+    department_id UUID NOT NULL REFERENCES public.b2b_departments(id) ON DELETE RESTRICT,
+    client_user_id UUID REFERENCES public.b2b_client_users(id) ON DELETE SET NULL,
+    delivery_date DATE NOT NULL DEFAULT CURRENT_DATE,
+    delivery_time_slot VARCHAR(50) DEFAULT 'Morning (08:30 AM - 10:00 AM)',
+    status VARCHAR(50) NOT NULL DEFAULT 'RECEIVED',
+    items JSONB NOT NULL DEFAULT '[]'::jsonb,
+    total_items INTEGER NOT NULL DEFAULT 0,
+    total_quantity INTEGER NOT NULL DEFAULT 0,
+    total_amount NUMERIC(10, 2) NOT NULL DEFAULT 0.00,
+    notes TEXT,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_b2b_orders_delivery_date ON public.b2b_orders(delivery_date);
+CREATE INDEX IF NOT EXISTS idx_b2b_orders_client_id ON public.b2b_orders(client_id);
+CREATE INDEX IF NOT EXISTS idx_b2b_orders_dept_id ON public.b2b_orders(department_id);
+CREATE INDEX IF NOT EXISTS idx_b2b_orders_status ON public.b2b_orders(status);
