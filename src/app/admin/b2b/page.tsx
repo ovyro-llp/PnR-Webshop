@@ -26,6 +26,13 @@ import {
   ChevronRight,
   RefreshCw,
   Lock,
+  ArrowRight,
+  Filter,
+  AlertCircle,
+  FileSpreadsheet,
+  CheckCircle2,
+  Truck,
+  Edit3,
 } from 'lucide-react';
 import {
   B2BClient,
@@ -44,14 +51,14 @@ export default function AdminB2BPage() {
 
   // Global State
   const [clients, setClients] = useState<B2BClient[]>([]);
-  const [selectedClientId, setSelectedClientId] = useState<string>('');
+  // Default to 'ALL' so orders across all clients are visible immediately
+  const [selectedClientId, setSelectedClientId] = useState<string>('ALL');
   const [isLoadingClients, setIsLoadingClients] = useState(true);
 
   // Tab 1: Orders & Kitchen Aggregation State
-  const [selectedDate, setSelectedDate] = useState(() => {
-    // Defaults to today or tomorrow
-    return new Date().toISOString().split('T')[0];
-  });
+  // Default to 'ALL' so no order is ever hidden by date mismatch!
+  const [selectedDate, setSelectedDate] = useState<string>('ALL');
+  const [dateFilterPreset, setDateFilterPreset] = useState<'ALL' | 'TOMORROW' | 'TODAY' | 'CUSTOM'>('ALL');
   const [orders, setOrders] = useState<B2BOrder[]>([]);
   const [kitchenSheet, setKitchenSheet] = useState<B2BKitchenAggregateItem[]>([]);
   const [packingSlips, setPackingSlips] = useState<B2BDepartmentPackingSlip[]>([]);
@@ -64,7 +71,7 @@ export default function AdminB2BPage() {
   const [isLoadingAggregation, setIsLoadingAggregation] = useState(false);
   const [orderStatusFilter, setOrderStatusFilter] = useState('ALL');
 
-  // Tab 2: Client Management State
+  // Tab 2: Client Management & Editing State
   const [isAddClientModalOpen, setIsAddClientModalOpen] = useState(false);
   const [newClientName, setNewClientName] = useState('');
   const [newClientSlug, setNewClientSlug] = useState('');
@@ -72,6 +79,18 @@ export default function AdminB2BPage() {
   const [newClientPhone, setNewClientPhone] = useState('');
   const [newClientEmail, setNewClientEmail] = useState('');
   const [newClientAddress, setNewClientAddress] = useState('');
+
+  // Edit Client Modal State
+  const [isEditClientModalOpen, setIsEditClientModalOpen] = useState(false);
+  const [editingClientId, setEditingClientId] = useState('');
+  const [editClientName, setEditClientName] = useState('');
+  const [editClientSlug, setEditClientSlug] = useState('');
+  const [editClientContact, setEditClientContact] = useState('');
+  const [editClientPhone, setEditClientPhone] = useState('');
+  const [editClientEmail, setEditClientEmail] = useState('');
+  const [editClientAddress, setEditClientAddress] = useState('');
+  const [editClientOutlet, setEditClientOutlet] = useState('cycle-circle');
+  const [editClientIsActive, setEditClientIsActive] = useState(true);
 
   // Tab 3: Catalog & Dynamic Pricing State
   const [clientCatalog, setClientCatalog] = useState<B2BClientCatalogItem[]>([]);
@@ -101,45 +120,59 @@ export default function AdminB2BPage() {
 
   // 1. Load Clients on initial mount
   const fetchClients = async () => {
-    setIsClientsLoading(true);
+    setIsLoadingClients(true);
     try {
       const res = await fetch('/api/b2b/admin/clients');
       const data = await res.json();
       setClients(data.clients || []);
-      if (data.clients && data.clients.length > 0 && !selectedClientId) {
-        setSelectedClientId(data.clients[0].id);
-      }
     } catch (err) {
       console.error('Failed to fetch B2B clients', err);
     } finally {
-      setIsClientsLoading(false);
+      setIsLoadingClients(false);
     }
   };
-
-  const setIsClientsLoading = (loading: boolean) => setIsLoadingClients(loading);
 
   useEffect(() => {
     fetchClients();
   }, []);
 
-  // 2. Fetch Orders & Kitchen Aggregation when Date or Filter changes
+  // When switching to Catalog or Users tab, default to first client if 'ALL' is selected
+  useEffect(() => {
+    if (
+      (activeTab === 'CATALOG' || activeTab === 'USERS') &&
+      selectedClientId === 'ALL' &&
+      clients.length > 0
+    ) {
+      setSelectedClientId(clients[0].id);
+    }
+  }, [activeTab, selectedClientId, clients]);
+
+  // 2. Fetch Orders & Kitchen Aggregation
   const fetchAggregation = async () => {
     setIsLoadingAggregation(true);
     try {
-      const clientParam = selectedClientId ? `&clientId=${selectedClientId}` : '';
-      const res = await fetch(
-        `/api/b2b/admin/aggregate?date=${selectedDate}${clientParam}`
-      );
-      const data = await res.json();
-      setKitchenSheet(data.kitchenSheet || []);
-      setPackingSlips(data.packingSlips || []);
-      setBillingSummary(data.billingSummary || null);
+      const clientParam =
+        selectedClientId && selectedClientId !== 'ALL'
+          ? `&clientId=${selectedClientId}`
+          : '';
+      const dateParam =
+        selectedDate && selectedDate !== 'ALL'
+          ? `date=${selectedDate}`
+          : 'date=ALL';
+      const statusParam =
+        orderStatusFilter !== 'ALL' ? `&status=${orderStatusFilter}` : '';
 
-      // Also fetch raw orders
-      const ordersRes = await fetch(
-        `/api/b2b/orders?date=${selectedDate}${clientParam}`
-      );
+      const [aggRes, ordersRes] = await Promise.all([
+        fetch(`/api/b2b/admin/aggregate?${dateParam}${clientParam}`),
+        fetch(`/api/b2b/orders?${dateParam}${clientParam}${statusParam}`),
+      ]);
+
+      const aggData = await aggRes.json();
       const ordersData = await ordersRes.json();
+
+      setKitchenSheet(aggData.kitchenSheet || []);
+      setPackingSlips(aggData.packingSlips || []);
+      setBillingSummary(aggData.billingSummary || null);
       setOrders(ordersData.orders || []);
     } catch (err) {
       console.error('Failed to fetch aggregation', err);
@@ -152,11 +185,11 @@ export default function AdminB2BPage() {
     if (activeTab === 'ORDERS') {
       fetchAggregation();
     }
-  }, [activeTab, selectedDate, selectedClientId]);
+  }, [activeTab, selectedDate, selectedClientId, orderStatusFilter]);
 
-  // 3. Fetch Client Catalog & Pricing when selected client changes
+  // 3. Fetch Client Catalog & Pricing
   const fetchCatalog = async () => {
-    if (!selectedClientId) return;
+    if (!selectedClientId || selectedClientId === 'ALL') return;
     setIsLoadingCatalog(true);
     try {
       const res = await fetch(`/api/b2b/admin/catalog?clientId=${selectedClientId}`);
@@ -170,14 +203,14 @@ export default function AdminB2BPage() {
   };
 
   useEffect(() => {
-    if (activeTab === 'CATALOG' && selectedClientId) {
+    if (activeTab === 'CATALOG' && selectedClientId && selectedClientId !== 'ALL') {
       fetchCatalog();
     }
   }, [activeTab, selectedClientId]);
 
-  // 4. Fetch Departments and Users when in Tab 4
+  // 4. Fetch Departments and Users
   const fetchDeptAndUsers = async () => {
-    if (!selectedClientId) return;
+    if (!selectedClientId || selectedClientId === 'ALL') return;
     try {
       const [deptRes, userRes] = await Promise.all([
         fetch(`/api/b2b/admin/departments?clientId=${selectedClientId}`),
@@ -196,15 +229,29 @@ export default function AdminB2BPage() {
   };
 
   useEffect(() => {
-    if (activeTab === 'USERS' && selectedClientId) {
+    if (activeTab === 'USERS' && selectedClientId && selectedClientId !== 'ALL') {
       fetchDeptAndUsers();
     }
   }, [activeTab, selectedClientId]);
 
   // Helpers
   const selectedClient = useMemo(() => {
+    if (selectedClientId === 'ALL') return null;
     return clients.find((c) => c.id === selectedClientId) || null;
   }, [clients, selectedClientId]);
+
+  // Date Filter Preset handlers
+  const handleDatePreset = (preset: 'ALL' | 'TOMORROW' | 'TODAY') => {
+    setDateFilterPreset(preset);
+    if (preset === 'ALL') {
+      setSelectedDate('ALL');
+    } else if (preset === 'TODAY') {
+      setSelectedDate(new Date().toISOString().split('T')[0]);
+    } else if (preset === 'TOMORROW') {
+      const tom = new Date(Date.now() + 24 * 60 * 60 * 1000);
+      setSelectedDate(tom.toISOString().split('T')[0]);
+    }
+  };
 
   // Handle Client Creation
   const handleCreateClient = async (e: React.FormEvent) => {
@@ -243,6 +290,54 @@ export default function AdminB2BPage() {
     }
   };
 
+  // Open Edit Client Modal
+  const openEditClientModal = (client: B2BClient) => {
+    setEditingClientId(client.id);
+    setEditClientName(client.name);
+    setEditClientSlug(client.slug);
+    setEditClientContact(client.contactPerson || '');
+    setEditClientPhone(client.phone || '');
+    setEditClientEmail(client.email || '');
+    setEditClientAddress(client.billingAddress || '');
+    setEditClientOutlet(client.fulfillingOutletSlug || 'cycle-circle');
+    setEditClientIsActive(client.isActive);
+    setIsEditClientModalOpen(true);
+  };
+
+  // Handle Client Update
+  const handleUpdateClient = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingClientId || !editClientName || !editClientSlug) return;
+
+    try {
+      const res = await fetch('/api/b2b/admin/clients', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          id: editingClientId,
+          name: editClientName,
+          slug: editClientSlug,
+          contactPerson: editClientContact,
+          phone: editClientPhone,
+          email: editClientEmail,
+          billingAddress: editClientAddress,
+          fulfillingOutletSlug: editClientOutlet,
+          isActive: editClientIsActive,
+        }),
+      });
+
+      if (res.ok) {
+        setIsEditClientModalOpen(false);
+        await fetchClients();
+      } else {
+        const data = await res.json();
+        alert(data.error || 'Failed to update client.');
+      }
+    } catch (err: any) {
+      alert(err.message || 'Error updating client.');
+    }
+  };
+
   // Delete Client
   const handleDeleteClient = async (clientId: string, clientName: string) => {
     if (
@@ -262,7 +357,7 @@ export default function AdminB2BPage() {
         const remaining = clients.filter((c) => c.id !== clientId);
         setClients(remaining);
         if (selectedClientId === clientId) {
-          setSelectedClientId(remaining.length > 0 ? remaining[0].id : '');
+          setSelectedClientId(remaining.length > 0 ? remaining[0].id : 'ALL');
         }
         await fetchClients();
       } else {
@@ -481,6 +576,24 @@ export default function AdminB2BPage() {
     setTimeout(() => setCopiedId(null), 3000);
   };
 
+  // Status badge styling helper
+  const getStatusBadge = (status: B2BOrder['status']) => {
+    switch (status) {
+      case 'RECEIVED':
+        return 'bg-blue-100 text-blue-800 border-blue-200';
+      case 'CONFIRMED':
+        return 'bg-purple-100 text-purple-800 border-purple-200';
+      case 'BAKING':
+        return 'bg-amber-100 text-amber-800 border-amber-200';
+      case 'PACKED':
+        return 'bg-indigo-100 text-indigo-800 border-indigo-200';
+      case 'DELIVERED':
+        return 'bg-emerald-100 text-emerald-800 border-emerald-200';
+      default:
+        return 'bg-stone-100 text-stone-800 border-stone-200';
+    }
+  };
+
   return (
     <div className="space-y-6 max-w-7xl mx-auto pb-16">
       {/* Top Banner */}
@@ -491,7 +604,7 @@ export default function AdminB2BPage() {
               B2B Accounts Hub
             </span>
             <span className="text-xs text-stone-400">
-              Dedicated Corporate Requisitions
+              Production-Ready Corporate Requisitions
             </span>
           </div>
           <h1 className="text-2xl font-black tracking-tight flex items-center gap-2.5">
@@ -499,13 +612,12 @@ export default function AdminB2BPage() {
             <span>B2B Orders & Corporate Accounts</span>
           </h1>
           <p className="text-xs text-stone-300 mt-1 max-w-2xl">
-            Eliminate daily PDF order chaos. Manage corporate client portals,
-            pre-locked department logins, custom negotiated pricing, and 1-click
-            kitchen production sheets.
+            Live order tracking, client management with full editing & deletion,
+            client-specific dynamic pricing, and 1-click kitchen bake sheets.
           </p>
         </div>
 
-        {/* Global Client Selector */}
+        {/* Global Client Scope Selector */}
         <div className="bg-stone-800/80 p-3 rounded-xl border border-stone-700/80 flex items-center gap-3">
           <Building2 className="w-5 h-5 text-amber-400 shrink-0" />
           <div>
@@ -517,6 +629,9 @@ export default function AdminB2BPage() {
               onChange={(e) => setSelectedClientId(e.target.value)}
               className="bg-transparent text-sm font-bold text-white focus:outline-none cursor-pointer"
             >
+              <option value="ALL" className="bg-stone-900 text-white font-bold">
+                🌟 All Corporate Clients (Global View)
+              </option>
               {clients.map((c) => (
                 <option key={c.id} value={c.id} className="bg-stone-900 text-white">
                   {c.name} ({c.slug})
@@ -538,7 +653,7 @@ export default function AdminB2BPage() {
           }`}
         >
           <ChefHat className="w-4 h-4 text-amber-400" />
-          <span>⚡ Daily Kitchen Bake Sheet & Orders</span>
+          <span>⚡ Live Orders & Kitchen Bake Sheet ({orders.length})</span>
         </button>
 
         <button
@@ -579,39 +694,76 @@ export default function AdminB2BPage() {
       </div>
 
       {/* =================================================================== */}
-      {/* TAB 1: Kitchen Bake Sheet & Daily Orders                            */}
+      {/* TAB 1: Live Orders & Kitchen Aggregation                           */}
       {/* =================================================================== */}
       {activeTab === 'ORDERS' && (
         <div className="space-y-6">
           {/* Controls Bar */}
           <div className="bg-white rounded-xl border border-stone-200 p-4 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
-            <div className="flex items-center gap-3">
-              <Calendar className="w-4 h-4 text-stone-500" />
-              <label className="text-xs font-bold text-stone-700 uppercase">
-                Production Date:
-              </label>
+            {/* Date Presets */}
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="text-xs font-bold text-stone-500 uppercase mr-1 flex items-center gap-1">
+                <Filter className="w-3.5 h-3.5" /> Date:
+              </span>
+              <button
+                onClick={() => handleDatePreset('ALL')}
+                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                  dateFilterPreset === 'ALL'
+                    ? 'bg-stone-900 text-white shadow-sm'
+                    : 'bg-stone-100 text-stone-700 hover:bg-stone-200'
+                }`}
+              >
+                All Dates (All Orders)
+              </button>
+              <button
+                onClick={() => handleDatePreset('TOMORROW')}
+                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                  dateFilterPreset === 'TOMORROW'
+                    ? 'bg-stone-900 text-white shadow-sm'
+                    : 'bg-stone-100 text-stone-700 hover:bg-stone-200'
+                }`}
+              >
+                Tomorrow's Shift
+              </button>
+              <button
+                onClick={() => handleDatePreset('TODAY')}
+                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                  dateFilterPreset === 'TODAY'
+                    ? 'bg-stone-900 text-white shadow-sm'
+                    : 'bg-stone-100 text-stone-700 hover:bg-stone-200'
+                }`}
+              >
+                Today
+              </button>
+
+              {/* Custom Date Input */}
               <input
                 type="date"
-                value={selectedDate}
-                onChange={(e) => setSelectedDate(e.target.value)}
-                className="px-3 py-1.5 bg-stone-50 border border-stone-300 rounded-lg text-xs font-bold text-stone-900"
+                value={selectedDate === 'ALL' ? '' : selectedDate}
+                onChange={(e) => {
+                  setDateFilterPreset('CUSTOM');
+                  setSelectedDate(e.target.value || 'ALL');
+                }}
+                className="px-2.5 py-1.5 bg-stone-50 border border-stone-300 rounded-lg text-xs font-semibold text-stone-900"
               />
+
               <button
                 onClick={fetchAggregation}
-                title="Refresh tally"
-                className="p-1.5 text-stone-500 hover:text-stone-900 hover:bg-stone-100 rounded-lg"
+                title="Refresh live orders"
+                className="p-1.5 text-stone-500 hover:text-stone-900 hover:bg-stone-100 rounded-lg ml-1"
               >
                 <RefreshCw className="w-4 h-4" />
               </button>
             </div>
 
+            {/* Quick Actions */}
             <div className="flex items-center gap-2">
               <button
                 onClick={() => window.print()}
                 className="px-4 py-2 bg-stone-900 hover:bg-black text-white text-xs font-bold rounded-xl flex items-center gap-2 shadow-sm"
               >
                 <Printer className="w-3.5 h-3.5" />
-                <span>Print Kitchen Bake Sheet</span>
+                <span>Print Production Sheets</span>
               </button>
             </div>
           </div>
@@ -621,15 +773,15 @@ export default function AdminB2BPage() {
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               <div className="bg-white p-4 rounded-xl border border-stone-200 shadow-sm">
                 <span className="text-[10px] uppercase font-bold text-stone-400 block">
-                  Total Requisition Orders
+                  Active Requisitions
                 </span>
                 <span className="text-2xl font-black text-stone-900">
-                  {billingSummary.totalOrders}
+                  {orders.length} Orders
                 </span>
               </div>
               <div className="bg-white p-4 rounded-xl border border-stone-200 shadow-sm">
                 <span className="text-[10px] uppercase font-bold text-stone-400 block">
-                  Total Units to Bake
+                  Total Baking Units
                 </span>
                 <span className="text-2xl font-black text-amber-700">
                   {billingSummary.totalUnits} Units
@@ -637,7 +789,7 @@ export default function AdminB2BPage() {
               </div>
               <div className="bg-white p-4 rounded-xl border border-stone-200 shadow-sm">
                 <span className="text-[10px] uppercase font-bold text-stone-400 block">
-                  Contracted Billing Value
+                  Contracted Value
                 </span>
                 <span className="text-2xl font-black text-emerald-700">
                   ₹{billingSummary.totalRevenue.toFixed(2)}
@@ -646,31 +798,205 @@ export default function AdminB2BPage() {
             </div>
           )}
 
+          {/* =============================================================== */}
+          {/* 📋 LIVE REQUISITIONS & ORDERS TABLE (The Primary View)          */}
+          {/* =============================================================== */}
+          <div className="bg-white rounded-2xl border border-stone-200 shadow-sm overflow-hidden">
+            <div className="p-4 bg-stone-900 text-white flex items-center justify-between">
+              <div>
+                <h3 className="text-sm font-black uppercase tracking-wide flex items-center gap-2">
+                  <Package className="w-4 h-4 text-amber-300" />
+                  <span>Live Corporate Requisition Orders</span>
+                </h3>
+                <p className="text-[11px] text-stone-300 mt-0.5">
+                  Real-time department orders received from client portals
+                </p>
+              </div>
+              <span className="text-xs px-2.5 py-1 bg-white/10 rounded-full font-bold">
+                {orders.length} Total Orders
+              </span>
+            </div>
+
+            {isLoadingAggregation ? (
+              <div className="p-12 text-center text-xs text-stone-500">
+                Loading live requisition orders...
+              </div>
+            ) : orders.length === 0 ? (
+              <div className="p-12 text-center text-stone-500 text-xs">
+                No orders found for the selected date or client scope.
+              </div>
+            ) : (
+              <div className="divide-y divide-stone-200">
+                {orders.map((order) => (
+                  <div
+                    key={order.id}
+                    className="p-5 hover:bg-stone-50/60 transition-colors space-y-3"
+                  >
+                    {/* Header Row */}
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-stone-100 pb-3">
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <span className="font-mono text-xs font-black text-stone-900 bg-stone-100 px-2.5 py-1 rounded-md">
+                            {order.orderNumber}
+                          </span>
+                          <span className="text-xs text-stone-500">
+                            Placed: {new Date(order.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-2 mt-1.5">
+                          <span className="text-sm font-black text-stone-900">
+                            {order.clientName}
+                          </span>
+                          <span className="text-xs font-bold text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
+                            Dept: {order.departmentName}
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Status & Transitions */}
+                      <div className="flex items-center gap-2">
+                        <span
+                          className={`px-3 py-1 rounded-full text-xs font-extrabold uppercase tracking-wider border ${getStatusBadge(
+                            order.status
+                          )}`}
+                        >
+                          {order.status}
+                        </span>
+
+                        {/* Status Updater Buttons */}
+                        {order.status === 'RECEIVED' && (
+                          <button
+                            onClick={() => handleUpdateOrderStatus(order.id, 'CONFIRMED')}
+                            className="px-3 py-1 bg-purple-600 hover:bg-purple-700 text-white rounded-lg text-xs font-bold flex items-center gap-1 shadow-xs"
+                          >
+                            <span>Confirm</span>
+                            <ArrowRight className="w-3 h-3" />
+                          </button>
+                        )}
+                        {order.status === 'CONFIRMED' && (
+                          <button
+                            onClick={() => handleUpdateOrderStatus(order.id, 'BAKING')}
+                            className="px-3 py-1 bg-amber-600 hover:bg-amber-700 text-white rounded-lg text-xs font-bold flex items-center gap-1 shadow-xs"
+                          >
+                            <span>Start Baking</span>
+                            <ArrowRight className="w-3 h-3" />
+                          </button>
+                        )}
+                        {order.status === 'BAKING' && (
+                          <button
+                            onClick={() => handleUpdateOrderStatus(order.id, 'PACKED')}
+                            className="px-3 py-1 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs font-bold flex items-center gap-1 shadow-xs"
+                          >
+                            <span>Mark Packed</span>
+                            <ArrowRight className="w-3 h-3" />
+                          </button>
+                        )}
+                        {order.status === 'PACKED' && (
+                          <button
+                            onClick={() => handleUpdateOrderStatus(order.id, 'DELIVERED')}
+                            className="px-3 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold flex items-center gap-1 shadow-xs"
+                          >
+                            <span>Dispatch / Deliver</span>
+                            <Check className="w-3 h-3" />
+                          </button>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Delivery Shift & Metadata */}
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs bg-stone-50 p-2.5 rounded-xl border border-stone-200">
+                      <div>
+                        <span className="text-stone-400 block text-[10px] font-bold uppercase">
+                          Delivery Date
+                        </span>
+                        <span className="font-bold text-stone-900">
+                          {order.deliveryDate}
+                        </span>
+                      </div>
+                      <div>
+                        <span className="text-stone-400 block text-[10px] font-bold uppercase">
+                          Time Slot
+                        </span>
+                        <span className="font-bold text-stone-900">
+                          {order.deliveryTimeSlot}
+                        </span>
+                      </div>
+                      <div>
+                        <span className="text-stone-400 block text-[10px] font-bold uppercase">
+                          Total Units
+                        </span>
+                        <span className="font-bold text-amber-800">
+                          {order.totalQuantity} units ({order.totalItems} items)
+                        </span>
+                      </div>
+                      <div>
+                        <span className="text-stone-400 block text-[10px] font-bold uppercase">
+                          Billing Total
+                        </span>
+                        <span className="font-black text-emerald-800">
+                          ₹{order.totalAmount.toFixed(2)}
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Ordered Items Pill Cloud */}
+                    <div className="space-y-1">
+                      <span className="text-[10px] uppercase font-bold text-stone-400 block">
+                        Requested Products & Quantities:
+                      </span>
+                      <div className="flex flex-wrap items-center gap-1.5">
+                        {order.items.map((item, idx) => (
+                          <span
+                            key={idx}
+                            className="px-2.5 py-1 bg-white border border-stone-200 rounded-lg text-xs font-medium text-stone-800"
+                          >
+                            <span className="font-bold text-stone-900">
+                              {item.productName}:
+                            </span>{' '}
+                            <span className="font-black text-amber-800">
+                              {item.quantity} {item.unit}
+                            </span>{' '}
+                            <span className="text-stone-400 text-[10px]">
+                              (@ ₹{item.b2bPrice})
+                            </span>
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Order Notes */}
+                    {order.notes && (
+                      <div className="p-2 bg-amber-50 border border-amber-200 rounded-lg text-xs text-amber-900">
+                        <span className="font-bold">Requisition Note: </span>
+                        {order.notes}
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
           {/* ⚡ Aggregated Kitchen Bake Sheet */}
           <div className="bg-white rounded-2xl border border-stone-200 shadow-sm overflow-hidden">
             <div className="bg-gradient-to-r from-amber-900 to-stone-900 text-white p-4 flex items-center justify-between">
               <div>
                 <h3 className="text-sm font-black uppercase tracking-wide flex items-center gap-2">
                   <ChefHat className="w-4 h-4 text-amber-300" />
-                  <span>Consolidated Kitchen Production Sheet</span>
+                  <span>Consolidated Kitchen Production Sheet (For Bakers)</span>
                 </h3>
                 <p className="text-[11px] text-stone-300 mt-0.5">
-                  Combines matching products across all departments for{' '}
-                  <span className="font-bold text-amber-300">{selectedDate}</span>
+                  Combines matching products across all departments for ovens
                 </p>
               </div>
               <span className="text-xs px-2.5 py-1 bg-white/10 rounded-full font-bold">
-                {kitchenSheet.length} Distinct Products
+                {kitchenSheet.length} Distinct Items to Bake
               </span>
             </div>
 
-            {isLoadingAggregation ? (
-              <div className="p-8 text-center text-xs text-stone-500">
-                Calculating kitchen tallies...
-              </div>
-            ) : kitchenSheet.length === 0 ? (
-              <div className="p-12 text-center text-stone-500 text-xs">
-                No corporate requisitions placed for this delivery date yet.
+            {kitchenSheet.length === 0 ? (
+              <div className="p-8 text-center text-stone-500 text-xs">
+                No active bake sheet data for this filter.
               </div>
             ) : (
               <div className="divide-y divide-stone-100">
@@ -729,7 +1055,7 @@ export default function AdminB2BPage() {
                   📦 Department Packing & Dispatch Slips
                 </h3>
                 <p className="text-xs text-stone-500">
-                  Individual crate labels for delivery runners
+                  Individual crate labels for delivery dispatch runners
                 </p>
               </div>
             </div>
@@ -798,7 +1124,7 @@ export default function AdminB2BPage() {
       )}
 
       {/* =================================================================== */}
-      {/* TAB 2: Corporate Clients Manager                                   */}
+      {/* TAB 2: Corporate Clients Manager & Editing                          */}
       {/* =================================================================== */}
       {activeTab === 'CLIENTS' && (
         <div className="space-y-4">
@@ -808,7 +1134,7 @@ export default function AdminB2BPage() {
                 Corporate Client Accounts
               </h3>
               <p className="text-xs text-stone-500">
-                Add corporate entities with custom portal slugs
+                Manage corporate entities, custom URLs, editing, and deletion
               </p>
             </div>
             <button
@@ -824,50 +1150,76 @@ export default function AdminB2BPage() {
             {clients.map((client) => (
               <div
                 key={client.id}
-                className="bg-white rounded-xl border border-stone-200 p-5 shadow-sm space-y-4 hover:border-stone-300 transition-all"
+                className="bg-white rounded-xl border border-stone-200 p-5 shadow-sm space-y-4 hover:border-stone-300 transition-all flex flex-col justify-between"
               >
-                <div className="flex items-start justify-between">
-                  <div>
-                    <h4 className="text-base font-black text-stone-900">
-                      {client.name}
-                    </h4>
-                    <span className="inline-block px-2 py-0.5 mt-1 rounded bg-stone-100 text-stone-600 font-mono text-xs font-bold">
-                      slug: {client.slug}
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-1.5">
-                    <span className="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase bg-emerald-100 text-emerald-800">
-                      Active
-                    </span>
-                    <button
-                      onClick={() => handleDeleteClient(client.id, client.name)}
-                      title={`Delete ${client.name}`}
-                      className="p-1.5 text-stone-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
-                  </div>
-                </div>
+                <div>
+                  <div className="flex items-start justify-between">
+                    <div>
+                      <h4 className="text-base font-black text-stone-900">
+                        {client.name}
+                      </h4>
+                      <span className="inline-block px-2 py-0.5 mt-1 rounded bg-stone-100 text-stone-600 font-mono text-xs font-bold">
+                        slug: {client.slug}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                      <span
+                        className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase ${
+                          client.isActive
+                            ? 'bg-emerald-100 text-emerald-800'
+                            : 'bg-red-100 text-red-800'
+                        }`}
+                      >
+                        {client.isActive ? 'Active' : 'Inactive'}
+                      </span>
 
-                <div className="space-y-1.5 text-xs text-stone-600">
-                  {client.contactPerson && (
-                    <p>
-                      <strong className="text-stone-900">Contact:</strong>{' '}
-                      {client.contactPerson}
-                    </p>
-                  )}
-                  {client.phone && (
-                    <p>
-                      <strong className="text-stone-900">Phone:</strong>{' '}
-                      {client.phone}
-                    </p>
-                  )}
-                  {client.email && (
-                    <p>
-                      <strong className="text-stone-900">Email:</strong>{' '}
-                      {client.email}
-                    </p>
-                  )}
+                      {/* Edit Button */}
+                      <button
+                        onClick={() => openEditClientModal(client)}
+                        title={`Edit ${client.name}`}
+                        className="px-2.5 py-1 text-xs font-bold text-stone-700 bg-stone-100 hover:bg-stone-200 hover:text-stone-900 rounded-lg transition-colors flex items-center gap-1"
+                      >
+                        <Edit3 className="w-3.5 h-3.5" />
+                        <span>Edit</span>
+                      </button>
+
+                      {/* Delete Button */}
+                      <button
+                        onClick={() => handleDeleteClient(client.id, client.name)}
+                        title={`Delete ${client.name}`}
+                        className="p-1.5 text-stone-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="space-y-1.5 text-xs text-stone-600 mt-3">
+                    {client.contactPerson && (
+                      <p>
+                        <strong className="text-stone-900">Contact:</strong>{' '}
+                        {client.contactPerson}
+                      </p>
+                    )}
+                    {client.phone && (
+                      <p>
+                        <strong className="text-stone-900">Phone:</strong>{' '}
+                        {client.phone}
+                      </p>
+                    )}
+                    {client.email && (
+                      <p>
+                        <strong className="text-stone-900">Email:</strong>{' '}
+                        {client.email}
+                      </p>
+                    )}
+                    {client.billingAddress && (
+                      <p className="truncate">
+                        <strong className="text-stone-900">Address:</strong>{' '}
+                        {client.billingAddress}
+                      </p>
+                    )}
+                  </div>
                 </div>
 
                 <div className="pt-3 border-t border-stone-100 flex items-center justify-between">
@@ -876,19 +1228,30 @@ export default function AdminB2BPage() {
                     target="_blank"
                     className="text-xs font-bold text-amber-800 hover:text-amber-900 flex items-center gap-1"
                   >
-                    <span>Open Requisition Portal</span>
+                    <span>Open Portal</span>
                     <ExternalLink className="w-3 h-3" />
                   </Link>
 
-                  <button
-                    onClick={() => {
-                      setSelectedClientId(client.id);
-                      setActiveTab('CATALOG');
-                    }}
-                    className="text-xs font-bold text-stone-600 hover:text-stone-900 underline"
-                  >
-                    Edit Pricing
-                  </button>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => {
+                        setSelectedClientId(client.id);
+                        setActiveTab('CATALOG');
+                      }}
+                      className="text-xs font-bold text-stone-600 hover:text-stone-900 underline"
+                    >
+                      Pricing
+                    </button>
+                    <button
+                      onClick={() => {
+                        setSelectedClientId(client.id);
+                        setActiveTab('USERS');
+                      }}
+                      className="text-xs font-bold text-stone-600 hover:text-stone-900 underline"
+                    >
+                      Logins
+                    </button>
+                  </div>
                 </div>
               </div>
             ))}
@@ -1017,6 +1380,132 @@ export default function AdminB2BPage() {
               </div>
             </div>
           )}
+
+          {/* Edit Client Modal */}
+          {isEditClientModalOpen && (
+            <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
+              <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-4">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-base font-black text-stone-900">
+                    Edit Corporate Client
+                  </h3>
+                  <button
+                    onClick={() => setIsEditClientModalOpen(false)}
+                    className="text-stone-400 hover:text-stone-600"
+                  >
+                    <X className="w-5 h-5" />
+                  </button>
+                </div>
+
+                <form onSubmit={handleUpdateClient} className="space-y-3 text-xs">
+                  <div>
+                    <label className="block font-bold text-stone-700 mb-1">
+                      Organization Name *
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      value={editClientName}
+                      onChange={(e) => setEditClientName(e.target.value)}
+                      className="w-full px-3 py-2 border rounded-lg"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block font-bold text-stone-700 mb-1">
+                      URL Slug * (URL: /b2b/{editClientSlug})
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      value={editClientSlug}
+                      onChange={(e) => setEditClientSlug(e.target.value)}
+                      className="w-full px-3 py-2 border rounded-lg font-mono"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block font-bold text-stone-700 mb-1">
+                      Contact Person
+                    </label>
+                    <input
+                      type="text"
+                      value={editClientContact}
+                      onChange={(e) => setEditClientContact(e.target.value)}
+                      className="w-full px-3 py-2 border rounded-lg"
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-2">
+                    <div>
+                      <label className="block font-bold text-stone-700 mb-1">
+                        Phone
+                      </label>
+                      <input
+                        type="text"
+                        value={editClientPhone}
+                        onChange={(e) => setEditClientPhone(e.target.value)}
+                        className="w-full px-3 py-2 border rounded-lg"
+                      />
+                    </div>
+                    <div>
+                      <label className="block font-bold text-stone-700 mb-1">
+                        Email
+                      </label>
+                      <input
+                        type="email"
+                        value={editClientEmail}
+                        onChange={(e) => setEditClientEmail(e.target.value)}
+                        className="w-full px-3 py-2 border rounded-lg"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block font-bold text-stone-700 mb-1">
+                      Billing Address
+                    </label>
+                    <textarea
+                      value={editClientAddress}
+                      onChange={(e) => setEditClientAddress(e.target.value)}
+                      className="w-full px-3 py-2 border rounded-lg h-16"
+                    />
+                  </div>
+
+                  <div className="flex items-center justify-between pt-1">
+                    <span className="font-bold text-stone-700">Client Status:</span>
+                    <button
+                      type="button"
+                      onClick={() => setEditClientIsActive(!editClientIsActive)}
+                      className={`px-3 py-1 rounded-full font-bold text-xs ${
+                        editClientIsActive
+                          ? 'bg-emerald-100 text-emerald-800'
+                          : 'bg-red-100 text-red-800'
+                      }`}
+                    >
+                      {editClientIsActive ? 'Active' : 'Inactive'}
+                    </button>
+                  </div>
+
+                  <div className="pt-2 flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setIsEditClientModalOpen(false)}
+                      className="flex-1 py-2.5 bg-stone-100 rounded-lg font-bold"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="submit"
+                      className="flex-1 py-2.5 bg-stone-900 text-white rounded-lg font-bold"
+                    >
+                      Save Changes
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          )}
         </div>
       )}
 
@@ -1028,7 +1517,7 @@ export default function AdminB2BPage() {
           <div className="bg-white rounded-xl border border-stone-200 p-4 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div>
               <h3 className="text-base font-black text-stone-900">
-                {selectedClient?.name} — Approved Catalog & Rates
+                {selectedClient?.name || 'Client'} — Approved Catalog & Rates
               </h3>
               <p className="text-xs text-stone-500">
                 Configure client-specific products and customized contract
@@ -1059,7 +1548,7 @@ export default function AdminB2BPage() {
           <div className="bg-white rounded-2xl border border-stone-200 shadow-sm overflow-hidden">
             <div className="p-4 bg-stone-50 border-b border-stone-200 flex items-center justify-between">
               <span className="text-xs font-bold text-stone-700">
-                {clientCatalog.length} Approved Products for {selectedClient?.name}
+                {clientCatalog.length} Approved Products for {selectedClient?.name || 'Selected Client'}
               </span>
               <span className="text-[11px] text-stone-500">
                 Click price to edit directly
@@ -1072,7 +1561,7 @@ export default function AdminB2BPage() {
               </div>
             ) : clientCatalog.length === 0 ? (
               <div className="p-12 text-center text-xs text-stone-500">
-                No products configured for {selectedClient?.name} yet. Click
+                No products configured for {selectedClient?.name || 'this client'} yet. Click
                 "Add from Master Catalog" or "Create Bespoke B2B Item" above.
               </div>
             ) : (
@@ -1324,7 +1813,7 @@ export default function AdminB2BPage() {
           <div className="space-y-4">
             <div className="bg-white rounded-2xl border border-stone-200 p-5 shadow-sm space-y-4">
               <h3 className="text-base font-black text-stone-900">
-                Departments for {selectedClient?.name}
+                Departments for {selectedClient?.name || 'Selected Client'}
               </h3>
               <p className="text-xs text-stone-500">
                 Departments can only be created or deleted by the bakery Admin.

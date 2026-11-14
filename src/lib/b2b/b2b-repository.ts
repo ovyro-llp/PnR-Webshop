@@ -455,6 +455,85 @@ export const b2bRepository = {
     return newClient;
   },
 
+  updateClient: async (
+    id: string,
+    data: {
+      name?: string;
+      slug?: string;
+      contactPerson?: string;
+      phone?: string;
+      email?: string;
+      billingAddress?: string;
+      fulfillingOutletSlug?: string;
+      isActive?: boolean;
+    }
+  ): Promise<B2BClient | null> => {
+    if (process.env.DATABASE_URL && process.env.DATABASE_URL.trim()) {
+      try {
+        await ensureCoreTables();
+        const pool = getDbPool();
+        const res = await pool.query(
+          `UPDATE public.b2b_clients SET
+             name = COALESCE($1, name),
+             slug = COALESCE($2, slug),
+             contact_person = COALESCE($3, contact_person),
+             phone = COALESCE($4, phone),
+             email = COALESCE($5, email),
+             billing_address = COALESCE($6, billing_address),
+             fulfilling_outlet_slug = COALESCE($7, fulfilling_outlet_slug),
+             is_active = COALESCE($8, is_active),
+             updated_at = NOW()
+           WHERE id = $9
+           RETURNING *;`,
+          [
+            data.name?.trim() || null,
+            data.slug ? data.slug.toLowerCase().replace(/[^a-z0-9_-]/g, '-').trim() : null,
+            data.contactPerson !== undefined ? data.contactPerson : null,
+            data.phone !== undefined ? data.phone : null,
+            data.email !== undefined ? data.email : null,
+            data.billingAddress !== undefined ? data.billingAddress : null,
+            data.fulfillingOutletSlug || null,
+            data.isActive !== undefined ? data.isActive : null,
+            id,
+          ]
+        );
+        if (res.rows.length === 0) return null;
+        const row = res.rows[0];
+        return {
+          id: row.id,
+          slug: row.slug,
+          name: row.name,
+          contactPerson: row.contact_person,
+          phone: row.phone,
+          email: row.email,
+          billingAddress: row.billing_address,
+          fulfillingOutletSlug: row.fulfilling_outlet_slug,
+          isActive: row.is_active,
+          createdAt: row.created_at,
+          updatedAt: row.updated_at,
+        };
+      } catch (err: any) {
+        console.warn('[b2bRepository.updateClient DB Warning]:', err.message);
+      }
+    }
+
+    const store = getMemoryStore();
+    const client = store.clients.find((c) => c.id === id);
+    if (!client) return null;
+
+    if (data.name !== undefined) client.name = data.name.trim();
+    if (data.slug !== undefined) client.slug = data.slug.toLowerCase().replace(/[^a-z0-9_-]/g, '-').trim();
+    if (data.contactPerson !== undefined) client.contactPerson = data.contactPerson.trim();
+    if (data.phone !== undefined) client.phone = data.phone.trim();
+    if (data.email !== undefined) client.email = data.email.trim();
+    if (data.billingAddress !== undefined) client.billingAddress = data.billingAddress.trim();
+    if (data.fulfillingOutletSlug !== undefined) client.fulfillingOutletSlug = data.fulfillingOutletSlug;
+    if (data.isActive !== undefined) client.isActive = data.isActive;
+    client.updatedAt = new Date().toISOString();
+
+    return client;
+  },
+
   deleteClient: async (clientId: string): Promise<boolean> => {
     if (process.env.DATABASE_URL && process.env.DATABASE_URL.trim()) {
       try {
@@ -1039,6 +1118,10 @@ export const b2bRepository = {
     const orderNumber = `B2B-${client.slug.toUpperCase()}-${data.deliveryDate.replace(/-/g, '')}-${Math.floor(100 + Math.random() * 900)}`;
     const id = crypto.randomUUID();
 
+    const departments = await b2bRepository.getDepartmentsByClientId(client.id);
+    const matchedDept = departments.find((d) => d.id === data.departmentId);
+    const departmentName = matchedDept?.name || 'Corporate Requisitions';
+
     const newOrder: B2BOrder = {
       id,
       orderNumber,
@@ -1046,6 +1129,7 @@ export const b2bRepository = {
       clientName: client.name,
       clientSlug: client.slug,
       departmentId: data.departmentId,
+      departmentName,
       clientUserId: data.clientUserId,
       deliveryDate: data.deliveryDate,
       deliveryTimeSlot: data.deliveryTimeSlot || 'Morning (08:30 AM - 10:00 AM)',
@@ -1128,15 +1212,15 @@ export const b2bRepository = {
         const params: any[] = [];
         const whereClauses: string[] = [];
 
-        if (filters?.date) {
+        if (filters?.date && filters.date !== 'ALL') {
           params.push(filters.date);
           whereClauses.push(`o.delivery_date = $${params.length}`);
         }
-        if (filters?.clientId) {
+        if (filters?.clientId && filters.clientId !== 'ALL') {
           params.push(filters.clientId);
           whereClauses.push(`o.client_id = $${params.length}`);
         }
-        if (filters?.departmentId) {
+        if (filters?.departmentId && filters.departmentId !== 'ALL') {
           params.push(filters.departmentId);
           whereClauses.push(`o.department_id = $${params.length}`);
         }
@@ -1184,13 +1268,26 @@ export const b2bRepository = {
     }
 
     const store = getMemoryStore();
-    return store.orders.filter((o) => {
-      if (filters?.date && o.deliveryDate !== filters.date) return false;
-      if (filters?.clientId && o.clientId !== filters.clientId) return false;
-      if (filters?.departmentId && o.departmentId !== filters.departmentId) return false;
-      if (filters?.status && filters.status !== 'ALL' && o.status !== filters.status) return false;
-      return true;
-    });
+    return store.orders
+      .filter((o) => {
+        if (filters?.date && filters.date !== 'ALL' && o.deliveryDate !== filters.date) return false;
+        if (filters?.clientId && filters.clientId !== 'ALL' && o.clientId !== filters.clientId) return false;
+        if (filters?.departmentId && filters.departmentId !== 'ALL' && o.departmentId !== filters.departmentId) return false;
+        if (filters?.status && filters.status !== 'ALL' && o.status !== filters.status) return false;
+        return true;
+      })
+      .map((o) => {
+        const client = store.clients.find((c) => c.id === o.clientId);
+        const dept = store.departments.find((d) => d.id === o.departmentId);
+        const user = store.users.find((u) => u.id === o.clientUserId);
+        return {
+          ...o,
+          clientName: o.clientName || client?.name || 'Corporate Client',
+          clientSlug: o.clientSlug || client?.slug,
+          departmentName: o.departmentName || dept?.name || 'Requisition Department',
+          requisitionerName: o.requisitionerName || user?.name || 'Requisition Officer',
+        };
+      });
   },
 
   updateOrderStatus: async (orderId: string, status: B2BOrder['status']): Promise<B2BOrder | null> => {
@@ -1245,8 +1342,8 @@ export const b2bRepository = {
     clientId?: string
   ): Promise<B2BKitchenAggregateItem[]> => {
     const orders = await b2bRepository.getB2BOrders({
-      date: deliveryDate,
-      clientId,
+      date: deliveryDate === 'ALL' ? undefined : deliveryDate,
+      clientId: clientId === 'ALL' ? undefined : clientId,
     });
 
     const activeOrders = orders.filter((o) => o.status !== 'CANCELLED');
@@ -1292,8 +1389,8 @@ export const b2bRepository = {
     clientId?: string
   ): Promise<B2BDepartmentPackingSlip[]> => {
     const orders = await b2bRepository.getB2BOrders({
-      date: deliveryDate,
-      clientId,
+      date: deliveryDate === 'ALL' ? undefined : deliveryDate,
+      clientId: clientId === 'ALL' ? undefined : clientId,
     });
 
     const activeOrders = orders.filter((o) => o.status !== 'CANCELLED');
@@ -1335,8 +1432,8 @@ export const b2bRepository = {
     }[];
   }> => {
     const orders = await b2bRepository.getB2BOrders({
-      date: deliveryDate,
-      clientId,
+      date: deliveryDate === 'ALL' ? undefined : deliveryDate,
+      clientId: clientId === 'ALL' ? undefined : clientId,
     });
 
     const activeOrders = orders.filter((o) => o.status !== 'CANCELLED');

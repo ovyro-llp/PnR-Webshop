@@ -37,6 +37,37 @@ export async function POST(req: NextRequest) {
   }
 }
 
+export async function PATCH(req: NextRequest) {
+  try {
+    const body = await req.json();
+    const { id, name, slug, contactPerson, phone, email, billingAddress, fulfillingOutletSlug, isActive } = body;
+
+    if (!id || !name) {
+      return NextResponse.json({ error: 'Client ID and Name are required.' }, { status: 400 });
+    }
+
+    const updated = await b2bRepository.updateClient(id, {
+      name,
+      slug,
+      contactPerson,
+      phone,
+      email,
+      billingAddress,
+      fulfillingOutletSlug,
+      isActive,
+    });
+
+    if (!updated) {
+      return NextResponse.json({ error: 'Client not found.' }, { status: 404 });
+    }
+
+    return NextResponse.json({ success: true, client: updated });
+  } catch (err: any) {
+    console.error('[API /api/b2b/admin/clients PATCH Error]:', err);
+    return NextResponse.json({ error: err.message || 'Failed to update client.' }, { status: 500 });
+  }
+}
+
 export async function DELETE(req: NextRequest) {
   try {
     const { searchParams } = new URL(req.url);
