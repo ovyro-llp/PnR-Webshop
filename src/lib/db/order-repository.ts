@@ -232,11 +232,12 @@ export const orderRepository = {
         const cleanCustomerPhone = (order.customer.phone || '').replace(/\D/g, '').slice(-10);
         if (cleanCustomerPhone.length === 10) {
           const custSql = `
-            INSERT INTO public.customers (phone, name, email, saved_addresses, total_orders, total_spent, created_at, updated_at)
-            VALUES ($1, $2, $3, $4, CASE WHEN $5::boolean THEN 1 ELSE 0 END, CASE WHEN $5::boolean THEN $6 ELSE 0.00 END, NOW(), NOW())
+            INSERT INTO public.customers (phone, name, email, password, saved_addresses, total_orders, total_spent, created_at, updated_at)
+            VALUES ($1, $2, $3, $4, $5, CASE WHEN $6::boolean THEN 1 ELSE 0 END, CASE WHEN $6::boolean THEN $7 ELSE 0.00 END, NOW(), NOW())
             ON CONFLICT (phone) DO UPDATE SET
               name = COALESCE(EXCLUDED.name, public.customers.name),
               email = COALESCE(EXCLUDED.email, public.customers.email),
+              password = COALESCE(EXCLUDED.password, public.customers.password),
               updated_at = NOW();
           `;
           const addressObj = {
@@ -249,6 +250,7 @@ export const orderRepository = {
             cleanCustomerPhone,
             order.customer.name,
             order.customer.email || null,
+            order.customer.password || null,
             JSON.stringify([addressObj]),
             isNewlyCompleted,
             order.total,

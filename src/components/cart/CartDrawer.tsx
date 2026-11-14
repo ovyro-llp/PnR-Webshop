@@ -197,6 +197,7 @@ export function CartDrawer({ outletSlug, campaignSlug }: CartDrawerProps) {
     const resolvedAddress = customer.address.trim() || deliveryAddress?.trim() || 'Nashik Doorstep Location';
     const resolvedArea = customer.area.trim() || deliveryArea?.trim() || nearestOutlet?.area || 'Nashik City';
     const resolvedPincode = customer.pincode.trim() || '422005';
+    const cleanPassword = authPassword.trim();
 
     let activeCustomer: CustomerDetails = {
       ...customer,
@@ -222,19 +223,31 @@ export function CartDrawer({ outletSlug, campaignSlug }: CartDrawerProps) {
         setSubmitError('Please enter a valid 10-digit mobile phone number for delivery rider contact');
         return;
       }
+      if (!cleanPassword || cleanPassword.length < 4) {
+        setSubmitError('Please enter an account password (at least 4 characters) to track delivery and secure your account.');
+        return;
+      }
 
-      if (showManualAuth && authMode === 'LOGIN' && authPassword.trim()) {
-        setIsSubmitting(true);
-        const loginRes = await loginCustomer(cleanPhone, authPassword.trim());
-        if (!loginRes.success) {
-          setIsSubmitting(false);
-          setSubmitError(loginRes.error || 'Invalid phone or password');
-          return;
-        }
+      setIsSubmitting(true);
+      const authRes = await autoRegisterOrLoginCustomer(
+        cleanName,
+        cleanPhone,
+        cleanPassword,
+        resolvedAddress,
+        resolvedArea,
+        resolvedPincode,
+        effectiveCoords
+      );
+
+      if (!authRes.success) {
+        setIsSubmitting(false);
+        setSubmitError(authRes.error || 'Failed to authenticate customer account. Please check your password.');
+        return;
       }
 
       activeCustomer.name = cleanName;
       activeCustomer.phone = cleanPhone;
+      activeCustomer.password = cleanPassword;
     }
 
     setIsSubmitting(true);
@@ -354,12 +367,13 @@ export function CartDrawer({ outletSlug, campaignSlug }: CartDrawerProps) {
               const verifiedPhone = confirmedOrder.customer?.phone?.replace(/\D/g, '').slice(-10);
               const verifiedName = confirmedOrder.customer?.name || (verifiedPhone ? `Customer ${verifiedPhone.slice(-4)}` : 'Valued Customer');
 
-              // Seamlessly log customer in so their account is ready instantly!
+              // Seamlessly ensure customer is logged in so their account is ready instantly!
               if (!isCustomerLoggedIn && verifiedPhone && verifiedPhone.length === 10) {
                 try {
                   await autoRegisterOrLoginCustomer(
                     verifiedName,
                     verifiedPhone,
+                    cleanPassword,
                     confirmedOrder.customer?.address || activeCustomer.address,
                     confirmedOrder.customer?.area || activeCustomer.area,
                     confirmedOrder.customer?.pincode || activeCustomer.pincode,
@@ -763,59 +777,65 @@ export function CartDrawer({ outletSlug, campaignSlug }: CartDrawerProps) {
                         </p>
                       </div>
 
-                      {showManualAuth ? (
-                        <div className="pt-2 border-t border-stone-100 space-y-2">
-                          <div className="flex items-center justify-between">
-                            <label className="block text-[10px] font-bold text-stone-600 uppercase tracking-wider">
-                              Account Password
-                            </label>
-                            <button
-                              type="button"
-                              onClick={() => setShowManualAuth(false)}
-                              className="text-[10px] text-stone-500 hover:text-stone-800 underline cursor-pointer"
-                            >
-                              Cancel
-                            </button>
-                          </div>
-                          <div className="relative">
-                            <input
-                              type={showAuthPassword ? 'text' : 'password'}
-                              placeholder="Enter your password"
-                              value={authPassword}
-                              onChange={(e) => setAuthPassword(e.target.value)}
-                              className="w-full pl-3 pr-9 py-2 bg-stone-50 border border-stone-200 rounded-xl text-xs focus:bg-white focus:ring-1 focus:ring-stone-900 focus:outline-none"
-                            />
-                            <button
-                              type="button"
-                              onClick={() => setShowAuthPassword(!showAuthPassword)}
-                              className="absolute right-2.5 top-2 text-stone-400 hover:text-stone-600 cursor-pointer"
-                            >
-                              {showAuthPassword ? (
-                                <EyeOff className="w-4 h-4" />
-                              ) : (
-                                <Eye className="w-4 h-4" />
-                              )}
-                            </button>
-                          </div>
+                      {/* Mandatory Account Password for Customer Order Tracking & Reorders */}
+                      <div className="pt-2 border-t border-stone-100 space-y-1">
+                        <div className="flex items-center justify-between">
+                          <label className="block text-[10px] font-bold text-stone-700 uppercase tracking-wider flex items-center gap-1">
+                            <Lock className="w-3 h-3 text-amber-700" />
+                            <span>Account Password *</span>
+                          </label>
+                          <span className="text-[9px] font-semibold text-amber-900 bg-amber-100/80 px-2 py-0.5 rounded-full border border-amber-200">
+                            Required to Track Order
+                          </span>
                         </div>
-                      ) : (
-                        <div className="pt-1 flex items-center justify-between text-[10px]">
+                        <div className="relative">
+                          <input
+                            type={showAuthPassword ? 'text' : 'password'}
+                            placeholder="Create or enter account password (min. 4 characters)"
+                            value={authPassword}
+                            onChange={(e) => {
+                              setAuthPassword(e.target.value);
+                              if (submitError) setSubmitError('');
+                            }}
+                            className={`w-full pl-3 pr-9 py-2 rounded-xl text-xs focus:bg-white focus:outline-none transition ${
+                              submitError && submitError.toLowerCase().includes('password')
+                                ? 'bg-rose-50/40 border border-rose-300 focus:ring-1 focus:ring-rose-500 text-rose-950'
+                                : 'bg-stone-50 border border-stone-200 focus:ring-1 focus:ring-stone-900'
+                            }`}
+                          />
                           <button
                             type="button"
-                            onClick={() => setShowManualAuth(true)}
-                            className="text-stone-500 hover:text-stone-800 underline cursor-pointer"
+                            onClick={() => setShowAuthPassword(!showAuthPassword)}
+                            className="absolute right-2.5 top-2 text-stone-400 hover:text-stone-600 cursor-pointer p-0.5"
+                            title={showAuthPassword ? 'Hide password' : 'Show password'}
                           >
-                            Enter account password
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => openCustomerLogin()}
-                            className="text-amber-800 hover:text-amber-950 font-bold underline cursor-pointer"
-                          >
-                            Already have an account? Sign in
+                            {showAuthPassword ? (
+                              <EyeOff className="w-4 h-4" />
+                            ) : (
+                              <Eye className="w-4 h-4" />
+                            )}
                           </button>
                         </div>
-                      )}
+                        {submitError && submitError.toLowerCase().includes('password') ? (
+                          <p className="text-[11px] text-rose-700 font-semibold bg-rose-50 px-2.5 py-1.5 rounded-lg border border-rose-200 animate-in fade-in">
+                            {submitError}
+                          </p>
+                        ) : (
+                          <p className="text-[10px] text-stone-500 leading-snug">
+                            Use this password to log back in anytime to track your delivery status and reorder with 1 tap.
+                          </p>
+                        )}
+                      </div>
+
+                      <div className="pt-0.5 flex items-center justify-end text-[10px]">
+                        <button
+                          type="button"
+                          onClick={() => openCustomerLogin()}
+                          className="text-amber-800 hover:text-amber-950 font-bold underline cursor-pointer"
+                        >
+                          Already have an account? Sign in
+                        </button>
+                      </div>
                     </div>
                   </div>
                 )}

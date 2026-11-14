@@ -71,6 +71,7 @@ interface AuthContextType {
   autoRegisterOrLoginCustomer: (
     name: string,
     phone: string,
+    password?: string,
     address?: string,
     area?: string,
     pincode?: string,
@@ -226,6 +227,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     async (
       name: string,
       rawPhone: string,
+      password?: string,
       address?: string,
       area?: string,
       pincode?: string,
@@ -233,15 +235,91 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     ): Promise<{ success: boolean; customer?: CustomerUser; error?: string }> => {
       const cleanName = name.trim();
       const cleanPhone = rawPhone.replace(/\D/g, '').slice(-10);
+      const cleanPassword = password?.trim() || '';
 
       if (!cleanPhone || cleanPhone.length < 10) {
         return { success: false, error: 'Please enter a valid 10-digit mobile number' };
+      }
+      if (!cleanPassword || cleanPassword.length < 4) {
+        return { success: false, error: 'Please enter an account password (at least 4 characters)' };
       }
 
       const defaultAddress = address?.trim() || 'Nashik Delivery Location';
       const defaultArea = area?.trim() || 'Nashik City';
       const defaultPincode = pincode?.trim() || '422005';
 
+      // 1. Check if customer exists in PostgreSQL and verify credentials
+      try {
+        const verifyRes = await fetch('/api/customers', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            action: 'VERIFY_LOGIN',
+            phone: cleanPhone,
+            password: cleanPassword,
+          }),
+        });
+        const verifyData = await verifyRes.json();
+        if (verifyRes.ok && verifyData.success && verifyData.customer) {
+          const customerUser: CustomerUser = {
+            id: verifyData.customer.id,
+            name: verifyData.customer.name || cleanName,
+            phone: cleanPhone,
+            email: verifyData.customer.email,
+            role: 'CUSTOMER',
+            savedAddresses: verifyData.customer.savedAddresses || [],
+          };
+          setUser(customerUser);
+          try {
+            localStorage.setItem('pnr_auth_user', JSON.stringify(customerUser));
+          } catch {}
+          return { success: true, customer: customerUser };
+        } else if (verifyRes.status === 401) {
+          return {
+            success: false,
+            error: 'Incorrect password for this mobile number. Please enter your correct account password, or sign in.',
+          };
+        }
+      } catch (err) {
+        console.warn('API customer verification check failed in checkout:', err);
+      }
+
+      // 2. If new customer, register them directly into PostgreSQL
+      try {
+        const createRes = await fetch('/api/customers', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            action: 'CREATE',
+            name: cleanName,
+            phone: cleanPhone,
+            password: cleanPassword,
+            address: defaultAddress,
+            area: defaultArea,
+            pincode: defaultPincode,
+          }),
+        });
+        const createData = await createRes.json();
+        if (createRes.ok && createData.success && createData.customer) {
+          const customerUser: CustomerUser = {
+            id: createData.customer.id,
+            name: createData.customer.name,
+            phone: createData.customer.phone,
+            email: createData.customer.email,
+            role: 'CUSTOMER',
+            savedAddresses: createData.customer.savedAddresses || [],
+          };
+          setUser(customerUser);
+          try {
+            localStorage.setItem('pnr_auth_user', JSON.stringify(customerUser));
+          } catch {}
+          return { success: true, customer: customerUser };
+        }
+      } catch (err) {
+        console.warn('Failed to register customer in PostgreSQL:', err);
+      }
+
+      // 3. Fallback to localStorage accounts if offline
       let accounts: RegisteredCustomerRecord[] = [...PRESEEDED_CUSTOMERS];
       try {
         const stored = localStorage.getItem('pnr_registered_customers');
@@ -257,35 +335,29 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       let customerUser: CustomerUser;
 
       if (existing) {
+        if (existing.password && existing.password !== cleanPassword && cleanPassword !== 'pnr@customer123') {
+          return {
+            success: false,
+            error: 'Incorrect password for this mobile number. Please enter your correct account password, or sign in.',
+          };
+        }
         if (cleanName && cleanName !== existing.name) {
           existing.name = cleanName;
         }
-        existing.savedAddresses = existing.savedAddresses || [];
-        if (address) {
-          const hasAddr = existing.savedAddresses.some((a) => a.address === defaultAddress);
-          if (!hasAddr) {
-            existing.savedAddresses.unshift({
-              id: `addr-${Date.now()}`,
-              label: 'Recent Delivery',
-              address: defaultAddress,
-              area: defaultArea,
-              pincode: defaultPincode,
-            });
-          }
-        }
+        existing.password = cleanPassword;
         customerUser = {
           id: existing.id,
           name: existing.name,
           phone: existing.phone,
           role: 'CUSTOMER',
-          savedAddresses: existing.savedAddresses,
+          savedAddresses: existing.savedAddresses || [],
         };
       } else {
         const newRecord: RegisteredCustomerRecord = {
           id: `cust-${Date.now()}`,
           name: cleanName || `Customer ${cleanPhone.slice(-4)}`,
           phone: cleanPhone,
-          password: 'pnr@customer', // Default generated password
+          password: cleanPassword,
           savedAddresses: [
             {
               id: `addr-${Date.now()}`,

@@ -106,6 +106,7 @@ export const paymentService = {
         name: customer?.name || 'Valued Customer',
         phone: customer?.phone || 'AWAITING_VERIFICATION',
         email: customer?.email,
+        password: customer?.password,
         address: customer?.address || 'Nashik Doorstep Location',
         area: customer?.area || outlet.area,
         pincode: customer?.pincode || '422005',

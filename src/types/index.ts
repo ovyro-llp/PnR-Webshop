@@ -238,6 +238,7 @@ export interface CustomerDetails {
   name: string;
   phone: string;
   email?: string;
+  password?: string;
   address: string;
   landmark?: string;
   area: string;
