@@ -551,7 +551,7 @@ export function CartDrawer({ outletSlug, campaignSlug }: CartDrawerProps) {
                                 </span>
                               </p>
                               <p className="text-[11px] text-amber-900/90 leading-snug mt-0.5">
-                                Pinpoint your exact building on the map to verify 30–45m delivery &amp; calculate rider fare.
+                                Pinpoint your exact building on the map for seamless 25–40m express doorstep delivery.
                               </p>
                             </div>
                           </div>
@@ -569,29 +569,29 @@ export function CartDrawer({ outletSlug, campaignSlug }: CartDrawerProps) {
                         </button>
                       </div>
                     ) : (
-                      <div className="bg-emerald-50/90 border border-emerald-300 rounded-2xl p-3 flex items-center justify-between text-xs text-emerald-950 shadow-2xs">
-                        <div className="flex items-center gap-2.5">
-                          <div className="p-1 rounded-lg bg-emerald-600 text-white shrink-0">
+                      <div className="bg-stone-50 border border-stone-200/90 rounded-2xl p-3 flex items-center justify-between gap-2.5 text-xs shadow-2xs">
+                        <div className="flex items-center gap-2.5 min-w-0">
+                          <div className="w-8 h-8 rounded-xl bg-emerald-600 text-white flex items-center justify-center shrink-0 shadow-2xs">
                             <CheckCircle2 className="w-4 h-4" />
                           </div>
-                          <div>
-                            <div className="flex items-center gap-1.5">
-                              <span className="font-bold text-emerald-950">Doorstep Location Verified</span>
-                              <span className="text-[9px] font-bold text-emerald-800 bg-emerald-200/70 px-1.5 py-0.2 rounded-full">
-                                GPS Locked
+                          <div className="min-w-0">
+                            <p className="font-bold text-xs text-stone-900 leading-tight">
+                              Delivery Pin Confirmed
+                            </p>
+                            <p className="text-[11px] text-stone-600 font-medium truncate mt-0.5 flex items-center gap-1">
+                              <span className="w-1.5 h-1.5 rounded-full bg-emerald-600 shrink-0" />
+                              <span className="truncate">
+                                {customer.area || deliveryArea ? `${customer.area || deliveryArea}, Nashik` : 'Doorstep pin verified'}
                               </span>
-                            </div>
-                            <span className="text-[10px] font-mono text-emerald-700 block">
-                              Lat: {customer.coordinates.lat.toFixed(5)}, Lng: {customer.coordinates.lng.toFixed(5)}
-                            </span>
+                            </p>
                           </div>
                         </div>
                         <button
                           type="button"
                           onClick={() => setIsMapModalOpen(true)}
-                          className="px-2.5 py-1.5 rounded-lg bg-emerald-100 hover:bg-emerald-200 text-emerald-900 text-[10px] font-bold tracking-wider uppercase transition cursor-pointer"
+                          className="shrink-0 px-3 py-1.5 rounded-xl border border-stone-300 bg-white hover:bg-stone-100 text-stone-700 hover:text-stone-900 text-xs font-bold transition shadow-2xs cursor-pointer active:scale-95"
                         >
-                          Change Pin
+                          Change
                         </button>
                       </div>
                     )}
@@ -859,12 +859,12 @@ export function CartDrawer({ outletSlug, campaignSlug }: CartDrawerProps) {
                         {customer.coordinates ? (
                           <div className="mt-1.5 flex items-center gap-1.5 text-[10px] text-emerald-700 font-semibold bg-emerald-50/80 px-2 py-0.5 rounded-md border border-emerald-200/60 w-fit">
                             <CheckCircle2 className="w-3 h-3 text-emerald-600 shrink-0" />
-                            <span>Doorstep GPS Coordinates Verified</span>
+                            <span>Doorstep Delivery Pin Confirmed</span>
                           </div>
                         ) : (
                           <div className="mt-1.5 flex items-center gap-1.5 text-[10px] text-amber-800 font-medium bg-amber-50 px-2 py-0.5 rounded-md border border-amber-200/80 w-fit">
                             <MapPin className="w-3 h-3 text-amber-600 shrink-0" />
-                            <span>Map pinpoint required to calculate delivery fare</span>
+                            <span>Map doorstep pin required for delivery</span>
                           </div>
                         )}
                       </div>
