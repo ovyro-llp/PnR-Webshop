@@ -1,0 +1,60 @@
+Product ID,Product Name,Category,Sub Category,Price (INR),Dietary Type,Gluten Free,Image Status,Current Image Path
+item-4,French Loaf,Breads & Daily Bakes,Loaves,70,Vegetarian,Standard,No Photo Uploaded (Placeholder Active),/images/no-image-available.png
+item-11,Bread Buns (2 Pcs),Breads & Daily Bakes,Daily Buns,25,Vegetarian,Standard,No Photo Uploaded (Placeholder Active),/images/no-image-available.png
+item-12,Pita Bread (2 Pcs),Breads & Daily Bakes,Daily Buns,30,Vegetarian,Standard,No Photo Uploaded (Placeholder Active),/images/no-image-available.png
+item-14,Dinner Roll,Breads & Daily Bakes,Daily Buns,30,Vegetarian,Standard,No Photo Uploaded (Placeholder Active),/images/no-image-available.png
+item-33,Nutella Croissant,"Puffs, Rolls & Savories",Croissants,180,Vegetarian,Standard,No Photo Uploaded (Placeholder Active),/images/no-image-available.png
+item-41,Veg Spicy Baked Roll,"Puffs, Rolls & Savories",Savory Rolls,80,Vegetarian,Standard,No Photo Uploaded (Placeholder Active),/images/no-image-available.png
+item-50,Whole Wheat Cookies (Eggless),"Khari, Cookies & High Tea",Healthy Cookies,150,Vegetarian,Standard,No Photo Uploaded (Placeholder Active),/images/no-image-available.png
+item-51,Multigrain Cookies (Eggless),"Khari, Cookies & High Tea",Healthy Cookies,150,Vegetarian,Standard,No Photo Uploaded (Placeholder Active),/images/no-image-available.png
+item-57,Mix Fruit Cookies (Eggless),"Khari, Cookies & High Tea",Eggless Cookies,130,Vegetarian,Standard,No Photo Uploaded (Placeholder Active),/images/no-image-available.png
+item-61,Osmania Cookies (Eggless),"Khari, Cookies & High Tea",Eggless Cookies,180,Vegetarian,Standard,No Photo Uploaded (Placeholder Active),/images/no-image-available.png
+item-62,Kashmiri Roth (Eggless),"Khari, Cookies & High Tea",Eggless Cookies,200,Vegetarian,Standard,No Photo Uploaded (Placeholder Active),/images/no-image-available.png
+item-64,Chocolate Chip Cookies (Eggless),"Khari, Cookies & High Tea",Eggless Cookies,200,Vegetarian,Standard,No Photo Uploaded (Placeholder Active),/images/no-image-available.png
+item-65,Brownie (Per Pc),Tea-Time Cakes & Brownies,Tea Time Cakes (With Egg),100,Non-Vegetarian,Standard,No Photo Uploaded (Placeholder Active),/images/no-image-available.png
+item-66,Banana Walnut Cake,Tea-Time Cakes & Brownies,Tea Time Cakes (With Egg),200,Non-Vegetarian,Standard,No Photo Uploaded (Placeholder Active),/images/no-image-available.png
+item-70,Double Chocolate Cake (Loaf),Tea-Time Cakes & Brownies,Tea Time Cakes (With Egg),360,Non-Vegetarian,Standard,No Photo Uploaded (Placeholder Active),/images/no-image-available.png
+item-71,Chocolate Walnut Cake (Loaf),Tea-Time Cakes & Brownies,Tea Time Cakes (With Egg),380,Non-Vegetarian,Standard,No Photo Uploaded (Placeholder Active),/images/no-image-available.png
+item-72,Brownie Round,Tea-Time Cakes & Brownies,Tea Time Cakes (With Egg),600,Non-Vegetarian,Standard,No Photo Uploaded (Placeholder Active),/images/no-image-available.png
+item-73,Carrot Cake (300g),Tea-Time Cakes & Brownies,Tea Time Cakes (Eggless),130,Vegetarian,Standard,No Photo Uploaded (Placeholder Active),/images/no-image-available.png
+item-76,Chocolate Overloaded Cake,Tea-Time Cakes & Brownies,Tea Time Cakes (Eggless),370,Vegetarian,Standard,No Photo Uploaded (Placeholder Active),/images/no-image-available.png
+item-77,Dark Forest Cake (Tea Cake),Tea-Time Cakes & Brownies,Tea Time Cakes (Eggless),370,Vegetarian,Standard,No Photo Uploaded (Placeholder Active),/images/no-image-available.png
+item-78,Chocolate Walnut Muffin,Tea-Time Cakes & Brownies,Muffins,130,Vegetarian,Standard,No Photo Uploaded (Placeholder Active),/images/no-image-available.png
+item-79,Blueberry Muffin,Tea-Time Cakes & Brownies,Muffins,130,Vegetarian,Standard,No Photo Uploaded (Placeholder Active),/images/no-image-available.png
+item-80,Chocolate Nutella Muffin,Tea-Time Cakes & Brownies,Muffins,130,Vegetarian,Standard,No Photo Uploaded (Placeholder Active),/images/no-image-available.png
+item-81,Chicken Masala Patty,"Puffs, Rolls & Savories",Fried Snacks,100,Non-Vegetarian,Standard,No Photo Uploaded (Placeholder Active),/images/no-image-available.png
+item-82,Chicken Parsi Pattice,"Puffs, Rolls & Savories",Fried Snacks,100,Non-Vegetarian,Standard,No Photo Uploaded (Placeholder Active),/images/no-image-available.png
+item-87,Vanilla White Chocolate Pastry (Small),Pastries & Desserts,Pastries (Small),90,Vegetarian,Standard,No Photo Uploaded (Placeholder Active),/images/no-image-available.png
+item-89,Chocolate Oreo Delight Pastry (Small),Pastries & Desserts,Pastries (Small),100,Vegetarian,Standard,No Photo Uploaded (Placeholder Active),/images/no-image-available.png
+item-91,Irish Chocolate Pastry (Small),Pastries & Desserts,Pastries (Small),110,Vegetarian,Standard,No Photo Uploaded (Placeholder Active),/images/no-image-available.png
+item-92,Chocolate Toffee Caramel Pastry (Small),Pastries & Desserts,Pastries (Small),150,Vegetarian,Standard,No Photo Uploaded (Placeholder Active),/images/no-image-available.png
+item-95,Mix Fruit Gateau Pastry (Small),Pastries & Desserts,Fruit Pastries (Small),90,Vegetarian,Standard,No Photo Uploaded (Placeholder Active),/images/no-image-available.png
+item-97,Honey Almond Gateau Pastry (Small),Pastries & Desserts,Exotic Pastries (Small),100,Vegetarian,Standard,No Photo Uploaded (Placeholder Active),/images/no-image-available.png
+item-98,Nougat Gateau Pastry (Small),Pastries & Desserts,Exotic Pastries (Small),90,Vegetarian,Standard,No Photo Uploaded (Placeholder Active),/images/no-image-available.png
+item-99,Red Velvet Pastry (Small),Pastries & Desserts,Exotic Pastries (Small),95,Vegetarian,Standard,No Photo Uploaded (Placeholder Active),/images/no-image-available.png
+item-103,Vanilla White Chocolate Pastry (Large),Pastries & Desserts,Pastries (Large),120,Vegetarian,Standard,No Photo Uploaded (Placeholder Active),/images/no-image-available.png
+item-107,Mix Fruit Gateau Pastry (Large),Pastries & Desserts,Fruit Pastries (Large),120,Vegetarian,Standard,No Photo Uploaded (Placeholder Active),/images/no-image-available.png
+item-109,Honey Almond Gateau Pastry (Large),Pastries & Desserts,Exotic Pastries (Large),130,Vegetarian,Standard,No Photo Uploaded (Placeholder Active),/images/no-image-available.png
+item-110,Nougat Gateau Pastry (Large),Pastries & Desserts,Exotic Pastries (Large),120,Vegetarian,Standard,No Photo Uploaded (Placeholder Active),/images/no-image-available.png
+item-113,Exotic Red Velvet Pastry (Large),Pastries & Desserts,Exotic Pastries (Large),170,Vegetarian,Standard,No Photo Uploaded (Placeholder Active),/images/no-image-available.png
+item-116,Chocolate Sin Toffee Caramel Pastry,Pastries & Desserts,Sin Pastries,220,Vegetarian,Standard,No Photo Uploaded (Placeholder Active),/images/no-image-available.png
+item-118,Biscoff Cheese Pastry,Pastries & Desserts,Cheese Pastries,220,Vegetarian,Standard,No Photo Uploaded (Placeholder Active),/images/no-image-available.png
+item-119,Blueberry Cheese Pastry,Pastries & Desserts,Cheese Pastries,220,Vegetarian,Standard,No Photo Uploaded (Placeholder Active),/images/no-image-available.png
+item-120,Hazeltine Cheese Pastry,Pastries & Desserts,Cheese Pastries,220,Vegetarian,Standard,No Photo Uploaded (Placeholder Active),/images/no-image-available.png
+item-121,Chocolate Bomb,Pastries & Desserts,Desserts,50,Vegetarian,Standard,No Photo Uploaded (Placeholder Active),/images/no-image-available.png
+item-123,Chocolate Mousse (Petite),Pastries & Desserts,Desserts,90,Vegetarian,Standard,No Photo Uploaded (Placeholder Active),/images/no-image-available.png
+item-124,Cinnamon Doughnut,Pastries & Desserts,Doughnuts,80,Vegetarian,Standard,No Photo Uploaded (Placeholder Active),/images/no-image-available.png
+item-129,Silk Bomb Doughnut,Pastries & Desserts,Doughnuts,140,Vegetarian,Standard,No Photo Uploaded (Placeholder Active),/images/no-image-available.png
+item-132,Strawberry Mousse Cup,Pastries & Desserts,Desserts,150,Vegetarian,Standard,No Photo Uploaded (Placeholder Active),/images/no-image-available.png
+item-133,Blackberry Mousse Cup,Pastries & Desserts,Desserts,180,Vegetarian,Standard,No Photo Uploaded (Placeholder Active),/images/no-image-available.png
+item-134,Chocolate Mousse (Premium Cup),Pastries & Desserts,Desserts,160,Vegetarian,Standard,No Photo Uploaded (Placeholder Active),/images/no-image-available.png
+item-173,Cold Cheesecake (1/2 KG),Celebration Cakes,Cheesecakes,1300,Vegetarian,Standard,No Photo Uploaded (Placeholder Active),/images/no-image-available.png
+item-174,Cold Cheesecake (1 KG),Celebration Cakes,Cheesecakes,2600,Vegetarian,Standard,No Photo Uploaded (Placeholder Active),/images/no-image-available.png
+item-175,Baked Cheesecake (1/2 KG),Celebration Cakes,Cheesecakes,1300,Vegetarian,Standard,No Photo Uploaded (Placeholder Active),/images/no-image-available.png
+item-180,Fresh Strawberry Cake (1/2 KG),Celebration Cakes,Fruit & Berry Cakes,650,Vegetarian,Standard,No Photo Uploaded (Placeholder Active),/images/no-image-available.png
+item-181,Fresh Strawberry Cake (1 KG),Celebration Cakes,Fruit & Berry Cakes,1300,Vegetarian,Standard,No Photo Uploaded (Placeholder Active),/images/no-image-available.png
+item-187,Mix Fruit Chocolate Gateau (1 KG),Celebration Cakes,Fruit & Berry Cakes,1500,Vegetarian,Standard,No Photo Uploaded (Placeholder Active),/images/no-image-available.png
+item-192,Rasmalai Cake (1/2 KG),Celebration Cakes,Exotic Cakes,750,Vegetarian,Standard,No Photo Uploaded (Placeholder Active),/images/no-image-available.png
+item-193,Rasmalai Regular Cake (1 KG),Celebration Cakes,Exotic Cakes,1500,Vegetarian,Standard,No Photo Uploaded (Placeholder Active),/images/no-image-available.png
+item-202,Mango Sin Cake (1/2 KG),Celebration Cakes,Sin Cakes,950,Vegetarian,Standard,No Photo Uploaded (Placeholder Active),/images/no-image-available.png
+item-203,Mango Sin Cake (1 KG),Celebration Cakes,Sin Cakes,1900,Vegetarian,Standard,No Photo Uploaded (Placeholder Active),/images/no-image-available.png
