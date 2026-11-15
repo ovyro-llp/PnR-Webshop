@@ -33,6 +33,9 @@ import {
   CheckCircle2,
   Truck,
   Edit3,
+  KeyRound,
+  Eye,
+  EyeOff,
 } from 'lucide-react';
 import {
   B2BClient,
@@ -117,6 +120,13 @@ export default function AdminB2BPage() {
   const [newUserUsername, setNewUserUsername] = useState('');
   const [newUserPassword, setNewUserPassword] = useState('pnr@corp123');
   const [copiedId, setCopiedId] = useState<string | null>(null);
+
+  // Reset Password Modal State
+  const [resettingUser, setResettingUser] = useState<B2BClientUser | null>(null);
+  const [newResetPassword, setNewResetPassword] = useState('');
+  const [showResetPassword, setShowResetPassword] = useState(false);
+  const [isResettingPassword, setIsResettingPassword] = useState(false);
+  const [resetSuccessMessage, setResetSuccessMessage] = useState<string | null>(null);
 
   // 1. Load Clients on initial mount
   const fetchClients = async () => {
@@ -579,6 +589,70 @@ export default function AdminB2BPage() {
     navigator.clipboard.writeText(text);
     setCopiedId(user.id);
     setTimeout(() => setCopiedId(null), 3000);
+  };
+
+  // Open Reset Password Modal
+  const handleOpenResetPasswordModal = (user: B2BClientUser) => {
+    setResettingUser(user);
+    setNewResetPassword('');
+    setShowResetPassword(false);
+    setResetSuccessMessage(null);
+  };
+
+  // Generate Suggested Password
+  const handleGenerateRandomPassword = () => {
+    const chars = 'abcdefghjkmnpqrstuvwxyz23456789';
+    let pass = 'pnr@';
+    for (let i = 0; i < 4; i++) {
+      pass += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    setNewResetPassword(pass);
+  };
+
+  // Save Reset Password
+  const handleSaveResetPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!resettingUser || !newResetPassword.trim()) return;
+
+    if (newResetPassword.trim().length < 4) {
+      alert('Password must be at least 4 characters long.');
+      return;
+    }
+
+    setIsResettingPassword(true);
+    try {
+      const res = await fetch('/api/b2b/admin/users', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userId: resettingUser.id,
+          newPassword: newResetPassword.trim(),
+        }),
+      });
+
+      const data = await res.json();
+      if (res.ok && data.success) {
+        // Build updated credentials text to copy directly to clipboard
+        const portalUrl = `${window.location.origin}/b2b/${selectedClient?.slug || ''}`;
+        const credentialsText = `*Puffs 'n' Rolls Corporate Requisition Portal*\nCompany: ${selectedClient?.name}\nAssigned Department: ${resettingUser.departmentName} (Pre-locked)\nPortal URL: ${portalUrl}\nLogin ID: ${resettingUser.username}\nNew Password: ${newResetPassword.trim()}`;
+
+        try {
+          await navigator.clipboard.writeText(credentialsText);
+        } catch {}
+
+        setResetSuccessMessage('Password updated successfully! New login details copied to clipboard.');
+        setTimeout(() => {
+          setResettingUser(null);
+          setResetSuccessMessage(null);
+        }, 2200);
+      } else {
+        alert(data.error || 'Failed to update password.');
+      }
+    } catch (err: any) {
+      alert(err.message || 'Error updating password.');
+    } finally {
+      setIsResettingPassword(false);
+    }
   };
 
   // Status badge styling helper
@@ -1958,12 +2032,13 @@ export default function AdminB2BPage() {
                       </span>
                     </div>
 
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-1.5 flex-wrap justify-end">
                       <button
                         onClick={() =>
                           handleCopyCredentials(user, selectedClient?.slug || '')
                         }
-                        className="px-2.5 py-1 bg-stone-100 hover:bg-stone-200 rounded text-[11px] font-bold flex items-center gap-1 text-stone-700"
+                        className="px-2.5 py-1 bg-stone-100 hover:bg-stone-200 rounded text-[11px] font-bold flex items-center gap-1 text-stone-700 cursor-pointer"
+                        title="Copy Login Credentials"
                       >
                         {copiedId === user.id ? (
                           <>
@@ -1979,8 +2054,18 @@ export default function AdminB2BPage() {
                       </button>
 
                       <button
+                        onClick={() => handleOpenResetPasswordModal(user)}
+                        className="px-2.5 py-1 bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-200 rounded text-[11px] font-bold flex items-center gap-1 cursor-pointer transition shadow-2xs"
+                        title="Change / Reset Employee Password"
+                      >
+                        <KeyRound className="w-3 h-3 text-amber-700" />
+                        <span>Change Password</span>
+                      </button>
+
+                      <button
                         onClick={() => handleDeleteUser(user.id)}
-                        className="text-stone-400 hover:text-red-600 p-1"
+                        className="text-stone-400 hover:text-red-600 p-1 cursor-pointer"
+                        title="Delete User"
                       >
                         <Trash2 className="w-3.5 h-3.5" />
                       </button>
@@ -1989,6 +2074,132 @@ export default function AdminB2BPage() {
                 ))}
               </div>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* =================================================================== */}
+      {/* 🔐 MODAL: RESET CLIENT EMPLOYEE PASSWORD                            */}
+      {/* =================================================================== */}
+      {resettingUser && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4 animate-in fade-in duration-200">
+          <div className="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl border border-stone-200 space-y-5 animate-in zoom-in-95 duration-200">
+            {/* Modal Header */}
+            <div className="flex items-start justify-between border-b border-stone-100 pb-3">
+              <div className="flex items-center gap-2.5">
+                <div className="w-9 h-9 rounded-2xl bg-amber-100 text-amber-900 flex items-center justify-center font-bold">
+                  <KeyRound className="w-4 h-4 text-amber-800" />
+                </div>
+                <div>
+                  <h3 className="text-base font-black text-stone-900">
+                    Change Employee Password
+                  </h3>
+                  <p className="text-xs text-stone-500">
+                    Set a new access password for {resettingUser.name}
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => setResettingUser(null)}
+                className="text-stone-400 hover:text-stone-600 p-1 cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Employee Summary Card */}
+            <div className="bg-[#FAF8F5] border border-stone-200 rounded-2xl p-3.5 space-y-1.5 text-xs">
+              <div className="flex justify-between">
+                <span className="text-stone-500">Corporate Client:</span>
+                <span className="font-bold text-stone-900">{selectedClient?.name}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-stone-500">Employee:</span>
+                <span className="font-bold text-stone-900">{resettingUser.name}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-stone-500">Login ID:</span>
+                <span className="font-mono font-bold text-stone-900 bg-stone-100 px-2 py-0.5 rounded">
+                  {resettingUser.username}
+                </span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-stone-500">Locked Department:</span>
+                <span className="font-bold text-emerald-800">{resettingUser.departmentName}</span>
+              </div>
+            </div>
+
+            {/* Password Form */}
+            <form onSubmit={handleSaveResetPassword} className="space-y-4">
+              <div>
+                <div className="flex items-center justify-between mb-1.5">
+                  <label className="block text-[11px] font-bold text-stone-700 uppercase tracking-wider">
+                    New Access Password *
+                  </label>
+                  <button
+                    type="button"
+                    onClick={handleGenerateRandomPassword}
+                    className="text-[11px] text-amber-800 hover:text-amber-950 font-bold underline cursor-pointer"
+                  >
+                    🎲 Suggest Password
+                  </button>
+                </div>
+                <div className="relative">
+                  <input
+                    type={showResetPassword ? 'text' : 'password'}
+                    required
+                    value={newResetPassword}
+                    onChange={(e) => setNewResetPassword(e.target.value)}
+                    placeholder="e.g. tcs@2026 or pnr#77"
+                    className="w-full pl-3.5 pr-10 py-2.5 bg-stone-50 border border-stone-300 rounded-xl text-sm font-mono text-stone-900 focus:outline-none focus:ring-2 focus:ring-stone-900 shadow-2xs"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowResetPassword(!showResetPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-stone-400 hover:text-stone-700 cursor-pointer"
+                  >
+                    {showResetPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                </div>
+                <p className="text-[11px] text-stone-400 mt-1">
+                  Must be at least 4 characters. Saving will automatically copy the full updated credentials message to your clipboard.
+                </p>
+              </div>
+
+              {resetSuccessMessage && (
+                <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-xl text-xs text-emerald-900 font-bold flex items-center gap-2">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                  <span>{resetSuccessMessage}</span>
+                </div>
+              )}
+
+              <div className="flex items-center gap-2 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setResettingUser(null)}
+                  className="flex-1 py-2.5 bg-stone-100 hover:bg-stone-200 text-stone-700 rounded-xl font-bold text-xs cursor-pointer transition"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={isResettingPassword || !newResetPassword.trim()}
+                  className="flex-1 py-2.5 bg-stone-900 hover:bg-black text-white rounded-xl font-bold text-xs flex items-center justify-center gap-1.5 shadow-md cursor-pointer transition disabled:opacity-50"
+                >
+                  {isResettingPassword ? (
+                    <>
+                      <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                      <span>Saving...</span>
+                    </>
+                  ) : (
+                    <>
+                      <KeyRound className="w-3.5 h-3.5" />
+                      <span>Update &amp; Copy Login</span>
+                    </>
+                  )}
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}

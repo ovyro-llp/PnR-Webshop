@@ -61,3 +61,34 @@ export async function DELETE(req: NextRequest) {
     return NextResponse.json({ error: err.message || 'Failed to delete user.' }, { status: 500 });
   }
 }
+
+export async function PATCH(req: NextRequest) {
+  try {
+    const body = await req.json();
+    const { userId, newPassword } = body;
+
+    if (!userId || !newPassword) {
+      return NextResponse.json(
+        { error: 'User ID and New Password are required.' },
+        { status: 400 }
+      );
+    }
+
+    if (newPassword.trim().length < 4) {
+      return NextResponse.json(
+        { error: 'Password must be at least 4 characters long.' },
+        { status: 400 }
+      );
+    }
+
+    const success = await b2bRepository.updateClientUserPassword(userId, newPassword.trim());
+    if (!success) {
+      return NextResponse.json({ error: 'User not found or failed to update password.' }, { status: 404 });
+    }
+
+    return NextResponse.json({ success: true, message: 'Password updated successfully.' });
+  } catch (err: any) {
+    console.error('[API /api/b2b/admin/users PATCH Error]:', err);
+    return NextResponse.json({ error: err.message || 'Failed to update password.' }, { status: 500 });
+  }
+}

@@ -1026,6 +1026,35 @@ export const b2bRepository = {
     return true;
   },
 
+  updateClientUserPassword: async (userId: string, newPassword: string): Promise<boolean> => {
+    const cleanPassword = newPassword.trim();
+    if (!cleanPassword) return false;
+    const passwordHash = hashPassword(cleanPassword);
+
+    if (process.env.DATABASE_URL && process.env.DATABASE_URL.trim()) {
+      try {
+        await ensureCoreTables();
+        const pool = getDbPool();
+        const res = await pool.query(
+          `UPDATE public.b2b_client_users 
+           SET password_hash = $1, updated_at = NOW() 
+           WHERE id = $2;`,
+          [passwordHash, userId]
+        );
+        return (res.rowCount || 0) > 0;
+      } catch (err: any) {
+        console.warn('[b2bRepository.updateClientUserPassword DB Warning]:', err.message);
+      }
+    }
+
+    const store = getMemoryStore();
+    const user = store.users.find((u) => u.id === userId);
+    if (!user) return false;
+    user.passwordHash = passwordHash;
+    user.updatedAt = new Date().toISOString();
+    return true;
+  },
+
   verifyClientLogin: async (
     clientSlug: string,
     username: string,
