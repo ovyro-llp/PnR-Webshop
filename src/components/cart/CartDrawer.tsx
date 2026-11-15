@@ -5,7 +5,7 @@ import { useCart } from '@/context/CartContext';
 import { useAuth } from '@/context/AuthContext';
 import { useLocation } from '@/context/LocationContext';
 import { useTracking } from '@/components/tracking/TrackingProvider';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { DeliveryMapPicker } from '@/components/location/DeliveryMapPicker';
 import {
   X,
@@ -28,8 +28,11 @@ import {
   Sparkles,
   Zap,
   Store,
+  Clock,
+  AlertTriangle,
 } from 'lucide-react';
 import { CustomerDetails, PaymentMethod } from '@/types';
+import { useOutletAcceptance } from '@/hooks/useOutletTiming';
 
 interface CartDrawerProps {
   outletSlug: string;
@@ -71,7 +74,20 @@ export function CartDrawer({ outletSlug, campaignSlug }: CartDrawerProps) {
     verifyRazorpayPayment,
   } = useCart();
 
+  const searchParams = useSearchParams();
+  const simTime = searchParams?.get('simulatedTime');
+  const simDate = simTime
+    ? (() => {
+        const [h, m] = simTime.split(':').map(Number);
+        return new Date(
+          `2026-11-15T${String(h).padStart(2, '0')}:${String(m || 0).padStart(2, '0')}:00+05:30`
+        );
+      })()
+    : undefined;
+
   const effectiveOutletSlug = cartOutletSlug || outletSlug || nearestOutlet?.slug || 'cycle-circle';
+  const currentOutlet = allOutlets.find((o) => o.slug === effectiveOutletSlug) || nearestOutlet;
+  const outletStatus = useOutletAcceptance(currentOutlet, simDate);
   const isCustomerLoggedIn = Boolean(user && isCustomer);
 
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -185,7 +201,13 @@ export function CartDrawer({ outletSlug, campaignSlug }: CartDrawerProps) {
     e.preventDefault();
     setSubmitError('');
 
-    // 0. MANDATORY HARD GATE: Customer MUST pinpoint doorstep location on map first!
+    // 0. Hard Operating Hours & Outlet Acceptance Gate (10:00 AM - 10:00 PM IST)
+    if (!outletStatus.isAccepting) {
+      setSubmitError(outletStatus.reason || 'Orders are accepted only between 10:00 AM and 10:00 PM.');
+      return;
+    }
+
+    // 0.1 MANDATORY HARD GATE: Customer MUST pinpoint doorstep location on map first!
     const effectiveCoords = customer.coordinates || deliveryCoordinates;
     if (!effectiveCoords || typeof effectiveCoords.lat !== 'number' || typeof effectiveCoords.lng !== 'number') {
       setIsMapModalOpen(true);
@@ -943,8 +965,47 @@ export function CartDrawer({ outletSlug, campaignSlug }: CartDrawerProps) {
 
           {/* Checkout Footer */}
           {items.length > 0 && (
-            <div className="p-4 sm:p-5 border-t border-stone-200 bg-white space-y-2">
-              {!customer.coordinates ? (
+            <div className="p-4 sm:p-5 border-t border-stone-200 bg-white space-y-2.5">
+              {!outletStatus.isAccepting ? (
+                <div className="space-y-2">
+                  <div
+                    className={`p-3.5 rounded-2xl border text-xs space-y-1.5 ${
+                      outletStatus.isPausedByAdmin
+                        ? 'bg-rose-50 border-rose-200 text-rose-900'
+                        : 'bg-amber-50 border-amber-200 text-amber-950'
+                    }`}
+                  >
+                    <div className="flex items-center gap-2 font-bold">
+                      {outletStatus.isPausedByAdmin ? (
+                        <AlertTriangle className="w-4 h-4 text-rose-600 shrink-0" />
+                      ) : (
+                        <Clock className="w-4 h-4 text-amber-700 shrink-0" />
+                      )}
+                      <span>
+                        {outletStatus.isPausedByAdmin
+                          ? 'Kitchen Orders Temporarily Paused'
+                          : 'Store Closed for Ordering (10 AM – 10 PM)'}
+                      </span>
+                    </div>
+                    <p className="text-[11px] leading-relaxed opacity-90">
+                      {outletStatus.reason}
+                    </p>
+                  </div>
+
+                  <button
+                    type="button"
+                    disabled
+                    className="w-full py-3.5 bg-stone-200 text-stone-500 rounded-full font-bold text-xs uppercase tracking-wider transition cursor-not-allowed flex items-center justify-center gap-2"
+                  >
+                    <Clock className="w-4 h-4" />
+                    <span>
+                      {outletStatus.isPausedByAdmin
+                        ? 'Orders Currently Paused'
+                        : `Closed • Opens ${outletStatus.timing.nextOpenTimeText}`}
+                    </span>
+                  </button>
+                </div>
+              ) : !customer.coordinates ? (
                 <>
                   <button
                     type="button"

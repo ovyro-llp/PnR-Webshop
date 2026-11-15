@@ -841,7 +841,7 @@ export const orderRepository = {
         pincode: r.pincode || '422005',
         phone: r.phone,
         email: r.email || `${r.slug}@puffsnrolls.com`,
-        openingHours: r.opening_hours || '8:00 AM - 11:00 PM',
+        openingHours: r.opening_hours || '10:00 AM - 10:00 PM',
         rating: 4.8,
         reviewCount: 420,
         isOpen: r.is_open ?? true,

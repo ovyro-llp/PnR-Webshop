@@ -104,7 +104,7 @@ export async function POST(req: NextRequest) {
         phone: phone || '+91 94236 39911',
         email: email || `${cleanSlug}@puffsnrolls.com`,
         googleMapsUrl: googleMapsUrl || `https://maps.google.com/?q=${encodeURIComponent(name + ' Nashik')}`,
-        openingHours: openingHours || '9:00 AM - 10:30 PM',
+        openingHours: openingHours || '10:00 AM - 10:00 PM',
         rating: 4.8,
         reviewCount: 12,
         isOpen: true,

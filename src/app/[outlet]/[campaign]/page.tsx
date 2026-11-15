@@ -6,6 +6,7 @@ import { MenuItemCard } from '@/components/menu/MenuItemCard';
 import { CartDrawer } from '@/components/cart/CartDrawer';
 import { MobileCartBar } from '@/components/cart/MobileCartBar';
 import { PageTracker } from '@/components/tracking/PageTracker';
+import { isB2COutletAcceptingOrders } from '@/lib/outlet-timing';
 import { Star, ShieldCheck, CheckCircle2, Award, Clock } from 'lucide-react';
 
 export const dynamic = 'force-dynamic';
@@ -13,16 +14,26 @@ export const revalidate = 0;
 
 export default async function CampaignLandingPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ outlet: string; campaign: string }>;
+  searchParams?: Promise<{ simulatedTime?: string }>;
 }) {
   const { outlet: outletSlug, campaign: campaignSlug } = await params;
+  const search = searchParams ? await searchParams : undefined;
   const outlet = orderStore.getOutletBySlug(outletSlug);
 
   if (!outlet) {
     notFound();
   }
 
+  let simDate: Date | undefined;
+  if (search?.simulatedTime) {
+    const [h, m] = search.simulatedTime.split(':').map(Number);
+    simDate = new Date(`2026-11-15T${String(h).padStart(2, '0')}:${String(m || 0).padStart(2, '0')}:00+05:30`);
+  }
+
+  const acceptance = isB2COutletAcceptingOrders(outlet, simDate);
   const campaign = orderStore.getCampaign(outletSlug, campaignSlug);
   const allOutletItems = orderStore.getMenuItems(outletSlug);
 
@@ -47,6 +58,17 @@ export default async function CampaignLandingPage({
       />
       <div className="min-h-screen flex flex-col bg-[#FDFCFB] overflow-x-hidden w-full">
         <Navbar currentOutletSlug={outlet.slug} currentCampaignSlug={campaignSlug} />
+
+        {/* Notice if outlet orders are paused or closed */}
+        {acceptance.isPausedByAdmin ? (
+          <div className="bg-rose-50 border-b border-rose-200 py-3 px-4 text-center text-xs text-rose-800 font-medium flex items-center justify-center gap-2">
+            <span>⚠️ Our kitchen at {outlet.name} is currently busy or taking a scheduled baking pause. Online orders are temporarily paused.</span>
+          </div>
+        ) : !acceptance.timing.isOpen ? (
+          <div className="bg-amber-50 border-b border-amber-200 py-3 px-4 text-center text-xs text-amber-950 font-medium flex items-center justify-center gap-2">
+            <span>🕒 <strong>Operating Hours (10:00 AM – 10:00 PM):</strong> {outlet.name} accepts customer orders only between 10:00 AM and 10:00 PM. We are currently closed for order taking (Current time: {acceptance.timing.currentIstTime} IST). Orders open {acceptance.timing.nextOpenTimeText.toLowerCase()}.</span>
+          </div>
+        ) : null}
 
         <main className="max-w-7xl mx-auto px-3.5 sm:px-6 lg:px-8 py-5 sm:py-8 space-y-8 sm:space-y-12 flex-1 w-full">
           {/* Performance Hero */}

@@ -56,7 +56,7 @@ export async function POST(req: NextRequest) {
     const errorMsg = error instanceof Error ? error.message : 'Failed to create order';
     return NextResponse.json(
       { success: false, message: errorMsg },
-      { status: 500 }
+      { status: 400 }
     );
   }
 }

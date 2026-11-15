@@ -14,7 +14,7 @@ export async function POST(req: NextRequest) {
     const message = error instanceof Error ? error.message : 'Failed to create payment order';
     return NextResponse.json(
       { success: false, message },
-      { status: 500 }
+      { status: 400 }
     );
   }
 }

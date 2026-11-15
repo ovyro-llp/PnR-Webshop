@@ -18,6 +18,7 @@ import { OUTLETS, CAMPAIGNS, MENU_ITEMS, INITIAL_ORDERS } from '@/lib/data/mock-
 import { dispatchToMangwale } from '@/lib/logistics/mangwale';
 import { sendMetaCAPI } from '@/lib/tracking/meta-capi';
 import { orderRepository } from '@/lib/db/order-repository';
+import { isB2COutletAcceptingOrders } from '@/lib/outlet-timing';
 import { getPersistedPaymentConfig, savePersistedPaymentConfig } from '@/lib/payments/payment-config-storage';
 import {
   getPersistedMarketingTags,
@@ -428,8 +429,9 @@ export const orderStore = {
       throw new Error(`Outlet not found: ${orderData.outletSlug}`);
     }
 
-    if (!outlet.isOpen) {
-      throw new Error(`Orders are currently paused for ${outlet.name}. Please select another outlet.`);
+    const acceptance = isB2COutletAcceptingOrders(outlet);
+    if (!acceptance.isAccepting) {
+      throw new Error(acceptance.reason || `Orders are currently not accepted for ${outlet.name}.`);
     }
 
     if (orderData.paymentMethod === 'COD') {

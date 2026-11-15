@@ -7,6 +7,7 @@ import { CartDrawer } from '@/components/cart/CartDrawer';
 import { MobileCartBar } from '@/components/cart/MobileCartBar';
 import { Footer } from '@/components/layout/Footer';
 import { PageTracker } from '@/components/tracking/PageTracker';
+import { isB2COutletAcceptingOrders } from '@/lib/outlet-timing';
 import { MapPin, Phone, Clock, Star, Sparkles, ArrowRight, Package } from 'lucide-react';
 import Link from 'next/link';
 
@@ -15,16 +16,27 @@ export const revalidate = 0;
 
 export default async function OutletPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ outlet: string }>;
+  searchParams?: Promise<{ simulatedTime?: string }>;
 }) {
   const { outlet: outletSlug } = await params;
+  const search = searchParams ? await searchParams : undefined;
   const outlet = orderStore.getOutletBySlug(outletSlug);
 
   if (!outlet) {
     notFound();
   }
 
+  // Support simulatedTime for testing / visual QA (e.g. ?simulatedTime=23:30 or 08:00)
+  let simDate: Date | undefined;
+  if (search?.simulatedTime) {
+    const [h, m] = search.simulatedTime.split(':').map(Number);
+    simDate = new Date(`2026-11-15T${String(h).padStart(2, '0')}:${String(m || 0).padStart(2, '0')}:00+05:30`);
+  }
+
+  const acceptance = isB2COutletAcceptingOrders(outlet, simDate);
   const menuItems = orderStore.getMenuItems(outletSlug);
   const outletCampaigns = orderStore
     .getCampaigns()
@@ -49,15 +61,20 @@ export default async function OutletPage({
                   <span className="text-[10px] uppercase tracking-wider font-semibold px-2 py-0.5 rounded-full bg-stone-100 text-stone-700">
                     Nashik Bakery Outlet
                   </span>
-                  {outlet.isOpen ? (
-                    <span className="text-[10px] font-medium text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded-full flex items-center gap-1 border border-emerald-200">
-                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-600" />
-                      Baking Fresh
+                  {acceptance.isAccepting ? (
+                    <span className="text-[10px] font-medium text-emerald-800 bg-emerald-50 px-2.5 py-0.5 rounded-full flex items-center gap-1.5 border border-emerald-200">
+                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-600 animate-pulse" />
+                      <span>Baking Fresh • 10 AM - 10 PM</span>
                     </span>
-                  ) : (
+                  ) : acceptance.isPausedByAdmin ? (
                     <span className="text-[10px] font-medium text-rose-800 bg-rose-50 px-2 py-0.5 rounded-full flex items-center gap-1 border border-rose-200">
                       <span className="w-1.5 h-1.5 rounded-full bg-rose-600" />
-                      Orders Paused
+                      <span>Orders Paused</span>
+                    </span>
+                  ) : (
+                    <span className="text-[10px] font-medium text-amber-900 bg-amber-50 px-2.5 py-0.5 rounded-full flex items-center gap-1.5 border border-amber-200">
+                      <Clock className="w-3 h-3 text-amber-700" />
+                      <span>Closed • Opens 10 AM</span>
                     </span>
                   )}
                   <span className="text-xs text-stone-500 flex items-center gap-1">
@@ -120,12 +137,16 @@ export default async function OutletPage({
           </div>
         </section>
 
-        {/* Notice if outlet orders are paused */}
-        {!outlet.isOpen && (
+        {/* Notice if outlet orders are paused or closed */}
+        {acceptance.isPausedByAdmin ? (
           <div className="bg-rose-50 border-b border-rose-200 py-3 px-4 text-center text-xs text-rose-800 font-medium flex items-center justify-center gap-2">
             <span>⚠️ Our kitchen at {outlet.name} is currently busy or taking a scheduled baking pause. Online orders are temporarily paused.</span>
           </div>
-        )}
+        ) : !acceptance.timing.isOpen ? (
+          <div className="bg-amber-50 border-b border-amber-200 py-3 px-4 text-center text-xs text-amber-950 font-medium flex items-center justify-center gap-2">
+            <span>🕒 <strong>Operating Hours (10:00 AM – 10:00 PM):</strong> {outlet.name} accepts customer orders only between 10:00 AM and 10:00 PM. We are currently closed for order taking (Current time: {acceptance.timing.currentIstTime} IST). Orders open {acceptance.timing.nextOpenTimeText.toLowerCase()}.</span>
+          </div>
+        ) : null}
 
         {/* Outlet Active Campaign Bar */}
         {outletCampaigns.length > 0 && (

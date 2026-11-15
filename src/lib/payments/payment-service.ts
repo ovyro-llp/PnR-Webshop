@@ -3,6 +3,7 @@ import { orderStore } from '@/lib/store/order-store';
 import { orderRepository } from '@/lib/db/order-repository';
 import { dispatchToMangwale } from '@/lib/logistics/mangwale';
 import { sendMetaCAPI } from '@/lib/tracking/meta-capi';
+import { isB2COutletAcceptingOrders } from '@/lib/outlet-timing';
 import { Order, CustomerDetails, CartItem, PaymentMethod } from '@/types';
 
 export interface CreatePaymentOrderInput {
@@ -65,8 +66,9 @@ export const paymentService = {
     if (!outlet) {
       throw new Error(`Outlet not found: ${outletSlug}`);
     }
-    if (!outlet.isOpen) {
-      throw new Error(`Orders are currently paused for ${outlet.name}. Please choose another outlet.`);
+    const acceptance = isB2COutletAcceptingOrders(outlet);
+    if (!acceptance.isAccepting) {
+      throw new Error(acceptance.reason || `Orders cannot be placed for ${outlet.name} at this time.`);
     }
 
     // Generate unique receipt and notes
