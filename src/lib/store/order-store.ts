@@ -1007,6 +1007,9 @@ export const orderStore = {
           ) {
             dbItem.image = masterItem.image;
             hasImageUpdates = true;
+          } else if (!dbItem.image || dbItem.image.includes('unsplash.com')) {
+            dbItem.image = '/images/no-image-available.png';
+            hasImageUpdates = true;
           }
         });
 
@@ -1052,7 +1055,7 @@ export const orderStore = {
       originalPrice: productData.originalPrice ? Number(productData.originalPrice) : undefined,
       image:
         productData.image ||
-        'https://images.unsplash.com/photo-1509440159596-0249088772ff?auto=format&fit=crop&q=80&w=800',
+        '/images/no-image-available.png',
       isVeg: productData.isVeg !== undefined ? Boolean(productData.isVeg) : true,
       isGlutenFree: Boolean(productData.isGlutenFree),
       isBestseller: Boolean(productData.isBestseller),

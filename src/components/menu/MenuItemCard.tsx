@@ -18,11 +18,15 @@ export function MenuItemCard({ item, outletSlug }: MenuItemCardProps) {
   const isSoldOut = item.isAvailable === false || (typeof item.stockQuantity === 'number' && item.stockQuantity <= 0);
   const isLowStock = !isSoldOut && typeof item.stockQuantity === 'number' && item.stockQuantity > 0 && item.stockQuantity <= 4;
 
-  const defaultFallback = 'https://images.unsplash.com/photo-1509440159596-0249088772ff?auto=format&fit=crop&w=800&q=80';
-  const [currentImg, setCurrentImg] = React.useState<string>(item.image || defaultFallback);
+  const defaultFallback = '/images/no-image-available.png';
+  const getProductImage = (img?: string) => {
+    if (!img || img.includes('unsplash.com')) return defaultFallback;
+    return img;
+  };
+  const [currentImg, setCurrentImg] = React.useState<string>(getProductImage(item.image));
 
   React.useEffect(() => {
-    setCurrentImg(item.image || defaultFallback);
+    setCurrentImg(getProductImage(item.image));
   }, [item.image]);
 
   return (

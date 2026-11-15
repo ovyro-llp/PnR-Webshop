@@ -56,24 +56,24 @@ const CATEGORIES: MenuCategory[] = [
 
 const PRESET_IMAGES = [
   {
+    name: 'No Image Available',
+    url: '/images/no-image-available.png',
+  },
+  {
     name: 'Veg Puff',
-    url: 'https://images.unsplash.com/photo-1509440159596-0249088772ff?auto=format&fit=crop&q=80&w=800',
+    url: '/images/products/veg-puff.jpg',
   },
   {
-    name: 'Savory Roll',
-    url: 'https://images.unsplash.com/photo-1627308595229-7830a5c91f9f?auto=format&fit=crop&q=80&w=800',
+    name: 'White Bread',
+    url: '/images/products/white-bread.jpg',
   },
   {
-    name: 'Cake Pastry',
-    url: 'https://images.unsplash.com/photo-1578985545062-69928b1d9587?auto=format&fit=crop&q=80&w=800',
+    name: 'Chocolate Croissant',
+    url: '/images/products/chocolate-croissant.jpg',
   },
   {
-    name: 'Artisan Bread',
-    url: 'https://images.unsplash.com/photo-1549931319-a545dcf3bc73?auto=format&fit=crop&q=80&w=800',
-  },
-  {
-    name: 'Beverage / Chai',
-    url: 'https://images.unsplash.com/photo-1544787219-7f47ccb76574?auto=format&fit=crop&q=80&w=800',
+    name: 'Butter Cookies',
+    url: '/images/products/butter-cookies.jpg',
   },
 ];
 
@@ -1338,7 +1338,11 @@ export default function OutletInventoryPage() {
                   <div className="flex items-start gap-3">
                     <div className="relative w-16 h-16 rounded-2xl overflow-hidden bg-stone-50 shrink-0 border border-stone-200/80 p-1 flex items-center justify-center">
                       <Image
-                        src={product.image}
+                        src={
+                          product.image && !product.image.includes('unsplash.com')
+                            ? product.image
+                            : '/images/no-image-available.png'
+                        }
                         alt={product.name}
                         fill
                         className="object-contain object-center p-0.5"
@@ -1558,7 +1562,11 @@ export default function OutletInventoryPage() {
                             <div className="flex items-center gap-3 min-w-0">
                               <div className="relative w-12 h-12 rounded-xl overflow-hidden bg-stone-50 shrink-0 border border-stone-200/80 p-0.5 flex items-center justify-center">
                                 <Image
-                                  src={product.image}
+                                  src={
+                                    product.image && !product.image.includes('unsplash.com')
+                                      ? product.image
+                                      : '/images/no-image-available.png'
+                                  }
                                   alt={product.name}
                                   fill
                                   className="object-contain object-center p-0.5"
@@ -2436,7 +2444,11 @@ export default function OutletInventoryPage() {
                     <div className="relative w-12 h-12 rounded-xl overflow-hidden bg-stone-50 border border-stone-200 shrink-0 p-1 flex items-center justify-center">
                       {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img
-                        src={editingProduct.image}
+                        src={
+                          editingProduct.image && !editingProduct.image.includes('unsplash.com')
+                            ? editingProduct.image
+                            : '/images/no-image-available.png'
+                        }
                         alt="Preview"
                         className="w-full h-full object-contain object-center"
                       />
