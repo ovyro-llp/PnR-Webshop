@@ -973,7 +973,7 @@ export const orderStore = {
       list = list.filter(
         (item) =>
           item.name.toLowerCase().includes(q) ||
-          item.description.toLowerCase().includes(q) ||
+          (item.description ? item.description.toLowerCase().includes(q) : false) ||
           item.category.toLowerCase().includes(q)
       );
     }

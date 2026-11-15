@@ -2,7 +2,7 @@
   {
     "id": "item-1",
     "name": "White Bread",
-    "description": "Soft and pillowy everyday sandwich white bread, freshly baked every morning.",
+    "description": "",
     "category": "Breads & Daily Bakes",
     "subCategory": "Loaves",
     "price": 50,
@@ -24,7 +24,7 @@
   {
     "id": "item-2",
     "name": "Brown Bread",
-    "description": "Wholesome brown bread made with enriched whole wheat flour.",
+    "description": "",
     "category": "Breads & Daily Bakes",
     "subCategory": "Loaves",
     "price": 70,
@@ -46,7 +46,7 @@
   {
     "id": "item-3",
     "name": "Multigrain Bread",
-    "description": "Nutrient-rich bread topped and baked with sunflower, flax, sesame and oats.",
+    "description": "",
     "category": "Breads & Daily Bakes",
     "subCategory": "Loaves",
     "price": 80,
@@ -68,7 +68,7 @@
   {
     "id": "item-4",
     "name": "French Loaf",
-    "description": "Classic French style baguette loaf with a crisp golden crust and light airy crumb.",
+    "description": "",
     "category": "Breads & Daily Bakes",
     "subCategory": "Loaves",
     "price": 70,
@@ -90,7 +90,7 @@
   {
     "id": "item-5",
     "name": "Whole Wheat Bread",
-    "description": "100% stoneground whole wheat loaf, preservative-free and high in dietary fiber.",
+    "description": "",
     "category": "Breads & Daily Bakes",
     "subCategory": "Loaves",
     "price": 100,
@@ -112,7 +112,7 @@
   {
     "id": "item-6",
     "name": "Cheese & Garlic Bread",
-    "description": "Toasted bakery loaf infused with aromatic roasted garlic and bubbling mozzarella cheese.",
+    "description": "",
     "category": "Breads & Daily Bakes",
     "subCategory": "Flavored Breads",
     "price": 50,
@@ -134,7 +134,7 @@
   {
     "id": "item-7",
     "name": "Ladi Paav (6 Pcs)",
-    "description": "Ultra-soft authentic Nashik style bakery ladi pav, perfect with misal and maska.",
+    "description": "",
     "category": "Breads & Daily Bakes",
     "subCategory": "Daily Buns",
     "price": 30,
@@ -156,7 +156,7 @@
   {
     "id": "item-8",
     "name": "Whole Wheat Ladi Paav (6 Pcs)",
-    "description": "Wholesome ladi pav crafted from pure whole wheat flour.",
+    "description": "",
     "category": "Breads & Daily Bakes",
     "subCategory": "Daily Buns",
     "price": 40,
@@ -178,7 +178,7 @@
   {
     "id": "item-9",
     "name": "Garlic Bread",
-    "description": "Oven-fresh bread slathered with herb garlic butter.",
+    "description": "",
     "category": "Breads & Daily Bakes",
     "subCategory": "Flavored Breads",
     "price": 40,
@@ -200,7 +200,7 @@
   {
     "id": "item-10",
     "name": "Bread Rolls (2 Pcs)",
-    "description": "Classic soft dinner bread rolls, pairs perfectly with soups and gravies.",
+    "description": "",
     "category": "Breads & Daily Bakes",
     "subCategory": "Daily Buns",
     "price": 25,
@@ -222,7 +222,7 @@
   {
     "id": "item-11",
     "name": "Bread Buns (2 Pcs)",
-    "description": "Light golden bakery burger buns, ideal for homemade burgers and sliders.",
+    "description": "",
     "category": "Breads & Daily Bakes",
     "subCategory": "Daily Buns",
     "price": 25,
@@ -244,7 +244,7 @@
   {
     "id": "item-12",
     "name": "Pita Bread (2 Pcs)",
-    "description": "Authentic pocket pita bread, perfect for falafel, hummus, and wraps.",
+    "description": "",
     "category": "Breads & Daily Bakes",
     "subCategory": "Daily Buns",
     "price": 30,
@@ -266,7 +266,7 @@
   {
     "id": "item-13",
     "name": "Butter Sweet Bun (2 Pcs)",
-    "description": "Golden sweet glazed butter buns, a timeless tea-time delight.",
+    "description": "",
     "category": "Breads & Daily Bakes",
     "subCategory": "Daily Buns",
     "price": 50,
@@ -288,7 +288,7 @@
   {
     "id": "item-14",
     "name": "Dinner Roll",
-    "description": "Fluffy warm dinner roll baked with pure table butter.",
+    "description": "",
     "category": "Breads & Daily Bakes",
     "subCategory": "Daily Buns",
     "price": 30,
@@ -310,7 +310,7 @@
   {
     "id": "item-15",
     "name": "Korean Chilly Buns",
-    "description": "Soft brioche bun stuffed with sweet cream cheese, drenched in spicy garlic chili herb butter.",
+    "description": "",
     "category": "Puffs, Rolls & Savories",
     "subCategory": "Buns & Breads",
     "price": 100,
@@ -332,7 +332,7 @@
   {
     "id": "item-16",
     "name": "Veg Delight Puff",
-    "description": "Flaky puff pastry stuffed with lightly seasoned potato and garden vegetables.",
+    "description": "",
     "category": "Puffs, Rolls & Savories",
     "subCategory": "Puffs & Patties",
     "price": 30,
@@ -354,7 +354,7 @@
   {
     "id": "item-17",
     "name": "Veg Spicy Delight Puff",
-    "description": "Golden crisp puff loaded with fiery green chili vegetable masala.",
+    "description": "",
     "category": "Puffs, Rolls & Savories",
     "subCategory": "Puffs & Patties",
     "price": 30,
@@ -376,7 +376,7 @@
   {
     "id": "item-18",
     "name": "Veg Puff (Classic)",
-    "description": "Our signature bakery puff, layers of flaky butter crust filled with spiced potatoes and peas.",
+    "description": "",
     "category": "Puffs, Rolls & Savories",
     "subCategory": "Puffs & Patties",
     "price": 50,
@@ -398,7 +398,7 @@
   {
     "id": "item-19",
     "name": "Veg Spicy Puff",
-    "description": "Crunchy flaky pastry bursting with spicy tempered potato filling.",
+    "description": "",
     "category": "Puffs, Rolls & Savories",
     "subCategory": "Puffs & Patties",
     "price": 50,
@@ -420,7 +420,7 @@
   {
     "id": "item-20",
     "name": "Veg Spicy Korean Puff",
-    "description": "Fusion puff with Korean chili paste glaze, melted cheese, and vegetables.",
+    "description": "",
     "category": "Puffs, Rolls & Savories",
     "subCategory": "Puffs & Patties",
     "price": 60,
@@ -442,7 +442,7 @@
   {
     "id": "item-21",
     "name": "Chicken Spicy Korean Puff",
-    "description": "Tender pulled chicken tossed in Korean gochujang sauce inside flaky golden crust.",
+    "description": "",
     "category": "Puffs, Rolls & Savories",
     "subCategory": "Puffs & Patties",
     "price": 60,
@@ -464,7 +464,7 @@
   {
     "id": "item-22",
     "name": "Chicken Puff",
-    "description": "Buttery flaky puff loaded with juicy minced chicken cooked in aromatic mild spices.",
+    "description": "",
     "category": "Puffs, Rolls & Savories",
     "subCategory": "Puffs & Patties",
     "price": 60,
@@ -487,7 +487,7 @@
   {
     "id": "item-23",
     "name": "Spicy Chicken Puff",
-    "description": "Fiery shredded chicken spiced with black pepper and green chilies inside crispy puff.",
+    "description": "",
     "category": "Puffs, Rolls & Savories",
     "subCategory": "Puffs & Patties",
     "price": 60,
@@ -509,7 +509,7 @@
   {
     "id": "item-24",
     "name": "Chicken Mushroom Puff",
-    "description": "Rich savory blend of tender chicken and button mushrooms in white herb pepper reduction.",
+    "description": "",
     "category": "Puffs, Rolls & Savories",
     "subCategory": "Puffs & Patties",
     "price": 60,
@@ -531,7 +531,7 @@
   {
     "id": "item-25",
     "name": "Veg Flaky Tuscan Croissant",
-    "description": "Butter croissant stuffed with sun-dried tomatoes, basil pesto, olives and melted mozzarella.",
+    "description": "",
     "category": "Puffs, Rolls & Savories",
     "subCategory": "Croissants",
     "price": 170,
@@ -553,7 +553,7 @@
   {
     "id": "item-26",
     "name": "Veg Flaky Spinach Croissant",
-    "description": "Oven-baked flaky croissant with creamy saut\u00e9ed garlic spinach and melted parmesan.",
+    "description": "",
     "category": "Puffs, Rolls & Savories",
     "subCategory": "Croissants",
     "price": 170,
@@ -575,7 +575,7 @@
   {
     "id": "item-27",
     "name": "Chicken Flaky Tuscan Croissant",
-    "description": "Smoked chicken cubes, Tuscan herbs, and melted provolone in flaky all-butter croissant.",
+    "description": "",
     "category": "Puffs, Rolls & Savories",
     "subCategory": "Croissants",
     "price": 170,
@@ -597,7 +597,7 @@
   {
     "id": "item-28",
     "name": "Chicken Flaky Spinach Croissant",
-    "description": "Juicy chicken breast tossed with creamy garlic spinach folded into warm layered croissant.",
+    "description": "",
     "category": "Puffs, Rolls & Savories",
     "subCategory": "Croissants",
     "price": 170,
@@ -619,7 +619,7 @@
   {
     "id": "item-29",
     "name": "Butter Croissant",
-    "description": "Classic French crescent roll with hundred delicate buttery layers and crisp crust.",
+    "description": "",
     "category": "Puffs, Rolls & Savories",
     "subCategory": "Croissants",
     "price": 100,
@@ -641,7 +641,7 @@
   {
     "id": "item-30",
     "name": "Cheese Croissant",
-    "description": "Flaky butter croissant filled and topped with sharp cheddar and mozzarella.",
+    "description": "",
     "category": "Puffs, Rolls & Savories",
     "subCategory": "Croissants",
     "price": 150,
@@ -663,7 +663,7 @@
   {
     "id": "item-31",
     "name": "Chocolate Croissant (Pain au Chocolat)",
-    "description": "Crisp laminated pastry layered around premium dark chocolate batons.",
+    "description": "",
     "category": "Puffs, Rolls & Savories",
     "subCategory": "Croissants",
     "price": 150,
@@ -685,7 +685,7 @@
   {
     "id": "item-32",
     "name": "Almond Chocolate Croissant",
-    "description": "Double-baked croissant filled with rich chocolate and frangipane, topped with toasted sliced almonds.",
+    "description": "",
     "category": "Puffs, Rolls & Savories",
     "subCategory": "Croissants",
     "price": 170,
@@ -707,7 +707,7 @@
   {
     "id": "item-33",
     "name": "Nutella Croissant",
-    "description": "Decadent croissant generously injected with creamy hazelnut Nutella.",
+    "description": "",
     "category": "Puffs, Rolls & Savories",
     "subCategory": "Croissants",
     "price": 180,
@@ -729,7 +729,7 @@
   {
     "id": "item-34",
     "name": "Coffee Croissant",
-    "description": "Flaky pastry infused with aromatic espresso buttercream and coffee glaze.",
+    "description": "",
     "category": "Puffs, Rolls & Savories",
     "subCategory": "Croissants",
     "price": 170,
@@ -751,7 +751,7 @@
   {
     "id": "item-35",
     "name": "Veg Mexican Toast",
-    "description": "Thick-cut artisanal toast layered with Mexican refried corn, peppers, salsa, and cheese.",
+    "description": "",
     "category": "Puffs, Rolls & Savories",
     "subCategory": "Toasts & Calzones",
     "price": 80,
@@ -773,7 +773,7 @@
   {
     "id": "item-36",
     "name": "Chicken Mexican Toast",
-    "description": "Spiced chipotle chicken, jalape\u00f1os, and melted cheese on crusty bakery bread.",
+    "description": "",
     "category": "Puffs, Rolls & Savories",
     "subCategory": "Toasts & Calzones",
     "price": 80,
@@ -795,7 +795,7 @@
   {
     "id": "item-37",
     "name": "Veg Calzone",
-    "description": "Folded oven-baked pizza turnover stuffed with peppers, mushrooms, tomato sauce, and mozzarella.",
+    "description": "",
     "category": "Puffs, Rolls & Savories",
     "subCategory": "Toasts & Calzones",
     "price": 90,
@@ -817,7 +817,7 @@
   {
     "id": "item-38",
     "name": "Chicken Calzone",
-    "description": "Italian stuffed calzone loaded with BBQ roasted chicken, herbs, and stringy mozzarella.",
+    "description": "",
     "category": "Puffs, Rolls & Savories",
     "subCategory": "Toasts & Calzones",
     "price": 90,
@@ -839,7 +839,7 @@
   {
     "id": "item-39",
     "name": "Veg Cheezy Roll",
-    "description": "Soft milk bread rolled around spiced diced veggies and a molten cheese center.",
+    "description": "",
     "category": "Puffs, Rolls & Savories",
     "subCategory": "Savory Rolls",
     "price": 80,
@@ -861,7 +861,7 @@
   {
     "id": "item-40",
     "name": "Chicken Cheezy Roll",
-    "description": "Tender chicken tikka chunks wrapped in fresh roll dough with creamy melting cheese.",
+    "description": "",
     "category": "Puffs, Rolls & Savories",
     "subCategory": "Savory Rolls",
     "price": 80,
@@ -883,7 +883,7 @@
   {
     "id": "item-41",
     "name": "Veg Spicy Baked Roll",
-    "description": "Oven-baked roll packed with spicy schezwan vegetables and peri-peri seasoning.",
+    "description": "",
     "category": "Puffs, Rolls & Savories",
     "subCategory": "Savory Rolls",
     "price": 80,
@@ -905,7 +905,7 @@
   {
     "id": "item-42",
     "name": "Chicken Spicy Baked Roll",
-    "description": "Juicy spiced chicken roll baked to golden perfection with zesty chili glaze.",
+    "description": "",
     "category": "Puffs, Rolls & Savories",
     "subCategory": "Savory Rolls",
     "price": 80,
@@ -927,7 +927,7 @@
   {
     "id": "item-43",
     "name": "Veg Supreme Bun",
-    "description": "Stuffed baked bun overflowing with paneer, sweet corn, and melted cheese.",
+    "description": "",
     "category": "Puffs, Rolls & Savories",
     "subCategory": "Buns & Breads",
     "price": 80,
@@ -949,7 +949,7 @@
   {
     "id": "item-44",
     "name": "Special Khari",
-    "description": "The pride of Nashik: ultra-crisp, feather-light puff biscuits baked with pure ghee.",
+    "description": "",
     "category": "Khari, Cookies & High Tea",
     "subCategory": "Khari & Toast",
     "price": 100,
@@ -971,7 +971,7 @@
   {
     "id": "item-45",
     "name": "Jeera Khari",
-    "description": "Crispy flaky khari tempered with aromatic roasted cumin seeds.",
+    "description": "",
     "category": "Khari, Cookies & High Tea",
     "subCategory": "Khari & Toast",
     "price": 100,
@@ -993,7 +993,7 @@
   {
     "id": "item-46",
     "name": "Whole Wheat Khari",
-    "description": "Healthy guilt-free khari made from whole grain flour, light and crunchy.",
+    "description": "",
     "category": "Khari, Cookies & High Tea",
     "subCategory": "Khari & Toast",
     "price": 100,
@@ -1015,7 +1015,7 @@
   {
     "id": "item-47",
     "name": "Cheese Spirals",
-    "description": "Twisted savory puff pastry spirals infused with real parmesan and cheddar.",
+    "description": "",
     "category": "Khari, Cookies & High Tea",
     "subCategory": "Khari & Toast",
     "price": 150,
@@ -1037,7 +1037,7 @@
   {
     "id": "item-48",
     "name": "Rusk (Sweet Toast)",
-    "description": "Crunchy twice-baked sweet toast, the quintessential chai companion.",
+    "description": "",
     "category": "Khari, Cookies & High Tea",
     "subCategory": "Khari & Toast",
     "price": 100,
@@ -1059,7 +1059,7 @@
   {
     "id": "item-49",
     "name": "Whole Wheat Toast",
-    "description": "Twice-baked whole wheat rusk with gentle sweetness and deep roasted grain aroma.",
+    "description": "",
     "category": "Khari, Cookies & High Tea",
     "subCategory": "Khari & Toast",
     "price": 100,
@@ -1081,7 +1081,7 @@
   {
     "id": "item-50",
     "name": "Whole Wheat Cookies (Eggless)",
-    "description": "Nutritious crisp biscuits made with 100% whole wheat and brown sugar.",
+    "description": "",
     "category": "Khari, Cookies & High Tea",
     "subCategory": "Healthy Cookies",
     "price": 150,
@@ -1103,7 +1103,7 @@
   {
     "id": "item-51",
     "name": "Multigrain Cookies (Eggless)",
-    "description": "Wholesome crunch loaded with oats, flaxseed, pumpkin seeds and barley.",
+    "description": "",
     "category": "Khari, Cookies & High Tea",
     "subCategory": "Healthy Cookies",
     "price": 150,
@@ -1125,7 +1125,7 @@
   {
     "id": "item-52",
     "name": "Millet Cookies (Eggless)",
-    "description": "Ancient grain cookies made with pearl millet, sweetened naturally.",
+    "description": "",
     "category": "Khari, Cookies & High Tea",
     "subCategory": "Healthy Cookies",
     "price": 230,
@@ -1147,7 +1147,7 @@
   {
     "id": "item-53",
     "name": "Ragi Joy Cookies (Eggless)",
-    "description": "Finger millet (nachni) cookies rich in calcium, baked with pure butter.",
+    "description": "",
     "category": "Khari, Cookies & High Tea",
     "subCategory": "Healthy Cookies",
     "price": 230,
@@ -1169,7 +1169,7 @@
   {
     "id": "item-54",
     "name": "Bread Sticks (Eggless)",
-    "description": "Crispy Italian style grissini breadsticks, ideal for dips and soups.",
+    "description": "",
     "category": "Khari, Cookies & High Tea",
     "subCategory": "Eggless Cookies",
     "price": 70,
@@ -1191,7 +1191,7 @@
   {
     "id": "item-55",
     "name": "Jeera Butter (Eggless)",
-    "description": "Traditional melt-in-mouth cumin butter biscuits with pleasant savory notes.",
+    "description": "",
     "category": "Khari, Cookies & High Tea",
     "subCategory": "Eggless Cookies",
     "price": 80,
@@ -1213,7 +1213,7 @@
   {
     "id": "item-56",
     "name": "Ginger Cookies (Eggless)",
-    "description": "Spiced aromatic ginger snap cookies with warming notes of cinnamon and clove.",
+    "description": "",
     "category": "Khari, Cookies & High Tea",
     "subCategory": "Eggless Cookies",
     "price": 130,
@@ -1235,7 +1235,7 @@
   {
     "id": "item-57",
     "name": "Mix Fruit Cookies (Eggless)",
-    "description": "Sweet crumbly bakery cookies speckled with colorful tutti frutti gems.",
+    "description": "",
     "category": "Khari, Cookies & High Tea",
     "subCategory": "Eggless Cookies",
     "price": 130,
@@ -1257,7 +1257,7 @@
   {
     "id": "item-58",
     "name": "Coconut Macaroon (Eggless)",
-    "description": "Chewy golden toasted coconut cookies with luscious tropical aroma.",
+    "description": "",
     "category": "Khari, Cookies & High Tea",
     "subCategory": "Eggless Cookies",
     "price": 130,
@@ -1279,7 +1279,7 @@
   {
     "id": "item-59",
     "name": "Almond Cookies (Eggless)",
-    "description": "Crunchy butter cookies packed with slivered Californian almonds.",
+    "description": "",
     "category": "Khari, Cookies & High Tea",
     "subCategory": "Eggless Cookies",
     "price": 130,
@@ -1301,7 +1301,7 @@
   {
     "id": "item-60",
     "name": "Cashew Cookies (Eggless)",
-    "description": "Rich buttery cookies loaded with golden roasted cashew nuts.",
+    "description": "",
     "category": "Khari, Cookies & High Tea",
     "subCategory": "Eggless Cookies",
     "price": 130,
@@ -1323,7 +1323,7 @@
   {
     "id": "item-61",
     "name": "Osmania Cookies (Eggless)",
-    "description": "Famous royal sweet-and-salty melt-in-mouth biscuits.",
+    "description": "",
     "category": "Khari, Cookies & High Tea",
     "subCategory": "Eggless Cookies",
     "price": 180,
@@ -1345,7 +1345,7 @@
   {
     "id": "item-62",
     "name": "Kashmiri Roth (Eggless)",
-    "description": "Traditional aromatic dry fruit baked roth with cardamom and poppy seeds.",
+    "description": "",
     "category": "Khari, Cookies & High Tea",
     "subCategory": "Eggless Cookies",
     "price": 200,
@@ -1367,7 +1367,7 @@
   {
     "id": "item-63",
     "name": "Butter Cookies (Eggless)",
-    "description": "Decadent rich Danish-style butter cookies made with 100% dairy butter.",
+    "description": "",
     "category": "Khari, Cookies & High Tea",
     "subCategory": "Eggless Cookies",
     "price": 190,
@@ -1389,7 +1389,7 @@
   {
     "id": "item-64",
     "name": "Chocolate Chip Cookies (Eggless)",
-    "description": "Golden crunchy cookies studded with rich dark chocolate chunks.",
+    "description": "",
     "category": "Khari, Cookies & High Tea",
     "subCategory": "Eggless Cookies",
     "price": 200,
@@ -1411,7 +1411,7 @@
   {
     "id": "item-65",
     "name": "Brownie (Per Pc)",
-    "description": "Fudgy dark chocolate brownie with crackly top, baked fresh daily.",
+    "description": "",
     "category": "Tea-Time Cakes & Brownies",
     "subCategory": "Tea Time Cakes (With Egg)",
     "price": 100,
@@ -1433,7 +1433,7 @@
   {
     "id": "item-66",
     "name": "Banana Walnut Cake",
-    "description": "Moist loaf cake prepared with ripe bananas and toasted crunchy walnuts.",
+    "description": "",
     "category": "Tea-Time Cakes & Brownies",
     "subCategory": "Tea Time Cakes (With Egg)",
     "price": 200,
@@ -1455,7 +1455,7 @@
   {
     "id": "item-67",
     "name": "Mawa Cake (Signature)",
-    "description": "Parsi bakery classic made with rich evaporated milk solids, cardamom, and nutmeg.",
+    "description": "",
     "category": "Tea-Time Cakes & Brownies",
     "subCategory": "Tea Time Cakes (With Egg)",
     "price": 290,
@@ -1477,7 +1477,7 @@
   {
     "id": "item-68",
     "name": "Mix Fruit Cake",
-    "description": "Classic British style tea loaf studded with candied citrus and soaked dried fruits.",
+    "description": "",
     "category": "Tea-Time Cakes & Brownies",
     "subCategory": "Tea Time Cakes (With Egg)",
     "price": 310,
@@ -1499,7 +1499,7 @@
   {
     "id": "item-69",
     "name": "Almond Cake",
-    "description": "Delicate sponge topped with honeyed sliced almonds.",
+    "description": "",
     "category": "Tea-Time Cakes & Brownies",
     "subCategory": "Tea Time Cakes (With Egg)",
     "price": 330,
@@ -1521,7 +1521,7 @@
   {
     "id": "item-70",
     "name": "Double Chocolate Cake (Loaf)",
-    "description": "Decadent cocoa sponge studded with dark and milk chocolate chips.",
+    "description": "",
     "category": "Tea-Time Cakes & Brownies",
     "subCategory": "Tea Time Cakes (With Egg)",
     "price": 360,
@@ -1543,7 +1543,7 @@
   {
     "id": "item-71",
     "name": "Chocolate Walnut Cake (Loaf)",
-    "description": "Rich chocolate tea cake loaded with roasted Kashmiri walnuts.",
+    "description": "",
     "category": "Tea-Time Cakes & Brownies",
     "subCategory": "Tea Time Cakes (With Egg)",
     "price": 380,
@@ -1565,7 +1565,7 @@
   {
     "id": "item-72",
     "name": "Brownie Round",
-    "description": "Large 6-inch sharing round of our signature gooey Belgian dark chocolate brownie.",
+    "description": "",
     "category": "Tea-Time Cakes & Brownies",
     "subCategory": "Tea Time Cakes (With Egg)",
     "price": 600,
@@ -1587,7 +1587,7 @@
   {
     "id": "item-73",
     "name": "Carrot Cake (300g)",
-    "description": "Spiced eggless carrot sponge with cinnamon, raisins, and toasted nuts.",
+    "description": "",
     "category": "Tea-Time Cakes & Brownies",
     "subCategory": "Tea Time Cakes (Eggless)",
     "price": 130,
@@ -1609,7 +1609,7 @@
   {
     "id": "item-74",
     "name": "Mawa Cake (Eggless)",
-    "description": "100% vegetarian mawa cake infused with saffron, cardamom and pure milk fat.",
+    "description": "",
     "category": "Tea-Time Cakes & Brownies",
     "subCategory": "Tea Time Cakes (Eggless)",
     "price": 240,
@@ -1631,7 +1631,7 @@
   {
     "id": "item-75",
     "name": "Chocolate Toffee Caramel Tea Cake",
-    "description": "Eggless chocolate loaf drizzled with handmade English toffee caramel.",
+    "description": "",
     "category": "Tea-Time Cakes & Brownies",
     "subCategory": "Tea Time Cakes (Eggless)",
     "price": 370,
@@ -1653,7 +1653,7 @@
   {
     "id": "item-76",
     "name": "Chocolate Overloaded Cake",
-    "description": "Ultimate chocolate lover sponge with melted ganache and chocolate chunks.",
+    "description": "",
     "category": "Tea-Time Cakes & Brownies",
     "subCategory": "Tea Time Cakes (Eggless)",
     "price": 370,
@@ -1675,7 +1675,7 @@
   {
     "id": "item-77",
     "name": "Dark Forest Cake (Tea Cake)",
-    "description": "Dark cocoa cake laced with sour cherries and chocolate curls.",
+    "description": "",
     "category": "Tea-Time Cakes & Brownies",
     "subCategory": "Tea Time Cakes (Eggless)",
     "price": 370,
@@ -1697,7 +1697,7 @@
   {
     "id": "item-78",
     "name": "Chocolate Walnut Muffin",
-    "description": "Moist bakery muffin bursting with chocolate and crunchy walnut pieces.",
+    "description": "",
     "category": "Tea-Time Cakes & Brownies",
     "subCategory": "Muffins",
     "price": 130,
@@ -1719,7 +1719,7 @@
   {
     "id": "item-79",
     "name": "Blueberry Muffin",
-    "description": "Tender golden muffin packed with wild European blueberries.",
+    "description": "",
     "category": "Tea-Time Cakes & Brownies",
     "subCategory": "Muffins",
     "price": 130,
@@ -1741,7 +1741,7 @@
   {
     "id": "item-80",
     "name": "Chocolate Nutella Muffin",
-    "description": "Double chocolate muffin with a molten Nutella hazelnut core.",
+    "description": "",
     "category": "Tea-Time Cakes & Brownies",
     "subCategory": "Muffins",
     "price": 130,
@@ -1763,7 +1763,7 @@
   {
     "id": "item-81",
     "name": "Chicken Masala Patty",
-    "description": "Crispy fried golden crumb patty stuffed with spiced chicken mince.",
+    "description": "",
     "category": "Puffs, Rolls & Savories",
     "subCategory": "Fried Snacks",
     "price": 100,
@@ -1785,7 +1785,7 @@
   {
     "id": "item-82",
     "name": "Chicken Parsi Pattice",
-    "description": "Mashed potato cutlet stuffed with fragrant slow-cooked chicken mince.",
+    "description": "",
     "category": "Puffs, Rolls & Savories",
     "subCategory": "Fried Snacks",
     "price": 100,
@@ -1807,7 +1807,7 @@
   {
     "id": "item-83",
     "name": "Chicken Cheezy Roll (2 Pcs)",
-    "description": "Twin crispy fried spring rolls loaded with cheesy chicken filling.",
+    "description": "",
     "category": "Puffs, Rolls & Savories",
     "subCategory": "Fried Snacks",
     "price": 120,
@@ -1829,7 +1829,7 @@
   {
     "id": "item-84",
     "name": "Chocolate Delight Pastry (Small)",
-    "description": "Signature single-serve chocolate sponge layered with smooth chocolate cream.",
+    "description": "",
     "category": "Pastries & Desserts",
     "subCategory": "Pastries (Small)",
     "price": 70,
@@ -1851,7 +1851,7 @@
   {
     "id": "item-85",
     "name": "Chocolate Chip Delight Pastry (Small)",
-    "description": "Rich chocolate pastry studded with crunchy chocolate chips.",
+    "description": "",
     "category": "Pastries & Desserts",
     "subCategory": "Pastries (Small)",
     "price": 90,
@@ -1873,7 +1873,7 @@
   {
     "id": "item-86",
     "name": "Exotic Black Forest Gateau Pastry (Small)",
-    "description": "Classic German pastry with chocolate sponge, whipped cream, and cherries.",
+    "description": "",
     "category": "Pastries & Desserts",
     "subCategory": "Pastries (Small)",
     "price": 90,
@@ -1895,7 +1895,7 @@
   {
     "id": "item-87",
     "name": "Vanilla White Chocolate Pastry (Small)",
-    "description": "Delicate vanilla sponge layered with silky white chocolate ganache.",
+    "description": "",
     "category": "Pastries & Desserts",
     "subCategory": "Pastries (Small)",
     "price": 90,
@@ -1917,7 +1917,7 @@
   {
     "id": "item-88",
     "name": "Chocolate Truffle Pastry (Small)",
-    "description": "Dense dark chocolate sponge glazed with 54% dark Belgian truffle ganache.",
+    "description": "",
     "category": "Pastries & Desserts",
     "subCategory": "Pastries (Small)",
     "price": 100,
@@ -1939,7 +1939,7 @@
   {
     "id": "item-89",
     "name": "Chocolate Oreo Delight Pastry (Small)",
-    "description": "Layered with crushed Oreo cookies and rich cookies & cream mousse.",
+    "description": "",
     "category": "Pastries & Desserts",
     "subCategory": "Pastries (Small)",
     "price": 100,
@@ -1961,7 +1961,7 @@
   {
     "id": "item-90",
     "name": "Dutch Truffle Gateau Pastry (Small)",
-    "description": "Silky smooth Dutch processed dark chocolate gateau pastry.",
+    "description": "",
     "category": "Pastries & Desserts",
     "subCategory": "Pastries (Small)",
     "price": 100,
@@ -1983,7 +1983,7 @@
   {
     "id": "item-91",
     "name": "Irish Chocolate Pastry (Small)",
-    "description": "Chocolate sponge infused with non-alcoholic Irish cream coffee notes.",
+    "description": "",
     "category": "Pastries & Desserts",
     "subCategory": "Pastries (Small)",
     "price": 110,
@@ -2005,7 +2005,7 @@
   {
     "id": "item-92",
     "name": "Chocolate Toffee Caramel Pastry (Small)",
-    "description": "Chocolate pastry layered with buttery toffee sauce and chocolate mousse.",
+    "description": "",
     "category": "Pastries & Desserts",
     "subCategory": "Pastries (Small)",
     "price": 150,
@@ -2027,7 +2027,7 @@
   {
     "id": "item-93",
     "name": "Mud Mec Rocks Pastry (Small)",
-    "description": "Our most decadent mud cake pastry topped with crunchy Ferrero-style hazelnut rocks.",
+    "description": "",
     "category": "Pastries & Desserts",
     "subCategory": "Pastries (Small)",
     "price": 230,
@@ -2049,7 +2049,7 @@
   {
     "id": "item-94",
     "name": "Pineapple Delight Pastry (Small)",
-    "description": "Light sponge layered with fresh pineapple chunks and whipped cream.",
+    "description": "",
     "category": "Pastries & Desserts",
     "subCategory": "Fruit Pastries (Small)",
     "price": 90,
@@ -2071,7 +2071,7 @@
   {
     "id": "item-95",
     "name": "Mix Fruit Gateau Pastry (Small)",
-    "description": "Fluffy vanilla sponge dressed with seasonal fruit compote and glaze.",
+    "description": "",
     "category": "Pastries & Desserts",
     "subCategory": "Fruit Pastries (Small)",
     "price": 90,
@@ -2093,7 +2093,7 @@
   {
     "id": "item-96",
     "name": "Blueberry Gateau Pastry (Small)",
-    "description": "Sweet tangy European wild blueberry compote between vanilla cream layers.",
+    "description": "",
     "category": "Pastries & Desserts",
     "subCategory": "Fruit Pastries (Small)",
     "price": 120,
@@ -2115,7 +2115,7 @@
   {
     "id": "item-97",
     "name": "Honey Almond Gateau Pastry (Small)",
-    "description": "Fragrant honey-soaked sponge coated in toasted almond slivers.",
+    "description": "",
     "category": "Pastries & Desserts",
     "subCategory": "Exotic Pastries (Small)",
     "price": 100,
@@ -2137,7 +2137,7 @@
   {
     "id": "item-98",
     "name": "Nougat Gateau Pastry (Small)",
-    "description": "Crunchy caramelized nut praline nougat cream in soft sponge.",
+    "description": "",
     "category": "Pastries & Desserts",
     "subCategory": "Exotic Pastries (Small)",
     "price": 90,
@@ -2159,7 +2159,7 @@
   {
     "id": "item-99",
     "name": "Red Velvet Pastry (Small)",
-    "description": "Ruby red velvet sponge layered with silky cream cheese frosting.",
+    "description": "",
     "category": "Pastries & Desserts",
     "subCategory": "Exotic Pastries (Small)",
     "price": 95,
@@ -2181,7 +2181,7 @@
   {
     "id": "item-100",
     "name": "Chocolate Delight Pastry (Large)",
-    "description": "Generous portion of our bestselling chocolate delight pastry.",
+    "description": "",
     "category": "Pastries & Desserts",
     "subCategory": "Pastries (Large)",
     "price": 110,
@@ -2203,7 +2203,7 @@
   {
     "id": "item-101",
     "name": "Chocolate Chip Delight Pastry (Large)",
-    "description": "Large portion of choco-chip loaded layered pastry.",
+    "description": "",
     "category": "Pastries & Desserts",
     "subCategory": "Pastries (Large)",
     "price": 120,
@@ -2225,7 +2225,7 @@
   {
     "id": "item-102",
     "name": "Exotic Black Forest Gateau Pastry (Large)",
-    "description": "Large cut of fresh cream Black Forest gateau.",
+    "description": "",
     "category": "Pastries & Desserts",
     "subCategory": "Pastries (Large)",
     "price": 120,
@@ -2247,7 +2247,7 @@
   {
     "id": "item-103",
     "name": "Vanilla White Chocolate Pastry (Large)",
-    "description": "Large slice of delicate vanilla and white chocolate pastry.",
+    "description": "",
     "category": "Pastries & Desserts",
     "subCategory": "Pastries (Large)",
     "price": 120,
@@ -2269,7 +2269,7 @@
   {
     "id": "item-104",
     "name": "Dutch Truffle Gateau Pastry (Large)",
-    "description": "Large decadent Dutch truffle chocolate slice.",
+    "description": "",
     "category": "Pastries & Desserts",
     "subCategory": "Pastries (Large)",
     "price": 120,
@@ -2291,7 +2291,7 @@
   {
     "id": "item-105",
     "name": "Chocolate Truffle Pastry (Large)",
-    "description": "Large thick slice of dark chocolate truffle gateau.",
+    "description": "",
     "category": "Pastries & Desserts",
     "subCategory": "Pastries (Large)",
     "price": 150,
@@ -2313,7 +2313,7 @@
   {
     "id": "item-106",
     "name": "Pineapple Delight Pastry (Large)",
-    "description": "Large portion of fresh tropical pineapple gateau.",
+    "description": "",
     "category": "Pastries & Desserts",
     "subCategory": "Fruit Pastries (Large)",
     "price": 120,
@@ -2335,7 +2335,7 @@
   {
     "id": "item-107",
     "name": "Mix Fruit Gateau Pastry (Large)",
-    "description": "Large fruit gateau pastry loaded with fresh seasonal toppings.",
+    "description": "",
     "category": "Pastries & Desserts",
     "subCategory": "Fruit Pastries (Large)",
     "price": 120,
@@ -2357,7 +2357,7 @@
   {
     "id": "item-108",
     "name": "Blueberry Gateau Pastry (Large)",
-    "description": "Generous slice of blueberry compote gateau.",
+    "description": "",
     "category": "Pastries & Desserts",
     "subCategory": "Fruit Pastries (Large)",
     "price": 175,
@@ -2379,7 +2379,7 @@
   {
     "id": "item-109",
     "name": "Honey Almond Gateau Pastry (Large)",
-    "description": "Large honey almond pastry with roasted almonds.",
+    "description": "",
     "category": "Pastries & Desserts",
     "subCategory": "Exotic Pastries (Large)",
     "price": 130,
@@ -2401,7 +2401,7 @@
   {
     "id": "item-110",
     "name": "Nougat Gateau Pastry (Large)",
-    "description": "Large crunchy nougat praline pastry.",
+    "description": "",
     "category": "Pastries & Desserts",
     "subCategory": "Exotic Pastries (Large)",
     "price": 120,
@@ -2423,7 +2423,7 @@
   {
     "id": "item-111",
     "name": "Tiramisu Pastry (Large)",
-    "description": "Italian espresso-soaked sponge with luscious mascarpone sabayon cream.",
+    "description": "",
     "category": "Pastries & Desserts",
     "subCategory": "Exotic Pastries (Large)",
     "price": 190,
@@ -2445,7 +2445,7 @@
   {
     "id": "item-112",
     "name": "Coffee Mocca Pastry (Large)",
-    "description": "Deep roasted arabica coffee mousse layered with dark cocoa sponge.",
+    "description": "",
     "category": "Pastries & Desserts",
     "subCategory": "Exotic Pastries (Large)",
     "price": 190,
@@ -2467,7 +2467,7 @@
   {
     "id": "item-113",
     "name": "Exotic Red Velvet Pastry (Large)",
-    "description": "Large cut of red velvet sponge with cream cheese frosting.",
+    "description": "",
     "category": "Pastries & Desserts",
     "subCategory": "Exotic Pastries (Large)",
     "price": 170,
@@ -2489,7 +2489,7 @@
   {
     "id": "item-114",
     "name": "Chocolate Sin Cake Pastry",
-    "description": "Unapologetically rich 70% dark Belgian chocolate sin pastry.",
+    "description": "",
     "category": "Pastries & Desserts",
     "subCategory": "Sin Pastries",
     "price": 190,
@@ -2511,7 +2511,7 @@
   {
     "id": "item-115",
     "name": "Chocolate Sin Hazeltine Pastry",
-    "description": "Dark chocolate sin pastry loaded with roasted Turkish hazelnut paste.",
+    "description": "",
     "category": "Pastries & Desserts",
     "subCategory": "Sin Pastries",
     "price": 220,
@@ -2533,7 +2533,7 @@
   {
     "id": "item-116",
     "name": "Chocolate Sin Toffee Caramel Pastry",
-    "description": "Sinful chocolate pastry marbled with slow-simmered buttery toffee.",
+    "description": "",
     "category": "Pastries & Desserts",
     "subCategory": "Sin Pastries",
     "price": 220,
@@ -2555,7 +2555,7 @@
   {
     "id": "item-117",
     "name": "Nutella Sin Pastry",
-    "description": "Ultimate Nutella overload pastry with hazelnut praline crunch.",
+    "description": "",
     "category": "Pastries & Desserts",
     "subCategory": "Sin Pastries",
     "price": 230,
@@ -2577,7 +2577,7 @@
   {
     "id": "item-118",
     "name": "Biscoff Cheese Pastry",
-    "description": "Creamy New York style cheesecake pastry layered with Lotus Biscoff butter and crumb.",
+    "description": "",
     "category": "Pastries & Desserts",
     "subCategory": "Cheese Pastries",
     "price": 220,
@@ -2599,7 +2599,7 @@
   {
     "id": "item-119",
     "name": "Blueberry Cheese Pastry",
-    "description": "Smooth cheesecake slice crowned with tart wild blueberry reduction.",
+    "description": "",
     "category": "Pastries & Desserts",
     "subCategory": "Cheese Pastries",
     "price": 220,
@@ -2621,7 +2621,7 @@
   {
     "id": "item-120",
     "name": "Hazeltine Cheese Pastry",
-    "description": "Silky cheesecake slice infused with roasted hazelnut butter.",
+    "description": "",
     "category": "Pastries & Desserts",
     "subCategory": "Cheese Pastries",
     "price": 220,
@@ -2643,7 +2643,7 @@
   {
     "id": "item-121",
     "name": "Chocolate Bomb",
-    "description": "Fudgy chocolate truffle ball rolled in chocolate sprinkles.",
+    "description": "",
     "category": "Pastries & Desserts",
     "subCategory": "Desserts",
     "price": 50,
@@ -2665,7 +2665,7 @@
   {
     "id": "item-122",
     "name": "Choco Bees",
-    "description": "Crunchy chocolate honeycomb treats enveloped in pure chocolate.",
+    "description": "",
     "category": "Pastries & Desserts",
     "subCategory": "Desserts",
     "price": 90,
@@ -2687,7 +2687,7 @@
   {
     "id": "item-123",
     "name": "Chocolate Mousse (Petite)",
-    "description": "Airy, silky chocolate mousse cup topped with dark chocolate curls.",
+    "description": "",
     "category": "Pastries & Desserts",
     "subCategory": "Desserts",
     "price": 90,
@@ -2709,7 +2709,7 @@
   {
     "id": "item-124",
     "name": "Cinnamon Doughnut",
-    "description": "Soft yeast-raised doughnut dusted in fragrant cinnamon sugar.",
+    "description": "",
     "category": "Pastries & Desserts",
     "subCategory": "Doughnuts",
     "price": 80,
@@ -2731,7 +2731,7 @@
   {
     "id": "item-125",
     "name": "Double Chocolate Doughnut",
-    "description": "Chocolate doughnut dipped in dark chocolate glaze and drizzled with milk chocolate.",
+    "description": "",
     "category": "Pastries & Desserts",
     "subCategory": "Doughnuts",
     "price": 140,
@@ -2753,7 +2753,7 @@
   {
     "id": "item-126",
     "name": "Dolce Doughnut",
-    "description": "Glazed artisan doughnut with Italian dulce de leche caramel.",
+    "description": "",
     "category": "Pastries & Desserts",
     "subCategory": "Doughnuts",
     "price": 140,
@@ -2775,7 +2775,7 @@
   {
     "id": "item-127",
     "name": "KitKat Doughnut",
-    "description": "Chocolate doughnut topped with crisp KitKat wafer bars.",
+    "description": "",
     "category": "Pastries & Desserts",
     "subCategory": "Doughnuts",
     "price": 140,
@@ -2797,7 +2797,7 @@
   {
     "id": "item-128",
     "name": "Colored Chocolate Doughnut",
-    "description": "Fun bakery doughnut dipped in vibrant chocolate with rainbow sprinkles.",
+    "description": "",
     "category": "Pastries & Desserts",
     "subCategory": "Doughnuts",
     "price": 140,
@@ -2819,7 +2819,7 @@
   {
     "id": "item-129",
     "name": "Silk Bomb Doughnut",
-    "description": "Bursting with creamy molten chocolate silk center.",
+    "description": "",
     "category": "Pastries & Desserts",
     "subCategory": "Doughnuts",
     "price": 140,
@@ -2841,7 +2841,7 @@
   {
     "id": "item-130",
     "name": "Iced Sprinkle Doughnut",
-    "description": "Classic bakery glazed ring doughnut with sugar icing and confetti sprinkles.",
+    "description": "",
     "category": "Pastries & Desserts",
     "subCategory": "Doughnuts",
     "price": 140,
@@ -2863,7 +2863,7 @@
   {
     "id": "item-131",
     "name": "Nutella Doughnut",
-    "description": "Filled and smothered with original Ferrero Nutella hazelnut spread.",
+    "description": "",
     "category": "Pastries & Desserts",
     "subCategory": "Doughnuts",
     "price": 150,
@@ -2885,7 +2885,7 @@
   {
     "id": "item-132",
     "name": "Strawberry Mousse Cup",
-    "description": "Light and refreshing mousse made with fresh strawberry puree.",
+    "description": "",
     "category": "Pastries & Desserts",
     "subCategory": "Desserts",
     "price": 150,
@@ -2907,7 +2907,7 @@
   {
     "id": "item-133",
     "name": "Blackberry Mousse Cup",
-    "description": "Gourmet dessert glass of tart blackberry coulis and whipped cream mousse.",
+    "description": "",
     "category": "Pastries & Desserts",
     "subCategory": "Desserts",
     "price": 180,
@@ -2929,7 +2929,7 @@
   {
     "id": "item-134",
     "name": "Chocolate Mousse (Premium Cup)",
-    "description": "Grand dessert glass of Belgian 54% dark chocolate mousse.",
+    "description": "",
     "category": "Pastries & Desserts",
     "subCategory": "Desserts",
     "price": 160,
@@ -2951,7 +2951,7 @@
   {
     "id": "item-135",
     "name": "Chocolate Delight Cake (1/2 KG)",
-    "description": "Classic bakery chocolate celebration cake with smooth chocolate ganache.",
+    "description": "",
     "category": "Celebration Cakes",
     "subCategory": "Chocolate Cakes",
     "price": 450,
@@ -2973,7 +2973,7 @@
   {
     "id": "item-136",
     "name": "Chocolate Delight Cake (1 KG)",
-    "description": "Full 1kg size of our signature celebration chocolate delight cake.",
+    "description": "",
     "category": "Celebration Cakes",
     "subCategory": "Chocolate Cakes",
     "price": 900,
@@ -2995,7 +2995,7 @@
   {
     "id": "item-137",
     "name": "Chocolate Chip Delight Cake (1/2 KG)",
-    "description": "Chocolate cake studded with rich dark chocolate chips.",
+    "description": "",
     "category": "Celebration Cakes",
     "subCategory": "Chocolate Cakes",
     "price": 550,
@@ -3017,7 +3017,7 @@
   {
     "id": "item-138",
     "name": "Chocolate Chip Delight Cake (1 KG)",
-    "description": "1kg chocolate cake loaded with crunchy chocolate chips.",
+    "description": "",
     "category": "Celebration Cakes",
     "subCategory": "Chocolate Cakes",
     "price": 1100,
@@ -3039,7 +3039,7 @@
   {
     "id": "item-139",
     "name": "Exotic Black Forest Gateau (1/2 KG)",
-    "description": "Authentic German Black Forest cake with fresh cream, chocolate flakes, and cherries.",
+    "description": "",
     "category": "Celebration Cakes",
     "subCategory": "Chocolate Cakes",
     "price": 550,
@@ -3061,7 +3061,7 @@
   {
     "id": "item-140",
     "name": "Exotic Black Forest Gateau (1 KG)",
-    "description": "1kg German Black Forest gateau with cherries and chocolate curls.",
+    "description": "",
     "category": "Celebration Cakes",
     "subCategory": "Chocolate Cakes",
     "price": 1100,
@@ -3083,7 +3083,7 @@
   {
     "id": "item-141",
     "name": "Dutch Truffle Gateau (1/2 KG)",
-    "description": "Rich and decadent Dutch cocoa truffle cake.",
+    "description": "",
     "category": "Celebration Cakes",
     "subCategory": "Chocolate Cakes",
     "price": 600,
@@ -3105,7 +3105,7 @@
   {
     "id": "item-142",
     "name": "Dutch Truffle Gateau (1 KG)",
-    "description": "1kg of our finest Belgian Dutch truffle chocolate gateau.",
+    "description": "",
     "category": "Celebration Cakes",
     "subCategory": "Chocolate Cakes",
     "price": 1200,
@@ -3127,7 +3127,7 @@
   {
     "id": "item-143",
     "name": "Chocolate Truffle Cake (1/2 KG)",
-    "description": "Pure dark chocolate truffle cake with mirror glaze.",
+    "description": "",
     "category": "Celebration Cakes",
     "subCategory": "Chocolate Cakes",
     "price": 600,
@@ -3149,7 +3149,7 @@
   {
     "id": "item-144",
     "name": "Chocolate Truffle Cake (1 KG)",
-    "description": "1kg mirror glaze dark chocolate truffle cake.",
+    "description": "",
     "category": "Celebration Cakes",
     "subCategory": "Chocolate Cakes",
     "price": 1200,
@@ -3171,7 +3171,7 @@
   {
     "id": "item-145",
     "name": "Vanilla White Chocolate Cake (1/2 KG)",
-    "description": "Sweet vanilla sponge enveloped in rich white chocolate ganache.",
+    "description": "",
     "category": "Celebration Cakes",
     "subCategory": "Chocolate Cakes",
     "price": 600,
@@ -3193,7 +3193,7 @@
   {
     "id": "item-146",
     "name": "Vanilla White Chocolate Cake (1 KG)",
-    "description": "1kg vanilla and white chocolate celebration cake.",
+    "description": "",
     "category": "Celebration Cakes",
     "subCategory": "Chocolate Cakes",
     "price": 1200,
@@ -3215,7 +3215,7 @@
   {
     "id": "item-147",
     "name": "Chocolate Oreo Delight Cake (1/2 KG)",
-    "description": "Oreo cookies and chocolate cream celebration cake.",
+    "description": "",
     "category": "Celebration Cakes",
     "subCategory": "Chocolate Cakes",
     "price": 650,
@@ -3237,7 +3237,7 @@
   {
     "id": "item-148",
     "name": "Chocolate Cookie Delight Cake (1 KG)",
-    "description": "1kg cookies and cream chocolate celebration cake.",
+    "description": "",
     "category": "Celebration Cakes",
     "subCategory": "Chocolate Cakes",
     "price": 1300,
@@ -3259,7 +3259,7 @@
   {
     "id": "item-149",
     "name": "Black Forest Truffle Cake (1/2 KG)",
-    "description": "Black Forest sponge upgraded with rich chocolate truffle cream.",
+    "description": "",
     "category": "Celebration Cakes",
     "subCategory": "Chocolate Cakes",
     "price": 650,
@@ -3281,7 +3281,7 @@
   {
     "id": "item-150",
     "name": "Black Forest Truffle Cake (1 KG)",
-    "description": "1kg Black Forest truffle gateau.",
+    "description": "",
     "category": "Celebration Cakes",
     "subCategory": "Chocolate Cakes",
     "price": 1300,
@@ -3303,7 +3303,7 @@
   {
     "id": "item-151",
     "name": "Chocolate Truffle Nougat Cake (1/2 KG)",
-    "description": "Chocolate truffle cake filled with crunchy nut nougat praline.",
+    "description": "",
     "category": "Celebration Cakes",
     "subCategory": "Chocolate Cakes",
     "price": 650,
@@ -3325,7 +3325,7 @@
   {
     "id": "item-152",
     "name": "Chocolate Truffle Nougat Cake (1 KG)",
-    "description": "1kg chocolate truffle nougat praline cake.",
+    "description": "",
     "category": "Celebration Cakes",
     "subCategory": "Chocolate Cakes",
     "price": 1300,
@@ -3347,7 +3347,7 @@
   {
     "id": "item-153",
     "name": "Irish Chocolate Cake (1/2 KG)",
-    "description": "Chocolate cake infused with rich Irish cream flavor notes.",
+    "description": "",
     "category": "Celebration Cakes",
     "subCategory": "Chocolate Cakes",
     "price": 700,
@@ -3369,7 +3369,7 @@
   {
     "id": "item-154",
     "name": "Irish Chocolate Cake (1 KG)",
-    "description": "1kg Irish cream chocolate gateau.",
+    "description": "",
     "category": "Celebration Cakes",
     "subCategory": "Chocolate Cakes",
     "price": 1400,
@@ -3391,7 +3391,7 @@
   {
     "id": "item-155",
     "name": "Chocolate Delight Rose Cake (1/2 KG)",
-    "description": "Artistically decorated with handcrafted chocolate roses.",
+    "description": "",
     "category": "Celebration Cakes",
     "subCategory": "Chocolate Cakes",
     "price": 700,
@@ -3413,7 +3413,7 @@
   {
     "id": "item-156",
     "name": "Chocolate Delight Rose Cake (1 KG)",
-    "description": "1kg rose design chocolate celebration cake.",
+    "description": "",
     "category": "Celebration Cakes",
     "subCategory": "Chocolate Cakes",
     "price": 1400,
@@ -3435,7 +3435,7 @@
   {
     "id": "item-157",
     "name": "White Forest Cake (1/2 KG)",
-    "description": "Vanilla sponge, cherry compote, and white chocolate shavings.",
+    "description": "",
     "category": "Celebration Cakes",
     "subCategory": "Chocolate Cakes",
     "price": 700,
@@ -3457,7 +3457,7 @@
   {
     "id": "item-158",
     "name": "White Forest Cake (1 KG)",
-    "description": "1kg White Forest gateau.",
+    "description": "",
     "category": "Celebration Cakes",
     "subCategory": "Chocolate Cakes",
     "price": 1400,
@@ -3479,7 +3479,7 @@
   {
     "id": "item-159",
     "name": "Red Velvet Chocolate Cake (1/2 KG)",
-    "description": "Red velvet sponge layered with chocolate truffle and cream cheese.",
+    "description": "",
     "category": "Celebration Cakes",
     "subCategory": "Chocolate Cakes",
     "price": 750,
@@ -3501,7 +3501,7 @@
   {
     "id": "item-160",
     "name": "Mocha Velvet Cloud Cake (1/2 KG)",
-    "description": "Light coffee mousse and chocolate sponge.",
+    "description": "",
     "category": "Celebration Cakes",
     "subCategory": "Signature Cakes",
     "price": 650,
@@ -3523,7 +3523,7 @@
   {
     "id": "item-161",
     "name": "Mocha Gateau (1/2 KG)",
-    "description": "Espresso infused chocolate gateau.",
+    "description": "",
     "category": "Celebration Cakes",
     "subCategory": "Signature Cakes",
     "price": 750,
@@ -3545,7 +3545,7 @@
   {
     "id": "item-162",
     "name": "Black Forest Old School (1/2 KG)",
-    "description": "Heritage recipe with soaked cherries and chocolate.",
+    "description": "",
     "category": "Celebration Cakes",
     "subCategory": "Signature Cakes",
     "price": 850,
@@ -3567,7 +3567,7 @@
   {
     "id": "item-163",
     "name": "Chocolate Toffee Caramel Cake (1/2 KG)",
-    "description": "Layers of chocolate and handmade toffee caramel.",
+    "description": "",
     "category": "Celebration Cakes",
     "subCategory": "Signature Cakes",
     "price": 900,
@@ -3589,7 +3589,7 @@
   {
     "id": "item-164",
     "name": "Chocolate Toffee Caramel Cake (1 KG)",
-    "description": "1kg chocolate and toffee caramel celebration cake.",
+    "description": "",
     "category": "Celebration Cakes",
     "subCategory": "Signature Cakes",
     "price": 1800,
@@ -3611,7 +3611,7 @@
   {
     "id": "item-165",
     "name": "Chocolate Hazeltine Cake (1/2 KG)",
-    "description": "Hazelnut praline and dark chocolate ganache.",
+    "description": "",
     "category": "Celebration Cakes",
     "subCategory": "Signature Cakes",
     "price": 1000,
@@ -3633,7 +3633,7 @@
   {
     "id": "item-166",
     "name": "Chocolate Hazeltine Cake (1 KG)",
-    "description": "1kg Turkish hazelnut and dark chocolate cake.",
+    "description": "",
     "category": "Celebration Cakes",
     "subCategory": "Signature Cakes",
     "price": 2000,
@@ -3655,7 +3655,7 @@
   {
     "id": "item-167",
     "name": "Mud Chocolate Cake (1/2 KG)",
-    "description": "Ultra-dense Mississippi style mud chocolate cake.",
+    "description": "",
     "category": "Celebration Cakes",
     "subCategory": "Signature Cakes",
     "price": 1200,
@@ -3677,7 +3677,7 @@
   {
     "id": "item-168",
     "name": "Mud Chocolate Cake (1 KG)",
-    "description": "1kg Mississippi mud chocolate cake.",
+    "description": "",
     "category": "Celebration Cakes",
     "subCategory": "Signature Cakes",
     "price": 2400,
@@ -3699,7 +3699,7 @@
   {
     "id": "item-169",
     "name": "Mud Mec Rocks Cake (1/2 KG)",
-    "description": "Signature mud cake encrusted with Ferrero hazelnut rocks.",
+    "description": "",
     "category": "Celebration Cakes",
     "subCategory": "Signature Cakes",
     "price": 1400,
@@ -3721,7 +3721,7 @@
   {
     "id": "item-170",
     "name": "Mud Mec Rocks Cake (1 KG)",
-    "description": "1kg of our highest tier mud mec rocks celebration cake.",
+    "description": "",
     "category": "Celebration Cakes",
     "subCategory": "Signature Cakes",
     "price": 2800,
@@ -3743,7 +3743,7 @@
   {
     "id": "item-171",
     "name": "Chocolate Walnut Crunchy Cake (1/2 KG)",
-    "description": "Chocolate cake loaded with caramelized walnuts.",
+    "description": "",
     "category": "Celebration Cakes",
     "subCategory": "Signature Cakes",
     "price": 1000,
@@ -3765,7 +3765,7 @@
   {
     "id": "item-172",
     "name": "Chocolate Walnut Crunchy Cake (1 KG)",
-    "description": "1kg chocolate walnut crunchy cake.",
+    "description": "",
     "category": "Celebration Cakes",
     "subCategory": "Signature Cakes",
     "price": 2000,
@@ -3787,7 +3787,7 @@
   {
     "id": "item-173",
     "name": "Cold Cheesecake (1/2 KG)",
-    "description": "Set cream cheesecake with buttery biscuit base. Choose flavor: Biscoff, Blueberry, Chocolate, or Hazeltine.",
+    "description": "",
     "category": "Celebration Cakes",
     "subCategory": "Cheesecakes",
     "price": 1300,
@@ -3809,7 +3809,7 @@
   {
     "id": "item-174",
     "name": "Cold Cheesecake (1 KG)",
-    "description": "1kg set cream cheesecake with choice of Biscoff, Blueberry, Chocolate, or Hazeltine.",
+    "description": "",
     "category": "Celebration Cakes",
     "subCategory": "Cheesecakes",
     "price": 2600,
@@ -3831,7 +3831,7 @@
   {
     "id": "item-175",
     "name": "Baked Cheesecake (1/2 KG)",
-    "description": "Authentic New York baked cheesecake with golden baked crust.",
+    "description": "",
     "category": "Celebration Cakes",
     "subCategory": "Cheesecakes",
     "price": 1300,
@@ -3853,7 +3853,7 @@
   {
     "id": "item-176",
     "name": "Pineapple Delight (Regular) (1/2 KG)",
-    "description": "Soft sponge, fresh pineapple chunks and whipped dairy cream.",
+    "description": "",
     "category": "Celebration Cakes",
     "subCategory": "Fruit & Berry Cakes",
     "price": 600,
@@ -3875,7 +3875,7 @@
   {
     "id": "item-177",
     "name": "Pineapple Delight (Regular) (1 KG)",
-    "description": "1kg fresh pineapple celebration cake.",
+    "description": "",
     "category": "Celebration Cakes",
     "subCategory": "Fruit & Berry Cakes",
     "price": 1200,
@@ -3897,7 +3897,7 @@
   {
     "id": "item-178",
     "name": "Pineapple Delight (Loaded) (1/2 KG)",
-    "description": "Extra loaded with pineapple compote and caramelized fruit.",
+    "description": "",
     "category": "Celebration Cakes",
     "subCategory": "Fruit & Berry Cakes",
     "price": 700,
@@ -3919,7 +3919,7 @@
   {
     "id": "item-179",
     "name": "Pineapple Delight (Loaded) (1 KG)",
-    "description": "1kg extra loaded pineapple cake.",
+    "description": "",
     "category": "Celebration Cakes",
     "subCategory": "Fruit & Berry Cakes",
     "price": 1400,
@@ -3941,7 +3941,7 @@
   {
     "id": "item-180",
     "name": "Fresh Strawberry Cake (1/2 KG)",
-    "description": "Mahabaleshwar strawberries with fresh vanilla cream.",
+    "description": "",
     "category": "Celebration Cakes",
     "subCategory": "Fruit & Berry Cakes",
     "price": 650,
@@ -3963,7 +3963,7 @@
   {
     "id": "item-181",
     "name": "Fresh Strawberry Cake (1 KG)",
-    "description": "1kg fresh strawberry celebration cake.",
+    "description": "",
     "category": "Celebration Cakes",
     "subCategory": "Fruit & Berry Cakes",
     "price": 1300,
@@ -3985,7 +3985,7 @@
   {
     "id": "item-182",
     "name": "Mix Fruit Gateau (1/2 KG)",
-    "description": "Vanilla sponge decorated with seasonal fresh fruits.",
+    "description": "",
     "category": "Celebration Cakes",
     "subCategory": "Fruit & Berry Cakes",
     "price": 650,
@@ -4007,7 +4007,7 @@
   {
     "id": "item-183",
     "name": "Mix Fruit Gateau (1 KG)",
-    "description": "1kg seasonal mix fruit celebration gateau.",
+    "description": "",
     "category": "Celebration Cakes",
     "subCategory": "Fruit & Berry Cakes",
     "price": 1300,
@@ -4029,7 +4029,7 @@
   {
     "id": "item-184",
     "name": "Blueberry Gateau (1/2 KG)",
-    "description": "European wild blueberry compote and light sponge.",
+    "description": "",
     "category": "Celebration Cakes",
     "subCategory": "Fruit & Berry Cakes",
     "price": 750,
@@ -4051,7 +4051,7 @@
   {
     "id": "item-185",
     "name": "Blueberry Gateau (1 KG)",
-    "description": "1kg wild blueberry celebration gateau.",
+    "description": "",
     "category": "Celebration Cakes",
     "subCategory": "Fruit & Berry Cakes",
     "price": 1500,
@@ -4073,7 +4073,7 @@
   {
     "id": "item-186",
     "name": "Mix Fruit White Chocolate Gateau (1/2 KG)",
-    "description": "White chocolate curls and fresh fruits.",
+    "description": "",
     "category": "Celebration Cakes",
     "subCategory": "Fruit & Berry Cakes",
     "price": 750,
@@ -4095,7 +4095,7 @@
   {
     "id": "item-187",
     "name": "Mix Fruit Chocolate Gateau (1 KG)",
-    "description": "1kg mix fruit with rich chocolate ganache.",
+    "description": "",
     "category": "Celebration Cakes",
     "subCategory": "Fruit & Berry Cakes",
     "price": 1500,
@@ -4117,7 +4117,7 @@
   {
     "id": "item-188",
     "name": "Honey Almond Gateau (1/2 KG)",
-    "description": "Wild honey soaked sponge coated with roasted sliced almonds.",
+    "description": "",
     "category": "Celebration Cakes",
     "subCategory": "Exotic Cakes",
     "price": 650,
@@ -4139,7 +4139,7 @@
   {
     "id": "item-189",
     "name": "Honey Almond Gateau (1 KG)",
-    "description": "1kg honey almond celebration gateau.",
+    "description": "",
     "category": "Celebration Cakes",
     "subCategory": "Exotic Cakes",
     "price": 1300,
@@ -4161,7 +4161,7 @@
   {
     "id": "item-190",
     "name": "Nougat Gateau (1/2 KG)",
-    "description": "Praline nougat cream and vanilla sponge.",
+    "description": "",
     "category": "Celebration Cakes",
     "subCategory": "Exotic Cakes",
     "price": 650,
@@ -4183,7 +4183,7 @@
   {
     "id": "item-191",
     "name": "Nougat Gateau (1 KG)",
-    "description": "1kg crunchy nougat gateau.",
+    "description": "",
     "category": "Celebration Cakes",
     "subCategory": "Exotic Cakes",
     "price": 1300,
@@ -4205,7 +4205,7 @@
   {
     "id": "item-192",
     "name": "Rasmalai Cake (1/2 KG)",
-    "description": "Indian fusion favorite with saffron milk, pistachios, and soft rasmalai pieces.",
+    "description": "",
     "category": "Celebration Cakes",
     "subCategory": "Exotic Cakes",
     "price": 750,
@@ -4227,7 +4227,7 @@
   {
     "id": "item-193",
     "name": "Rasmalai Regular Cake (1 KG)",
-    "description": "1kg royal rasmalai celebration cake.",
+    "description": "",
     "category": "Celebration Cakes",
     "subCategory": "Exotic Cakes",
     "price": 1500,
@@ -4249,7 +4249,7 @@
   {
     "id": "item-194",
     "name": "Chocolate Sin Cake (1/2 KG)",
-    "description": "Pure 70% dark Belgian cocoa sin cake.",
+    "description": "",
     "category": "Celebration Cakes",
     "subCategory": "Sin Cakes",
     "price": 800,
@@ -4271,7 +4271,7 @@
   {
     "id": "item-195",
     "name": "Chocolate Sin Cake (1 KG)",
-    "description": "1kg dark chocolate sin celebration cake.",
+    "description": "",
     "category": "Celebration Cakes",
     "subCategory": "Sin Cakes",
     "price": 1600,
@@ -4293,7 +4293,7 @@
   {
     "id": "item-196",
     "name": "Hazeltine Sin Cake (1/2 KG)",
-    "description": "Dark chocolate sin cake with roasted hazelnut butter.",
+    "description": "",
     "category": "Celebration Cakes",
     "subCategory": "Sin Cakes",
     "price": 950,
@@ -4315,7 +4315,7 @@
   {
     "id": "item-197",
     "name": "Chocolate Sin Hazeltine Cake (1 KG)",
-    "description": "1kg hazelnut chocolate sin cake.",
+    "description": "",
     "category": "Celebration Cakes",
     "subCategory": "Sin Cakes",
     "price": 1900,
@@ -4337,7 +4337,7 @@
   {
     "id": "item-198",
     "name": "Nutella Sin Cake (1/2 KG)",
-    "description": "Decadent Ferrero Nutella sin cake.",
+    "description": "",
     "category": "Celebration Cakes",
     "subCategory": "Sin Cakes",
     "price": 950,
@@ -4359,7 +4359,7 @@
   {
     "id": "item-199",
     "name": "Nutella Sin Cake (1 KG)",
-    "description": "1kg Nutella sin celebration cake.",
+    "description": "",
     "category": "Celebration Cakes",
     "subCategory": "Sin Cakes",
     "price": 1900,
@@ -4381,7 +4381,7 @@
   {
     "id": "item-200",
     "name": "Chocolate Toffee Caramel Sin Cake (1/2 KG)",
-    "description": "Dark sin cake with thick buttery toffee caramel.",
+    "description": "",
     "category": "Celebration Cakes",
     "subCategory": "Sin Cakes",
     "price": 950,
@@ -4403,7 +4403,7 @@
   {
     "id": "item-201",
     "name": "Chocolate Sin Toffee Caramel Cake (1 KG)",
-    "description": "1kg chocolate toffee caramel sin cake.",
+    "description": "",
     "category": "Celebration Cakes",
     "subCategory": "Sin Cakes",
     "price": 1900,
@@ -4425,7 +4425,7 @@
   {
     "id": "item-202",
     "name": "Mango Sin Cake (1/2 KG)",
-    "description": "Alphonso mango glaze and rich white chocolate sin cake.",
+    "description": "",
     "category": "Celebration Cakes",
     "subCategory": "Sin Cakes",
     "price": 950,
@@ -4447,7 +4447,7 @@
   {
     "id": "item-203",
     "name": "Mango Sin Cake (1 KG)",
-    "description": "1kg Alphonso mango sin cake.",
+    "description": "",
     "category": "Celebration Cakes",
     "subCategory": "Sin Cakes",
     "price": 1900,
@@ -4469,7 +4469,7 @@
   {
     "id": "item-204",
     "name": "American Bites Cake (1/2 KG)",
-    "description": "American cookies and chocolate truffle fusion cake.",
+    "description": "",
     "category": "Celebration Cakes",
     "subCategory": "Newly Launched",
     "price": 750,
@@ -4491,7 +4491,7 @@
   {
     "id": "item-205",
     "name": "American Bites Cake (1 KG)",
-    "description": "1kg American bites cake.",
+    "description": "",
     "category": "Celebration Cakes",
     "subCategory": "Newly Launched",
     "price": 1500,
@@ -4513,7 +4513,7 @@
   {
     "id": "item-206",
     "name": "Exotic Red Velvet Cake (1/2 KG)",
-    "description": "Signature red velvet sponge with silky cream cheese frosting.",
+    "description": "",
     "category": "Celebration Cakes",
     "subCategory": "Newly Launched",
     "price": 750,
@@ -4535,7 +4535,7 @@
   {
     "id": "item-207",
     "name": "Exotic Red Velvet Cake (1 KG)",
-    "description": "1kg exotic red velvet cake.",
+    "description": "",
     "category": "Celebration Cakes",
     "subCategory": "Newly Launched",
     "price": 1500,
@@ -4557,7 +4557,7 @@
   {
     "id": "item-208",
     "name": "Tiramisu Cake (1/2 KG)",
-    "description": "Italian coffee sponge with mascarpone cream.",
+    "description": "",
     "category": "Celebration Cakes",
     "subCategory": "Newly Launched",
     "price": 800,
@@ -4579,7 +4579,7 @@
   {
     "id": "item-209",
     "name": "Tiramisu Cake (1 KG)",
-    "description": "1kg Italian tiramisu celebration cake.",
+    "description": "",
     "category": "Celebration Cakes",
     "subCategory": "Newly Launched",
     "price": 1600,
@@ -4601,7 +4601,7 @@
   {
     "id": "item-210",
     "name": "Berry Bomb Cake (1/2 KG)",
-    "description": "Loaded with fresh strawberries, blueberries, and blackberries.",
+    "description": "",
     "category": "Celebration Cakes",
     "subCategory": "Newly Launched",
     "price": 900,
@@ -4623,7 +4623,7 @@
   {
     "id": "item-211",
     "name": "Berry Bomb Cake (1 KG)",
-    "description": "1kg triple berry bomb celebration cake.",
+    "description": "",
     "category": "Celebration Cakes",
     "subCategory": "Newly Launched",
     "price": 1800,
@@ -4645,7 +4645,7 @@
   {
     "id": "item-212",
     "name": "Berry Berry Cake (1/2 KG)",
-    "description": "Strawberry and blueberry fusion celebration cake.",
+    "description": "",
     "category": "Celebration Cakes",
     "subCategory": "Newly Launched",
     "price": 800,
@@ -4667,7 +4667,7 @@
   {
     "id": "item-213",
     "name": "Berry Berry Cake (1 KG)",
-    "description": "1kg strawberry & blueberry celebration cake.",
+    "description": "",
     "category": "Celebration Cakes",
     "subCategory": "Newly Launched",
     "price": 1600,

@@ -781,7 +781,7 @@ export default function OutletInventoryPage() {
       product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       product.category.toLowerCase().includes(searchQuery.toLowerCase()) ||
       (product.subCategory && product.subCategory.toLowerCase().includes(searchQuery.toLowerCase())) ||
-      product.description.toLowerCase().includes(searchQuery.toLowerCase());
+      (product.description ? product.description.toLowerCase().includes(searchQuery.toLowerCase()) : false);
     const matchesCat = selectedCategory === 'ALL' || product.category === selectedCategory;
     const matchesSub = selectedSubCategory === 'ALL' || product.subCategory === selectedSubCategory;
     return matchesSearch && matchesCat && matchesSub;
@@ -1373,9 +1373,11 @@ export default function OutletInventoryPage() {
                     </div>
                   </div>
 
-                  <p className="text-[11px] text-stone-500 mt-2.5 line-clamp-2 leading-relaxed">
-                    {product.description}
-                  </p>
+                  {product.description && product.description.trim() ? (
+                    <p className="text-[11px] text-stone-500 mt-2.5 line-clamp-2 leading-relaxed">
+                      {product.description}
+                    </p>
+                  ) : null}
 
                   {/* Outlet Availability Badges */}
                   <div className="mt-3 pt-3 border-t border-stone-100">

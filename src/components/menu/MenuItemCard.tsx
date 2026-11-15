@@ -115,9 +115,11 @@ export function MenuItemCard({ item, outletSlug }: MenuItemCardProps) {
           <h3 className="font-serif font-bold text-base text-stone-900 group-hover:text-stone-700 transition line-clamp-1 mt-0.5">
             {item.name}
           </h3>
-          <p className="text-xs text-stone-500 line-clamp-2 mt-1 leading-relaxed">
-            {item.description}
-          </p>
+          {item.description && item.description.trim() ? (
+            <p className="text-xs text-stone-500 line-clamp-2 mt-1 leading-relaxed">
+              {item.description}
+            </p>
+          ) : null}
         </div>
 
         {/* Price & Action */}
