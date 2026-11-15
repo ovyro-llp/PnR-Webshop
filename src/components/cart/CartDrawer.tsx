@@ -33,6 +33,7 @@ import {
 } from 'lucide-react';
 import { CustomerDetails, PaymentMethod } from '@/types';
 import { useOutletAcceptance } from '@/hooks/useOutletTiming';
+import { DietarySymbol, GlutenFreeSymbol } from '@/components/ui/DietarySymbol';
 
 interface CartDrawerProps {
   outletSlug: string;
@@ -495,11 +496,10 @@ export function CartDrawer({ outletSlug, campaignSlug }: CartDrawerProps) {
                     >
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-1.5">
-                          <span
-                            className={`w-2 h-2 rounded-full shrink-0 ${
-                              cartItem.item.isVeg ? 'bg-emerald-600' : 'bg-rose-600'
-                            }`}
-                          />
+                          {cartItem.item.isGlutenFree && (
+                            <GlutenFreeSymbol size="xs" />
+                          )}
+                          <DietarySymbol isVeg={cartItem.item.isVeg} size="xs" />
                           <p className="font-medium text-xs text-stone-900 truncate">
                             {cartItem.item.name}
                           </p>

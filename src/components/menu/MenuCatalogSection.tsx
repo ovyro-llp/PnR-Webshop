@@ -4,6 +4,7 @@ import React, { useState, useMemo } from 'react';
 import { MenuItem } from '@/types';
 import { MenuItemCard } from './MenuItemCard';
 import { Package, Sparkles } from 'lucide-react';
+import { DietarySymbol, GlutenFreeSymbol } from '@/components/ui/DietarySymbol';
 
 interface MenuCatalogSectionProps {
   items: MenuItem[];
@@ -12,7 +13,7 @@ interface MenuCatalogSectionProps {
   subtitle?: string;
 }
 
-export type DietaryFilterType = 'ALL' | 'VEG' | 'NON_VEG';
+export type DietaryFilterType = 'ALL' | 'VEG' | 'NON_VEG' | 'GLUTEN_FREE';
 
 export function MenuCatalogSection({
   items,
@@ -40,12 +41,16 @@ export function MenuCatalogSection({
       if (dietaryFilter === 'NON_VEG' && item.isVeg) {
         return false;
       }
+      if (dietaryFilter === 'GLUTEN_FREE' && !item.isGlutenFree) {
+        return false;
+      }
       return true;
     });
   }, [items, selectedCategory, dietaryFilter]);
 
   const vegCount = useMemo(() => items.filter((i) => i.isVeg).length, [items]);
   const nonVegCount = useMemo(() => items.filter((i) => !i.isVeg).length, [items]);
+  const glutenFreeCount = useMemo(() => items.filter((i) => i.isGlutenFree).length, [items]);
 
   return (
     <section className="space-y-6 w-full">
@@ -63,7 +68,7 @@ export function MenuCatalogSection({
           </p>
         </div>
 
-        {/* Dietary 3-Way Filter Controls */}
+        {/* Dietary Multi-Option Filter Controls */}
         <div className="shrink-0 flex items-center gap-2">
           <div className="inline-flex items-center p-1 bg-white border border-stone-200/90 rounded-2xl shadow-2xs">
             {/* All / Both */}
@@ -86,12 +91,12 @@ export function MenuCatalogSection({
               onClick={() => setDietaryFilter('VEG')}
               className={`px-3 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 cursor-pointer ${
                 dietaryFilter === 'VEG'
-                  ? 'bg-emerald-600 text-white shadow-xs'
+                  ? 'bg-emerald-700 text-white shadow-xs'
                   : 'text-emerald-800 hover:text-emerald-950 bg-emerald-50/50'
               }`}
             >
-              <span className={`w-2 h-2 rounded-full ${dietaryFilter === 'VEG' ? 'bg-white' : 'bg-emerald-600'}`} />
-              <span>Veg Only ({vegCount})</span>
+              <DietarySymbol isVeg={true} size="xs" />
+              <span>Veg ({vegCount})</span>
             </button>
 
             {/* Non-Veg Only */}
@@ -100,12 +105,26 @@ export function MenuCatalogSection({
               onClick={() => setDietaryFilter('NON_VEG')}
               className={`px-3 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 cursor-pointer ${
                 dietaryFilter === 'NON_VEG'
-                  ? 'bg-rose-700 text-white shadow-xs'
-                  : 'text-rose-800 hover:text-rose-950 bg-rose-50/50'
+                  ? 'bg-[#7d4a2f] text-white shadow-xs'
+                  : 'text-[#7d4a2f] hover:text-amber-950 bg-amber-50/50'
               }`}
             >
-              <span className={`w-2 h-2 rounded-full ${dietaryFilter === 'NON_VEG' ? 'bg-white' : 'bg-rose-700'}`} />
+              <DietarySymbol isVeg={false} size="xs" />
               <span>Non-Veg ({nonVegCount})</span>
+            </button>
+
+            {/* Gluten Free Only */}
+            <button
+              type="button"
+              onClick={() => setDietaryFilter('GLUTEN_FREE')}
+              className={`px-3 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 cursor-pointer ${
+                dietaryFilter === 'GLUTEN_FREE'
+                  ? 'bg-amber-600 text-white shadow-xs'
+                  : 'text-amber-800 hover:text-amber-950 bg-amber-50/50'
+              }`}
+            >
+              <GlutenFreeSymbol size="xs" />
+              <span>Gluten-Free ({glutenFreeCount})</span>
             </button>
           </div>
         </div>

@@ -481,7 +481,8 @@
     ],
     "isAvailable": true,
     "stockQuantity": 25,
-    "isArchived": false
+    "isArchived": false,
+    "isGlutenFree": false
   },
   {
     "id": "item-23",

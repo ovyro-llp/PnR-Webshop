@@ -31,7 +31,7 @@ import {
   Phone,
 } from 'lucide-react';
 
-export type DietaryFilterType = 'ALL' | 'VEG' | 'NON_VEG';
+export type DietaryFilterType = 'ALL' | 'VEG' | 'NON_VEG' | 'GLUTEN_FREE';
 
 const getCategoryIcon = (category: string) => {
   const lower = category.toLowerCase();
@@ -127,6 +127,7 @@ export default function HomePage() {
       // 1. Dietary filter
       if (dietaryFilter === 'VEG' && !item.isVeg) return false;
       if (dietaryFilter === 'NON_VEG' && item.isVeg) return false;
+      if (dietaryFilter === 'GLUTEN_FREE' && !item.isGlutenFree) return false;
 
       // 2. Category filter
       if (selectedCategory !== 'All' && item.category !== selectedCategory) {
@@ -303,11 +304,13 @@ export default function HomePage() {
                         ? items.filter((i) => {
                             if (dietaryFilter === 'VEG' && !i.isVeg) return false;
                             if (dietaryFilter === 'NON_VEG' && i.isVeg) return false;
+                            if (dietaryFilter === 'GLUTEN_FREE' && !i.isGlutenFree) return false;
                             return true;
                           }).length
                         : items.filter((i) => {
                             if (dietaryFilter === 'VEG' && !i.isVeg) return false;
                             if (dietaryFilter === 'NON_VEG' && i.isVeg) return false;
+                            if (dietaryFilter === 'GLUTEN_FREE' && !i.isGlutenFree) return false;
                             return i.category === cat;
                           }).length;
 

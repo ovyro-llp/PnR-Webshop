@@ -5,6 +5,7 @@ import Image from 'next/image';
 import { MenuItem } from '@/types';
 import { useCart } from '@/context/CartContext';
 import { Plus, Minus } from 'lucide-react';
+import { DietarySymbol, GlutenFreeSymbol } from '@/components/ui/DietarySymbol';
 
 interface MenuItemCardProps {
   item: MenuItem;
@@ -58,13 +59,25 @@ export function MenuItemCard({ item, outletSlug }: MenuItemCardProps) {
           }}
         />
 
-        {/* Veg / Non-Veg Indicator */}
-        <div className="absolute top-3 right-3 bg-white/95 backdrop-blur-sm p-1 rounded-md shadow-xs z-10">
+        {/* Dietary & Allergy Indicators */}
+        <div className="absolute top-3 right-3 flex items-center gap-1.5 z-10">
+          {item.isGlutenFree && (
+            <div
+              className="bg-white/95 backdrop-blur-sm p-1 rounded-lg border border-stone-200/80 shadow-2xs flex items-center gap-1"
+              title="Gluten-Free Certified"
+            >
+              <GlutenFreeSymbol size="sm" />
+              <span className="text-[9px] font-bold text-amber-900 pr-0.5 tracking-tight uppercase hidden sm:inline">
+                GF
+              </span>
+            </div>
+          )}
           <div
-            className={`w-2.5 h-2.5 rounded-full ${
-              item.isVeg ? 'bg-emerald-600' : 'bg-rose-600'
-            }`}
-          />
+            className="bg-white/95 backdrop-blur-sm p-1 rounded-lg border border-stone-200/80 shadow-2xs flex items-center justify-center"
+            title={item.isVeg ? 'Vegetarian' : 'Non-Vegetarian'}
+          >
+            <DietarySymbol isVeg={item.isVeg} size="sm" />
+          </div>
         </div>
 
         {item.isBestseller && !isSoldOut && (

@@ -1053,7 +1053,8 @@ export const orderStore = {
       image:
         productData.image ||
         'https://images.unsplash.com/photo-1509440159596-0249088772ff?auto=format&fit=crop&q=80&w=800',
-      isVeg: productData.isVeg !== undefined ? productData.isVeg : true,
+      isVeg: productData.isVeg !== undefined ? Boolean(productData.isVeg) : true,
+      isGlutenFree: Boolean(productData.isGlutenFree),
       isBestseller: Boolean(productData.isBestseller),
       isSpicy: Boolean(productData.isSpicy),
       preparationTimeMinutes: productData.preparationTimeMinutes || 15,
@@ -1066,6 +1067,17 @@ export const orderStore = {
     list.unshift(newProduct);
     globalThis.__PNR_MASTER_PRODUCTS__ = list;
     orderRepository.saveMasterProducts(list).catch(() => {});
+
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
+      const fs = require('fs');
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
+      const path = require('path');
+      const catalogPath = path.join(process.cwd(), 'src/lib/data/master-catalog.json');
+      if (fs.existsSync(catalogPath)) {
+        fs.writeFileSync(catalogPath, JSON.stringify(list, null, 2), 'utf-8');
+      }
+    } catch {}
 
     // Provision stock items for assigned outlets
     if (!globalThis.__PNR_OUTLET_STOCK__) {
@@ -1104,6 +1116,10 @@ export const orderStore = {
     if (idx === -1) return undefined;
 
     const current = list[idx];
+    const isVegUpdated = updates.isVeg !== undefined ? Boolean(updates.isVeg) : current.isVeg;
+    const isGlutenFreeUpdated =
+      updates.isGlutenFree !== undefined ? Boolean(updates.isGlutenFree) : current.isGlutenFree;
+
     const updated: MenuItem = {
       ...current,
       ...updates,
@@ -1114,10 +1130,23 @@ export const orderStore = {
         updates.originalPrice !== undefined
           ? Number(updates.originalPrice)
           : current.originalPrice,
+      isVeg: isVegUpdated,
+      isGlutenFree: isGlutenFreeUpdated,
     };
     list[idx] = updated;
     globalThis.__PNR_MASTER_PRODUCTS__ = list;
     orderRepository.saveMasterProducts(list).catch(() => {});
+
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
+      const fs = require('fs');
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
+      const path = require('path');
+      const catalogPath = path.join(process.cwd(), 'src/lib/data/master-catalog.json');
+      if (fs.existsSync(catalogPath)) {
+        fs.writeFileSync(catalogPath, JSON.stringify(list, null, 2), 'utf-8');
+      }
+    } catch {}
 
     // If archive state explicitly changed
     if (updates.isArchived === true) {
@@ -1145,6 +1174,9 @@ export const orderStore = {
         if (updates.name) stock.name = updates.name;
         if (updates.price !== undefined) stock.basePrice = Number(updates.price);
         if (updates.category) stock.category = updates.category;
+        if (updates.isVeg !== undefined) stock.isVeg = updates.isVeg;
+        if (updates.isGlutenFree !== undefined) stock.isGlutenFree = updates.isGlutenFree;
+        if (updates.image) stock.image = updates.image;
       }
     });
 
@@ -1386,11 +1418,23 @@ export const orderStore = {
         .map((p) => p.id)
     );
 
-    return (globalThis.__PNR_OUTLET_STOCK__ || []).filter(
-      (s) =>
-        orderStore.normalizeOutletSlug(s.outletSlug) === normalizedSlug &&
-        assignedItemIds.has(s.itemId)
-    );
+    const productMap = new Map(products.map((p) => [p.id, p]));
+
+    return (globalThis.__PNR_OUTLET_STOCK__ || [])
+      .filter(
+        (s) =>
+          orderStore.normalizeOutletSlug(s.outletSlug) === normalizedSlug &&
+          assignedItemIds.has(s.itemId)
+      )
+      .map((s) => {
+        const p = productMap.get(s.itemId);
+        return {
+          ...s,
+          isVeg: p ? p.isVeg : s.isVeg ?? true,
+          isGlutenFree: p ? p.isGlutenFree : s.isGlutenFree ?? false,
+          image: p?.image || s.image,
+        };
+      });
   },
 
   getOutletStockAsync: async (outletSlug: string): Promise<OutletStockItem[]> => {

@@ -30,6 +30,7 @@ import {
   Package,
 } from 'lucide-react';
 import { B2BClientCatalogItem, B2BOrder } from '@/types';
+import { DietarySymbol, GlutenFreeSymbol } from '@/components/ui/DietarySymbol';
 
 interface ClientSession {
   userId: string;
@@ -243,15 +244,23 @@ export default function B2BClientPortalPage({
     updateQuantity(itemId, current + delta);
   };
 
-  // Helper to determine dietary type based on item name
+  // Helper to determine dietary type based on item attributes and name
   const isItemVeg = (item: B2BClientCatalogItem) => {
+    if (typeof item.isVeg === 'boolean') return item.isVeg;
     const name = item.productName.toLowerCase();
     return (
       !name.includes('chicken') &&
       !name.includes('meat') &&
       !name.includes('mutton') &&
+      !name.includes('egg') &&
       !name.includes('non-veg')
     );
+  };
+
+  const isItemGlutenFree = (item: B2BClientCatalogItem) => {
+    if (typeof item.isGlutenFree === 'boolean') return item.isGlutenFree;
+    const name = item.productName.toLowerCase();
+    return name.includes('millet') || name.includes('ragi');
   };
 
   // Filter products by category, dietary, and search
@@ -749,6 +758,7 @@ export default function B2BClientPortalPage({
             {filteredProducts.map((item) => {
               const currentQty = quantities[item.id] || 0;
               const isVeg = isItemVeg(item);
+              const isGlutenFree = isItemGlutenFree(item);
 
               return (
                 <div
@@ -767,13 +777,16 @@ export default function B2BClientPortalPage({
                         <span className="text-[10px] uppercase tracking-widest font-semibold text-stone-400 block">
                           {item.category}
                         </span>
-                        {/* Veg / Non-Veg Indicator */}
-                        <div className="bg-stone-50 border border-stone-200/80 p-1 rounded-md shadow-2xs">
-                          <div
-                            className={`w-2.5 h-2.5 rounded-full ${
-                              isVeg ? 'bg-emerald-600' : 'bg-rose-600'
-                            }`}
-                          />
+                        {/* Veg / Non-Veg & Gluten-Free Indicator */}
+                        <div className="flex items-center gap-1.5">
+                          {isGlutenFree && (
+                            <div className="bg-white border border-stone-200/80 p-0.5 rounded shadow-2xs">
+                              <GlutenFreeSymbol size="xs" />
+                            </div>
+                          )}
+                          <div className="bg-white border border-stone-200/80 p-0.5 rounded shadow-2xs">
+                            <DietarySymbol isVeg={isVeg} size="xs" />
+                          </div>
                         </div>
                       </div>
 

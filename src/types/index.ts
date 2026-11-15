@@ -94,6 +94,9 @@ export interface OutletStockItem {
   stockQuantity: number; // 0 for sold out
   lowStockThreshold: number;
   customPrice?: number;
+  isVeg?: boolean;
+  isGlutenFree?: boolean;
+  image?: string;
   lastUpdated: string;
   updatedBy: string;
 }
@@ -177,6 +180,7 @@ export interface MenuItem {
   originalPrice?: number;
   image: string;
   isVeg: boolean;
+  isGlutenFree?: boolean;
   isBestseller?: boolean;
   isSpicy?: boolean;
   preparationTimeMinutes: number;
@@ -197,6 +201,7 @@ export interface CreateProductDTO {
   originalPrice?: number;
   image: string;
   isVeg: boolean;
+  isGlutenFree?: boolean;
   isBestseller?: boolean;
   isSpicy?: boolean;
   preparationTimeMinutes?: number;
@@ -214,6 +219,7 @@ export interface UpdateProductDTO {
   originalPrice?: number;
   image?: string;
   isVeg?: boolean;
+  isGlutenFree?: boolean;
   isBestseller?: boolean;
   isSpicy?: boolean;
   preparationTimeMinutes?: number;
@@ -445,6 +451,8 @@ export interface B2BClientCatalogItem {
   unit: string;
   b2bPrice: number;
   imageUrl?: string;
+  isVeg?: boolean;
+  isGlutenFree?: boolean;
   isActive: boolean;
   displayOrder: number;
   createdAt: string;

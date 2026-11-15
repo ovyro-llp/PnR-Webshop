@@ -37,6 +37,7 @@ import {
   Archive,
 } from 'lucide-react';
 import Image from 'next/image';
+import { DietarySymbol, GlutenFreeSymbol } from '@/components/ui/DietarySymbol';
 
 const CATEGORIES: MenuCategory[] = [
   'Celebration Cakes',
@@ -139,6 +140,7 @@ export default function OutletInventoryPage() {
     originalPrice: '',
     image: '',
     isVeg: true,
+    isGlutenFree: false,
     isBestseller: false,
     isSpicy: false,
     preparationTimeMinutes: '' as unknown as number,
@@ -619,6 +621,7 @@ export default function OutletInventoryPage() {
             originalPrice: newProductForm.originalPrice ? Number(newProductForm.originalPrice) : undefined,
             image: newProductForm.image,
             isVeg: newProductForm.isVeg,
+            isGlutenFree: newProductForm.isGlutenFree,
             isBestseller: newProductForm.isBestseller,
             isSpicy: newProductForm.isSpicy,
             preparationTimeMinutes: Number(newProductForm.preparationTimeMinutes) || 15,
@@ -642,6 +645,7 @@ export default function OutletInventoryPage() {
           originalPrice: '',
           image: '',
           isVeg: true,
+          isGlutenFree: false,
           isBestseller: false,
           isSpicy: false,
           preparationTimeMinutes: '' as unknown as number,
@@ -681,6 +685,7 @@ export default function OutletInventoryPage() {
             description: editingProduct.description,
             image: editingProduct.image,
             isVeg: editingProduct.isVeg,
+            isGlutenFree: editingProduct.isGlutenFree,
             isArchived: editingProduct.isArchived,
             availableOutlets: editingProduct.availableOutlets,
           },
@@ -1053,9 +1058,15 @@ export default function OutletInventoryPage() {
                     <div>
                       <div className="flex items-start justify-between gap-2">
                         <div>
-                          <span className="text-[10px] font-mono uppercase font-semibold text-stone-400">
-                            {item.category}
-                          </span>
+                          <div className="flex items-center gap-1.5">
+                            {item.isGlutenFree && (
+                              <GlutenFreeSymbol size="xs" />
+                            )}
+                            <DietarySymbol isVeg={item.isVeg ?? true} size="xs" />
+                            <span className="text-[10px] font-mono uppercase font-semibold text-stone-400">
+                              {item.category}
+                            </span>
+                          </div>
                           <h3 className="font-serif font-bold text-sm text-stone-900 mt-0.5 leading-snug">
                             {item.name}
                           </h3>
@@ -1335,11 +1346,10 @@ export default function OutletInventoryPage() {
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-1.5">
-                        <span
-                          className={`w-2 h-2 rounded-full shrink-0 ${
-                            product.isVeg ? 'bg-emerald-600' : 'bg-rose-600'
-                          }`}
-                        />
+                        {product.isGlutenFree && (
+                          <GlutenFreeSymbol size="xs" />
+                        )}
+                        <DietarySymbol isVeg={product.isVeg} size="xs" />
                         <span className="text-[10px] font-mono uppercase font-semibold text-stone-400 truncate">
                           {product.category}
                           {product.subCategory ? ` › ${product.subCategory}` : ''}
@@ -1556,11 +1566,10 @@ export default function OutletInventoryPage() {
                               </div>
                               <div className="min-w-0">
                                 <div className="flex items-center gap-1.5">
-                                  <span
-                                    className={`w-1.5 h-1.5 rounded-full shrink-0 ${
-                                      product.isVeg ? 'bg-emerald-600' : 'bg-rose-600'
-                                    }`}
-                                  />
+                                  {product.isGlutenFree && (
+                                    <GlutenFreeSymbol size="xs" />
+                                  )}
+                                  <DietarySymbol isVeg={product.isVeg} size="xs" />
                                   <p className="text-xs font-bold text-stone-900 truncate">
                                     {product.name}
                                   </p>
@@ -1902,34 +1911,93 @@ export default function OutletInventoryPage() {
                 </div>
               </div>
 
-              {/* Toggles: Pure Veg & Initial Stock */}
-              <div className="grid grid-cols-2 gap-3 pt-1">
-                <label className="flex items-center gap-2 p-2.5 bg-stone-50 rounded-xl border border-stone-200 cursor-pointer">
+              {/* Dietary Classification & Allergen Controls */}
+              <div className="space-y-2 p-3 bg-stone-50/80 rounded-2xl border border-stone-200">
+                <div className="flex items-center justify-between">
+                  <label className="text-xs font-semibold text-stone-800">
+                    Dietary Classification &amp; Allergen Tags
+                  </label>
+                  <span className="text-[10px] text-stone-500 font-mono">
+                    FSSAI Marks
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-2 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setNewProductForm({ ...newProductForm, isVeg: true })}
+                    className={`p-2.5 rounded-xl border text-left transition flex items-center gap-2.5 cursor-pointer ${
+                      newProductForm.isVeg
+                        ? 'bg-emerald-50/70 border-emerald-500 ring-1 ring-emerald-500'
+                        : 'bg-white border-stone-200 hover:border-stone-300'
+                    }`}
+                  >
+                    <div className="shrink-0 p-0.5 bg-white rounded border border-stone-200 shadow-2xs">
+                      <DietarySymbol isVeg={true} size="sm" />
+                    </div>
+                    <div className="min-w-0">
+                      <span className="text-xs font-bold text-emerald-950 block">Vegetarian</span>
+                      <p className="text-[10px] text-stone-500 leading-tight">100% Pure Veg (Green Dot)</p>
+                    </div>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setNewProductForm({ ...newProductForm, isVeg: false })}
+                    className={`p-2.5 rounded-xl border text-left transition flex items-center gap-2.5 cursor-pointer ${
+                      !newProductForm.isVeg
+                        ? 'bg-amber-50/70 border-[#7d4a2f] ring-1 ring-[#7d4a2f]'
+                        : 'bg-white border-stone-200 hover:border-stone-300'
+                    }`}
+                  >
+                    <div className="shrink-0 p-0.5 bg-white rounded border border-stone-200 shadow-2xs">
+                      <DietarySymbol isVeg={false} size="sm" />
+                    </div>
+                    <div className="min-w-0">
+                      <span className="text-xs font-bold text-[#7d4a2f] block">Non-Vegetarian</span>
+                      <p className="text-[10px] text-stone-500 leading-tight">Egg/Meat (Brown Triangle)</p>
+                    </div>
+                  </button>
+                </div>
+
+                <label className="flex items-center justify-between p-2.5 bg-white rounded-xl border border-stone-200 hover:border-stone-300 transition cursor-pointer">
+                  <div className="flex items-center gap-2.5">
+                    <div className="p-0.5 bg-amber-50 rounded border border-amber-200/80 shrink-0">
+                      <GlutenFreeSymbol size="sm" />
+                    </div>
+                    <div>
+                      <span className="text-xs font-semibold text-stone-900 block">Gluten-Free Certified</span>
+                      <p className="text-[10px] text-stone-500 leading-tight">Ragi, Millet &amp; Wheat-Free badge</p>
+                    </div>
+                  </div>
                   <input
                     type="checkbox"
-                    checked={newProductForm.isVeg}
+                    checked={Boolean(newProductForm.isGlutenFree)}
                     onChange={(e) =>
-                      setNewProductForm({ ...newProductForm, isVeg: e.target.checked })
+                      setNewProductForm({ ...newProductForm, isGlutenFree: e.target.checked })
                     }
-                    className="w-4 h-4 rounded text-emerald-600 focus:ring-emerald-600"
+                    className="w-4 h-4 rounded text-amber-600 focus:ring-amber-500 border-stone-300"
                   />
-                  <span className="text-xs font-semibold text-stone-800">100% Pure Veg</span>
                 </label>
+              </div>
 
-                <div>
-                  <input
-                    type="number"
-                    placeholder="Batch stock: 25"
-                    value={newProductForm.initialStock}
-                    onChange={(e) =>
-                      setNewProductForm({
-                        ...newProductForm,
-                        initialStock: Number(e.target.value),
-                      })
-                    }
-                    className="w-full px-3 py-2.5 bg-stone-50 border border-stone-200 rounded-xl text-xs text-stone-900 font-mono"
-                  />
-                </div>
+              {/* Initial Stock */}
+              <div>
+                <label className="block text-xs font-semibold text-stone-800 mb-1">
+                  Initial Outlet Stock
+                </label>
+                <input
+                  type="number"
+                  placeholder="Batch stock: 25"
+                  value={newProductForm.initialStock}
+                  onChange={(e) =>
+                    setNewProductForm({
+                      ...newProductForm,
+                      initialStock: Number(e.target.value),
+                    })
+                  }
+                  className="w-full px-3 py-2.5 bg-stone-50 border border-stone-200 rounded-xl text-xs text-stone-900 font-mono"
+                />
               </div>
 
               {/* Outlet Availability Assignment */}
@@ -2213,6 +2281,113 @@ export default function OutletInventoryPage() {
                   }
                   className="w-full px-3.5 py-2 bg-stone-50 border border-stone-200 rounded-xl text-xs text-stone-900 focus:bg-white focus:outline-none resize-none"
                 />
+              </div>
+
+              {/* Dietary Classification & Allergen Controls */}
+              <div className="space-y-2 p-3 bg-stone-50/80 rounded-2xl border border-stone-200">
+                <div className="flex items-center justify-between">
+                  <label className="text-xs font-semibold text-stone-800">
+                    Dietary Classification &amp; Allergen Tags
+                  </label>
+                  <span className="text-[10px] text-stone-500 font-mono">
+                    FSSAI Compliant Marks
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-2 gap-2">
+                  {/* Vegetarian Selector */}
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setEditingProduct({ ...editingProduct, isVeg: true })
+                    }
+                    className={`p-2.5 rounded-xl border text-left transition flex items-center gap-2.5 cursor-pointer ${
+                      editingProduct.isVeg
+                        ? 'bg-emerald-50/70 border-emerald-500 ring-1 ring-emerald-500 shadow-2xs'
+                        : 'bg-white border-stone-200 hover:border-stone-300'
+                    }`}
+                  >
+                    <div className="shrink-0 p-0.5 bg-white rounded border border-stone-200 shadow-2xs">
+                      <DietarySymbol isVeg={true} size="sm" />
+                    </div>
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-1">
+                        <span className="text-xs font-bold text-emerald-950">
+                          Vegetarian
+                        </span>
+                        {editingProduct.isVeg && (
+                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-600" />
+                        )}
+                      </div>
+                      <p className="text-[10px] text-stone-500 leading-tight">
+                        100% Pure Veg (Green Dot)
+                      </p>
+                    </div>
+                  </button>
+
+                  {/* Non-Vegetarian Selector */}
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setEditingProduct({ ...editingProduct, isVeg: false })
+                    }
+                    className={`p-2.5 rounded-xl border text-left transition flex items-center gap-2.5 cursor-pointer ${
+                      !editingProduct.isVeg
+                        ? 'bg-amber-50/70 border-[#7d4a2f] ring-1 ring-[#7d4a2f] shadow-2xs'
+                        : 'bg-white border-stone-200 hover:border-stone-300'
+                    }`}
+                  >
+                    <div className="shrink-0 p-0.5 bg-white rounded border border-stone-200 shadow-2xs">
+                      <DietarySymbol isVeg={false} size="sm" />
+                    </div>
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-1">
+                        <span className="text-xs font-bold text-[#7d4a2f]">
+                          Non-Vegetarian
+                        </span>
+                        {!editingProduct.isVeg && (
+                          <span className="w-1.5 h-1.5 rounded-full bg-[#7d4a2f]" />
+                        )}
+                      </div>
+                      <p className="text-[10px] text-stone-500 leading-tight">
+                        Egg / Non-Veg (Brown Triangle)
+                      </p>
+                    </div>
+                  </button>
+                </div>
+
+                {/* Gluten-Free Toggle */}
+                <label className="flex items-center justify-between p-2.5 bg-white rounded-xl border border-stone-200 hover:border-stone-300 transition cursor-pointer">
+                  <div className="flex items-center gap-2.5">
+                    <div className="p-0.5 bg-amber-50 rounded border border-amber-200/80 shrink-0">
+                      <GlutenFreeSymbol size="sm" />
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-xs font-semibold text-stone-900">
+                          Gluten-Free Certified
+                        </span>
+                        <span className="text-[9px] uppercase tracking-wider font-bold text-amber-800 bg-amber-100 px-1.5 py-0.2 rounded-full">
+                          Wheat-Free
+                        </span>
+                      </div>
+                      <p className="text-[10px] text-stone-500 leading-tight">
+                        Display official Gluten Free emblem beside dietary symbol (e.g. Ragi Joy, Millet)
+                      </p>
+                    </div>
+                  </div>
+                  <input
+                    type="checkbox"
+                    checked={Boolean(editingProduct.isGlutenFree)}
+                    onChange={(e) =>
+                      setEditingProduct({
+                        ...editingProduct,
+                        isGlutenFree: e.target.checked,
+                      })
+                    }
+                    className="w-4 h-4 rounded text-amber-600 focus:ring-amber-500 border-stone-300"
+                  />
+                </label>
               </div>
 
               {/* Photo Asset for Editing Product */}
