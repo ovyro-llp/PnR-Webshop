@@ -1060,7 +1060,7 @@ export default function OutletInventoryPage() {
                         <div>
                           <div className="flex items-center gap-1.5">
                             {item.isGlutenFree && (
-                              <GlutenFreeSymbol size="xs" />
+                              <GlutenFreeSymbol size="xs" showLabel />
                             )}
                             <DietarySymbol isVeg={item.isVeg ?? true} size="xs" />
                             <span className="text-[10px] font-mono uppercase font-semibold text-stone-400">
@@ -1351,7 +1351,7 @@ export default function OutletInventoryPage() {
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-1.5">
                         {product.isGlutenFree && (
-                          <GlutenFreeSymbol size="xs" />
+                          <GlutenFreeSymbol size="xs" showLabel />
                         )}
                         <DietarySymbol isVeg={product.isVeg} size="xs" />
                         <span className="text-[10px] font-mono uppercase font-semibold text-stone-400 truncate">
@@ -1577,7 +1577,7 @@ export default function OutletInventoryPage() {
                               <div className="min-w-0">
                                 <div className="flex items-center gap-1.5">
                                   {product.isGlutenFree && (
-                                    <GlutenFreeSymbol size="xs" />
+                                    <GlutenFreeSymbol size="xs" showLabel />
                                   )}
                                   <DietarySymbol isVeg={product.isVeg} size="xs" />
                                   <p className="text-xs font-bold text-stone-900 truncate">

@@ -200,14 +200,22 @@ if (!globalThis.__PNR_OUTLETS__) {
 if (!globalThis.__PNR_MASTER_PRODUCTS__ || globalThis.__PNR_MASTER_PRODUCTS__.length < 20) {
   globalThis.__PNR_MASTER_PRODUCTS__ = [...MENU_ITEMS];
 } else {
-  // Sync authentic bakery photos from MENU_ITEMS into active in-memory cache
+  // Sync authentic bakery photos, dietary & allergy flags from MENU_ITEMS into active in-memory cache
   globalThis.__PNR_MASTER_PRODUCTS__.forEach((item) => {
     const fresh = MENU_ITEMS.find((m) => m.id === item.id);
-    if (
-      fresh?.image &&
-      (fresh.image.startsWith('/images/cakes/') || fresh.image.startsWith('/images/products/'))
-    ) {
-      item.image = fresh.image;
+    if (fresh) {
+      if (
+        fresh.image &&
+        (fresh.image.startsWith('/images/cakes/') || fresh.image.startsWith('/images/products/'))
+      ) {
+        item.image = fresh.image;
+      }
+      if (fresh.isGlutenFree !== undefined) {
+        item.isGlutenFree = fresh.isGlutenFree;
+      }
+      if (fresh.isVeg !== undefined) {
+        item.isVeg = fresh.isVeg;
+      }
     }
   });
 }
@@ -310,12 +318,25 @@ if (!globalThis.__PNR_OUTLET_STOCK__ || globalThis.__PNR_OUTLET_STOCK__.length <
         isAvailable: true,
         stockQuantity: item.category === 'Cakes & Pastries' ? 8 : 35,
         lowStockThreshold: 5,
+        isVeg: item.isVeg,
+        isGlutenFree: item.isGlutenFree,
+        image: item.image,
         lastUpdated: new Date().toISOString(),
         updatedBy: 'System Auto-Seed',
       });
     });
   });
   globalThis.__PNR_OUTLET_STOCK__ = stockSeed;
+} else {
+  // Sync dietary & allergy info to existing in-memory outlet stock
+  globalThis.__PNR_OUTLET_STOCK__.forEach((stock) => {
+    const fresh = MENU_ITEMS.find((m) => m.id === stock.itemId);
+    if (fresh) {
+      if (fresh.isGlutenFree !== undefined) stock.isGlutenFree = fresh.isGlutenFree;
+      if (fresh.isVeg !== undefined) stock.isVeg = fresh.isVeg;
+      if (fresh.image) stock.image = fresh.image;
+    }
+  });
 }
 
 if (!globalThis.__PNR_MARKETING_TAGS__) {

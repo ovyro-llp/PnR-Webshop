@@ -115,7 +115,7 @@ export const GlutenFreeSymbol: React.FC<GlutenFreeSymbolProps> = ({
   return (
     <div
       className={`inline-flex items-center gap-1 select-none ${className}`}
-      title="Gluten-Free Certified"
+      title="Gluten Free"
     >
       <div className={`relative ${sizeClasses} shrink-0`}>
         {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -126,7 +126,7 @@ export const GlutenFreeSymbol: React.FC<GlutenFreeSymbolProps> = ({
         />
       </div>
       {showLabel && (
-        <span className="text-[10px] font-semibold text-amber-800 tracking-wider uppercase">
+        <span className="text-[10px] font-bold text-amber-950 tracking-tight whitespace-nowrap">
           Gluten Free
         </span>
       )}

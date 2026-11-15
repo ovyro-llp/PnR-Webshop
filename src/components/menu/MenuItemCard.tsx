@@ -67,13 +67,10 @@ export function MenuItemCard({ item, outletSlug }: MenuItemCardProps) {
         <div className="absolute top-3 right-3 flex items-center gap-1.5 z-10">
           {item.isGlutenFree && (
             <div
-              className="bg-white/95 backdrop-blur-sm p-1 rounded-lg border border-stone-200/80 shadow-2xs flex items-center gap-1"
-              title="Gluten-Free Certified"
+              className="bg-white/95 backdrop-blur-sm px-2 py-0.5 rounded-lg border border-amber-200/90 shadow-2xs flex items-center"
+              title="Gluten Free"
             >
-              <GlutenFreeSymbol size="sm" />
-              <span className="text-[9px] font-bold text-amber-900 pr-0.5 tracking-tight uppercase hidden sm:inline">
-                GF
-              </span>
+              <GlutenFreeSymbol size="sm" showLabel />
             </div>
           )}
           <div

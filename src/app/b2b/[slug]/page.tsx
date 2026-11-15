@@ -780,8 +780,8 @@ export default function B2BClientPortalPage({
                         {/* Veg / Non-Veg & Gluten-Free Indicator */}
                         <div className="flex items-center gap-1.5">
                           {isGlutenFree && (
-                            <div className="bg-white border border-stone-200/80 p-0.5 rounded shadow-2xs">
-                              <GlutenFreeSymbol size="xs" />
+                            <div className="bg-white/95 border border-amber-200/90 px-1.5 py-0.5 rounded shadow-2xs flex items-center">
+                              <GlutenFreeSymbol size="xs" showLabel />
                             </div>
                           )}
                           <div className="bg-white border border-stone-200/80 p-0.5 rounded shadow-2xs">
