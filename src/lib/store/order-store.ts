@@ -205,8 +205,7 @@ if (!globalThis.__PNR_MASTER_PRODUCTS__ || globalThis.__PNR_MASTER_PRODUCTS__.le
     const fresh = MENU_ITEMS.find((m) => m.id === item.id);
     if (
       fresh?.image &&
-      fresh.image.startsWith('/images/cakes/') &&
-      (!item.image || item.image.includes('unsplash.com'))
+      (fresh.image.startsWith('/images/cakes/') || fresh.image.startsWith('/images/products/'))
     ) {
       item.image = fresh.image;
     }
@@ -1003,8 +1002,8 @@ export const orderStore = {
           const masterItem = MENU_ITEMS.find((m) => m.id === dbItem.id);
           if (
             masterItem?.image &&
-            masterItem.image.startsWith('/images/cakes/') &&
-            (!dbItem.image || dbItem.image.includes('unsplash.com'))
+            (masterItem.image.startsWith('/images/cakes/') || masterItem.image.startsWith('/images/products/')) &&
+            (!dbItem.image || dbItem.image.includes('unsplash.com') || dbItem.image.startsWith('/api/media/'))
           ) {
             dbItem.image = masterItem.image;
             hasImageUpdates = true;
@@ -1120,6 +1119,25 @@ export const orderStore = {
     globalThis.__PNR_MASTER_PRODUCTS__ = list;
     orderRepository.saveMasterProducts(list).catch(() => {});
 
+    // If archive state explicitly changed
+    if (updates.isArchived === true) {
+      updated.isArchived = true;
+      updated.availableOutlets = [];
+      const stockList = globalThis.__PNR_OUTLET_STOCK__ || [];
+      stockList.forEach((s) => {
+        if (s.itemId === id) {
+          s.isAvailable = false;
+          s.stockQuantity = 0;
+        }
+      });
+    } else if (updates.isArchived === false) {
+      updated.isArchived = false;
+      const outlets = globalThis.__PNR_OUTLETS__ || OUTLETS;
+      if (!updated.availableOutlets || updated.availableOutlets.length === 0) {
+        updated.availableOutlets = outlets.map((o) => o.slug);
+      }
+    }
+
     // Sync changes to outlet stock matrix
     const stockList = globalThis.__PNR_OUTLET_STOCK__ || [];
     stockList.forEach((stock) => {
@@ -1192,6 +1210,10 @@ export const orderStore = {
     const idx = list.findIndex((item) => item.id === id);
     if (idx !== -1) {
       list[idx].isArchived = false;
+      const outlets = globalThis.__PNR_OUTLETS__ || OUTLETS;
+      if (!list[idx].availableOutlets || list[idx].availableOutlets.length === 0) {
+        list[idx].availableOutlets = outlets.map((o) => o.slug);
+      }
       globalThis.__PNR_MASTER_PRODUCTS__ = list;
       orderRepository.saveMasterProducts(list).catch(() => {});
       return true;

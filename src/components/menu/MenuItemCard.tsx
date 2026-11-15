@@ -17,20 +17,45 @@ export function MenuItemCard({ item, outletSlug }: MenuItemCardProps) {
   const isSoldOut = item.isAvailable === false || (typeof item.stockQuantity === 'number' && item.stockQuantity <= 0);
   const isLowStock = !isSoldOut && typeof item.stockQuantity === 'number' && item.stockQuantity > 0 && item.stockQuantity <= 4;
 
+  const defaultFallback = 'https://images.unsplash.com/photo-1509440159596-0249088772ff?auto=format&fit=crop&w=800&q=80';
+  const [currentImg, setCurrentImg] = React.useState<string>(item.image || defaultFallback);
+
+  React.useEffect(() => {
+    setCurrentImg(item.image || defaultFallback);
+  }, [item.image]);
+
   return (
     <div className={`bg-white rounded-2xl border transition-all duration-300 flex flex-col justify-between overflow-hidden group shadow-[0_2px_8px_rgba(0,0,0,0.02)] ${
       isSoldOut ? 'opacity-70 border-stone-200' : 'border-stone-200/70 hover:border-stone-400/80'
     }`}>
-      {/* Product Image */}
-      <div className="relative w-full h-48 bg-stone-50 overflow-hidden">
+      {/* Product Image: Centered, fully fitted within frame so all packaging & labels are clearly visible */}
+      <div className="relative w-full h-52 bg-gradient-to-b from-[#FAF8F5] via-stone-50 to-stone-100/70 overflow-hidden flex items-center justify-center p-2.5">
+        {/* Soft Ambient Studio Glow */}
+        <div className="absolute inset-0 overflow-hidden pointer-events-none opacity-25 filter blur-xl scale-125">
+          <Image
+            src={currentImg}
+            alt=""
+            fill
+            aria-hidden="true"
+            className="object-cover"
+            unoptimized
+          />
+        </div>
+
+        {/* Foreground Product Photo: object-contain preserves entire packet, label, and bread */}
         <Image
-          src={item.image}
+          src={currentImg}
           alt={item.name}
           fill
           sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-          className={`object-cover transition duration-500 ease-out ${
-            isSoldOut ? 'grayscale contrast-75' : 'group-hover:scale-103'
+          className={`relative z-1 object-contain object-center p-2 transition duration-500 ease-out drop-shadow-xs ${
+            isSoldOut ? 'grayscale contrast-75' : 'group-hover:scale-105'
           }`}
+          onError={() => {
+            if (currentImg !== defaultFallback) {
+              setCurrentImg(defaultFallback);
+            }
+          }}
         />
 
         {/* Veg / Non-Veg Indicator */}

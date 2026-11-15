@@ -35,6 +35,35 @@ function getLocalCakeMedia(): MediaUpload[] {
   }
 }
 
+function getLocalProductMedia(): MediaUpload[] {
+  try {
+    const dir = path.join(process.cwd(), 'public/images/products');
+    if (!fs.existsSync(dir)) return [];
+    const files = fs.readdirSync(dir).filter((f) => f.endsWith('.jpg') || f.endsWith('.jpeg') || f.endsWith('.webp') || f.endsWith('.png'));
+    return files.map((f) => {
+      const stat = fs.statSync(path.join(dir, f));
+      const cleanName = f
+        .replace(/\.(jpg|jpeg|webp|png)$/, '')
+        .replace(/-/g, ' ')
+        .replace(/\b\w/g, (c) => c.toUpperCase());
+      return {
+        id: `local-product-${f.replace(/\.(jpg|jpeg|webp|png)$/, '')}`,
+        filename: f,
+        mimeType: f.endsWith('.webp') ? 'image/webp' : f.endsWith('.png') ? 'image/png' : 'image/jpeg',
+        byteSize: stat.size,
+        url: `/images/products/${f}`,
+        title: `${cleanName} (Bakery Authentic)`,
+        altText: cleanName,
+        category: 'products',
+        createdAt: stat.birthtime ? new Date(stat.birthtime).toISOString() : new Date().toISOString(),
+        updatedAt: stat.mtime ? new Date(stat.mtime).toISOString() : new Date().toISOString(),
+      };
+    });
+  } catch {
+    return [];
+  }
+}
+
 declare global {
   // eslint-disable-next-line no-var
   var __PNR_PG_POOL__: Pool | undefined;
@@ -108,8 +137,11 @@ export async function ensureMediaTable(): Promise<void> {
 
 export async function getMediaUploads(limit = 100): Promise<MediaUpload[]> {
   const localCakes = getLocalCakeMedia();
+  const localProducts = getLocalProductMedia();
+  const localAll = [...localProducts, ...localCakes];
+
   if (!process.env.DATABASE_URL || !process.env.DATABASE_URL.trim()) {
-    return localCakes.slice(0, limit);
+    return localAll.slice(0, limit);
   }
   await ensureMediaTable();
   const pool = getDbPool();
@@ -135,10 +167,10 @@ export async function getMediaUploads(limit = 100): Promise<MediaUpload[]> {
       updatedAt: row.updated_at ? new Date(row.updated_at).toISOString() : new Date().toISOString(),
     }));
 
-    return [...dbMedia, ...localCakes].slice(0, limit);
+    return [...dbMedia, ...localAll].slice(0, limit);
   } catch (err: any) {
     console.warn('[Railway PostgreSQL getMediaUploads Warning]:', err.message);
-    return localCakes.slice(0, limit);
+    return localAll.slice(0, limit);
   }
 }
 

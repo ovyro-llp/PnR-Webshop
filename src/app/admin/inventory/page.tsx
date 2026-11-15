@@ -681,6 +681,7 @@ export default function OutletInventoryPage() {
             description: editingProduct.description,
             image: editingProduct.image,
             isVeg: editingProduct.isVeg,
+            isArchived: editingProduct.isArchived,
             availableOutlets: editingProduct.availableOutlets,
           },
         }),
@@ -1122,6 +1123,18 @@ export default function OutletInventoryPage() {
                         {isSoldOut ? 'Mark In Stock' : '86 Item'}
                       </button>
 
+                      {/* Quick Edit Master & Recipe Shortcut */}
+                      <button
+                        onClick={() => {
+                          const master = masterProducts.find((p) => p.id === item.itemId);
+                          if (master) setEditingProduct(master);
+                        }}
+                        className="p-1.5 text-stone-400 hover:text-stone-900 rounded-lg hover:bg-stone-100 transition cursor-pointer"
+                        title="Edit Master Recipe & Catalog Status"
+                      >
+                        <Edit2 className="w-3.5 h-3.5" />
+                      </button>
+
                       {/* Remove from Outlet shortcut */}
                       <button
                         onClick={() => handleToggleProductForOutlet(item.itemId, false)}
@@ -1312,12 +1325,12 @@ export default function OutletInventoryPage() {
               >
                 <div>
                   <div className="flex items-start gap-3">
-                    <div className="relative w-16 h-16 rounded-2xl overflow-hidden bg-stone-100 shrink-0 border border-stone-200/80">
+                    <div className="relative w-16 h-16 rounded-2xl overflow-hidden bg-stone-50 shrink-0 border border-stone-200/80 p-1 flex items-center justify-center">
                       <Image
                         src={product.image}
                         alt={product.name}
                         fill
-                        className="object-cover"
+                        className="object-contain object-center p-0.5"
                       />
                     </div>
                     <div className="flex-1 min-w-0">
@@ -1388,6 +1401,14 @@ export default function OutletInventoryPage() {
                   )}
 
                   <div className="flex items-center gap-1.5">
+                    <button
+                      onClick={() => setEditingProduct(product)}
+                      className="px-3 py-1 rounded-xl bg-stone-50 hover:bg-stone-100 text-stone-700 text-xs font-medium border border-stone-200 transition flex items-center gap-1 cursor-pointer"
+                    >
+                      <Edit2 className="w-3 h-3 text-stone-500" />
+                      <span>Edit</span>
+                    </button>
+
                     {product.isArchived ? (
                       <button
                         onClick={() => handleRestoreProduct(product.id, product.name)}
@@ -1395,26 +1416,17 @@ export default function OutletInventoryPage() {
                         title="Restore to Active Catalog"
                       >
                         <RotateCcw className="w-3 h-3" />
-                        <span>Restore Product</span>
+                        <span>Restore</span>
                       </button>
                     ) : (
-                      <>
-                        <button
-                          onClick={() => setEditingProduct(product)}
-                          className="px-3 py-1 rounded-xl bg-stone-50 hover:bg-stone-100 text-stone-700 text-xs font-medium border border-stone-200 transition flex items-center gap-1 cursor-pointer"
-                        >
-                          <Edit2 className="w-3 h-3 text-stone-500" />
-                          <span>Edit</span>
-                        </button>
-
-                        <button
-                          onClick={() => handleDeleteProduct(product.id, product.name)}
-                          className="p-1.5 text-stone-400 hover:text-rose-600 hover:bg-rose-50 rounded-xl transition cursor-pointer"
-                          title="Archive Product"
-                        >
-                          <Trash2 className="w-3.5 h-3.5" />
-                        </button>
-                      </>
+                      <button
+                        onClick={() => handleDeleteProduct(product.id, product.name)}
+                        className="px-2.5 py-1 rounded-xl bg-amber-50 hover:bg-amber-100 text-amber-800 text-xs font-medium border border-amber-200 transition flex items-center gap-1 cursor-pointer"
+                        title="Archive Product from Active Catalog"
+                      >
+                        <Archive className="w-3.5 h-3.5 text-amber-600" />
+                        <span>Archive</span>
+                      </button>
                     )}
                   </div>
                 </div>
@@ -1534,12 +1546,12 @@ export default function OutletInventoryPage() {
                           {/* Top Row: Photo, Info, and 1-Tap Toggle */}
                           <div className="flex items-center justify-between gap-3">
                             <div className="flex items-center gap-3 min-w-0">
-                              <div className="relative w-12 h-12 rounded-xl overflow-hidden bg-stone-100 shrink-0 border border-stone-100">
+                              <div className="relative w-12 h-12 rounded-xl overflow-hidden bg-stone-50 shrink-0 border border-stone-200/80 p-0.5 flex items-center justify-center">
                                 <Image
                                   src={product.image}
                                   alt={product.name}
                                   fill
-                                  className="object-cover"
+                                  className="object-contain object-center p-0.5"
                                 />
                               </div>
                               <div className="min-w-0">
@@ -1869,12 +1881,12 @@ export default function OutletInventoryPage() {
                 {/* Preview & Custom URL */}
                 <div className="flex items-center gap-2 pt-1">
                   {newProductForm.image && (
-                    <div className="relative w-10 h-10 rounded-lg overflow-hidden bg-stone-100 border border-stone-200 shrink-0">
+                    <div className="relative w-12 h-12 rounded-xl overflow-hidden bg-stone-50 border border-stone-200 shrink-0 p-1 flex items-center justify-center">
                       {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img
                         src={newProductForm.image}
                         alt="Preview"
-                        className="w-full h-full object-cover"
+                        className="w-full h-full object-contain object-center"
                       />
                     </div>
                   )}
@@ -1977,13 +1989,25 @@ export default function OutletInventoryPage() {
       {editingProduct && (
         <div className="fixed inset-0 z-50 overflow-y-auto bg-black/50 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in">
           <div className="bg-white rounded-3xl border border-stone-200 max-w-lg w-full p-6 shadow-2xl space-y-5 animate-in zoom-in-95 duration-150">
+            {/* Modal Header */}
             <div className="flex items-center justify-between border-b border-stone-100 pb-3">
               <div>
-                <h3 className="font-serif font-bold text-base text-stone-900">
-                  Edit Master Product
-                </h3>
-                <p className="text-xs text-stone-500">
-                  Updates master recipe and cascades pricing across outlets
+                <div className="flex items-center gap-2">
+                  <h3 className="font-serif font-bold text-base text-stone-900">
+                    Edit Master Product
+                  </h3>
+                  {editingProduct.isArchived ? (
+                    <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-amber-100 text-amber-800 border border-amber-300">
+                      Archived
+                    </span>
+                  ) : (
+                    <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-emerald-100 text-emerald-800 border border-emerald-300">
+                      Active
+                    </span>
+                  )}
+                </div>
+                <p className="text-xs text-stone-500 mt-0.5">
+                  Updates master recipe, catalog status, and cascades pricing across outlets
                 </p>
               </div>
               <button
@@ -1993,6 +2017,29 @@ export default function OutletInventoryPage() {
                 <X className="w-5 h-5" />
               </button>
             </div>
+
+            {/* Archived Alert Banner */}
+            {editingProduct.isArchived && (
+              <div className="p-3.5 bg-amber-50/90 border border-amber-200 rounded-2xl flex items-center justify-between gap-3">
+                <div className="flex items-center gap-2 min-w-0">
+                  <Archive className="w-4 h-4 text-amber-700 shrink-0" />
+                  <p className="text-xs text-amber-900 font-medium">
+                    This product is <strong>archived</strong> and hidden from outlet menus.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={async () => {
+                    await handleRestoreProduct(editingProduct.id, editingProduct.name);
+                    setEditingProduct({ ...editingProduct, isArchived: false });
+                  }}
+                  className="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-semibold flex items-center gap-1 transition shrink-0 shadow-xs cursor-pointer"
+                >
+                  <RotateCcw className="w-3 h-3" />
+                  <span>Restore Now</span>
+                </button>
+              </div>
+            )}
 
             <form onSubmit={handleSaveEditProduct} className="space-y-4">
               <div>
@@ -2008,6 +2055,64 @@ export default function OutletInventoryPage() {
                   }
                   className="w-full px-3.5 py-2.5 bg-stone-50 border border-stone-200 rounded-xl text-xs text-stone-900 focus:bg-white focus:outline-none"
                 />
+              </div>
+
+              {/* Lifecycle & Catalog Status Selector */}
+              <div className="p-3.5 bg-stone-50 rounded-2xl border border-stone-200 space-y-2">
+                <div className="flex items-center justify-between">
+                  <label className="text-xs font-semibold text-stone-800 flex items-center gap-1.5">
+                    <Archive className="w-3.5 h-3.5 text-amber-700" />
+                    <span>Catalog Status</span>
+                  </label>
+                  <span className="text-[10px] text-stone-500 font-mono">
+                    Availability across stores
+                  </span>
+                </div>
+                <div className="grid grid-cols-2 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setEditingProduct({ ...editingProduct, isArchived: false })}
+                    className={`p-2.5 rounded-xl border text-left transition flex items-start gap-2 cursor-pointer ${
+                      !editingProduct.isArchived
+                        ? 'bg-white border-emerald-600 ring-1 ring-emerald-600 shadow-2xs'
+                        : 'bg-white/60 border-stone-200 hover:bg-white'
+                    }`}
+                  >
+                    <div className={`w-3.5 h-3.5 rounded-full border mt-0.5 flex items-center justify-center shrink-0 ${
+                      !editingProduct.isArchived ? 'border-emerald-600 bg-emerald-600' : 'border-stone-300'
+                    }`}>
+                      {!editingProduct.isArchived && <span className="w-1.5 h-1.5 rounded-full bg-white" />}
+                    </div>
+                    <div>
+                      <p className="text-xs font-semibold text-stone-900">Active</p>
+                      <p className="text-[10px] text-stone-500 leading-tight mt-0.5">
+                        Visible in stores &amp; customer shop
+                      </p>
+                    </div>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setEditingProduct({ ...editingProduct, isArchived: true })}
+                    className={`p-2.5 rounded-xl border text-left transition flex items-start gap-2 cursor-pointer ${
+                      editingProduct.isArchived
+                        ? 'bg-amber-50/80 border-amber-600 ring-1 ring-amber-600 shadow-2xs'
+                        : 'bg-white/60 border-stone-200 hover:bg-white'
+                    }`}
+                  >
+                    <div className={`w-3.5 h-3.5 rounded-full border mt-0.5 flex items-center justify-center shrink-0 ${
+                      editingProduct.isArchived ? 'border-amber-600 bg-amber-600' : 'border-stone-300'
+                    }`}>
+                      {editingProduct.isArchived && <span className="w-1.5 h-1.5 rounded-full bg-white" />}
+                    </div>
+                    <div>
+                      <p className="text-xs font-semibold text-amber-950">Archived</p>
+                      <p className="text-[10px] text-stone-500 leading-tight mt-0.5">
+                        Hidden from stores &amp; online orders
+                      </p>
+                    </div>
+                  </button>
+                </div>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -2153,12 +2258,12 @@ export default function OutletInventoryPage() {
 
                 <div className="flex items-center gap-2 pt-1">
                   {editingProduct.image && (
-                    <div className="relative w-10 h-10 rounded-lg overflow-hidden bg-stone-100 border border-stone-200 shrink-0">
+                    <div className="relative w-12 h-12 rounded-xl overflow-hidden bg-stone-50 border border-stone-200 shrink-0 p-1 flex items-center justify-center">
                       {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img
                         src={editingProduct.image}
                         alt="Preview"
-                        className="w-full h-full object-cover"
+                        className="w-full h-full object-contain object-center"
                       />
                     </div>
                   )}
@@ -2174,20 +2279,49 @@ export default function OutletInventoryPage() {
                 </div>
               </div>
 
-              <div className="pt-3 border-t border-stone-100 flex items-center justify-end gap-2">
-                <button
-                  type="button"
-                  onClick={() => setEditingProduct(null)}
-                  className="px-4 py-2.5 bg-stone-100 hover:bg-stone-200 text-stone-700 text-xs font-medium rounded-xl transition cursor-pointer"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="px-5 py-2.5 bg-[#1C1917] hover:bg-stone-800 text-white text-xs font-semibold rounded-xl transition shadow-xs cursor-pointer"
-                >
-                  Save Changes
-                </button>
+              {/* Modal Footer with Archive Button */}
+              <div className="pt-3 border-t border-stone-100 flex items-center justify-between gap-2">
+                {editingProduct.isArchived ? (
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      await handleRestoreProduct(editingProduct.id, editingProduct.name);
+                      setEditingProduct(null);
+                    }}
+                    className="px-3.5 py-2.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-300 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition cursor-pointer"
+                  >
+                    <RotateCcw className="w-3.5 h-3.5 text-emerald-700" />
+                    <span>Restore Product</span>
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      await handleDeleteProduct(editingProduct.id, editingProduct.name);
+                      setEditingProduct(null);
+                    }}
+                    className="px-3.5 py-2.5 bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-300 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition cursor-pointer"
+                  >
+                    <Archive className="w-3.5 h-3.5 text-amber-700" />
+                    <span>Archive Product</span>
+                  </button>
+                )}
+
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setEditingProduct(null)}
+                    className="px-4 py-2.5 bg-stone-100 hover:bg-stone-200 text-stone-700 text-xs font-medium rounded-xl transition cursor-pointer"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    className="px-5 py-2.5 bg-[#1C1917] hover:bg-stone-800 text-white text-xs font-semibold rounded-xl transition shadow-xs cursor-pointer"
+                  >
+                    Save Changes
+                  </button>
+                </div>
               </div>
             </form>
           </div>

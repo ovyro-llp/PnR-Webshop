@@ -406,7 +406,7 @@ export default function AdminMediaLibraryPage() {
               >
                 {/* Thumbnail Container */}
                 <div
-                  className="relative aspect-square bg-stone-100 cursor-pointer overflow-hidden"
+                  className="relative aspect-square bg-stone-50 cursor-pointer overflow-hidden p-2 flex items-center justify-center"
                   onClick={() => setInspectAsset(asset)}
                 >
                   {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -414,7 +414,7 @@ export default function AdminMediaLibraryPage() {
                     src={assetUrl}
                     alt={asset.title || asset.filename}
                     loading="lazy"
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                    className="w-full h-full object-contain object-center group-hover:scale-105 transition-transform duration-300"
                   />
 
                   {/* Top Category Badge */}
@@ -558,12 +558,12 @@ export default function AdminMediaLibraryPage() {
 
                 {uploadPreview ? (
                   <div className="space-y-2">
-                    <div className="relative w-32 h-32 rounded-xl overflow-hidden mx-auto border border-stone-200 shadow-xs">
+                    <div className="relative w-32 h-32 rounded-xl overflow-hidden mx-auto border border-stone-200 shadow-xs bg-stone-50 p-1 flex items-center justify-center">
                       {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img
                         src={uploadPreview}
                         alt="Upload Preview"
-                        className="w-full h-full object-cover"
+                        className="w-full h-full object-contain object-center"
                       />
                     </div>
                     <span className="text-[11px] font-semibold text-stone-700 block">
