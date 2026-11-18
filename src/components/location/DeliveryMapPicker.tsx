@@ -3,8 +3,8 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { Outlet } from '@/types';
 import { OUTLETS } from '@/lib/data/mock-data';
-import { calculateDistanceKm } from '@/context/LocationContext';
-import { MapPin, Navigation, Check, Store, Compass, Search, Loader2, Sparkles, Map as MapIcon } from 'lucide-react';
+import { calculateDistanceKm, useLocation } from '@/context/LocationContext';
+import { MapPin, Navigation, Check, Store, Compass, Search, Loader2, Sparkles, Map as MapIcon, AlertCircle } from 'lucide-react';
 
 export interface LocationSelectedData {
   lat: number;
@@ -43,9 +43,16 @@ export function DeliveryMapPicker({
 
   const defaultCenter = initialCoords || { lat: 20.0043996, lng: 73.7579984 }; // Cycle Circle, Nashik
 
+  const { allOutlets } = useLocation();
+
   const [currentCoords, setCurrentCoords] = useState<{ lat: number; lng: number }>(defaultCenter);
   const [closestOutlet, setClosestOutlet] = useState<Outlet>(OUTLETS[0]);
   const [distance, setDistance] = useState<number>(0);
+  const [failoverInfo, setFailoverInfo] = useState<{
+    isFailover: boolean;
+    physicalNearest?: Outlet;
+    failoverMessage?: string;
+  } | null>(null);
   const [isLocating, setIsLocating] = useState(false);
   const [isGeocoding, setIsGeocoding] = useState(false);
   const [detectedAddress, setDetectedAddress] = useState<string>('');
@@ -55,22 +62,29 @@ export function DeliveryMapPicker({
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [activeProvider, setActiveProvider] = useState<'google' | 'leaflet'>('leaflet');
 
-  // Compute nearest outlet from given coords
-  const computeNearest = useCallback((lat: number, lng: number) => {
-    let nearest = OUTLETS[0];
-    let minKm = Infinity;
+  // Compute nearest outlet from given coords, prioritizing active/open outlets
+  const computeNearest = useCallback(
+    (lat: number, lng: number) => {
+      const outlets = allOutlets && allOutlets.length > 0 ? allOutlets : OUTLETS;
+      const openOutlets = outlets.filter((o) => o.isOpen !== false);
+      const candidates = openOutlets.length > 0 ? openOutlets : outlets;
 
-    for (const out of OUTLETS) {
-      if (out.coordinates) {
-        const d = calculateDistanceKm(lat, lng, out.coordinates.lat, out.coordinates.lng);
-        if (d < minKm) {
-          minKm = d;
-          nearest = out;
+      let nearest = candidates[0];
+      let minKm = Infinity;
+
+      for (const out of candidates) {
+        if (out.coordinates) {
+          const d = calculateDistanceKm(lat, lng, out.coordinates.lat, out.coordinates.lng);
+          if (d < minKm) {
+            minKm = d;
+            nearest = out;
+          }
         }
       }
-    }
-    return { nearest, distanceKm: minKm };
-  }, []);
+      return { nearest, distanceKm: minKm };
+    },
+    [allOutlets]
+  );
 
   // Reverse geocode via our unified server endpoint (Google Geocoding -> OSM fallback)
   const reverseGeocode = useCallback(
@@ -86,10 +100,26 @@ export function DeliveryMapPicker({
             setDetectedArea(data.area || 'Cycle Circle / College Road');
             setDetectedPincode(data.pincode || '422005');
 
+            const resolvedOutlet = data.nearestOutlet || closestOutlet;
+            setClosestOutlet(resolvedOutlet);
+            if (typeof data.distanceKm === 'number') {
+              setDistance(data.distanceKm);
+            }
+
+            if (data.isFailover) {
+              setFailoverInfo({
+                isFailover: true,
+                physicalNearest: data.physicalNearestOutlet,
+                failoverMessage: data.failoverMessage,
+              });
+            } else {
+              setFailoverInfo(null);
+            }
+
             const payload: LocationSelectedData = {
               lat,
               lng,
-              nearestOutlet: data.nearestOutlet || closestOutlet,
+              nearestOutlet: resolvedOutlet,
               distanceKm: data.distanceKm ?? distance,
               formattedAddress: data.formattedAddress || data.street || '',
               street: data.street || '',
@@ -560,6 +590,14 @@ export function DeliveryMapPicker({
             <span>•</span>
             <span className="font-mono">{distance} km away</span>
           </div>
+          {failoverInfo?.isFailover && (
+            <div className="mt-1.5 p-2 rounded-lg bg-amber-50 border border-amber-200 text-[11px] text-amber-900 flex items-start gap-1.5 leading-tight">
+              <span className="font-bold shrink-0">⚡ Smart Route:</span>
+              <span>
+                {failoverInfo.physicalNearest?.name.replace("Puffs 'n' Rolls - ", '')} is currently pausing orders. We connected you to our active {closestOutlet.name.replace("Puffs 'n' Rolls - ", '')} kitchen!
+              </span>
+            </div>
+          )}
         </div>
       </div>
 

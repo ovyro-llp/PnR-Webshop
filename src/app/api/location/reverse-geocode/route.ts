@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { OUTLETS } from '@/lib/data/mock-data';
+import { Outlet } from '@/types';
+import { orderStore } from '@/lib/store/order-store';
 
 // Haversine distance calculator
 function calculateDistanceKm(lat1: number, lon1: number, lat2: number, lon2: number): number {
@@ -16,11 +18,29 @@ function calculateDistanceKm(lat1: number, lon1: number, lat2: number, lon2: num
   return Math.round(R * c * 10) / 10;
 }
 
-function findNearestOutlet(lat: number, lng: number) {
-  let nearest = OUTLETS[0];
-  let minKm = Infinity;
+function findNearestOutlet(lat: number, lng: number, candidateOutlets: Outlet[]) {
+  const outlets = candidateOutlets && candidateOutlets.length > 0 ? candidateOutlets : OUTLETS;
 
-  for (const out of OUTLETS) {
+  // 1. Calculate physical nearest
+  let physicalNearest = outlets[0];
+  let physicalMinKm = Infinity;
+  for (const out of outlets) {
+    if (out.coordinates) {
+      const d = calculateDistanceKm(lat, lng, out.coordinates.lat, out.coordinates.lng);
+      if (d < physicalMinKm) {
+        physicalMinKm = d;
+        physicalNearest = out;
+      }
+    }
+  }
+
+  // 2. Filter for outlets that are currently accepting orders (isOpen !== false)
+  const openOutlets = outlets.filter((out) => out.isOpen !== false);
+  const activeCandidates = openOutlets.length > 0 ? openOutlets : outlets;
+
+  let nearest = activeCandidates[0];
+  let minKm = Infinity;
+  for (const out of activeCandidates) {
     if (out.coordinates) {
       const d = calculateDistanceKm(lat, lng, out.coordinates.lat, out.coordinates.lng);
       if (d < minKm) {
@@ -29,7 +49,19 @@ function findNearestOutlet(lat: number, lng: number) {
       }
     }
   }
-  return { nearest, distanceKm: minKm };
+
+  const isFailover = physicalNearest.slug !== nearest.slug && physicalNearest.isOpen === false;
+
+  return {
+    nearest,
+    distanceKm: minKm,
+    physicalNearest,
+    physicalDistanceKm: physicalMinKm,
+    isFailover,
+    failoverMessage: isFailover
+      ? `${physicalNearest.name} kitchen is currently pausing orders. We connected you to our ${nearest.name} kitchen to fulfill your fresh order!`
+      : undefined,
+  };
 }
 
 // Map sublocality / text to standardized Nashik area option
@@ -73,7 +105,9 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const { nearest, distanceKm } = findNearestOutlet(lat, lng);
+    const liveOutlets = (await orderStore.getOutletsAsync()) || orderStore.getOutlets() || OUTLETS;
+    const { nearest, distanceKm, physicalNearest, physicalDistanceKm, isFailover, failoverMessage } =
+      findNearestOutlet(lat, lng, liveOutlets);
 
     const googleApiKey = process.env.GOOGLE_MAPS_API_KEY || process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
 
@@ -122,6 +156,10 @@ export async function GET(request: NextRequest) {
               city: city || 'Nashik',
               nearestOutlet: nearest,
               distanceKm,
+              physicalNearestOutlet: physicalNearest,
+              physicalDistanceKm,
+              isFailover,
+              failoverMessage,
               source: 'google',
             });
           }
@@ -171,6 +209,10 @@ export async function GET(request: NextRequest) {
           city: city,
           nearestOutlet: nearest,
           distanceKm,
+          physicalNearestOutlet: physicalNearest,
+          physicalDistanceKm,
+          isFailover,
+          failoverMessage,
           source: 'nominatim',
         });
       }
@@ -190,6 +232,10 @@ export async function GET(request: NextRequest) {
       city: 'Nashik',
       nearestOutlet: nearest,
       distanceKm,
+      physicalNearestOutlet: physicalNearest,
+      physicalDistanceKm,
+      isFailover,
+      failoverMessage,
       source: 'offline_fallback',
     });
   } catch (error) {

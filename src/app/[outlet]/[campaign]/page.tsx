@@ -7,7 +7,8 @@ import { CartDrawer } from '@/components/cart/CartDrawer';
 import { MobileCartBar } from '@/components/cart/MobileCartBar';
 import { PageTracker } from '@/components/tracking/PageTracker';
 import { isB2COutletAcceptingOrders } from '@/lib/outlet-timing';
-import { Star, ShieldCheck, CheckCircle2, Award, Clock } from 'lucide-react';
+import { Star, ShieldCheck, CheckCircle2, Award, Clock, ArrowRight } from 'lucide-react';
+import Link from 'next/link';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
@@ -34,6 +35,10 @@ export default async function CampaignLandingPage({
   }
 
   const acceptance = isB2COutletAcceptingOrders(outlet, simDate);
+  const allOutlets = orderStore.getOutlets();
+  const alternativeOutlet = allOutlets.find(
+    (o) => o.slug !== outletSlug && isB2COutletAcceptingOrders(o, simDate).isAccepting
+  );
   const campaign = orderStore.getCampaign(outletSlug, campaignSlug);
   const allOutletItems = orderStore.getMenuItems(outletSlug);
 
@@ -61,8 +66,27 @@ export default async function CampaignLandingPage({
 
         {/* Notice if outlet orders are paused or closed */}
         {acceptance.isPausedByAdmin ? (
-          <div className="bg-rose-50 border-b border-rose-200 py-3 px-4 text-center text-xs text-rose-800 font-medium flex items-center justify-center gap-2">
-            <span>⚠️ Our kitchen at {outlet.name} is currently busy or taking a scheduled baking pause. Online orders are temporarily paused.</span>
+          <div className="bg-amber-50 border-b border-amber-200 py-3.5 px-4">
+            <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3">
+              <div className="flex items-center gap-2.5 text-center sm:text-left">
+                <span className="w-2.5 h-2.5 rounded-full bg-rose-500 shrink-0 animate-pulse" />
+                <p className="text-xs sm:text-sm text-amber-950 font-medium">
+                  <strong>{outlet.name}</strong> kitchen is currently pausing online orders.
+                  {alternativeOutlet && (
+                    <span className="text-stone-700"> Our nearby <strong>{alternativeOutlet.name}</strong> kitchen is open &amp; ready to deliver fresh!</span>
+                  )}
+                </p>
+              </div>
+              {alternativeOutlet && (
+                <Link
+                  href={`/${alternativeOutlet.slug}`}
+                  className="inline-flex items-center justify-center gap-1.5 px-4 py-2 bg-stone-900 hover:bg-stone-800 text-white rounded-full text-xs font-bold transition shadow-xs shrink-0 cursor-pointer"
+                >
+                  <span>Order from {alternativeOutlet.name.replace("Puffs 'n' Rolls - ", '')}</span>
+                  <ArrowRight className="w-3.5 h-3.5 text-amber-400" />
+                </Link>
+              )}
+            </div>
           </div>
         ) : !acceptance.timing.isOpen ? (
           <div className="bg-amber-50 border-b border-amber-200 py-3 px-4 text-center text-xs text-amber-950 font-medium flex items-center justify-center gap-2">

@@ -15,11 +15,20 @@ export interface LocationContextType {
   locationError: string | null;
   hasSetLocation: boolean;
   isLocationModalOpen: boolean;
+  failoverNotice: { wasPausedOutlet: Outlet; servingOutlet: Outlet } | null;
+  dismissFailoverNotice: () => void;
+  isOutletPaused: (slug?: string) => boolean;
+  refreshOutlets: () => Promise<Outlet[] | null>;
   setDeliveryAddress: (address: string) => void;
   setDeliveryArea: (area: string) => void;
   setDeliveryCoordinates: (coords: { lat: number; lng: number } | null) => void;
   requestLocation: () => Promise<void>;
-  findNearestOutletFromCoords: (lat: number, lng: number) => { outlet: Outlet; distance: number };
+  findNearestOutletFromCoords: (lat: number, lng: number, candidateOutlets?: Outlet[]) => {
+    outlet: Outlet;
+    distance: number;
+    physicalNearest?: Outlet;
+    isFailover?: boolean;
+  };
   setManualOutlet: (slug: string, address?: string, coords?: { lat: number; lng: number }) => void;
   switchOutlet: (slug: string) => void;
   openLocationModal: () => void;
@@ -58,6 +67,7 @@ const STORAGE_KEY_COORDS = 'pnr_customer_delivery_coords';
 export function LocationProvider({ children }: { children: React.ReactNode }) {
   // Default to Cycle Circle (flagship outlet) if not yet resolved
   const [nearestOutlet, setNearestOutlet] = useState<Outlet>(() => OUTLETS[0]);
+  const [allOutlets, setAllOutlets] = useState<Outlet[]>(OUTLETS);
   const [distanceKm, setDistanceKm] = useState<number | null>(null);
   const [deliveryAddress, setDeliveryAddressState] = useState('');
   const [deliveryArea, setDeliveryAreaState] = useState('');
@@ -69,8 +79,106 @@ export function LocationProvider({ children }: { children: React.ReactNode }) {
   const [locationError, setLocationError] = useState<string | null>(null);
   const [hasSetLocation, setHasSetLocation] = useState(false);
   const [isLocationModalOpen, setIsLocationModalOpen] = useState(false);
+  const [failoverNotice, setFailoverNotice] = useState<{
+    wasPausedOutlet: Outlet;
+    servingOutlet: Outlet;
+  } | null>(null);
 
-  // Restore stored outlet, coordinates and address on mount
+  const dismissFailoverNotice = useCallback(() => {
+    setFailoverNotice(null);
+  }, []);
+
+  const refreshOutlets = useCallback(async (): Promise<Outlet[] | null> => {
+    try {
+      const res = await fetch('/api/outlets');
+      if (res.ok) {
+        const data = await res.json();
+        if (data.success && Array.isArray(data.outlets) && data.outlets.length > 0) {
+          setAllOutlets(data.outlets);
+          return data.outlets;
+        }
+      }
+    } catch (e) {
+      console.warn('Failed to load live outlets in LocationProvider', e);
+    }
+    return null;
+  }, []);
+
+  const isOutletPaused = useCallback((slug?: string): boolean => {
+    if (!slug) return false;
+    const found = allOutlets.find((o) => o.slug === slug);
+    return found ? found.isOpen === false : false;
+  }, [allOutlets]);
+
+  const findNearestOutletFromCoords = useCallback(
+    (lat: number, lng: number, candidateOutlets?: Outlet[]) => {
+      const outlets = candidateOutlets || allOutlets || OUTLETS;
+
+      // 1. Compute physical closest
+      let physicalNearest = outlets[0] || OUTLETS[0];
+      let minPhysicalDistance = Infinity;
+      for (const outlet of outlets) {
+        if (outlet.coordinates) {
+          const dist = calculateDistanceKm(lat, lng, outlet.coordinates.lat, outlet.coordinates.lng);
+          if (dist < minPhysicalDistance) {
+            minPhysicalDistance = dist;
+            physicalNearest = outlet;
+          }
+        }
+      }
+
+      // 2. Compute closest among active/open outlets
+      const openOutlets = outlets.filter((o) => o.isOpen !== false);
+      const activeTargets = openOutlets.length > 0 ? openOutlets : outlets;
+
+      let closestOutlet = activeTargets[0] || OUTLETS[0];
+      let minDistance = Infinity;
+
+      for (const outlet of activeTargets) {
+        if (outlet.coordinates) {
+          const dist = calculateDistanceKm(lat, lng, outlet.coordinates.lat, outlet.coordinates.lng);
+          if (dist < minDistance) {
+            minDistance = dist;
+            closestOutlet = outlet;
+          }
+        }
+      }
+
+      const isFailover = physicalNearest.slug !== closestOutlet.slug && physicalNearest.isOpen === false;
+
+      if (isFailover) {
+        setFailoverNotice({
+          wasPausedOutlet: physicalNearest,
+          servingOutlet: closestOutlet,
+        });
+      } else {
+        setFailoverNotice(null);
+      }
+
+      setNearestOutlet(closestOutlet);
+      setDistanceKm(minDistance);
+      setHasSetLocation(true);
+      setLocationError(null);
+      setDeliveryCoordinatesState({ lat, lng });
+
+      try {
+        localStorage.setItem(STORAGE_KEY_OUTLET, closestOutlet.slug);
+        localStorage.setItem(STORAGE_KEY_DISTANCE, minDistance.toString());
+        localStorage.setItem(STORAGE_KEY_COORDS, JSON.stringify({ lat, lng }));
+        localStorage.setItem(STORAGE_KEY_PROMPTED, 'true');
+      } catch {}
+
+      return {
+        outlet: closestOutlet,
+        distance: minDistance,
+        physicalNearest,
+        isFailover,
+      };
+    },
+    [allOutlets]
+  );
+
+  // Restore stored outlet, coordinates and address on mount, then sync live outlet status
   useEffect(() => {
     try {
       const storedSlug = localStorage.getItem(STORAGE_KEY_OUTLET);
@@ -102,18 +210,7 @@ export function LocationProvider({ children }: { children: React.ReactNode }) {
           if (found) setNearestOutlet(found);
         } else if (parsedCoords) {
           // Recompute closest outlet from saved coordinates
-          let closest = OUTLETS[0];
-          let minD = Infinity;
-          for (const o of OUTLETS) {
-            if (o.coordinates) {
-              const d = calculateDistanceKm(parsedCoords.lat, parsedCoords.lng, o.coordinates.lat, o.coordinates.lng);
-              if (d < minD) {
-                minD = d;
-                closest = o;
-              }
-            }
-          }
-          setNearestOutlet(closest);
+          findNearestOutletFromCoords(parsedCoords.lat, parsedCoords.lng);
         }
         if (storedDist) setDistanceKm(parseFloat(storedDist));
       } else {
@@ -136,7 +233,30 @@ export function LocationProvider({ children }: { children: React.ReactNode }) {
     } catch (e) {
       console.warn('Failed to load location preference', e);
     }
-  }, []);
+
+    // Dynamic failover check: fetch live outlets and re-route if saved outlet is paused
+    refreshOutlets().then((live) => {
+      if (!live || live.length === 0) return;
+      const storedSlug = localStorage.getItem(STORAGE_KEY_OUTLET);
+      const storedCoords = localStorage.getItem(STORAGE_KEY_COORDS);
+      let parsedCoords: { lat: number; lng: number } | null = null;
+      if (storedCoords) {
+        try {
+          parsedCoords = JSON.parse(storedCoords);
+        } catch {}
+      }
+
+      if (storedSlug) {
+        const matchingOutlet = live.find((o) => o.slug === storedSlug);
+        // If stored outlet was paused by kitchen, auto-failover to closest open outlet!
+        if (matchingOutlet && matchingOutlet.isOpen === false && parsedCoords) {
+          findNearestOutletFromCoords(parsedCoords.lat, parsedCoords.lng, live);
+        } else if (matchingOutlet) {
+          setNearestOutlet(matchingOutlet);
+        }
+      }
+    });
+  }, [findNearestOutletFromCoords, refreshOutlets]);
 
   const setDeliveryAddress = useCallback((address: string) => {
     setDeliveryAddressState(address);
@@ -161,41 +281,6 @@ export function LocationProvider({ children }: { children: React.ReactNode }) {
         localStorage.removeItem(STORAGE_KEY_COORDS);
       }
     } catch {}
-  }, []);
-
-  const findNearestOutletFromCoords = useCallback((lat: number, lng: number) => {
-    let closestOutlet = OUTLETS[0];
-    let minDistance = Infinity;
-
-    for (const outlet of OUTLETS) {
-      if (outlet.coordinates) {
-        const dist = calculateDistanceKm(
-          lat,
-          lng,
-          outlet.coordinates.lat,
-          outlet.coordinates.lng
-        );
-        if (dist < minDistance) {
-          minDistance = dist;
-          closestOutlet = outlet;
-        }
-      }
-    }
-
-    setNearestOutlet(closestOutlet);
-    setDistanceKm(minDistance);
-    setHasSetLocation(true);
-    setLocationError(null);
-    setDeliveryCoordinatesState({ lat, lng });
-
-    try {
-      localStorage.setItem(STORAGE_KEY_OUTLET, closestOutlet.slug);
-      localStorage.setItem(STORAGE_KEY_DISTANCE, minDistance.toString());
-      localStorage.setItem(STORAGE_KEY_COORDS, JSON.stringify({ lat, lng }));
-      localStorage.setItem(STORAGE_KEY_PROMPTED, 'true');
-    } catch {}
-
-    return { outlet: closestOutlet, distance: minDistance };
   }, []);
 
   const requestLocation = useCallback(async () => {
@@ -238,7 +323,8 @@ export function LocationProvider({ children }: { children: React.ReactNode }) {
   }, [findNearestOutletFromCoords]);
 
   const setManualOutlet = useCallback((slug: string, address?: string, coords?: { lat: number; lng: number }) => {
-    const found = OUTLETS.find((o) => o.slug === slug);
+    const list = allOutlets && allOutlets.length > 0 ? allOutlets : OUTLETS;
+    const found = list.find((o) => o.slug === slug);
     if (found) {
       setNearestOutlet(found);
       setHasSetLocation(true);
@@ -282,10 +368,11 @@ export function LocationProvider({ children }: { children: React.ReactNode }) {
         localStorage.setItem(STORAGE_KEY_PROMPTED, 'true');
       } catch {}
     }
-  }, [deliveryCoordinates]);
+  }, [allOutlets, deliveryCoordinates]);
 
   const switchOutlet = useCallback((slug: string) => {
-    const found = OUTLETS.find((o) => o.slug === slug);
+    const list = allOutlets && allOutlets.length > 0 ? allOutlets : OUTLETS;
+    const found = list.find((o) => o.slug === slug);
     if (found) {
       setNearestOutlet(found);
       try {
@@ -305,7 +392,7 @@ export function LocationProvider({ children }: { children: React.ReactNode }) {
         } catch {}
       }
     }
-  }, [deliveryCoordinates]);
+  }, [allOutlets, deliveryCoordinates]);
 
   const openLocationModal = useCallback(() => setIsLocationModalOpen(true), []);
   const closeLocationModal = useCallback(() => {
@@ -319,7 +406,7 @@ export function LocationProvider({ children }: { children: React.ReactNode }) {
     <LocationContext.Provider
       value={{
         nearestOutlet,
-        allOutlets: OUTLETS,
+        allOutlets,
         distanceKm,
         deliveryAddress,
         deliveryArea,
@@ -331,6 +418,10 @@ export function LocationProvider({ children }: { children: React.ReactNode }) {
         locationError,
         hasSetLocation,
         isLocationModalOpen,
+        failoverNotice,
+        dismissFailoverNotice,
+        isOutletPaused,
+        refreshOutlets,
         requestLocation,
         findNearestOutletFromCoords,
         setManualOutlet,

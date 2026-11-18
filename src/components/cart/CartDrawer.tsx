@@ -89,6 +89,9 @@ export function CartDrawer({ outletSlug, campaignSlug }: CartDrawerProps) {
   const effectiveOutletSlug = cartOutletSlug || outletSlug || nearestOutlet?.slug || 'cycle-circle';
   const currentOutlet = allOutlets.find((o) => o.slug === effectiveOutletSlug) || nearestOutlet;
   const outletStatus = useOutletAcceptance(currentOutlet, simDate);
+  const openAlternativeOutlet = allOutlets.find(
+    (o) => o.slug !== effectiveOutletSlug && o.isOpen !== false
+  );
   const isCustomerLoggedIn = Boolean(user && isCustomer);
 
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -1008,6 +1011,20 @@ export function CartDrawer({ outletSlug, campaignSlug }: CartDrawerProps) {
                         : `Closed • Opens ${outletStatus.timing.nextOpenTimeText}`}
                     </span>
                   </button>
+
+                  {outletStatus.isPausedByAdmin && openAlternativeOutlet && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        switchOutlet(openAlternativeOutlet.slug);
+                        setCartOutletSlug(openAlternativeOutlet.slug);
+                      }}
+                      className="w-full py-3 bg-stone-900 hover:bg-stone-800 text-white rounded-full font-bold text-xs uppercase tracking-wider transition flex items-center justify-center gap-1.5 cursor-pointer shadow-md mt-1"
+                    >
+                      <Store className="w-4 h-4 text-amber-400" />
+                      <span>Switch to {openAlternativeOutlet.name.replace("Puffs 'n' Rolls - ", '')} &amp; Order</span>
+                    </button>
+                  )}
                 </div>
               ) : !customer.coordinates ? (
                 <>

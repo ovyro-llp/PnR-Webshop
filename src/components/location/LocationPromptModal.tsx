@@ -79,9 +79,37 @@ export function LocationPromptModal() {
 
   const [formError, setFormError] = useState<string | null>(null);
 
-  // Compute closest outlet based on current staged coordinates
+  // Compute closest outlet based on current staged coordinates, prioritizing active/open kitchens
   const closestOutlet = useMemo(() => {
-    if (!stagedCoords) return nearestOutlet || allOutlets[0];
+    if (!stagedCoords) {
+      const openCandidates = allOutlets.filter((o) => o.isOpen !== false);
+      return openCandidates[0] || nearestOutlet || allOutlets[0];
+    }
+
+    const openCandidates = allOutlets.filter((o) => o.isOpen !== false);
+    const targetCandidates = openCandidates.length > 0 ? openCandidates : allOutlets;
+
+    let best = targetCandidates[0];
+    let minD = Infinity;
+    for (const o of targetCandidates) {
+      if (o.coordinates) {
+        const d = calculateDistanceKm(
+          stagedCoords.lat,
+          stagedCoords.lng,
+          o.coordinates.lat,
+          o.coordinates.lng
+        );
+        if (d < minD) {
+          minD = d;
+          best = o;
+        }
+      }
+    }
+    return best;
+  }, [stagedCoords, allOutlets, nearestOutlet]);
+
+  const physicalClosestOutlet = useMemo(() => {
+    if (!stagedCoords) return null;
     let best = allOutlets[0];
     let minD = Infinity;
     for (const o of allOutlets) {
@@ -99,7 +127,13 @@ export function LocationPromptModal() {
       }
     }
     return best;
-  }, [stagedCoords, allOutlets, nearestOutlet]);
+  }, [stagedCoords, allOutlets]);
+
+  const isFailover = Boolean(
+    physicalClosestOutlet &&
+    physicalClosestOutlet.slug !== closestOutlet.slug &&
+    physicalClosestOutlet.isOpen === false
+  );
 
   const closestDistanceKm = useMemo(() => {
     if (!stagedCoords || !closestOutlet.coordinates) return null;
@@ -310,6 +344,21 @@ export function LocationPromptModal() {
               />
             </div>
 
+            {/* Smart Failover Alert */}
+            {isFailover && physicalClosestOutlet && (
+              <div className="p-3 rounded-2xl bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200 text-amber-950 text-xs flex items-start gap-2 shadow-xs">
+                <Store className="w-4 h-4 text-amber-700 shrink-0 mt-0.5" />
+                <div className="flex-1">
+                  <p className="font-bold text-[11px] text-amber-900">
+                    Smart Kitchen Failover Active
+                  </p>
+                  <p className="text-[11px] text-amber-800 leading-relaxed mt-0.5">
+                    Our {physicalClosestOutlet.name.replace("Puffs 'n' Rolls - ", '')} branch is currently taking a baking pause. We automatically connected you to our active <strong className="text-stone-900">{closestOutlet.name.replace("Puffs 'n' Rolls - ", '')}</strong> kitchen so your order can be delivered hot &amp; fresh!
+                  </p>
+                </div>
+              </div>
+            )}
+
             {/* 2. Auto-filled Address Fields (Editable by customer) */}
             <div className="bg-white rounded-2xl border border-stone-200 p-3.5 space-y-3 shadow-xs">
               <div className="flex flex-wrap items-center justify-between gap-1.5">
@@ -455,6 +504,8 @@ export function LocationPromptModal() {
                 Select Specific Bakery Kitchen To Order From:
               </p>
               {OUTLET_DIRECT_OPTIONS.map((loc) => {
+                const liveOutlet = allOutlets.find((o) => o.slug === loc.slug);
+                const isPaused = liveOutlet ? liveOutlet.isOpen === false : false;
                 const currentSlug = stagedOutlet?.slug || nearestOutlet?.slug;
                 const isSelected = currentSlug === loc.slug;
                 const isClosest = closestOutlet.slug === loc.slug;
@@ -465,6 +516,8 @@ export function LocationPromptModal() {
                     className={`w-full p-3 rounded-2xl border text-left transition flex items-center justify-between cursor-pointer ${
                       isSelected
                         ? 'bg-white border-stone-900 ring-2 ring-stone-900/10 shadow-xs'
+                        : isPaused
+                        ? 'bg-stone-50/80 hover:bg-stone-100/80 border-stone-200'
                         : 'bg-white/70 hover:bg-white border-stone-200 hover:border-stone-300'
                     }`}
                   >
@@ -473,18 +526,31 @@ export function LocationPromptModal() {
                         className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 mt-0.5 ${
                           isSelected
                             ? 'bg-stone-900 text-amber-400'
+                            : isPaused
+                            ? 'bg-rose-100 text-rose-700'
                             : 'bg-stone-100 text-stone-500'
                         }`}
                       >
                         <Store className="w-4 h-4" />
                       </div>
                       <div className="min-w-0">
-                        <div className="flex items-center gap-2">
+                        <div className="flex flex-wrap items-center gap-1.5">
                           <p className="font-semibold text-xs text-stone-900 truncate">
                             Puffs &apos;n&apos; Rolls - {loc.name}
                           </p>
+                          {isPaused ? (
+                            <span className="text-[9px] uppercase tracking-wider font-extrabold px-1.5 py-0.2 rounded-md bg-rose-100 text-rose-800 shrink-0 border border-rose-200 flex items-center gap-1">
+                              <span className="w-1.5 h-1.5 rounded-full bg-rose-600" />
+                              <span>Orders Paused</span>
+                            </span>
+                          ) : (
+                            <span className="text-[9px] uppercase tracking-wider font-extrabold px-1.5 py-0.2 rounded-md bg-emerald-50 text-emerald-800 shrink-0 border border-emerald-200 flex items-center gap-1">
+                              <span className="w-1.5 h-1.5 rounded-full bg-emerald-600 animate-pulse" />
+                              <span>Baking Fresh</span>
+                            </span>
+                          )}
                           {isClosest && (
-                            <span className="text-[9px] uppercase tracking-wider font-extrabold px-1.5 py-0.2 rounded-md bg-emerald-100 text-emerald-800 shrink-0 border border-emerald-300">
+                            <span className="text-[9px] uppercase tracking-wider font-extrabold px-1.5 py-0.2 rounded-md bg-stone-900 text-amber-400 shrink-0 border border-stone-800">
                               ★ Recommended
                             </span>
                           )}
