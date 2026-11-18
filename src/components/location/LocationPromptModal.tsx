@@ -77,6 +77,8 @@ export function LocationPromptModal() {
   const [stagedOutlet, setStagedOutlet] = useState<Outlet | null>(nearestOutlet || null);
   const [hasUserManuallySelectedOutlet, setHasUserManuallySelectedOutlet] = useState(false);
 
+  const [formError, setFormError] = useState<string | null>(null);
+
   // Compute closest outlet based on current staged coordinates
   const closestOutlet = useMemo(() => {
     if (!stagedCoords) return nearestOutlet || allOutlets[0];
@@ -155,54 +157,80 @@ export function LocationPromptModal() {
 
   // Final confirmation to lock in address, coordinates, and chosen outlet
   const handleFinalConfirm = () => {
-    const finalAddress = addressInput.trim() || 'Nashik Doorstep Location';
-    const outletToUse = stagedOutlet || nearestOutlet;
+    setFormError(null);
+    const coordsToUse = stagedCoords || deliveryCoordinates;
+    if (!coordsToUse || typeof coordsToUse.lat !== 'number' || typeof coordsToUse.lng !== 'number') {
+      setFormError('📍 Please pinpoint your exact delivery doorstep on the map first.');
+      return;
+    }
+
+    const finalAddress = addressInput.trim();
+    if (!finalAddress || finalAddress.length < 3) {
+      setFormError('Please enter your flat no., building or street details for delivery.');
+      return;
+    }
+
+    const outletToUse = stagedOutlet || closestOutlet || nearestOutlet;
     const finalArea = outletToUse.area || 'Nashik City';
 
     setDeliveryAddress(finalAddress);
     setDeliveryArea(finalArea);
     setCartOutletSlug(outletToUse.slug);
-
-    if (stagedCoords) {
-      setDeliveryCoordinates(stagedCoords);
-      setManualOutlet(outletToUse.slug, finalAddress, stagedCoords);
-    } else {
-      setManualOutlet(outletToUse.slug, finalAddress);
-    }
+    setDeliveryCoordinates(coordsToUse);
+    setManualOutlet(outletToUse.slug, finalAddress, coordsToUse);
 
     closeLocationModal();
   };
 
   const handleSelectOutletDirect = (slug: string) => {
+    setFormError(null);
     const found = allOutlets.find((o) => o.slug === slug);
     if (!found) return;
 
     setStagedOutlet(found);
-    setCartOutletSlug(found.slug);
-    const finalAddress = addressInput.trim() || deliveryAddress || found.name;
-    setDeliveryAddress(finalAddress);
-    setDeliveryArea(found.area);
+    setHasUserManuallySelectedOutlet(true);
 
-    if (stagedCoords || deliveryCoordinates) {
-      const coords = stagedCoords || deliveryCoordinates!;
+    const coords = stagedCoords || deliveryCoordinates;
+    if (coords) {
+      setCartOutletSlug(found.slug);
+      const finalAddress = addressInput.trim() || deliveryAddress || found.name;
+      setDeliveryAddress(finalAddress);
+      setDeliveryArea(found.area);
       setManualOutlet(found.slug, finalAddress, coords);
+      closeLocationModal();
     } else {
-      setManualOutlet(found.slug, finalAddress);
+      // Must pinpoint doorstep on map to establish delivery coordinates
+      setActiveTab('MAP');
+      setFormError(`Selected ${found.name.replace("Puffs 'n' Rolls - ", '')}. Please pinpoint your delivery doorstep on the map to confirm.`);
     }
-    closeLocationModal();
   };
 
+  const hasExistingCoordinates = Boolean(
+    deliveryCoordinates && typeof deliveryCoordinates.lat === 'number' && typeof deliveryCoordinates.lng === 'number'
+  );
+
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/60 backdrop-blur-xs animate-in fade-in duration-200 overscroll-contain">
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/60 backdrop-blur-xs animate-in fade-in duration-200 overscroll-contain"
+      onClick={(e) => {
+        // Only allow dismissing on backdrop click if customer already has saved coordinates
+        if (e.target === e.currentTarget && hasExistingCoordinates) {
+          closeLocationModal();
+        }
+      }}
+    >
       <div className="bg-[#FAF8F5] border border-stone-200 rounded-3xl max-w-lg w-full p-5 sm:p-7 relative shadow-2xl space-y-4 max-h-[94vh] overflow-y-auto overscroll-contain">
-        {/* Close Button */}
-        <button
-          onClick={closeLocationModal}
-          className="absolute top-4 right-4 text-stone-400 hover:text-stone-800 p-1.5 rounded-full hover:bg-stone-200/50 transition cursor-pointer"
-          aria-label="Close"
-        >
-          <X className="w-5 h-5" />
-        </button>
+        {/* Close Button - ONLY visible if customer already has a saved delivery address */}
+        {hasExistingCoordinates && (
+          <button
+            onClick={closeLocationModal}
+            className="absolute top-4 right-4 text-stone-400 hover:text-stone-800 p-1.5 rounded-full hover:bg-stone-200/50 transition cursor-pointer"
+            aria-label="Close"
+            title="Close"
+          >
+            <X className="w-5 h-5" />
+          </button>
+        )}
 
         {/* Brand Header */}
         <div className="text-center space-y-1">
@@ -227,7 +255,14 @@ export function LocationPromptModal() {
           </p>
         </div>
 
-        {/* Error Alert */}
+        {/* Error Alerts */}
+        {formError && (
+          <div className="bg-amber-50 border border-amber-200 rounded-2xl p-2.5 flex items-start gap-2.5 text-xs text-amber-900 animate-in fade-in">
+            <AlertCircle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+            <p className="leading-snug font-medium">{formError}</p>
+          </div>
+        )}
+
         {locationError && (
           <div className="bg-rose-50 border border-rose-200 rounded-2xl p-2.5 flex items-start gap-2.5 text-xs text-rose-800">
             <AlertCircle className="w-4 h-4 text-rose-600 shrink-0 mt-0.5" />

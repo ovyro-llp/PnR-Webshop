@@ -511,15 +511,23 @@ export async function dispatchToMangwale(
     ? 'test'
     : 'live';
 
+  if (
+    !order.customer.coordinates ||
+    typeof order.customer.coordinates.lat !== 'number' ||
+    typeof order.customer.coordinates.lng !== 'number'
+  ) {
+    return {
+      success: false,
+      taskId: '',
+      trackingUrl: '',
+      estimatedDeliveryMinutes: 0,
+      message: 'Delivery coordinates missing from order. Dropoff location required for Mangwale rider dispatch.',
+    };
+  }
+
   const outletCoords = outlet.coordinates || { lat: 20.0043996, lng: 73.7579984 };
-  const dropLat =
-    order.customer.coordinates?.lat && typeof order.customer.coordinates.lat === 'number'
-      ? order.customer.coordinates.lat
-      : outletCoords.lat;
-  const dropLng =
-    order.customer.coordinates?.lng && typeof order.customer.coordinates.lng === 'number'
-      ? order.customer.coordinates.lng
-      : outletCoords.lng;
+  const dropLat = order.customer.coordinates.lat;
+  const dropLng = order.customer.coordinates.lng;
 
   const payload = {
     external_order_id: order.orderNumber,

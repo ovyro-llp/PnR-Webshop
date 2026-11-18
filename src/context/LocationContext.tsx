@@ -78,39 +78,60 @@ export function LocationProvider({ children }: { children: React.ReactNode }) {
       const storedAddr = localStorage.getItem(STORAGE_KEY_ADDRESS);
       const storedArea = localStorage.getItem(STORAGE_KEY_AREA);
       const storedCoords = localStorage.getItem(STORAGE_KEY_COORDS);
-      const prompted = localStorage.getItem(STORAGE_KEY_PROMPTED);
 
       if (storedAddr) setDeliveryAddressState(storedAddr);
       if (storedArea) setDeliveryAreaState(storedArea);
+
+      let parsedCoords: { lat: number; lng: number } | null = null;
       if (storedCoords) {
         try {
-          setDeliveryCoordinatesState(JSON.parse(storedCoords));
+          const parsed = JSON.parse(storedCoords);
+          if (parsed && typeof parsed.lat === 'number' && typeof parsed.lng === 'number') {
+            parsedCoords = parsed;
+            setDeliveryCoordinatesState(parsed);
+          }
         } catch {}
       }
 
-      if (storedSlug) {
-        const found = OUTLETS.find((o) => o.slug === storedSlug);
-        if (found) {
-          setNearestOutlet(found);
-          setHasSetLocation(true);
-          if (storedDist) setDistanceKm(parseFloat(storedDist));
-          return;
-        }
-      }
+      const hasValidCoords = Boolean(parsedCoords);
 
-      // If user hasn't set location or hasn't been prompted yet, open prompt on storefront
-      if (!prompted) {
+      if (hasValidCoords) {
+        setHasSetLocation(true);
+        if (storedSlug) {
+          const found = OUTLETS.find((o) => o.slug === storedSlug);
+          if (found) setNearestOutlet(found);
+        } else if (parsedCoords) {
+          // Recompute closest outlet from saved coordinates
+          let closest = OUTLETS[0];
+          let minD = Infinity;
+          for (const o of OUTLETS) {
+            if (o.coordinates) {
+              const d = calculateDistanceKm(parsedCoords.lat, parsedCoords.lng, o.coordinates.lat, o.coordinates.lng);
+              if (d < minD) {
+                minD = d;
+                closest = o;
+              }
+            }
+          }
+          setNearestOutlet(closest);
+        }
+        if (storedDist) setDistanceKm(parseFloat(storedDist));
+      } else {
+        // MANDATORY GATE: No valid doorstep coordinates found
+        setHasSetLocation(false);
         if (typeof window !== 'undefined') {
           const path = window.location.pathname;
-          if (path.startsWith('/admin') || path.startsWith('/login') || path.startsWith('/b2b')) {
-            return;
+          const isExcluded =
+            path.startsWith('/admin') ||
+            path.startsWith('/login') ||
+            path.startsWith('/b2b') ||
+            path.startsWith('/privacy') ||
+            path.startsWith('/terms');
+          if (!isExcluded) {
+            // Immediately open location modal (0ms) so customer cannot browse or order without coordinates
+            setIsLocationModalOpen(true);
           }
         }
-        // Auto-open modal after a short graceful delay (800ms)
-        const timer = setTimeout(() => {
-          setIsLocationModalOpen(true);
-        }, 800);
-        return () => clearTimeout(timer);
       }
     } catch (e) {
       console.warn('Failed to load location preference', e);
@@ -288,11 +309,11 @@ export function LocationProvider({ children }: { children: React.ReactNode }) {
 
   const openLocationModal = useCallback(() => setIsLocationModalOpen(true), []);
   const closeLocationModal = useCallback(() => {
-    setIsLocationModalOpen(false);
-    try {
-      localStorage.setItem(STORAGE_KEY_PROMPTED, 'true');
-    } catch {}
-  }, []);
+    // Only allow dismissing if customer already has confirmed delivery coordinates
+    if (deliveryCoordinates && typeof deliveryCoordinates.lat === 'number') {
+      setIsLocationModalOpen(false);
+    }
+  }, [deliveryCoordinates]);
 
   return (
     <LocationContext.Provider

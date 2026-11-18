@@ -71,6 +71,21 @@ export const paymentService = {
       throw new Error(acceptance.reason || `Orders cannot be placed for ${outlet.name} at this time.`);
     }
 
+    // MANDATORY GATE: Validate customer delivery coordinates
+    if (
+      !customer?.coordinates ||
+      typeof customer.coordinates.lat !== 'number' ||
+      typeof customer.coordinates.lng !== 'number' ||
+      isNaN(customer.coordinates.lat) ||
+      isNaN(customer.coordinates.lng)
+    ) {
+      throw new Error('Mandatory delivery coordinates missing. Please pinpoint your exact delivery doorstep on the map before proceeding.');
+    }
+
+    if (!customer?.address || customer.address.trim().length < 3) {
+      throw new Error('Delivery address details (flat, building, street) are required.');
+    }
+
     // Generate unique receipt and notes
     const receipt = `rcpt_${normalizedSlug}_${Date.now()}`;
     const notes: Record<string, string> = {

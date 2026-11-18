@@ -24,6 +24,19 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    if (
+      !customer?.coordinates ||
+      typeof customer.coordinates.lat !== 'number' ||
+      typeof customer.coordinates.lng !== 'number' ||
+      isNaN(customer.coordinates.lat) ||
+      isNaN(customer.coordinates.lng)
+    ) {
+      return NextResponse.json(
+        { success: false, message: 'Mandatory delivery coordinates missing. Please pinpoint your doorstep on the map.' },
+        { status: 400 }
+      );
+    }
+
     if (paymentMethod === 'COD') {
       return NextResponse.json(
         { success: false, message: 'Cash on Delivery (COD) is not accepted. All orders must be prepaid online via UPI or card.' },

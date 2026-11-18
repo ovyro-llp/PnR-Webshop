@@ -217,7 +217,11 @@ export function CartDrawer({ outletSlug, campaignSlug }: CartDrawerProps) {
     }
 
     // 1. Resolve Delivery Address & Locality
-    const resolvedAddress = customer.address.trim() || deliveryAddress?.trim() || 'Nashik Doorstep Location';
+    const resolvedAddress = customer.address.trim() || deliveryAddress?.trim();
+    if (!resolvedAddress || resolvedAddress.length < 3) {
+      setSubmitError('📍 Please enter your building, flat no., or street details for delivery.');
+      return;
+    }
     const resolvedArea = customer.area.trim() || deliveryArea?.trim() || nearestOutlet?.area || 'Nashik City';
     const resolvedPincode = customer.pincode.trim() || '422005';
     const cleanPassword = authPassword.trim();
