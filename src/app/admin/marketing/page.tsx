@@ -1049,7 +1049,7 @@ export default function MarketingViewPage() {
                     <span>Map-First Gating &amp; Razorpay Magic Checkout</span>
                   </div>
                   <p className="text-[11px] text-amber-900 leading-relaxed">
-                    Storefront strictly enforces customer map pinpointing before opening Magic Checkout. This guarantees exact doorstep GPS coordinates for Mangwale 30–45 min rider delivery before 1-click payment triggers.
+                    Storefront strictly enforces customer map pinpointing before opening Magic Checkout. This guarantees exact doorstep GPS coordinates for Mangwale express rider delivery before 1-click payment triggers.
                   </p>
                 </div>
               </div>

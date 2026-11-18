@@ -204,7 +204,7 @@ export default function HomePage() {
               </h1>
             </div>
             <p className="text-xs text-stone-500 font-medium">
-              Handcrafted daily in small batches • Dispatched in 25 mins
+              Handcrafted daily in small batches • Express Delivery across Nashik
             </p>
           </div>
 

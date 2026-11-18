@@ -651,7 +651,7 @@ export function CartDrawer({ outletSlug, campaignSlug }: CartDrawerProps) {
                       Express Doorstep Delivery
                     </p>
                     <p className="text-[11px] text-stone-500 mt-0.5">
-                      Dispatched straight from our nearest ovens to your address in 25 minutes.
+                      Dispatched straight from our nearest ovens to your address via express delivery.
                     </p>
                   </div>
                 </div>
@@ -687,7 +687,7 @@ export function CartDrawer({ outletSlug, campaignSlug }: CartDrawerProps) {
                                 </span>
                               </p>
                               <p className="text-[11px] text-amber-900/90 leading-snug mt-0.5">
-                                Pinpoint your exact building on the map for seamless 25–40m express doorstep delivery.
+                                Pinpoint your exact building on the map for seamless express doorstep delivery.
                               </p>
                             </div>
                           </div>
@@ -1046,7 +1046,7 @@ export function CartDrawer({ outletSlug, campaignSlug }: CartDrawerProps) {
                   </div>
                   <div className="text-[10px] text-emerald-700 font-medium pl-0.5 flex items-center justify-between">
                     <span>⚡ 100% Free Doorstep Delivery</span>
-                    <span>~{deliveryQuote?.estimatedMinutes || 30}m Express</span>
+                    <span>Express Delivery</span>
                   </div>
                   <div className="pt-2 border-t border-stone-100 flex justify-between font-bold text-sm text-stone-900">
                     <span>Total Amount</span>
@@ -1134,7 +1134,7 @@ export function CartDrawer({ outletSlug, campaignSlug }: CartDrawerProps) {
                     <ArrowRight className="w-3.5 h-3.5" />
                   </button>
                   <p className="text-[10px] text-amber-900 font-semibold text-center flex items-center justify-center gap-1">
-                    <span>* Exact map pinpoint ensures guaranteed 25–40m doorstep bakery dispatch</span>
+                    <span>* Exact map pinpoint ensures seamless express doorstep bakery delivery</span>
                   </p>
                 </>
               ) : (
@@ -1187,7 +1187,7 @@ export function CartDrawer({ outletSlug, campaignSlug }: CartDrawerProps) {
             <div className="p-2.5 bg-amber-50 border border-amber-200/80 rounded-2xl flex items-center gap-2 text-xs text-amber-900">
               <MapPin className="w-3.5 h-3.5 text-amber-600 shrink-0" />
               <span>
-                <strong>Required for Delivery:</strong> Pin your exact doorstep for 25–40m express bakery delivery.
+                <strong>Required for Delivery:</strong> Pin your exact doorstep for express bakery delivery.
               </span>
             </div>
 
@@ -1295,7 +1295,7 @@ export function CartDrawer({ outletSlug, campaignSlug }: CartDrawerProps) {
                   Kitchen: {currentOutlet.name.replace("Puffs 'n' Rolls - ", '')}
                 </span>
                 <span>•</span>
-                <span>{deliveryQuote?.distanceKm ? `${Number(deliveryQuote.distanceKm).toFixed(1)} km away` : 'Fast Nashik Dispatch'}</span>
+                <span>{deliveryQuote?.distanceKm ? `${Number(deliveryQuote.distanceKm).toFixed(1)} km away` : 'Express Delivery'}</span>
               </div>
             </div>
 

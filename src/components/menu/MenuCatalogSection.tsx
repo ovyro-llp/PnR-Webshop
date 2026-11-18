@@ -19,7 +19,7 @@ export function MenuCatalogSection({
   items,
   outletSlug,
   title = 'Fresh Counter Menu',
-  subtitle = 'Baked in small batches throughout the day. Dispatched in under 25 minutes across Nashik.',
+  subtitle = 'Baked in small batches throughout the day. Express delivery across Nashik.',
 }: MenuCatalogSectionProps) {
   const [selectedCategory, setSelectedCategory] = useState<string>('All');
   const [dietaryFilter, setDietaryFilter] = useState<DietaryFilterType>('ALL');

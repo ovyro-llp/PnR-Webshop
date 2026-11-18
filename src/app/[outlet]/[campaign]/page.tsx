@@ -123,7 +123,7 @@ export default async function CampaignLandingPage({
                 <Clock className="w-3.5 h-3.5" />
               </div>
               <div className="min-w-0">
-                <p className="text-xs font-bold text-stone-900 truncate">25-Min Dispatch</p>
+                <p className="text-xs font-bold text-stone-900 truncate">Express Delivery</p>
                 <p className="text-[10px] text-stone-500 truncate">To your doorstep</p>
               </div>
             </div>
@@ -202,7 +202,7 @@ export default async function CampaignLandingPage({
             <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs">
               <div className="p-3.5 bg-stone-50 rounded-2xl border border-stone-100 space-y-1.5">
                 <p className="text-stone-700 italic">
-                  &ldquo;The Paneer Makhani puff was piping hot when it arrived. Delivered in just 20 minutes to Gangapur Road.&rdquo;
+                  &ldquo;The Paneer Makhani puff was piping hot when it arrived. Delivered fresh to Gangapur Road via express delivery.&rdquo;
                 </p>
                 <p className="font-semibold text-stone-900">— Tanvi Joshi, Nashik</p>
               </div>

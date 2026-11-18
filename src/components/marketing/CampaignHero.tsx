@@ -29,11 +29,11 @@ export function CampaignHero({ campaign, outlet }: CampaignHeroProps) {
 
           <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] sm:text-[11px] font-medium text-stone-600 bg-white border border-stone-200">
             <Flame className="w-3 h-3 text-amber-600" />
-            Fresh Ovens Every 45 Min
+            Small Batch Fresh Ovens
           </span>
 
           <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] sm:text-[11px] font-medium text-stone-600 bg-white border border-stone-200">
-            25-Min Doorstep Delivery
+            Express Doorstep Delivery
           </span>
         </div>
 

@@ -456,7 +456,7 @@ export function LocationPromptModal() {
                 <p className="text-[10px] text-stone-500">
                   {stagedOutlet?.slug === closestOutlet.slug ? (
                     <span className="text-emerald-700 font-medium">
-                      ✓ Pre-selected closest bakery ({closestOutlet.name.replace("Puffs 'n' Rolls - ", '')}) for fastest 25-minute oven-fresh delivery.
+                      ✓ Pre-selected closest bakery ({closestOutlet.name.replace("Puffs 'n' Rolls - ", '')}) for express oven-fresh delivery.
                     </span>
                   ) : (
                     <span className="text-amber-900 font-medium">
@@ -578,7 +578,7 @@ export function LocationPromptModal() {
 
         <div className="pt-2 text-center border-t border-stone-200/70">
           <p className="text-[10px] text-stone-400">
-            Delivering hot &amp; fresh from your selected oven in under 25 minutes.
+            Delivering hot &amp; fresh from your selected oven via express delivery.
           </p>
         </div>
       </div>

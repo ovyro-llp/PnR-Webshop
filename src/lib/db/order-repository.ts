@@ -846,7 +846,7 @@ export const orderRepository = {
         reviewCount: 420,
         isOpen: r.is_open ?? true,
         minOrderAmount: 99,
-        deliveryTimeEstimate: '20-30 mins',
+        deliveryTimeEstimate: 'Express Delivery',
         googleMapsUrl: r.google_maps_url || undefined,
         coordinates: r.coordinates || { lat: 20.0043996, lng: 73.7579984 },
         mangwaleConfig: r.mangwale_config || undefined,

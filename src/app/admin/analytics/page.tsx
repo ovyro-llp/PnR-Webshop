@@ -577,7 +577,7 @@ export default function AnalyticsDashboardPage() {
             <div className="p-4 bg-[#FAF8F5] rounded-2xl border border-stone-200 mt-3 text-xs space-y-1">
               <span className="font-serif font-bold text-stone-900 block">White-Label Logistics Guarantee:</span>
               <p className="text-[11px] text-stone-600 leading-relaxed">
-                All order dispatch webhooks route to fleet logistics automatically. Customer tracking links display pure Puffs &apos;n&apos; Rolls branding with real-time rider status, vehicle numbers, and estimated delivery minutes.
+                All order dispatch webhooks route to fleet logistics automatically. Customer tracking links display pure Puffs &apos;n&apos; Rolls branding with real-time rider status, vehicle numbers, and estimated delivery status.
               </p>
             </div>
           </div>

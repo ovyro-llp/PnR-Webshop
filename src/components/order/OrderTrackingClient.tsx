@@ -225,8 +225,8 @@ export function OrderTrackingClient({
           </div>
 
           <div className="flex items-center gap-2 self-start sm:self-center">
-            <span className="px-3 py-1 rounded-full text-xs font-bold bg-stone-200/80 text-stone-800">
-              ETA: ~{order.mangwale?.estimatedDeliveryMinutes || (order.orderStatus === 'DELIVERED' ? 0 : 25)} Mins
+            <span className="px-3 py-1 rounded-full text-xs font-bold bg-amber-500/10 text-amber-900 border border-amber-200">
+              {order.orderStatus === 'DELIVERED' ? 'Delivered' : 'Express Delivery'}
             </span>
             <button
               onClick={handleManualRefresh}

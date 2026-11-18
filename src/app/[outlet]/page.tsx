@@ -130,7 +130,7 @@ export default async function OutletPage({
                   Delivery Details
                 </span>
                 <p className="text-xs sm:text-sm font-serif font-bold text-stone-900">
-                  {outlet.deliveryTimeEstimate} Doorstep Delivery
+                  Express Doorstep Delivery
                 </p>
                 <div className="text-[11px] text-stone-500 flex justify-between pt-1 border-t border-stone-200/60">
                   <span>Min. Order: ₹{outlet.minOrderAmount}</span>
@@ -196,7 +196,7 @@ export default async function OutletPage({
             items={menuItems}
             outletSlug={outlet.slug}
             title={`Fresh Menu (${outlet.area})`}
-            subtitle={`Small batch bakes prepared daily at ${outlet.name}. Fast 25-minute delivery across Nashik.`}
+            subtitle={`Small batch bakes prepared daily at ${outlet.name}. Express delivery across Nashik.`}
           />
         </main>
 

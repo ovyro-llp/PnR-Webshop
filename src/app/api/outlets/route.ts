@@ -109,7 +109,7 @@ export async function POST(req: NextRequest) {
         reviewCount: 12,
         isOpen: true,
         minOrderAmount: minOrderAmount ? Number(minOrderAmount) : 149,
-        deliveryTimeEstimate: deliveryTimeEstimate || '20-30 mins',
+        deliveryTimeEstimate: deliveryTimeEstimate || 'Express Delivery',
         coordinates: {
           lat: 20.0063,
           lng: 73.7634,

@@ -59,7 +59,7 @@ export default function TermsAndConditionsPage() {
               <strong>Immediate Consumption &amp; Storage:</strong> Flaky savory puffs and hot rolls are baked fresh and intended for immediate consumption. Fresh cream cakes, pastries, and mousse desserts must be refrigerated immediately upon receipt at temperatures between 2°C to 5°C.
             </li>
             <li>
-              <strong>Batch Timing:</strong> Hot bakery batches are prepared in recurring cycles throughout the day. In the event of high in-store footfall, delivery estimates may adjust dynamically by 10–15 minutes.
+              <strong>Batch Timing:</strong> Hot bakery batches are prepared in recurring cycles throughout the day. In the event of high in-store footfall, delivery timing may adjust dynamically to ensure products arrive piping hot and fresh.
             </li>
           </ul>
         </div>
@@ -117,7 +117,7 @@ export default function TermsAndConditionsPage() {
           <p>We deliver across designated postal areas in Nashik through dedicated delivery fleet partners:</p>
           <ul className="list-disc pl-5 space-y-1.5 text-stone-600">
             <li>
-              <strong>Delivery Windows:</strong> Displayed delivery ETAs (e.g. ~25–35 minutes) are estimates calculated based on kitchen prep times and local road traffic conditions.
+              <strong>Express Delivery:</strong> Orders are fulfilled via express delivery from our nearest kitchen. Delivery timeframes are indicative and may vary depending on fresh baking prep and local traffic conditions.
             </li>
             <li>
               <strong>Customer Availability:</strong> The recipient must be present at the address provided and reachable via the registered phone number.
