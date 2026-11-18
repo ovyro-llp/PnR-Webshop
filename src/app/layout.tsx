@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from 'next';
+import Script from 'next/script';
 import { Geist, Geist_Mono, Playfair_Display } from 'next/font/google';
 import './globals.css';
 import { AuthProvider } from '@/context/AuthContext';
@@ -8,6 +9,7 @@ import { LocationProvider } from '@/context/LocationContext';
 import { CustomerLoginModal } from '@/components/auth/CustomerLoginModal';
 import { LocationPromptModal } from '@/components/location/LocationPromptModal';
 import { orderStore } from '@/lib/store/order-store';
+import { parseCustomHeaderScripts } from '@/lib/marketing/parse-header-scripts';
 
 const geistSans = Geist({
   variable: '--font-geist-sans',
@@ -49,6 +51,7 @@ export default async function RootLayout({
   const tags = await orderStore.getMarketingTagsAsync();
   const initialPixelId = (tags.globalMetaPixelId as string) || '';
   const initialGoogleAdsId = (tags.globalGoogleAdsId as string) || '';
+  const parsedHeader = parseCustomHeaderScripts(tags.customHeaderScript as string | undefined);
 
   return (
     <html
@@ -56,14 +59,35 @@ export default async function RootLayout({
       className={`${geistSans.variable} ${geistMono.variable} ${playfair.variable} h-full antialiased`}
     >
       <head>
-        {tags.customHeaderScript ? (
-          <div
-            dangerouslySetInnerHTML={{ __html: tags.customHeaderScript }}
-            style={{ display: 'contents' }}
+        {parsedHeader.metaTags.map((meta, idx) => (
+          <meta
+            key={`pnr-meta-${idx}`}
+            name={meta.name}
+            property={meta.property}
+            content={meta.content}
+            httpEquiv={meta.httpEquiv}
+            charSet={meta.charSet}
           />
-        ) : null}
+        ))}
       </head>
       <body className="min-h-full flex flex-col bg-[#FDFCFB] text-stone-900 font-sans selection:bg-stone-200 overflow-x-hidden w-full">
+        {parsedHeader.scripts.map((scr) =>
+          scr.src ? (
+            <Script
+              key={scr.id}
+              id={scr.id}
+              src={scr.src}
+              strategy="afterInteractive"
+            />
+          ) : scr.inlineCode ? (
+            <Script
+              key={scr.id}
+              id={scr.id}
+              strategy="afterInteractive"
+              dangerouslySetInnerHTML={{ __html: scr.inlineCode }}
+            />
+          ) : null
+        )}
         <AuthProvider>
           <LocationProvider>
             <TrackingProvider

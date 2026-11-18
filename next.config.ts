@@ -23,6 +23,21 @@ const nextConfig: NextConfig = {
     ],
   },
   async headers() {
+    const publicAssetCorsHeaders = [
+      {
+        key: 'Access-Control-Allow-Origin',
+        value: '*',
+      },
+      {
+        key: 'Access-Control-Allow-Methods',
+        value: 'GET, HEAD, OPTIONS',
+      },
+      {
+        key: 'Cross-Origin-Resource-Policy',
+        value: 'cross-origin',
+      },
+    ];
+
     return [
       {
         source: '/:path*',
@@ -40,8 +55,8 @@ const nextConfig: NextConfig = {
             value: 'nosniff',
           },
           {
-            key: 'X-Frame-Options',
-            value: 'SAMEORIGIN',
+            key: 'Content-Security-Policy',
+            value: "frame-ancestors 'self' https://clarity.microsoft.com https://*.clarity.ms",
           },
           {
             key: 'Referrer-Policy',
@@ -52,6 +67,18 @@ const nextConfig: NextConfig = {
             value: 'camera=(), microphone=(), geolocation=(self)',
           },
         ],
+      },
+      {
+        source: '/_next/static/:path*',
+        headers: publicAssetCorsHeaders,
+      },
+      {
+        source: '/_next/image',
+        headers: publicAssetCorsHeaders,
+      },
+      {
+        source: '/images/:path*',
+        headers: publicAssetCorsHeaders,
       },
     ];
   },
