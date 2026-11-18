@@ -2,7 +2,12 @@
 
 import React, { createContext, useContext, useEffect, useState, useCallback, useMemo } from 'react';
 import Script from 'next/script';
-import { fireClientPixel, ensureMetaPixelInitialized } from '@/lib/tracking/pixel-tracker';
+import {
+  fireClientPixel,
+  ensureMetaPixelInitialized,
+  captureMetaAttributionParams,
+  updateMetaPixelAdvancedMatching,
+} from '@/lib/tracking/pixel-tracker';
 
 interface TrackingItem {
   id: string;
@@ -27,6 +32,7 @@ interface TrackingContextType {
   trackAddToCart: (item: TrackingItem) => void;
   trackInitiateCheckout: (value: number, itemCount: number, items?: TrackingItem[]) => void;
   trackPurchase: (orderId: string, value: number, items: unknown[]) => void;
+  identifyCustomer: (user: { phone?: string; email?: string; name?: string; pincode?: string }) => void;
 }
 
 const TrackingContext = createContext<TrackingContextType>({
@@ -35,6 +41,7 @@ const TrackingContext = createContext<TrackingContextType>({
   trackAddToCart: () => {},
   trackInitiateCheckout: () => {},
   trackPurchase: () => {},
+  identifyCustomer: () => {},
 });
 
 export const useTracking = () => useContext(TrackingContext);
@@ -87,10 +94,16 @@ export function TrackingProvider({
       .catch(() => {});
   }, []);
 
+  // Capture Meta ad click ID (`fbclid` -> `_fbc`) immediately on landing
+  useEffect(() => {
+    captureMetaAttributionParams();
+  }, []);
+
   // Track single PageView on route or parameter changes (deduplicated)
   useEffect(() => {
     if (!activePixelId) return;
 
+    captureMetaAttributionParams();
     ensureMetaPixelInitialized(activePixelId);
     fireClientPixel(
       'PageView',
@@ -229,10 +242,17 @@ export function TrackingProvider({
       // Meta Standard Event: Purchase (Shared eventID with server CAPI for exact deduplication)
       fireClientPixel('Purchase', payload, activePixelId, orderId);
 
-      // Complementary Sale event in marketing ledger
+      // Complementary Sale event (dispatched via trackSingleCustom + logged in marketing ledger)
       fireClientPixel('Sale', payload, activePixelId, `sale_${orderId}`);
     },
     [outletSlug, campaignSlug, activePixelId]
+  );
+
+  const identifyCustomer = useCallback(
+    (user: { phone?: string; email?: string; name?: string; pincode?: string }) => {
+      updateMetaPixelAdvancedMatching(activePixelId, user);
+    },
+    [activePixelId]
   );
 
   const contextValue = useMemo(
@@ -246,6 +266,7 @@ export function TrackingProvider({
       trackAddToCart,
       trackInitiateCheckout,
       trackPurchase,
+      identifyCustomer,
     }),
     [
       activePixelId,
@@ -257,12 +278,13 @@ export function TrackingProvider({
       trackAddToCart,
       trackInitiateCheckout,
       trackPurchase,
+      identifyCustomer,
     ]
   );
 
   return (
     <TrackingContext.Provider value={contextValue}>
-      {/* Dynamic Meta Pixel Script - Injected Once, Single PageView */}
+      {/* Dynamic Meta Pixel Script - Injected Once; PageView dispatched via deduplicated effect */}
       {activePixelId && (
         <>
           <Script
@@ -279,7 +301,6 @@ export function TrackingProvider({
                 s.parentNode.insertBefore(t,s)}(window, document,'script',
                 'https://connect.facebook.net/en_US/fbevents.js');
                 fbq('init', '${activePixelId}');
-                fbq('track', 'PageView');
               `,
             }}
           />

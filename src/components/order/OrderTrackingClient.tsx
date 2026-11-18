@@ -39,9 +39,17 @@ export function OrderTrackingClient({
   // Guarantee Purchase event is tracked once (strictly guarded by sessionStorage deduplication)
   useEffect(() => {
     if (order.paymentStatus === 'COMPLETED' && order.orderNumber) {
+      if (order.customer) {
+        tracking.identifyCustomer({
+          phone: order.customer.phone,
+          email: order.customer.email,
+          name: order.customer.name,
+          pincode: order.customer.pincode,
+        });
+      }
       tracking.trackPurchase(order.orderNumber, order.total, order.items || []);
     }
-  }, [order.paymentStatus, order.orderNumber, order.total, order.items, tracking]);
+  }, [order.paymentStatus, order.orderNumber, order.total, order.items, order.customer, tracking]);
 
   const cleanCustomerPhone = order.customer?.phone
     ? order.customer.phone.replace(/[^0-9]/g, '').slice(-10)

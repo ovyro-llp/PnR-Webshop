@@ -530,6 +530,7 @@ export const orderStore = {
         outletSlug: orderData.outletSlug,
         campaignSlug: orderData.campaignSlug,
         value: newOrder.total,
+        currency: 'INR',
         orderId: newOrder.orderNumber,
         contentName: `Order from ${outlet.name}`,
         contentIds: newOrder.items.map((i) => i.itemId),
@@ -538,10 +539,12 @@ export const orderStore = {
           quantity: i.quantity,
           item_price: i.price,
         })),
+        numItems: newOrder.items.reduce((sum, i) => sum + (Number(i.quantity) || 1), 0),
         userData: {
           name: newOrder.customer.name,
           phone: newOrder.customer.phone,
           email: newOrder.customer.email,
+          pincode: newOrder.customer.pincode,
         },
       });
     } catch (err) {

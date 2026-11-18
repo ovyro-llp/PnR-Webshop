@@ -3,6 +3,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { MenuItem, CartItem, CustomerDetails, Order, PaymentMethod } from '@/types';
 import { useTracking } from '@/components/tracking/TrackingProvider';
+import { getMetaTrackingContext } from '@/lib/tracking/pixel-tracker';
 
 interface CartContextType {
   items: CartItem[];
@@ -250,6 +251,8 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         paymentMethod,
       };
 
+      const metaAttribution = getMetaTrackingContext();
+
       const res = await fetch('/api/payments/razorpay/verify', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -258,6 +261,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
           razorpay_payment_id,
           razorpay_signature,
           orderPayload,
+          metaAttribution,
         }),
       });
 
@@ -266,8 +270,17 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         return { success: false, error: data.message || 'Payment verification failed' };
       }
 
-      // Track conversion
-      tracking.trackPurchase(data.order.orderNumber, total, items);
+      // Boost browser-side Meta Pixel Advanced Matching before Purchase
+      tracking.identifyCustomer({
+        phone: customer.phone,
+        email: customer.email,
+        name: customer.name,
+        pincode: customer.pincode,
+      });
+
+      // Track conversion with authoritative settled total
+      const settledValue = typeof data.order?.total === 'number' ? data.order.total : total;
+      tracking.trackPurchase(data.order.orderNumber, settledValue, items);
 
       clearCart();
       setIsCartOpen(false);

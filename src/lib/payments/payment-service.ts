@@ -5,13 +5,64 @@ import { dispatchToMangwale } from '@/lib/logistics/mangwale';
 import { sendMetaCAPI } from '@/lib/tracking/meta-capi';
 import { isB2COutletAcceptingOrders } from '@/lib/outlet-timing';
 import { validateDeliveryAddress } from '@/lib/utils/address-validation';
-import { Order, CustomerDetails, CartItem, PaymentMethod } from '@/types';
+import { Order, CustomerDetails, CartItem, PaymentMethod, MetaAttributionContext } from '@/types';
+
+declare global {
+  var __PNR_ORDER_ATTRIBUTION__: Map<string, MetaAttributionContext> | undefined;
+}
+
+if (!globalThis.__PNR_ORDER_ATTRIBUTION__) {
+  globalThis.__PNR_ORDER_ATTRIBUTION__ = new Map<string, MetaAttributionContext>();
+}
+
+function saveOrderAttribution(keys: Array<string | undefined>, meta?: MetaAttributionContext) {
+  if (!meta) return;
+  const store = globalThis.__PNR_ORDER_ATTRIBUTION__;
+  if (!store) return;
+  for (const key of keys) {
+    if (key) {
+      store.set(key, { ...(store.get(key) || {}), ...meta });
+    }
+  }
+  // Cap map size to prevent unbounded memory growth
+  if (store.size > 1000) {
+    const firstKey = store.keys().next().value;
+    if (firstKey) store.delete(firstKey);
+  }
+}
+
+function getOrderAttribution(
+  keys: Array<string | undefined>,
+  fallback?: MetaAttributionContext,
+  rzpNotes?: Record<string, unknown>
+): MetaAttributionContext {
+  const store = globalThis.__PNR_ORDER_ATTRIBUTION__;
+  let cached: MetaAttributionContext = {};
+  if (store) {
+    for (const key of keys) {
+      if (key && store.has(key)) {
+        cached = { ...cached, ...store.get(key) };
+      }
+    }
+  }
+  return {
+    fbc: fallback?.fbc || cached.fbc || (typeof rzpNotes?.metaFbc === 'string' ? rzpNotes.metaFbc : undefined),
+    fbp: fallback?.fbp || cached.fbp || (typeof rzpNotes?.metaFbp === 'string' ? rzpNotes.metaFbp : undefined),
+    clientIp:
+      fallback?.clientIp ||
+      cached.clientIp ||
+      (typeof rzpNotes?.metaClientIp === 'string' ? rzpNotes.metaClientIp : undefined),
+    clientUserAgent: fallback?.clientUserAgent || cached.clientUserAgent,
+    eventSourceUrl: fallback?.eventSourceUrl || cached.eventSourceUrl,
+  };
+}
 
 export interface CreatePaymentOrderInput {
   amount: number; // in INR
   outletSlug: string;
   campaignSlug?: string;
   customer?: CustomerDetails;
+  metaAttribution?: MetaAttributionContext;
   items?: Array<{
     itemId: string;
     name: string;
@@ -29,6 +80,7 @@ export interface VerifyPaymentInput {
   razorpay_order_id: string;
   razorpay_payment_id: string;
   razorpay_signature: string;
+  metaAttribution?: MetaAttributionContext;
   orderPayload?: {
     outletSlug: string;
     campaignSlug?: string;
@@ -88,20 +140,23 @@ export const paymentService = {
       throw new Error(addressCheck.reason || 'Complete delivery address (Flat/House No. and Building name) is required.');
     }
 
-    // Generate unique receipt and notes
+    // Generate unique receipt and notes (Razorpay allows max 15 keys, 256 chars/val)
     const receipt = `rcpt_${normalizedSlug}_${Date.now()}`;
     const notes: Record<string, string> = {
       outletSlug: normalizedSlug,
       campaignSlug: campaignSlug || 'direct',
-      customerName: customer?.name || 'Guest',
-      customerPhone: customer?.phone || '',
+      customerName: (customer?.name || 'Guest').slice(0, 200),
+      customerPhone: (customer?.phone || '').slice(0, 50),
       itemCount: items ? String(items.length) : '1',
-      deliveryAddress: customer?.address || '',
-      deliveryArea: customer?.area || '',
-      deliveryPincode: customer?.pincode || '',
+      deliveryAddress: (customer?.address || '').slice(0, 240),
+      deliveryArea: (customer?.area || '').slice(0, 120),
+      deliveryPincode: (customer?.pincode || '').slice(0, 20),
       deliveryLat: customer?.coordinates?.lat ? String(customer.coordinates.lat) : '',
       deliveryLng: customer?.coordinates?.lng ? String(customer.coordinates.lng) : '',
       magicCheckout: 'true',
+      ...(input.metaAttribution?.fbc ? { metaFbc: input.metaAttribution.fbc.slice(0, 250) } : {}),
+      ...(input.metaAttribution?.fbp ? { metaFbp: input.metaAttribution.fbp.slice(0, 250) } : {}),
+      ...(input.metaAttribution?.clientIp ? { metaClientIp: input.metaAttribution.clientIp.slice(0, 64) } : {}),
     };
 
     // Call Razorpay API
@@ -116,6 +171,7 @@ export const paymentService = {
 
     // Persist draft order intent in DB with status AWAITING_PAYMENT
     const orderNumber = `PNR-${Math.floor(10000 + Math.random() * 90000)}`;
+    saveOrderAttribution([rzpOrder.id, orderNumber], input.metaAttribution);
     const draftOrder: Order = {
       id: `ord-${Date.now()}`,
       orderNumber,
@@ -368,21 +424,35 @@ export const paymentService = {
           item_price: i.price,
         })) || [];
 
-        // Meta standard Purchase event (Server CAPI)
+        const resolvedAttribution = getOrderAttribution(
+          [razorpay_order_id, settledOrder.orderNumber, settledOrder.id],
+          input.metaAttribution
+        );
+        const totalNumItems = settledOrder.items?.reduce((sum, i) => sum + (Number(i.quantity) || 1), 0) || 0;
+
+        // Meta standard Purchase event (Server CAPI with full EMQ attribution signals)
         await sendMetaCAPI({
           eventName: 'Purchase',
           pixelId: pixelId || '',
           outletSlug: settledOrder.outletSlug,
           campaignSlug: settledOrder.campaignSlug,
           value: settledOrder.total,
+          currency: 'INR',
           orderId: settledOrder.orderNumber,
+          eventSourceUrl: resolvedAttribution.eventSourceUrl,
           contentName: `Order from ${outlet.name}`,
           contentIds,
           contents,
+          numItems: totalNumItems,
           userData: {
             name: settledOrder.customer.name,
             phone: settledOrder.customer.phone,
             email: settledOrder.customer.email,
+            pincode: settledOrder.customer.pincode,
+            fbc: resolvedAttribution.fbc,
+            fbp: resolvedAttribution.fbp,
+            clientIp: resolvedAttribution.clientIp,
+            clientUserAgent: resolvedAttribution.clientUserAgent,
           },
         });
 
@@ -524,13 +594,22 @@ export const paymentService = {
             const campaign = orderStore.getCampaign(order.outletSlug, order.campaignSlug);
             const tags = await orderStore.getMarketingTagsAsync();
             const pixelId = campaign?.metaPixelId || outlet.defaultMetaPixelId || (tags.globalMetaPixelId as string) || '';
+            const resolvedAttribution = getOrderAttribution(
+              [rzpOrderId, order.orderNumber, order.id],
+              undefined,
+              paymentEntity?.notes as Record<string, unknown> | undefined
+            );
+            const totalNumItems = order.items?.reduce((sum, i) => sum + (Number(i.quantity) || 1), 0) || 0;
+
             await sendMetaCAPI({
               eventName: 'Purchase',
               pixelId: pixelId || '',
               outletSlug: order.outletSlug,
               campaignSlug: order.campaignSlug,
               value: order.total,
+              currency: 'INR',
               orderId: order.orderNumber,
+              eventSourceUrl: resolvedAttribution.eventSourceUrl,
               contentName: `Order from ${outlet.name}`,
               contentIds: order.items?.map((i) => i.itemId) || [],
               contents: order.items?.map((i) => ({
@@ -538,10 +617,16 @@ export const paymentService = {
                 quantity: i.quantity,
                 item_price: i.price,
               })) || [],
+              numItems: totalNumItems,
               userData: {
                 name: order.customer.name,
                 phone: order.customer.phone,
                 email: order.customer.email,
+                pincode: order.customer.pincode,
+                fbc: resolvedAttribution.fbc,
+                fbp: resolvedAttribution.fbp,
+                clientIp: resolvedAttribution.clientIp,
+                clientUserAgent: resolvedAttribution.clientUserAgent,
               },
             });
           } catch (cErr) {

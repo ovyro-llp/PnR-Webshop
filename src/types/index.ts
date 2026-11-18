@@ -367,6 +367,14 @@ export interface PaymentGatewayConfig {
   businessName: string;
 }
 
+export interface MetaAttributionContext {
+  fbc?: string;
+  fbp?: string;
+  clientIp?: string;
+  clientUserAgent?: string;
+  eventSourceUrl?: string;
+}
+
 export interface TrackingEventPayload {
   eventName: string;
   outletSlug?: string;
@@ -377,12 +385,22 @@ export interface TrackingEventPayload {
   contentName?: string;
   contentIds?: string[];
   contents?: Array<{ id: string; quantity: number; item_price: number; [key: string]: unknown }>;
+  numItems?: number;
   orderId?: string;
   eventId?: string;
+  eventSourceUrl?: string;
   userData?: {
     phone?: string;
     email?: string;
     name?: string;
+    pincode?: string;
+    city?: string;
+    state?: string;
+    externalId?: string;
+    fbc?: string;
+    fbp?: string;
+    clientIp?: string;
+    clientUserAgent?: string;
   };
 }
 

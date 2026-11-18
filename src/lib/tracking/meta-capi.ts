@@ -62,42 +62,86 @@ export async function sendMetaCAPI(payload: TrackingEventPayload) {
   }
   globalThis.__PNR_SENT_CAPI_EVENTS__?.add(dedupKey);
 
-  // SHA-256 Hashing of user data
-  const hashedPhone = payload.userData?.phone ? hashPhoneForMeta(payload.userData.phone) : undefined;
-  const hashedEmail = payload.userData?.email ? hashForMeta(payload.userData.email) : undefined;
+  // SHA-256 Hashing of validated customer PII per Meta CAPI v19.0 specification
+  const rawPhone = payload.userData?.phone && /\d{10,}/.test(payload.userData.phone) ? payload.userData.phone : undefined;
+  const rawEmail = payload.userData?.email && payload.userData.email.includes('@') ? payload.userData.email : undefined;
+  const rawName =
+    payload.userData?.name && payload.userData.name.trim().toLowerCase() !== 'valued customer'
+      ? payload.userData.name
+      : undefined;
+  const rawPincode =
+    payload.userData?.pincode && /^\d{6}$/.test(payload.userData.pincode.trim())
+      ? payload.userData.pincode.trim()
+      : undefined;
+
+  const hashedPhone = rawPhone ? hashPhoneForMeta(rawPhone) : undefined;
+  const hashedEmail = rawEmail ? hashForMeta(rawEmail) : undefined;
 
   let hashedFirstName: string | undefined = undefined;
   let hashedLastName: string | undefined = undefined;
-  if (payload.userData?.name) {
-    const parts = payload.userData.name.trim().split(/\s+/);
+  if (rawName) {
+    const parts = rawName.trim().split(/\s+/);
     if (parts[0]) hashedFirstName = hashForMeta(parts[0]);
     if (parts.length > 1) hashedLastName = hashForMeta(parts[parts.length - 1]);
   }
 
-  const hashedCity = hashForMeta('nashik');
+  const hashedCity = hashForMeta(payload.userData?.city || 'nashik');
+  const hashedState = hashForMeta(payload.userData?.state || 'mh');
   const hashedCountry = hashForMeta('in');
+  const hashedZip = rawPincode ? hashForMeta(rawPincode) : undefined;
+
+  // Stable external_id (hashed normalized phone or email) boosts cross-device attribution
+  const externalIdSeed = payload.userData?.externalId || rawPhone || rawEmail;
+  const hashedExternalId = externalIdSeed
+    ? rawPhone && externalIdSeed === rawPhone
+      ? hashPhoneForMeta(rawPhone)
+      : hashForMeta(externalIdSeed)
+    : undefined;
 
   const userDataPayload: Record<string, unknown> = {
-    client_user_agent: 'P&R Enterprise Backend / Next.js',
     ct: [hashedCity],
+    st: [hashedState],
     country: [hashedCountry],
   };
 
+  // High-priority Meta Attribution & Event Match Quality (EMQ) browser signals (MUST NOT be hashed)
+  if (payload.userData?.fbc) userDataPayload.fbc = payload.userData.fbc;
+  if (payload.userData?.fbp) userDataPayload.fbp = payload.userData.fbp;
+  if (payload.userData?.clientIp) userDataPayload.client_ip_address = payload.userData.clientIp;
+  if (payload.userData?.clientUserAgent) userDataPayload.client_user_agent = payload.userData.clientUserAgent;
+
+  // Hashed PII signals
   if (hashedPhone) userDataPayload.ph = [hashedPhone];
   if (hashedEmail) userDataPayload.em = [hashedEmail];
   if (hashedFirstName) userDataPayload.fn = [hashedFirstName];
   if (hashedLastName) userDataPayload.ln = [hashedLastName];
+  if (hashedZip) userDataPayload.zp = [hashedZip];
+  if (hashedExternalId) userDataPayload.external_id = [hashedExternalId];
+
+  const cleanValue = Number.isFinite(Number(payload.value)) ? Number(Number(payload.value).toFixed(2)) : 0;
+  const computedNumItems =
+    payload.numItems ??
+    (Array.isArray(payload.contents)
+      ? payload.contents.reduce((sum, item) => sum + (Number(item.quantity) || 1), 0)
+      : undefined);
 
   const customDataPayload: Record<string, unknown> = {
     currency: payload.currency || 'INR',
-    value: payload.value || 0,
+    value: cleanValue,
+    order_id: payload.orderId,
     content_name: payload.contentName,
     content_ids: payload.contentIds,
     contents: payload.contents,
     content_type: 'product',
+    ...(computedNumItems !== undefined ? { num_items: computedNumItems } : {}),
     outlet_slug: payload.outletSlug,
     campaign_slug: payload.campaignSlug,
   };
+
+  const baseAppUrl = (process.env.NEXT_PUBLIC_APP_URL || 'https://shop.puffsnrolls.com').replace(/\/$/, '');
+  const eventSourceUrl =
+    payload.eventSourceUrl ||
+    (payload.outletSlug ? `${baseAppUrl}/${payload.outletSlug}` : baseAppUrl);
 
   const currentTimestamp = Math.floor(Date.now() / 1000);
 
@@ -107,6 +151,7 @@ export async function sendMetaCAPI(payload: TrackingEventPayload) {
         event_name: payload.eventName,
         event_time: currentTimestamp,
         event_id: eventId,
+        event_source_url: eventSourceUrl,
         action_source: 'website',
         user_data: userDataPayload,
         custom_data: customDataPayload,
@@ -121,9 +166,15 @@ export async function sendMetaCAPI(payload: TrackingEventPayload) {
     pixelId,
     outletSlug: payload.outletSlug,
     campaignSlug: payload.campaignSlug,
-    value: payload.value,
+    value: cleanValue,
     currency: payload.currency || 'INR',
-    userHash: { phoneHashed: Boolean(hashedPhone), emailHashed: Boolean(hashedEmail) },
+    userHash: {
+      phoneHashed: Boolean(hashedPhone),
+      emailHashed: Boolean(hashedEmail),
+      hasFbc: Boolean(payload.userData?.fbc),
+      hasFbp: Boolean(payload.userData?.fbp),
+      hasClientIp: Boolean(payload.userData?.clientIp),
+    },
   };
 
   // If no live access token, simulate gracefully and audit log to DB and memory store

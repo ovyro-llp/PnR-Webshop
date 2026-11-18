@@ -37,6 +37,7 @@ import { CustomerDetails, PaymentMethod } from '@/types';
 import { useOutletAcceptance } from '@/hooks/useOutletTiming';
 import { DietarySymbol, GlutenFreeSymbol } from '@/components/ui/DietarySymbol';
 import { validateDeliveryAddress, splitAddressComponents } from '@/lib/utils/address-validation';
+import { getMetaTrackingContext } from '@/lib/tracking/pixel-tracker';
 
 interface CartDrawerProps {
   outletSlug: string;
@@ -371,6 +372,14 @@ export function CartDrawer({ outletSlug, campaignSlug }: CartDrawerProps) {
     setIsSubmitting(true);
 
     // Track Meta & Google Ads InitiateCheckout
+    // Boost browser-side Meta Pixel Advanced Matching before InitiateCheckout
+    tracking.identifyCustomer({
+      phone: activeCustomer.phone,
+      email: activeCustomer.email,
+      name: activeCustomer.name,
+      pincode: activeCustomer.pincode,
+    });
+
     tracking.trackInitiateCheckout(
       total,
       itemCount,
@@ -382,6 +391,8 @@ export function CartDrawer({ outletSlug, campaignSlug }: CartDrawerProps) {
         category: i.item.category,
       }))
     );
+
+    const metaAttribution = getMetaTrackingContext();
 
     // Online Payment Gateway (Razorpay - 100% Prepaid Online)
     try {
@@ -397,6 +408,7 @@ export function CartDrawer({ outletSlug, campaignSlug }: CartDrawerProps) {
           outletSlug: effectiveOutletSlug,
           campaignSlug,
           customer: activeCustomer,
+          metaAttribution,
           items: items.map((i) => ({
             itemId: i.item.id,
             name: i.item.name,
