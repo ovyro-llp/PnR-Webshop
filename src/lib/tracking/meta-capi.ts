@@ -145,7 +145,12 @@ export async function sendMetaCAPI(payload: TrackingEventPayload) {
 
   const currentTimestamp = Math.floor(Date.now() / 1000);
 
-  const eventData = {
+  const isTestEvent = Boolean(
+    payload.isTestOrder || process.env.NODE_ENV === 'test' || process.env.PNR_TEST_MODE === 'true'
+  );
+  const testEventCode = (payload.testEventCode || process.env.META_CAPI_TEST_EVENT_CODE || '').trim();
+
+  const eventData: Record<string, unknown> = {
     data: [
       {
         event_name: payload.eventName,
@@ -157,6 +162,7 @@ export async function sendMetaCAPI(payload: TrackingEventPayload) {
         custom_data: customDataPayload,
       },
     ],
+    ...(isTestEvent && testEventCode ? { test_event_code: testEventCode } : {}),
   };
 
   const eventRecord = {
@@ -176,6 +182,28 @@ export async function sendMetaCAPI(payload: TrackingEventPayload) {
       hasClientIp: Boolean(payload.userData?.clientIp),
     },
   };
+
+  // STRICT TEST ISOLATION: Never send Sandbox/Test orders to live Meta Ads ROAS without an explicit test_event_code!
+  if (isTestEvent && !testEventCode) {
+    console.log(
+      `[Meta CAPI Test Guard] Skipping live Graph API call for test order ${eventId} (set META_CAPI_TEST_EVENT_CODE to inspect in Meta Test Events).`
+    );
+    try {
+      const fullRecord = {
+        ...eventRecord,
+        capiStatus: 'TEST_MODE_SKIPPED',
+        capiResponse: {
+          status: 'blocked_in_test_mode',
+          reason: 'Prevented test transaction from polluting live Meta Ads ROAS',
+          timestamp: currentTimestamp,
+        },
+      };
+      orderStore.recordMarketingEvent(fullRecord);
+      await orderRepository.recordMarketingEvent(fullRecord);
+    } catch {}
+
+    return { success: true, simulated: true, testSkipped: true, eventId };
+  }
 
   // If no live access token, simulate gracefully and audit log to DB and memory store
   if (!accessToken || accessToken === 'mock_token' || accessToken === 'test_capi_token') {

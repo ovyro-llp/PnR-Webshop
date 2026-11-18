@@ -55,27 +55,29 @@ export function buildRazorpayClient(config: PaymentGatewayConfig) {
 
   const hasValidLiveCreds = Boolean(liveKey.startsWith('rzp_live_') && liveSecret);
 
-  // 2. Resolve test keys with fallbacks
+  // 2. Resolve test keys with strict segregation (ONLY rzp_test_ keys allowed, NEVER live keys or live secrets!)
+  const isEnvKeyExplicitlyTest = Boolean(process.env.RAZORPAY_KEY_ID?.startsWith('rzp_test_'));
   const testKey = (
-    config.testKeyId ||
-    process.env.RAZORPAY_TEST_KEY_ID ||
-    (!process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID?.startsWith('rzp_live_') ? process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID : '') ||
-    (!process.env.RAZORPAY_KEY_ID?.startsWith('rzp_live_') ? process.env.RAZORPAY_KEY_ID : '') ||
+    (config.testKeyId?.startsWith('rzp_test_') ? config.testKeyId : '') ||
+    (process.env.RAZORPAY_TEST_KEY_ID?.startsWith('rzp_test_') ? process.env.RAZORPAY_TEST_KEY_ID : '') ||
+    (process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID?.startsWith('rzp_test_') ? process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID : '') ||
+    (isEnvKeyExplicitlyTest ? process.env.RAZORPAY_KEY_ID : '') ||
     'rzp_test_Tu3J2xHanphLOy'
   ).trim();
 
   const testSecret = (
-    config.testKeySecret ||
+    (config.testKeySecret && config.testKeySecret !== liveSecret ? config.testKeySecret : '') ||
     process.env.RAZORPAY_TEST_KEY_SECRET ||
-    (!process.env.RAZORPAY_KEY_ID?.startsWith('rzp_live_') ? process.env.RAZORPAY_KEY_SECRET : '') ||
+    (isEnvKeyExplicitlyTest ? process.env.RAZORPAY_KEY_SECRET : '') ||
     'wQKVEbjQupqQMEZeqjA2eeju'
   ).trim();
 
-  // Determine mode: testMode === true ONLY if explicitly configured by Admin in Admin Control!
-  const isExplicitTestMode = config.testMode === true;
+  // Automated test runners (NODE_ENV=test or PNR_TEST_MODE=true) ALWAYS force Sandbox Test Mode!
+  const isAutomatedTestRun = process.env.NODE_ENV === 'test' || process.env.PNR_TEST_MODE === 'true';
+  const isExplicitTestMode = isAutomatedTestRun || config.testMode === true;
   const isLive = !isExplicitTestMode;
 
-  // In Live mode, strictly use live credentials. NEVER fall back to test credentials!
+  // In Live mode, strictly use live credentials. In Test mode, strictly use test credentials!
   const activeKeyId = isLive ? (liveKey || '') : testKey;
   const activeKeySecret = isLive ? (liveSecret || '') : testSecret;
 
@@ -113,7 +115,7 @@ export function buildRazorpayClient(config: PaymentGatewayConfig) {
     keyId: activeKeyId,
     keySecret: activeKeySecret,
     isDemoMode,
-    testMode: config.testMode,
+    testMode: isExplicitTestMode,
     isLive,
     hasValidLiveCreds,
   };
@@ -144,6 +146,13 @@ export async function createRazorpayOrder({
     await getRazorpayClientAsync();
   const paise = Math.round(amount * 100);
   const orderReceipt = receipt || `rcpt_${outletSlug || 'pnr'}_${Date.now()}`;
+
+  // STRICT TEST MODE SAFETY: NEVER allow a live key (rzp_live_...) when in Sandbox Test Mode!
+  if (testMode === true && keyId.startsWith('rzp_live_')) {
+    throw new Error(
+      'Security Guard: Refusing to use a live Razorpay key (rzp_live_...) while in Sandbox Test Mode. Only rzp_test_ keys are permitted for testing.'
+    );
+  }
 
   // STRICT PRODUCTION INTEGRITY:
   // If in Live Production Mode, NEVER fall back to test credentials or demo mock orders!

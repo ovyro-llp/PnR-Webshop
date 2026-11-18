@@ -7,6 +7,9 @@
  */
 
 const BASE_URL = process.env.BASE_URL || 'http://localhost:3000';
+if (!/^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?(\/|$)/.test(BASE_URL)) {
+  throw new Error(`SAFETY GUARD: Refusing to run test script against non-local URL (${BASE_URL}). Only localhost is allowed.`);
+}
 
 async function runCheckoutFilteringTests() {
   console.log('=================================================================');
@@ -57,6 +60,9 @@ async function runCheckoutFilteringTests() {
 
     if (!draftData.success || !draftData.internalOrderId) {
       throw new Error(`Failed to create draft order intent: ${draftData.message}`);
+    }
+    if (!String(draftData.keyId || '').startsWith('rzp_test_')) {
+      throw new Error(`SAFETY GUARD ABORT: Expected rzp_test_ key in test run, got ${draftData.keyId}`);
     }
     console.log('✅ TEST 1 PASSED: Draft checkout order created successfully.\n');
 

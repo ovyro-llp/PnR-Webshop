@@ -2,6 +2,9 @@ const { Pool } = require('pg');
 const crypto = require('crypto');
 
 const BASE_URL = process.env.BASE_URL || 'http://localhost:3000';
+if (!/^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?(\/|$)/.test(BASE_URL)) {
+  throw new Error(`SAFETY GUARD: Refusing to run test script against non-local URL (${BASE_URL}). Only localhost is allowed.`);
+}
 const DB_URL = (process.env.DATABASE_URL || '').trim();
 const RZP_SECRET = process.env.RAZORPAY_TEST_KEY_SECRET || 'wQKVEbjQupqQMEZeqjA2eeju';
 const MANGWALE_SECRET = process.env.MANGWALE_WEBHOOK_SECRET || '74674008326d8f803ee968e532eaa66e01a1fc85c2f7409e744e10f2f0cc8ff1';
@@ -118,6 +121,9 @@ async function runAudit() {
 
   if (!createOrderData.success || !createOrderData.orderId) {
     throw new Error(`Failed to create Razorpay order intent: ${createOrderData.message}`);
+  }
+  if (!String(createOrderData.keyId || '').startsWith('rzp_test_')) {
+    throw new Error(`SAFETY GUARD ABORT: Expected rzp_test_ key in test run, got ${createOrderData.keyId}`);
   }
 
   // Verify draft order exists in Database if connected

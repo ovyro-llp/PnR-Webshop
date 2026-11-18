@@ -381,37 +381,49 @@ export const paymentService = {
     });
 
     const outlet = orderStore.getOutletBySlug(settledOrder.outletSlug);
+    const { testMode: rzpIsTestMode } = await getRazorpayClientAsync();
+    const isSandboxTestOrder = Boolean(
+      rzpIsTestMode || process.env.NODE_ENV === 'test' || process.env.PNR_TEST_MODE === 'true'
+    );
 
-    // 1. Dispatch to Mangwale Logistics
+    // 1. Dispatch to Mangwale Logistics (STRICTLY SKIPPED for Sandbox/Test orders so live riders are never summoned!)
     if (outlet) {
-      try {
-        const mangwaleRes = await dispatchToMangwale(settledOrder, outlet);
-        if (mangwaleRes.success) {
-          settledOrder.mangwale = {
-            taskId: mangwaleRes.taskId,
-            status: mangwaleRes.rider ? 'ASSIGNED' : 'PENDING',
-            riderName: mangwaleRes.rider?.name,
-            riderPhone: mangwaleRes.rider?.phone,
-            riderVehicleNo: mangwaleRes.rider?.vehicleNo,
-            trackingUrl: mangwaleRes.trackingUrl,
-            estimatedDeliveryMinutes: mangwaleRes.estimatedDeliveryMinutes,
-            dispatchedAt: new Date().toISOString(),
-            notes: mangwaleRes.message,
-          };
-          settledOrder.orderStatus = 'PREPARING';
-        } else {
-          settledOrder.mangwale = {
-            status: 'PENDING',
-            notes: mangwaleRes.message,
-          };
-          settledOrder.orderStatus = 'PREPARING';
+      if (isSandboxTestOrder) {
+        settledOrder.mangwale = {
+          status: 'PENDING',
+          notes: 'Sandbox test order — live Mangwale rider dispatch skipped',
+        };
+        settledOrder.orderStatus = 'PREPARING';
+      } else {
+        try {
+          const mangwaleRes = await dispatchToMangwale(settledOrder, outlet);
+          if (mangwaleRes.success) {
+            settledOrder.mangwale = {
+              taskId: mangwaleRes.taskId,
+              status: mangwaleRes.rider ? 'ASSIGNED' : 'PENDING',
+              riderName: mangwaleRes.rider?.name,
+              riderPhone: mangwaleRes.rider?.phone,
+              riderVehicleNo: mangwaleRes.rider?.vehicleNo,
+              trackingUrl: mangwaleRes.trackingUrl,
+              estimatedDeliveryMinutes: mangwaleRes.estimatedDeliveryMinutes,
+              dispatchedAt: new Date().toISOString(),
+              notes: mangwaleRes.message,
+            };
+            settledOrder.orderStatus = 'PREPARING';
+          } else {
+            settledOrder.mangwale = {
+              status: 'PENDING',
+              notes: mangwaleRes.message,
+            };
+            settledOrder.orderStatus = 'PREPARING';
+          }
+        } catch (err) {
+          console.error('Mangwale dispatch error during settlement:', err);
         }
-      } catch (err) {
-        console.error('Mangwale dispatch error during settlement:', err);
       }
     }
 
-    // 2. Trigger Meta CAPI Server Purchase Event
+    // 2. Trigger Meta CAPI Server Purchase Event (Test orders are isolated from live Meta Ads ROAS)
     if (outlet) {
       try {
         const campaign = orderStore.getCampaign(settledOrder.outletSlug, settledOrder.campaignSlug);
@@ -440,6 +452,7 @@ export const paymentService = {
           currency: 'INR',
           orderId: settledOrder.orderNumber,
           eventSourceUrl: resolvedAttribution.eventSourceUrl,
+          isTestOrder: isSandboxTestOrder,
           contentName: `Order from ${outlet.name}`,
           contentIds,
           contents,
@@ -563,31 +576,44 @@ export const paymentService = {
         }
 
         const outlet = orderStore.getOutletBySlug(order.outletSlug);
+        const { testMode: whRzpIsTestMode } = await getRazorpayClientAsync();
+        const isWebhookTestOrder = Boolean(
+          whRzpIsTestMode || process.env.NODE_ENV === 'test' || process.env.PNR_TEST_MODE === 'true'
+        );
+
         if (outlet) {
-          try {
-            const mangwaleRes = await dispatchToMangwale(order, outlet);
-            if (mangwaleRes.success) {
-              order.mangwale = {
-                taskId: mangwaleRes.taskId,
-                status: mangwaleRes.rider ? 'ASSIGNED' : 'PENDING',
-                riderName: mangwaleRes.rider?.name,
-                riderPhone: mangwaleRes.rider?.phone,
-                riderVehicleNo: mangwaleRes.rider?.vehicleNo,
-                trackingUrl: mangwaleRes.trackingUrl,
-                estimatedDeliveryMinutes: mangwaleRes.estimatedDeliveryMinutes,
-                dispatchedAt: new Date().toISOString(),
-                notes: mangwaleRes.message,
-              };
-              order.orderStatus = 'PREPARING';
-            } else {
-              order.mangwale = {
-                status: 'PENDING',
-                notes: mangwaleRes.message,
-              };
-              order.orderStatus = 'PREPARING';
+          if (isWebhookTestOrder) {
+            order.mangwale = {
+              status: 'PENDING',
+              notes: 'Sandbox test webhook — live Mangwale rider dispatch skipped',
+            };
+            order.orderStatus = 'PREPARING';
+          } else {
+            try {
+              const mangwaleRes = await dispatchToMangwale(order, outlet);
+              if (mangwaleRes.success) {
+                order.mangwale = {
+                  taskId: mangwaleRes.taskId,
+                  status: mangwaleRes.rider ? 'ASSIGNED' : 'PENDING',
+                  riderName: mangwaleRes.rider?.name,
+                  riderPhone: mangwaleRes.rider?.phone,
+                  riderVehicleNo: mangwaleRes.rider?.vehicleNo,
+                  trackingUrl: mangwaleRes.trackingUrl,
+                  estimatedDeliveryMinutes: mangwaleRes.estimatedDeliveryMinutes,
+                  dispatchedAt: new Date().toISOString(),
+                  notes: mangwaleRes.message,
+                };
+                order.orderStatus = 'PREPARING';
+              } else {
+                order.mangwale = {
+                  status: 'PENDING',
+                  notes: mangwaleRes.message,
+                };
+                order.orderStatus = 'PREPARING';
+              }
+            } catch (mErr) {
+              console.error('Mangwale auto-dispatch on webhook error:', mErr);
             }
-          } catch (mErr) {
-            console.error('Mangwale auto-dispatch on webhook error:', mErr);
           }
 
           try {
@@ -610,6 +636,7 @@ export const paymentService = {
               currency: 'INR',
               orderId: order.orderNumber,
               eventSourceUrl: resolvedAttribution.eventSourceUrl,
+              isTestOrder: isWebhookTestOrder,
               contentName: `Order from ${outlet.name}`,
               contentIds: order.items?.map((i) => i.itemId) || [],
               contents: order.items?.map((i) => ({

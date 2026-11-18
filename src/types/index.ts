@@ -389,6 +389,8 @@ export interface TrackingEventPayload {
   orderId?: string;
   eventId?: string;
   eventSourceUrl?: string;
+  isTestOrder?: boolean;
+  testEventCode?: string;
   userData?: {
     phone?: string;
     email?: string;

@@ -141,23 +141,24 @@ export function getPersistedPaymentConfig(
 
   const hasValidLiveCreds = Boolean(liveKeyId.startsWith('rzp_live_') && liveKeySecret);
 
-  // Test keys resolution
+  // Test keys resolution (STRICTLY segregated: ONLY rzp_test_ keys allowed, NEVER live keys or live secrets!)
+  const isEnvKeyExplicitlyTest = Boolean(process.env.RAZORPAY_KEY_ID?.startsWith('rzp_test_'));
   const testKeyId = (
-    overrideConfig?.testKeyId ||
-    fileConfig.testKeyId ||
-    process.env.RAZORPAY_TEST_KEY_ID ||
-    (!process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID?.startsWith('rzp_live_')
+    (overrideConfig?.testKeyId?.startsWith('rzp_test_') ? overrideConfig.testKeyId : '') ||
+    (fileConfig.testKeyId?.startsWith('rzp_test_') ? fileConfig.testKeyId : '') ||
+    (process.env.RAZORPAY_TEST_KEY_ID?.startsWith('rzp_test_') ? process.env.RAZORPAY_TEST_KEY_ID : '') ||
+    (process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID?.startsWith('rzp_test_')
       ? process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID
       : '') ||
-    (!process.env.RAZORPAY_KEY_ID?.startsWith('rzp_live_') ? process.env.RAZORPAY_KEY_ID : '') ||
+    (isEnvKeyExplicitlyTest ? process.env.RAZORPAY_KEY_ID : '') ||
     'rzp_test_Tu3J2xHanphLOy'
   ).trim();
 
   const testKeySecret = (
-    overrideConfig?.testKeySecret ||
-    fileConfig.testKeySecret ||
+    (overrideConfig?.testKeySecret && overrideConfig.testKeySecret !== liveKeySecret ? overrideConfig.testKeySecret : '') ||
+    (fileConfig.testKeySecret && fileConfig.testKeySecret !== liveKeySecret ? fileConfig.testKeySecret : '') ||
     process.env.RAZORPAY_TEST_KEY_SECRET ||
-    (!process.env.RAZORPAY_KEY_ID?.startsWith('rzp_live_') ? process.env.RAZORPAY_KEY_SECRET : '') ||
+    (isEnvKeyExplicitlyTest ? process.env.RAZORPAY_KEY_SECRET : '') ||
     'wQKVEbjQupqQMEZeqjA2eeju'
   ).trim();
 
@@ -165,15 +166,18 @@ export function getPersistedPaymentConfig(
     overrideConfig?.testWebhookSecret ||
     fileConfig.testWebhookSecret ||
     process.env.RAZORPAY_TEST_WEBHOOK_SECRET ||
-    (!process.env.RAZORPAY_KEY_ID?.startsWith('rzp_live_') ? process.env.RAZORPAY_WEBHOOK_SECRET : '') ||
+    (isEnvKeyExplicitlyTest ? process.env.RAZORPAY_WEBHOOK_SECRET : '') ||
     'rzp_whsec_demo'
   ).trim();
 
   // Determine testMode:
-  // Admin explicit configuration is the sole authority!
-  // Default is LIVE PRODUCTION MODE (false). Test mode is only active if explicitly enabled by admin.
+  // Automated test runners (NODE_ENV=test or PNR_TEST_MODE=true) ALWAYS force Sandbox Test Mode!
+  // Otherwise, Admin explicit configuration is the sole authority (default is LIVE PRODUCTION MODE).
+  const isAutomatedTestRun = process.env.NODE_ENV === 'test' || process.env.PNR_TEST_MODE === 'true';
   let testMode = false;
-  if (typeof overrideConfig?.testMode === 'boolean') {
+  if (isAutomatedTestRun) {
+    testMode = true;
+  } else if (typeof overrideConfig?.testMode === 'boolean') {
     testMode = overrideConfig.testMode;
   } else if (typeof fileConfig.testMode === 'boolean') {
     testMode = fileConfig.testMode;
