@@ -30,10 +30,13 @@ import {
   Store,
   Clock,
   AlertTriangle,
+  Home,
+  Navigation,
 } from 'lucide-react';
 import { CustomerDetails, PaymentMethod } from '@/types';
 import { useOutletAcceptance } from '@/hooks/useOutletTiming';
 import { DietarySymbol, GlutenFreeSymbol } from '@/components/ui/DietarySymbol';
+import { validateDeliveryAddress, splitAddressComponents } from '@/lib/utils/address-validation';
 
 interface CartDrawerProps {
   outletSlug: string;
@@ -98,6 +101,14 @@ export function CartDrawer({ outletSlug, campaignSlug }: CartDrawerProps) {
   const [submitError, setSubmitError] = useState('');
   const [isMapModalOpen, setIsMapModalOpen] = useState(false);
 
+  // Address Confirmation Modal State ("Is the delivery location correct?")
+  const [isLocationConfirmOpen, setIsLocationConfirmOpen] = useState(false);
+  const [confirmFlatNo, setConfirmFlatNo] = useState('');
+  const [confirmBuilding, setConfirmBuilding] = useState('');
+  const [confirmStreet, setConfirmStreet] = useState('');
+  const [confirmPincode, setConfirmPincode] = useState('422005');
+  const [confirmError, setConfirmError] = useState('');
+
   // Unauthenticated customer contact state
   const [authMode, setAuthMode] = useState<'REGISTER' | 'LOGIN'>('REGISTER');
   const [authName, setAuthName] = useState('');
@@ -126,9 +137,9 @@ export function CartDrawer({ outletSlug, campaignSlug }: CartDrawerProps) {
     }));
   }, [deliveryCoordinates, deliveryAddress, deliveryArea]);
 
-  // Lock body scroll and prevent viewport wobble when cart or map modal is open
+  // Lock body scroll and prevent viewport wobble when cart, map modal, or location confirm modal is open
   useEffect(() => {
-    if (isCartOpen || isMapModalOpen) {
+    if (isCartOpen || isMapModalOpen || isLocationConfirmOpen) {
       const prevOverflow = document.body.style.overflow;
       const prevTouchAction = document.body.style.touchAction;
       document.body.style.overflow = 'hidden';
@@ -138,7 +149,7 @@ export function CartDrawer({ outletSlug, campaignSlug }: CartDrawerProps) {
         document.body.style.touchAction = prevTouchAction;
       };
     }
-  }, [isCartOpen, isMapModalOpen]);
+  }, [isCartOpen, isMapModalOpen, isLocationConfirmOpen]);
 
   // Sync customer details when user logs in
   useEffect(() => {
@@ -201,8 +212,11 @@ export function CartDrawer({ outletSlug, campaignSlug }: CartDrawerProps) {
     });
   };
 
-  const handleCheckout = async (e: React.FormEvent) => {
-    e.preventDefault();
+  /**
+   * Step 1: When user clicks "Proceed to Pay", validate contact info & prompt location confirmation
+   */
+  const handleInitiateCheckout = (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
     setSubmitError('');
 
     // 0. Hard Operating Hours & Outlet Acceptance Gate (10:00 AM - 10:00 PM IST)
@@ -219,31 +233,11 @@ export function CartDrawer({ outletSlug, campaignSlug }: CartDrawerProps) {
       return;
     }
 
-    // 1. Resolve Delivery Address & Locality
-    const resolvedAddress = customer.address.trim() || deliveryAddress?.trim();
-    if (!resolvedAddress || resolvedAddress.length < 3) {
-      setSubmitError('📍 Please enter your building, flat no., or street details for delivery.');
-      return;
-    }
-    const resolvedArea = customer.area.trim() || deliveryArea?.trim() || nearestOutlet?.area || 'Nashik City';
-    const resolvedPincode = customer.pincode.trim() || '422005';
-    const cleanPassword = authPassword.trim();
-
-    let activeCustomer: CustomerDetails = {
-      ...customer,
-      address: resolvedAddress,
-      area: resolvedArea,
-      pincode: resolvedPincode,
-      coordinates: effectiveCoords,
-    };
-
-    // 2. Customer Authentication & Phone Handling (Required for Mangwale delivery rider)
-    if (isCustomerLoggedIn) {
-      if (!activeCustomer.name.trim()) activeCustomer.name = user?.name || 'Valued Customer';
-      if (!activeCustomer.phone.trim() && user && 'phone' in user) activeCustomer.phone = user.phone;
-    } else {
+    // Customer Authentication & Phone Handling (Required for Mangwale delivery rider)
+    if (!isCustomerLoggedIn) {
       const cleanPhone = (customer.phone || authPhone).replace(/\D/g, '').slice(-10);
       const cleanName = (customer.name || authName).trim();
+      const cleanPassword = authPassword.trim();
 
       if (cleanName.length < 2) {
         setSubmitError('Please enter your full name for order delivery');
@@ -257,6 +251,100 @@ export function CartDrawer({ outletSlug, campaignSlug }: CartDrawerProps) {
         setSubmitError('Please enter an account password (at least 4 characters) to track delivery and secure your account.');
         return;
       }
+    }
+
+    // Parse current address into structured fields for the prompt
+    const currentAddr = customer.address.trim() || deliveryAddress?.trim() || '';
+    const parsed = splitAddressComponents(currentAddr);
+    setConfirmFlatNo(parsed.flatNo);
+    setConfirmBuilding(parsed.building);
+    setConfirmStreet(parsed.street);
+    setConfirmPincode(customer.pincode || '422005');
+    setConfirmError('');
+
+    // Open dedicated confirmation prompt: "Is the delivery location correct?"
+    setIsLocationConfirmOpen(true);
+  };
+
+  /**
+   * Step 2: "Confirm Location and Pay" button handler
+   * Validates non-ambiguous address and triggers Razorpay Checkout
+   */
+  const handleConfirmLocationAndPay = async () => {
+    setConfirmError('');
+
+    const cleanFlat = confirmFlatNo.trim();
+    const cleanBldg = confirmBuilding.trim();
+    const cleanStreet = confirmStreet.trim();
+    const cleanPin = confirmPincode.trim() || '422005';
+
+    if (!cleanFlat || cleanFlat.length < 1) {
+      setConfirmError('Please enter your specific Flat / House / Floor number.');
+      return;
+    }
+
+    if (!cleanBldg || cleanBldg.length < 3) {
+      setConfirmError('Please enter your Building / Society name.');
+      return;
+    }
+
+    // Construct composite doorstep address
+    const fullAddress = [cleanFlat, cleanBldg, cleanStreet].filter(Boolean).join(', ');
+
+    const addressCheck = validateDeliveryAddress(fullAddress);
+    if (!addressCheck.isValid) {
+      setConfirmError(addressCheck.reason || 'Please provide complete doorstep details.');
+      return;
+    }
+
+    const effectiveCoords = customer.coordinates || deliveryCoordinates;
+    if (!effectiveCoords) {
+      setConfirmError('Mandatory map pin coordinates missing. Please adjust pin on map.');
+      return;
+    }
+
+    const resolvedArea = customer.area.trim() || deliveryArea?.trim() || nearestOutlet?.area || 'Nashik City';
+
+    // Update customer and context states
+    setCustomer((prev) => ({
+      ...prev,
+      address: fullAddress,
+      pincode: cleanPin,
+      area: resolvedArea,
+      coordinates: effectiveCoords,
+    }));
+    setDeliveryAddress(fullAddress);
+
+    // Proceed to trigger Razorpay payment flow
+    await executePaymentFlow(fullAddress, cleanPin, resolvedArea, effectiveCoords);
+  };
+
+  /**
+   * Step 3: Trigger Razorpay Order Creation and Launch Checkout Modal
+   */
+  const executePaymentFlow = async (
+    resolvedAddress: string,
+    resolvedPincode: string,
+    resolvedArea: string,
+    effectiveCoords: { lat: number; lng: number }
+  ) => {
+    let activeCustomer: CustomerDetails = {
+      ...customer,
+      address: resolvedAddress,
+      area: resolvedArea,
+      pincode: resolvedPincode,
+      coordinates: effectiveCoords,
+    };
+
+    const cleanPassword = authPassword.trim();
+
+    // Customer Authentication & Phone Handling
+    if (isCustomerLoggedIn) {
+      if (!activeCustomer.name.trim()) activeCustomer.name = user?.name || 'Valued Customer';
+      if (!activeCustomer.phone.trim() && user && 'phone' in user) activeCustomer.phone = user.phone;
+    } else {
+      const cleanPhone = (customer.phone || authPhone).replace(/\D/g, '').slice(-10);
+      const cleanName = (customer.name || authName).trim();
 
       setIsSubmitting(true);
       const authRes = await autoRegisterOrLoginCustomer(
@@ -271,7 +359,7 @@ export function CartDrawer({ outletSlug, campaignSlug }: CartDrawerProps) {
 
       if (!authRes.success) {
         setIsSubmitting(false);
-        setSubmitError(authRes.error || 'Failed to authenticate customer account. Please check your password.');
+        setConfirmError(authRes.error || 'Failed to authenticate customer account. Please check your password.');
         return;
       }
 
@@ -322,14 +410,14 @@ export function CartDrawer({ outletSlug, campaignSlug }: CartDrawerProps) {
       const orderData = await createRes.json();
       if (!createRes.ok || !orderData.success) {
         setIsSubmitting(false);
-        setSubmitError(orderData.message || orderData.error || 'Failed to initialize payment gateway');
+        setConfirmError(orderData.message || orderData.error || 'Failed to initialize payment gateway');
         return;
       }
 
       const scriptLoaded = await loadRazorpayScript();
       if (!scriptLoaded) {
         setIsSubmitting(false);
-        setSubmitError('Payment gateway script failed to load. Please check your connection.');
+        setConfirmError('Payment gateway script failed to load. Please check your connection.');
         return;
       }
 
@@ -337,7 +425,7 @@ export function CartDrawer({ outletSlug, campaignSlug }: CartDrawerProps) {
       const RazorpayConstructor = (window as any).Razorpay;
       if (!RazorpayConstructor) {
         setIsSubmitting(false);
-        setSubmitError('Payment gateway temporarily unavailable. Please try again.');
+        setConfirmError('Payment gateway temporarily unavailable. Please try again.');
         return;
       }
 
@@ -414,13 +502,15 @@ export function CartDrawer({ outletSlug, campaignSlug }: CartDrawerProps) {
                 }
               }
 
+              // Close confirmation modal
+              setIsLocationConfirmOpen(false);
               router.push(`/${effectiveOutletSlug}/order/${confirmedOrder.id}`);
             } else {
-              setSubmitError(verifyRes.error || 'Payment verification failed');
+              setConfirmError(verifyRes.error || 'Payment verification failed');
             }
           } catch (err) {
             setIsSubmitting(false);
-            setSubmitError(
+            setConfirmError(
               err instanceof Error ? err.message : 'Failed to verify payment with server'
             );
           }
@@ -431,13 +521,16 @@ export function CartDrawer({ outletSlug, campaignSlug }: CartDrawerProps) {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       rzpInstance.on('payment.failed', (resp: any) => {
         setIsSubmitting(false);
-        setSubmitError(resp?.error?.description || 'Payment was declined or cancelled');
+        setConfirmError(resp?.error?.description || 'Payment was declined or cancelled');
       });
+
+      // Close location confirmation modal right before Razorpay opens
+      setIsLocationConfirmOpen(false);
       rzpInstance.open();
     } catch (err) {
       console.error('Razorpay checkout error:', err);
       setIsSubmitting(false);
-      setSubmitError(
+      setConfirmError(
         err instanceof Error ? err.message : 'Checkout encountered an unexpected error'
       );
     }
@@ -1047,7 +1140,7 @@ export function CartDrawer({ outletSlug, campaignSlug }: CartDrawerProps) {
               ) : (
                 <button
                   type="button"
-                  onClick={handleCheckout}
+                  onClick={handleInitiateCheckout}
                   disabled={isSubmitting}
                   className="w-full py-3.5 bg-[#1C1917] hover:bg-stone-800 active:scale-[0.99] text-white rounded-full font-bold text-xs uppercase tracking-wider transition shadow-sm flex items-center justify-center gap-2 disabled:opacity-60 cursor-pointer"
                 >
@@ -1055,7 +1148,7 @@ export function CartDrawer({ outletSlug, campaignSlug }: CartDrawerProps) {
                     <span>Opening Secure Checkout...</span>
                   ) : (
                     <>
-                      <span>Pay Securely • ₹{total}</span>
+                      <span>Proceed to Pay • ₹{total}</span>
                       <ArrowRight className="w-3.5 h-3.5" />
                     </>
                   )}
@@ -1145,6 +1238,189 @@ export function CartDrawer({ outletSlug, campaignSlug }: CartDrawerProps) {
               }}
               onClose={() => setIsMapModalOpen(false)}
             />
+          </div>
+        </div>
+      )}
+
+      {/* =========================================================================
+          MANDATORY ADDRESS CONFIRMATION MODAL: "Is the delivery location correct?"
+         ========================================================================= */}
+      {isLocationConfirmOpen && (
+        <div className="fixed inset-0 z-70 flex items-center justify-center p-3 sm:p-4 bg-black/65 backdrop-blur-xs overscroll-contain animate-in fade-in duration-200">
+          <div className="bg-[#FAF8F5] border border-stone-200 rounded-3xl max-w-md w-full p-5 sm:p-6 relative shadow-2xl space-y-4 max-h-[94vh] overflow-y-auto overscroll-contain">
+            {/* Header & Prompt */}
+            <div className="flex items-start justify-between gap-3">
+              <div className="space-y-1">
+                <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-900 border border-amber-200 text-[10px] font-extrabold uppercase tracking-wider">
+                  <MapPin className="w-3 h-3 text-amber-700" />
+                  <span>Doorstep Verification</span>
+                </div>
+                <h3 className="font-serif font-bold text-stone-900 text-lg tracking-tight">
+                  Is the delivery location correct?
+                </h3>
+                <p className="text-xs text-stone-600 leading-relaxed">
+                  Our rider delivers directly to your doorstep. Please ensure your flat number and building name are accurate before payment.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsLocationConfirmOpen(false)}
+                className="p-1.5 rounded-full text-stone-400 hover:text-stone-800 hover:bg-stone-200/50 transition cursor-pointer shrink-0"
+                aria-label="Close"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Pinned Map Summary & Change Pin Button */}
+            <div className="p-3 bg-white rounded-2xl border border-stone-200/90 shadow-2xs space-y-1.5">
+              <div className="flex items-center justify-between text-xs">
+                <span className="font-bold text-stone-800 flex items-center gap-1.5">
+                  <Navigation className="w-3.5 h-3.5 text-amber-600" />
+                  <span>Map Pin Confirmed</span>
+                </span>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsLocationConfirmOpen(false);
+                    setIsMapModalOpen(true);
+                  }}
+                  className="text-amber-800 hover:text-amber-950 font-bold text-[11px] underline cursor-pointer"
+                >
+                  Adjust Pin on Map
+                </button>
+              </div>
+              <div className="flex items-center gap-2 text-[11px] text-stone-500 pt-0.5">
+                <span className="font-semibold text-emerald-800">
+                  Kitchen: {currentOutlet.name.replace("Puffs 'n' Rolls - ", '')}
+                </span>
+                <span>•</span>
+                <span>{deliveryQuote?.distanceKm ? `${Number(deliveryQuote.distanceKm).toFixed(1)} km away` : 'Fast Nashik Dispatch'}</span>
+              </div>
+            </div>
+
+            {/* Address Fields */}
+            <div className="space-y-3 bg-white p-4 rounded-2xl border border-stone-200 shadow-2xs">
+              <div>
+                <label className="block text-[10px] font-bold text-stone-700 uppercase tracking-wider mb-1">
+                  Flat / House / Floor No. *
+                </label>
+                <div className="relative">
+                  <Home className="w-4 h-4 text-stone-400 absolute left-3 top-2.5" />
+                  <input
+                    type="text"
+                    required
+                    placeholder="e.g. Flat 402, 4th Floor / Bungalow 12"
+                    value={confirmFlatNo}
+                    onChange={(e) => {
+                      setConfirmFlatNo(e.target.value);
+                      if (confirmError) setConfirmError('');
+                    }}
+                    className="w-full pl-9 pr-3 py-2 bg-stone-50 hover:bg-white focus:bg-white border border-stone-300 rounded-xl text-xs font-medium focus:ring-1 focus:ring-stone-900 focus:outline-none"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-[10px] font-bold text-stone-700 uppercase tracking-wider mb-1">
+                  Society / Building / Apartment Name *
+                </label>
+                <input
+                  type="text"
+                  required
+                  placeholder="e.g. Shrinath Heights, Wing B"
+                  value={confirmBuilding}
+                  onChange={(e) => {
+                    setConfirmBuilding(e.target.value);
+                    if (confirmError) setConfirmError('');
+                  }}
+                  className="w-full px-3 py-2 bg-stone-50 hover:bg-white focus:bg-white border border-stone-300 rounded-xl text-xs font-medium focus:ring-1 focus:ring-stone-900 focus:outline-none"
+                />
+              </div>
+
+              <div>
+                <label className="block text-[10px] font-bold text-stone-700 uppercase tracking-wider mb-1">
+                  Street, Area &amp; Landmark
+                </label>
+                <input
+                  type="text"
+                  placeholder="e.g. Opp. BYK College, College Road"
+                  value={confirmStreet}
+                  onChange={(e) => {
+                    setConfirmStreet(e.target.value);
+                    if (confirmError) setConfirmError('');
+                  }}
+                  className="w-full px-3 py-2 bg-stone-50 hover:bg-white focus:bg-white border border-stone-300 rounded-xl text-xs font-medium focus:ring-1 focus:ring-stone-900 focus:outline-none"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <label className="block text-[10px] font-bold text-stone-700 uppercase tracking-wider mb-1">
+                    Delivery Area
+                  </label>
+                  <input
+                    type="text"
+                    value={customer.area || currentOutlet.area}
+                    readOnly
+                    className="w-full px-3 py-2 bg-stone-100 border border-stone-200 rounded-xl text-xs text-stone-600 font-medium"
+                  />
+                </div>
+                <div>
+                  <label className="block text-[10px] font-bold text-stone-700 uppercase tracking-wider mb-1">
+                    Pincode *
+                  </label>
+                  <input
+                    type="text"
+                    maxLength={6}
+                    required
+                    placeholder="422005"
+                    value={confirmPincode}
+                    onChange={(e) => {
+                      setConfirmPincode(e.target.value.replace(/\D/g, '').slice(0, 6));
+                      if (confirmError) setConfirmError('');
+                    }}
+                    className="w-full px-3 py-2 bg-stone-50 hover:bg-white focus:bg-white border border-stone-300 rounded-xl text-xs font-mono font-medium focus:ring-1 focus:ring-stone-900 focus:outline-none"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Validation Error Banner */}
+            {confirmError && (
+              <div className="p-3 bg-rose-50 border border-rose-200 rounded-xl flex items-start gap-2 text-xs text-rose-800 animate-in fade-in">
+                <AlertTriangle className="w-4 h-4 text-rose-600 shrink-0 mt-0.5" />
+                <p className="font-semibold leading-tight">{confirmError}</p>
+              </div>
+            )}
+
+            {/* "Confirm location and pay" Button */}
+            <div className="space-y-2 pt-1">
+              <button
+                type="button"
+                onClick={handleConfirmLocationAndPay}
+                disabled={isSubmitting}
+                className="w-full py-3.5 bg-stone-900 hover:bg-stone-800 active:scale-[0.99] text-white rounded-full font-bold text-xs uppercase tracking-wider transition shadow-md flex items-center justify-center gap-2 cursor-pointer disabled:opacity-60"
+              >
+                {isSubmitting ? (
+                  <span>Opening Razorpay Secure Checkout...</span>
+                ) : (
+                  <>
+                    <Lock className="w-3.5 h-3.5 text-emerald-400" />
+                    <span>Confirm Location and Pay • ₹{total}</span>
+                    <ArrowRight className="w-3.5 h-3.5 text-amber-400" />
+                  </>
+                )}
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setIsLocationConfirmOpen(false)}
+                className="w-full py-1.5 text-stone-500 hover:text-stone-800 text-xs font-semibold text-center transition cursor-pointer"
+              >
+                ← Back to Cart
+              </button>
+            </div>
           </div>
         </div>
       )}

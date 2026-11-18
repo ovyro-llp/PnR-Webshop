@@ -4,6 +4,7 @@ import { orderRepository } from '@/lib/db/order-repository';
 import { dispatchToMangwale } from '@/lib/logistics/mangwale';
 import { sendMetaCAPI } from '@/lib/tracking/meta-capi';
 import { isB2COutletAcceptingOrders } from '@/lib/outlet-timing';
+import { validateDeliveryAddress } from '@/lib/utils/address-validation';
 import { Order, CustomerDetails, CartItem, PaymentMethod } from '@/types';
 
 export interface CreatePaymentOrderInput {
@@ -82,8 +83,9 @@ export const paymentService = {
       throw new Error('Mandatory delivery coordinates missing. Please pinpoint your exact delivery doorstep on the map before proceeding.');
     }
 
-    if (!customer?.address || customer.address.trim().length < 3) {
-      throw new Error('Delivery address details (flat, building, street) are required.');
+    const addressCheck = validateDeliveryAddress(customer?.address);
+    if (!addressCheck.isValid) {
+      throw new Error(addressCheck.reason || 'Complete delivery address (Flat/House No. and Building name) is required.');
     }
 
     // Generate unique receipt and notes
