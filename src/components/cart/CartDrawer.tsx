@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useCart } from '@/context/CartContext';
 import { useAuth } from '@/context/AuthContext';
 import { useLocation } from '@/context/LocationContext';
@@ -101,6 +101,14 @@ export function CartDrawer({ outletSlug, campaignSlug }: CartDrawerProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState('');
   const [isMapModalOpen, setIsMapModalOpen] = useState(false);
+  const cartScrollRef = useRef<HTMLDivElement>(null);
+
+  // Auto-scroll cart drawer to top whenever an error is triggered so it is immediately visible
+  useEffect(() => {
+    if (submitError && cartScrollRef.current) {
+      cartScrollRef.current.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  }, [submitError]);
 
   // Address Confirmation Modal State ("Is the delivery location correct?")
   const [isLocationConfirmOpen, setIsLocationConfirmOpen] = useState(false);
@@ -226,11 +234,11 @@ export function CartDrawer({ outletSlug, campaignSlug }: CartDrawerProps) {
       return;
     }
 
-    // 0.1 MANDATORY HARD GATE: Customer MUST pinpoint doorstep location on map first!
+    // 0.1 MANDATORY HARD GATE: Customer MUST pinpoint location on map first!
     const effectiveCoords = customer.coordinates || deliveryCoordinates;
     if (!effectiveCoords || typeof effectiveCoords.lat !== 'number' || typeof effectiveCoords.lng !== 'number') {
       setIsMapModalOpen(true);
-      setSubmitError('📍 Please pinpoint your exact delivery doorstep on the map first to proceed to checkout.');
+      setSubmitError('📍 Please pinpoint your delivery location on the map first to proceed to checkout.');
       return;
     }
 
@@ -294,7 +302,7 @@ export function CartDrawer({ outletSlug, campaignSlug }: CartDrawerProps) {
 
     const addressCheck = validateDeliveryAddress(fullAddress);
     if (!addressCheck.isValid) {
-      setConfirmError(addressCheck.reason || 'Please provide complete doorstep details.');
+      setConfirmError(addressCheck.reason || 'Please provide complete address details.');
       return;
     }
 
@@ -580,7 +588,10 @@ export function CartDrawer({ outletSlug, campaignSlug }: CartDrawerProps) {
           </div>
 
           {/* Cart Content */}
-          <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-4 overscroll-contain touch-pan-y">
+          <div
+            ref={cartScrollRef}
+            className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-4 overscroll-contain touch-pan-y"
+          >
             {items.length === 0 ? (
               <div className="py-16 text-center space-y-3">
                 <div className="w-14 h-14 bg-stone-100 text-stone-400 rounded-full flex items-center justify-center mx-auto">
@@ -599,6 +610,16 @@ export function CartDrawer({ outletSlug, campaignSlug }: CartDrawerProps) {
               </div>
             ) : (
               <>
+                {/* Top Prominent Error Banner */}
+                {submitError && (
+                  <div className="p-3.5 bg-rose-50 border border-rose-200 rounded-2xl flex items-start gap-2.5 text-rose-900 shadow-xs animate-in fade-in slide-in-from-top-1 duration-200">
+                    <AlertTriangle className="w-4 h-4 text-rose-600 shrink-0 mt-0.5" />
+                    <div className="flex-1 text-xs font-semibold leading-relaxed">
+                      {submitError}
+                    </div>
+                  </div>
+                )}
+
                 {/* Items List */}
                 <div className="space-y-2.5">
                   {items.map((cartItem) => (
@@ -655,19 +676,6 @@ export function CartDrawer({ outletSlug, campaignSlug }: CartDrawerProps) {
                   ))}
                 </div>
 
-                {/* Express Bakery Delivery Notice */}
-                <div className="p-3 bg-white rounded-2xl border border-stone-200/80 flex items-start gap-2.5 shadow-xs">
-                  <Truck className="w-4 h-4 text-stone-700 shrink-0 mt-0.5" />
-                  <div>
-                    <p className="text-xs font-semibold text-stone-900">
-                      Express Doorstep Delivery
-                    </p>
-                    <p className="text-[11px] text-stone-500 mt-0.5">
-                      Dispatched straight from our nearest ovens to your address via express delivery.
-                    </p>
-                  </div>
-                </div>
-
                 {/* =========================================================================
                     SECTION 1: DELIVERY ADDRESS (ALWAYS VISIBLE - WHERE SHOULD WE DELIVER?)
                    ========================================================================= */}
@@ -693,13 +701,13 @@ export function CartDrawer({ outletSlug, campaignSlug }: CartDrawerProps) {
                             </div>
                             <div>
                               <p className="text-xs font-bold text-amber-950 flex items-center gap-1.5">
-                                <span>Step 1: Pinpoint Doorstep on Map</span>
+                                <span>Step 1: Set Delivery Location on Map</span>
                                 <span className="text-[9px] uppercase font-bold tracking-wider px-1.5 py-0.2 rounded bg-amber-200/80 text-amber-900">
                                   Required
                                 </span>
                               </p>
                               <p className="text-[11px] text-amber-900/90 leading-snug mt-0.5">
-                                Pinpoint your exact building on the map for seamless express doorstep delivery.
+                                Pinpoint your building on the map for accurate bakery delivery.
                               </p>
                             </div>
                           </div>
@@ -713,7 +721,7 @@ export function CartDrawer({ outletSlug, campaignSlug }: CartDrawerProps) {
                           className="w-full py-2.5 bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-700 hover:to-amber-800 text-white rounded-xl text-xs font-bold flex items-center justify-center gap-2 transition cursor-pointer shadow-sm"
                         >
                           <MapPin className="w-3.5 h-3.5 text-amber-200" />
-                          <span>Pinpoint Delivery Doorstep on Map</span>
+                          <span>Pinpoint Delivery Location on Map</span>
                         </button>
                       </div>
                     ) : (
@@ -729,7 +737,7 @@ export function CartDrawer({ outletSlug, campaignSlug }: CartDrawerProps) {
                             <p className="text-[11px] text-stone-600 font-medium truncate mt-0.5 flex items-center gap-1">
                               <span className="w-1.5 h-1.5 rounded-full bg-emerald-600 shrink-0" />
                               <span className="truncate">
-                                {customer.area || deliveryArea ? `${customer.area || deliveryArea}, Nashik` : 'Doorstep pin verified'}
+                                {customer.area || deliveryArea ? `${customer.area || deliveryArea}, Nashik` : 'Delivery location verified'}
                               </span>
                             </p>
                           </div>
@@ -1013,12 +1021,12 @@ export function CartDrawer({ outletSlug, campaignSlug }: CartDrawerProps) {
                         {customer.coordinates ? (
                           <div className="mt-1.5 flex items-center gap-1.5 text-[10px] text-emerald-700 font-semibold bg-emerald-50/80 px-2 py-0.5 rounded-md border border-emerald-200/60 w-fit">
                             <CheckCircle2 className="w-3 h-3 text-emerald-600 shrink-0" />
-                            <span>Doorstep Delivery Pin Confirmed</span>
+                            <span>Delivery Location Confirmed</span>
                           </div>
                         ) : (
                           <div className="mt-1.5 flex items-center gap-1.5 text-[10px] text-amber-800 font-medium bg-amber-50 px-2 py-0.5 rounded-md border border-amber-200/80 w-fit">
                             <MapPin className="w-3 h-3 text-amber-600 shrink-0" />
-                            <span>Map doorstep pin required for delivery</span>
+                            <span>Map pin required for delivery</span>
                           </div>
                         )}
                       </div>
@@ -1040,7 +1048,7 @@ export function CartDrawer({ outletSlug, campaignSlug }: CartDrawerProps) {
                   )}
                   <div className="flex justify-between text-stone-500 items-center">
                     <div className="flex items-center gap-1.5">
-                      <span>Direct Doorstep Delivery</span>
+                      <span>Delivery Fee</span>
                       {deliveryQuote?.distanceKm && (
                         <span className="text-[10px] font-mono bg-stone-100 text-stone-700 px-1.5 py-0.5 rounded font-semibold">
                           {Number(deliveryQuote.distanceKm).toFixed(1)} km
@@ -1057,20 +1065,14 @@ export function CartDrawer({ outletSlug, campaignSlug }: CartDrawerProps) {
                     </div>
                   </div>
                   <div className="text-[10px] text-emerald-700 font-medium pl-0.5 flex items-center justify-between">
-                    <span>⚡ 100% Free Doorstep Delivery</span>
-                    <span>Express Delivery</span>
+                    <span>⚡ Free Delivery</span>
+                    <span>Direct Dispatch</span>
                   </div>
                   <div className="pt-2 border-t border-stone-100 flex justify-between font-bold text-sm text-stone-900">
                     <span>Total Amount</span>
                     <span>₹{total}</span>
                   </div>
                 </div>
-
-                {submitError && (
-                  <p className="text-xs text-rose-600 font-medium bg-rose-50 p-2.5 rounded-xl border border-rose-200">
-                    {submitError}
-                  </p>
-                )}
               </>
             )}
           </div>
@@ -1137,7 +1139,7 @@ export function CartDrawer({ outletSlug, campaignSlug }: CartDrawerProps) {
                     type="button"
                     onClick={() => {
                       setIsMapModalOpen(true);
-                      setSubmitError('📍 Please pinpoint your delivery doorstep on the map to proceed.');
+                      setSubmitError('📍 Please pinpoint your delivery location on the map to proceed.');
                     }}
                     className="w-full py-3.5 bg-gradient-to-r from-amber-600 via-amber-600 to-amber-700 hover:from-amber-700 hover:to-amber-800 active:scale-[0.99] text-white rounded-full font-bold text-xs uppercase tracking-wider transition shadow-md flex items-center justify-center gap-2 cursor-pointer"
                   >
@@ -1146,7 +1148,7 @@ export function CartDrawer({ outletSlug, campaignSlug }: CartDrawerProps) {
                     <ArrowRight className="w-3.5 h-3.5" />
                   </button>
                   <p className="text-[10px] text-amber-900 font-semibold text-center flex items-center justify-center gap-1">
-                    <span>* Exact map pinpoint ensures seamless express doorstep bakery delivery</span>
+                    <span>* Accurate map pinpoint ensures seamless bakery delivery</span>
                   </p>
                 </>
               ) : (
@@ -1199,7 +1201,7 @@ export function CartDrawer({ outletSlug, campaignSlug }: CartDrawerProps) {
             <div className="p-2.5 bg-amber-50 border border-amber-200/80 rounded-2xl flex items-center gap-2 text-xs text-amber-900">
               <MapPin className="w-3.5 h-3.5 text-amber-600 shrink-0" />
               <span>
-                <strong>Required for Delivery:</strong> Pin your exact doorstep for express bakery delivery.
+                <strong>Required for Delivery:</strong> Pin your exact location for bakery delivery.
               </span>
             </div>
 
@@ -1265,13 +1267,13 @@ export function CartDrawer({ outletSlug, campaignSlug }: CartDrawerProps) {
               <div className="space-y-1">
                 <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-900 border border-amber-200 text-[10px] font-extrabold uppercase tracking-wider">
                   <MapPin className="w-3 h-3 text-amber-700" />
-                  <span>Doorstep Verification</span>
+                  <span>Delivery Address Verification</span>
                 </div>
                 <h3 className="font-serif font-bold text-stone-900 text-lg tracking-tight">
                   Is the delivery location correct?
                 </h3>
                 <p className="text-xs text-stone-600 leading-relaxed">
-                  Our rider delivers directly to your doorstep. Please ensure your flat number and building name are accurate before payment.
+                  Our rider delivers directly to your address. Please ensure your flat number and building name are accurate before payment.
                 </p>
               </div>
               <button
