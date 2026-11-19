@@ -2,10 +2,12 @@
 
 import React from 'react';
 import Image from 'next/image';
+import Link from 'next/link';
 import { MenuItem } from '@/types';
 import { useCart } from '@/context/CartContext';
 import { Plus, Minus } from 'lucide-react';
 import { DietarySymbol, GlutenFreeSymbol } from '@/components/ui/DietarySymbol';
+import { slugify } from '@/lib/utils/slugify';
 
 interface MenuItemCardProps {
   item: MenuItem;
@@ -17,6 +19,7 @@ export function MenuItemCard({ item, outletSlug }: MenuItemCardProps) {
   const cartEntry = items.find((ci) => ci.item.id === item.id);
   const isSoldOut = item.isAvailable === false || (typeof item.stockQuantity === 'number' && item.stockQuantity <= 0);
   const isLowStock = !isSoldOut && typeof item.stockQuantity === 'number' && item.stockQuantity > 0 && item.stockQuantity <= 4;
+  const productSlug = item.slug || slugify(item.name);
 
   const defaultFallback = '/images/no-image-available.png';
   const getProductImage = (img?: string) => {
@@ -34,7 +37,11 @@ export function MenuItemCard({ item, outletSlug }: MenuItemCardProps) {
       isSoldOut ? 'opacity-70 border-stone-200' : 'border-stone-200/70 hover:border-stone-400/80'
     }`}>
       {/* Product Image: Centered, fully fitted within frame so all packaging & labels are clearly visible */}
-      <div className="relative w-full h-52 bg-gradient-to-b from-[#FAF8F5] via-stone-50 to-stone-100/70 overflow-hidden flex items-center justify-center p-2.5">
+      <Link
+        href={`/product/${productSlug}`}
+        className="relative w-full h-52 bg-gradient-to-b from-[#FAF8F5] via-stone-50 to-stone-100/70 overflow-hidden flex items-center justify-center p-2.5 block cursor-pointer"
+        title={`View ${item.name} details`}
+      >
         {/* Soft Ambient Studio Glow */}
         <div className="absolute inset-0 overflow-hidden pointer-events-none opacity-25 filter blur-xl scale-125">
           <Image
@@ -64,7 +71,7 @@ export function MenuItemCard({ item, outletSlug }: MenuItemCardProps) {
         />
 
         {/* Dietary & Allergy Indicators */}
-        <div className="absolute top-3 right-3 flex items-center gap-1.5 z-10">
+        <div className="absolute top-3 right-3 flex items-center gap-1.5 z-10 pointer-events-none">
           {item.isGlutenFree && (
             <div
               className="bg-white/95 backdrop-blur-sm px-2 py-0.5 rounded-lg border border-amber-200/90 shadow-2xs flex items-center"
@@ -82,7 +89,7 @@ export function MenuItemCard({ item, outletSlug }: MenuItemCardProps) {
         </div>
 
         {item.isBestseller && !isSoldOut && (
-          <div className="absolute top-3 left-3 bg-[#1C1917]/90 backdrop-blur-sm text-white text-[10px] uppercase tracking-wider font-semibold px-2.5 py-0.5 rounded-full z-10">
+          <div className="absolute top-3 left-3 bg-[#1C1917]/90 backdrop-blur-sm text-white text-[10px] uppercase tracking-wider font-semibold px-2.5 py-0.5 rounded-full z-10 pointer-events-none">
             Signature
           </div>
         )}
@@ -94,24 +101,30 @@ export function MenuItemCard({ item, outletSlug }: MenuItemCardProps) {
             </span>
           </div>
         )}
-      </div>
+      </Link>
 
       {/* Item Details */}
       <div className="p-4 sm:p-5 flex-1 flex flex-col justify-between space-y-3">
         <div>
           <div className="flex items-center justify-between">
-            <span className="text-[10px] uppercase tracking-widest font-semibold text-stone-400 block">
+            <Link
+              href={`/?category=${encodeURIComponent(item.category)}`}
+              className="text-[10px] uppercase tracking-widest font-semibold text-stone-400 hover:text-stone-700 block transition truncate max-w-[150px]"
+              title={`Filter by ${item.category}`}
+            >
               {item.category}
-            </span>
+            </Link>
             {isLowStock && (
               <span className="text-[10px] font-semibold text-amber-700 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded-full">
                 Only {item.stockQuantity} left
               </span>
             )}
           </div>
-          <h3 className="font-serif font-bold text-base text-stone-900 group-hover:text-stone-700 transition line-clamp-1 mt-0.5">
-            {item.name}
-          </h3>
+          <Link href={`/product/${productSlug}`} className="block group/link">
+            <h3 className="font-serif font-bold text-base text-stone-900 group-hover/link:text-amber-800 transition line-clamp-1 mt-0.5">
+              {item.name}
+            </h3>
+          </Link>
           {item.description && item.description.trim() ? (
             <p className="text-xs text-stone-500 line-clamp-2 mt-1 leading-relaxed">
               {item.description}

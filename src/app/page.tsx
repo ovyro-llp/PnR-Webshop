@@ -29,7 +29,10 @@ import {
   Coffee,
   ArrowRight,
   Phone,
+  Copy,
+  Check,
 } from 'lucide-react';
+import { slugify } from '@/lib/utils/slugify';
 
 export type DietaryFilterType = 'ALL' | 'VEG' | 'NON_VEG' | 'GLUTEN_FREE';
 
@@ -88,6 +91,7 @@ export default function HomePage() {
       const customEvent = e as CustomEvent<{ category: string }>;
       if (customEvent.detail?.category) {
         setSelectedCategory(customEvent.detail.category);
+        updateCategoryInUrl(customEvent.detail.category);
         document.getElementById('bakery-catalog')?.scrollIntoView({ behavior: 'smooth' });
       }
     };
@@ -119,6 +123,74 @@ export default function HomePage() {
   const categories = useMemo(() => {
     return ['All', ...Array.from(new Set(items.map((i) => i.category)))];
   }, [items]);
+
+  const [copiedCategory, setCopiedCategory] = useState(false);
+
+  // Sync category in URL query params without reloading the page
+  const updateCategoryInUrl = (cat: string) => {
+    if (typeof window === 'undefined') return;
+    try {
+      const url = new URL(window.location.href);
+      if (cat && cat !== 'All') {
+        url.searchParams.set('category', cat);
+      } else {
+        url.searchParams.delete('category');
+      }
+      window.history.replaceState(null, '', url.pathname + (url.search ? url.search : '') + url.hash);
+    } catch {}
+  };
+
+  const handleSelectCategory = (cat: string, scroll = true) => {
+    setSelectedCategory(cat);
+    updateCategoryInUrl(cat);
+    if (scroll) {
+      document.getElementById('bakery-catalog')?.scrollIntoView({ behavior: 'smooth' });
+    }
+  };
+
+  const handleCopyCategoryLink = () => {
+    if (typeof window === 'undefined') return;
+    const url = new URL(window.location.href);
+    if (selectedCategory && selectedCategory !== 'All') {
+      url.searchParams.set('category', selectedCategory);
+    }
+    navigator.clipboard.writeText(url.toString());
+    setCopiedCategory(true);
+    setTimeout(() => setCopiedCategory(false), 2000);
+  };
+
+  // On page load, read ?category= from URL query params and auto-select & smooth scroll
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    try {
+      const params = new URLSearchParams(window.location.search);
+      const catParam = params.get('category');
+      if (catParam) {
+        const normalizedTarget = catParam.toLowerCase().trim();
+        const matched = categories.find(
+          (c) =>
+            c.toLowerCase() === normalizedTarget ||
+            slugify(c) === slugify(normalizedTarget)
+        );
+        if (matched) {
+          setSelectedCategory(matched);
+          setTimeout(() => {
+            document.getElementById('bakery-catalog')?.scrollIntoView({ behavior: 'smooth' });
+          }, 200);
+
+          // Fire Meta Pixel ViewContent for category landing
+          if ((window as any).fbq) {
+            try {
+              (window as any).fbq('track', 'ViewContent', {
+                content_name: matched,
+                content_category: matched,
+              });
+            } catch {}
+          }
+        }
+      }
+    } catch {}
+  }, [categories]);
 
   // Real-time filter: category + dietary choice + search query
   const filteredItems = useMemo(() => {
@@ -319,8 +391,7 @@ export default function HomePage() {
                         key={cat}
                         type="button"
                         onClick={() => {
-                          setSelectedCategory(cat);
-                          document.getElementById('bakery-catalog')?.scrollIntoView({ behavior: 'smooth' });
+                          handleSelectCategory(cat, true);
                         }}
                         className={`w-full px-3 py-2.5 rounded-2xl text-xs font-semibold flex items-center justify-between transition cursor-pointer group ${
                           isSelected
@@ -435,7 +506,7 @@ export default function HomePage() {
                   {categories.map((cat) => (
                     <button
                       key={cat}
-                      onClick={() => setSelectedCategory(cat)}
+                      onClick={() => handleSelectCategory(cat, false)}
                       className={`px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition cursor-pointer flex items-center gap-1.5 ${
                         selectedCategory === cat
                           ? 'bg-[#1C1917] text-white shadow-xs'
@@ -450,13 +521,33 @@ export default function HomePage() {
 
               {/* Status & Active Search Bar */}
               <div className="flex flex-wrap items-center justify-between gap-3 bg-white p-3.5 rounded-2xl border border-stone-200/80 shadow-2xs">
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2.5 flex-wrap">
                   <h3 className="font-serif font-bold text-stone-900 text-base sm:text-lg">
                     {selectedCategory === 'All' ? 'All Counter Bakes' : selectedCategory}
                   </h3>
                   <span className="text-[11px] font-mono text-stone-500 bg-stone-100 px-2 py-0.5 rounded-md border border-stone-200">
                     {filteredItems.length} {filteredItems.length === 1 ? 'item' : 'items'}
                   </span>
+                  {selectedCategory !== 'All' && (
+                    <button
+                      type="button"
+                      onClick={handleCopyCategoryLink}
+                      className="inline-flex items-center gap-1.5 text-[11px] font-medium text-stone-600 hover:text-stone-900 bg-stone-100 hover:bg-stone-200/90 border border-stone-200/80 px-2.5 py-1 rounded-full transition cursor-pointer active:scale-95 shadow-2xs"
+                      title="Copy link to this category for Meta Ads"
+                    >
+                      {copiedCategory ? (
+                        <>
+                          <Check className="w-3 h-3 text-emerald-600" />
+                          <span className="text-emerald-700 font-semibold">Link Copied!</span>
+                        </>
+                      ) : (
+                        <>
+                          <Copy className="w-3 h-3 text-stone-500" />
+                          <span>Copy Link for Ads</span>
+                        </>
+                      )}
+                    </button>
+                  )}
                 </div>
 
                 {searchQuery && (
@@ -486,7 +577,7 @@ export default function HomePage() {
                     type="button"
                     onClick={() => {
                       setSearchQuery('');
-                      setSelectedCategory('All');
+                      handleSelectCategory('All', false);
                       setDietaryFilter('ALL');
                     }}
                     className="mt-2 px-5 py-2 bg-stone-900 text-white text-xs font-bold rounded-full hover:bg-stone-800 transition cursor-pointer"

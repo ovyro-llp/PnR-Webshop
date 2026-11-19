@@ -26,6 +26,7 @@ import {
   getPersistedMarketingTagsAsync,
   savePersistedMarketingTagsAsync,
 } from '@/lib/marketing/marketing-storage';
+import { slugify } from '@/lib/utils/slugify';
 
 export const DEFAULT_CATEGORIES: Category[] = [
   {
@@ -1023,6 +1024,10 @@ export const orderStore = {
       if (dbProducts && Array.isArray(dbProducts) && dbProducts.length > 20) {
         let hasImageUpdates = false;
         dbProducts.forEach((dbItem) => {
+          if (!dbItem.slug) {
+            dbItem.slug = slugify(dbItem.name);
+            hasImageUpdates = true;
+          }
           const masterItem = MENU_ITEMS.find((m) => m.id === dbItem.id);
           if (
             masterItem?.image &&
@@ -1059,6 +1064,31 @@ export const orderStore = {
     );
   },
 
+  getProductBySlug: (slug: string, outletSlug?: string): MenuItem | undefined => {
+    if (!slug) return undefined;
+    const normalized = slug.toLowerCase().trim();
+    const items = orderStore.getMenuItems(outletSlug);
+    return items.find(
+      (item) =>
+        (item.slug && item.slug.toLowerCase() === normalized) ||
+        slugify(item.name) === normalized
+    );
+  },
+
+  getProductBySlugAsync: async (slug: string, outletSlug?: string): Promise<MenuItem | undefined> => {
+    if (!slug) return undefined;
+    try {
+      await orderStore.getMasterProductsAsync();
+    } catch {}
+    return orderStore.getProductBySlug(slug, outletSlug);
+  },
+
+  getProductById: (id: string, outletSlug?: string): MenuItem | undefined => {
+    if (!id) return undefined;
+    const items = orderStore.getMenuItems(outletSlug);
+    return items.find((item) => item.id === id);
+  },
+
   createMasterProduct: (productData: CreateProductDTO): MenuItem => {
     const list = globalThis.__PNR_MASTER_PRODUCTS__ || [...MENU_ITEMS];
     const outlets = globalThis.__PNR_OUTLETS__ || OUTLETS;
@@ -1071,6 +1101,7 @@ export const orderStore = {
     const newProduct: MenuItem = {
       id: `prod-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
       name: productData.name.trim(),
+      slug: slugify(productData.name.trim()),
       description: productData.description.trim(),
       category: productData.category,
       subCategory: productData.subCategory,
@@ -1150,6 +1181,7 @@ export const orderStore = {
     const updated: MenuItem = {
       ...current,
       ...updates,
+      slug: updates.name ? slugify(updates.name) : (current.slug || slugify(current.name)),
       subCategory: updates.subCategory !== undefined ? updates.subCategory : current.subCategory,
       subCategoryId: updates.subCategoryId !== undefined ? updates.subCategoryId : current.subCategoryId,
       price: updates.price !== undefined ? Number(updates.price) : current.price,

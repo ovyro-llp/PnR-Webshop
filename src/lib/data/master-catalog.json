@@ -19,7 +19,8 @@
     ],
     "isAvailable": true,
     "stockQuantity": 25,
-    "isArchived": false
+    "isArchived": false,
+    "slug": "white-bread"
   },
   {
     "id": "item-2",
@@ -41,7 +42,8 @@
     ],
     "isAvailable": true,
     "stockQuantity": 25,
-    "isArchived": false
+    "isArchived": false,
+    "slug": "brown-bread"
   },
   {
     "id": "item-3",
@@ -63,7 +65,8 @@
     ],
     "isAvailable": true,
     "stockQuantity": 25,
-    "isArchived": false
+    "isArchived": false,
+    "slug": "multigrain-bread"
   },
   {
     "id": "item-4",
@@ -85,7 +88,8 @@
     ],
     "isAvailable": true,
     "stockQuantity": 25,
-    "isArchived": false
+    "isArchived": false,
+    "slug": "french-loaf"
   },
   {
     "id": "item-5",
@@ -107,7 +111,8 @@
     ],
     "isAvailable": true,
     "stockQuantity": 25,
-    "isArchived": false
+    "isArchived": false,
+    "slug": "whole-wheat-bread"
   },
   {
     "id": "item-6",
@@ -129,7 +134,8 @@
     ],
     "isAvailable": true,
     "stockQuantity": 25,
-    "isArchived": false
+    "isArchived": false,
+    "slug": "cheese-and-garlic-bread"
   },
   {
     "id": "item-7",
@@ -151,7 +157,8 @@
     ],
     "isAvailable": true,
     "stockQuantity": 25,
-    "isArchived": false
+    "isArchived": false,
+    "slug": "ladi-paav-6-pcs"
   },
   {
     "id": "item-8",
@@ -173,7 +180,8 @@
     ],
     "isAvailable": true,
     "stockQuantity": 25,
-    "isArchived": false
+    "isArchived": false,
+    "slug": "whole-wheat-ladi-paav-6-pcs"
   },
   {
     "id": "item-9",
@@ -195,7 +203,8 @@
     ],
     "isAvailable": true,
     "stockQuantity": 25,
-    "isArchived": false
+    "isArchived": false,
+    "slug": "garlic-bread"
   },
   {
     "id": "item-10",
@@ -217,7 +226,8 @@
     ],
     "isAvailable": true,
     "stockQuantity": 25,
-    "isArchived": false
+    "isArchived": false,
+    "slug": "bread-rolls-2-pcs"
   },
   {
     "id": "item-11",
@@ -239,7 +249,8 @@
     ],
     "isAvailable": true,
     "stockQuantity": 25,
-    "isArchived": false
+    "isArchived": false,
+    "slug": "bread-buns-2-pcs"
   },
   {
     "id": "item-12",
@@ -261,7 +272,8 @@
     ],
     "isAvailable": true,
     "stockQuantity": 25,
-    "isArchived": false
+    "isArchived": false,
+    "slug": "pita-bread-2-pcs"
   },
   {
     "id": "item-13",
@@ -283,7 +295,8 @@
     ],
     "isAvailable": true,
     "stockQuantity": 25,
-    "isArchived": false
+    "isArchived": false,
+    "slug": "butter-sweet-bun-2-pcs"
   },
   {
     "id": "item-14",
@@ -305,7 +318,8 @@
     ],
     "isAvailable": true,
     "stockQuantity": 25,
-    "isArchived": false
+    "isArchived": false,
+    "slug": "dinner-roll"
   },
   {
     "id": "item-15",
@@ -327,7 +341,8 @@
     ],
     "isAvailable": true,
     "stockQuantity": 25,
-    "isArchived": false
+    "isArchived": false,
+    "slug": "korean-chilly-buns"
   },
   {
     "id": "item-16",
@@ -349,7 +364,8 @@
     ],
     "isAvailable": true,
     "stockQuantity": 25,
-    "isArchived": false
+    "isArchived": false,
+    "slug": "veg-delight-puff"
   },
   {
     "id": "item-17",
@@ -371,7 +387,8 @@
     ],
     "isAvailable": true,
     "stockQuantity": 25,
-    "isArchived": false
+    "isArchived": false,
+    "slug": "veg-spicy-delight-puff"
   },
   {
     "id": "item-18",
@@ -393,7 +410,8 @@
     ],
     "isAvailable": true,
     "stockQuantity": 25,
-    "isArchived": false
+    "isArchived": false,
+    "slug": "veg-puff-classic"
   },
   {
     "id": "item-19",
@@ -415,7 +433,8 @@
     ],
     "isAvailable": true,
     "stockQuantity": 25,
-    "isArchived": false
+    "isArchived": false,
+    "slug": "veg-spicy-puff"
   },
   {
     "id": "item-20",
@@ -437,7 +456,8 @@
     ],
     "isAvailable": true,
     "stockQuantity": 25,
-    "isArchived": false
+    "isArchived": false,
+    "slug": "veg-spicy-korean-puff"
   },
   {
     "id": "item-21",
@@ -459,7 +479,8 @@
     ],
     "isAvailable": true,
     "stockQuantity": 25,
-    "isArchived": false
+    "isArchived": false,
+    "slug": "chicken-spicy-korean-puff"
   },
   {
     "id": "item-22",
@@ -482,7 +503,8 @@
     "isAvailable": true,
     "stockQuantity": 25,
     "isArchived": false,
-    "isGlutenFree": false
+    "isGlutenFree": false,
+    "slug": "chicken-puff"
   },
   {
     "id": "item-23",
@@ -504,7 +526,8 @@
     ],
     "isAvailable": true,
     "stockQuantity": 25,
-    "isArchived": false
+    "isArchived": false,
+    "slug": "spicy-chicken-puff"
   },
   {
     "id": "item-24",
@@ -526,7 +549,8 @@
     ],
     "isAvailable": true,
     "stockQuantity": 25,
-    "isArchived": false
+    "isArchived": false,
+    "slug": "chicken-mushroom-puff"
   },
   {
     "id": "item-25",
@@ -548,7 +572,8 @@
     ],
     "isAvailable": true,
     "stockQuantity": 25,
-    "isArchived": false
+    "isArchived": false,
+    "slug": "veg-flaky-tuscan-croissant"
   },
   {
     "id": "item-26",
@@ -570,7 +595,8 @@
     ],
     "isAvailable": true,
     "stockQuantity": 25,
-    "isArchived": false
+    "isArchived": false,
+    "slug": "veg-flaky-spinach-croissant"
   },
   {
     "id": "item-27",
@@ -592,7 +618,8 @@
     ],
     "isAvailable": true,
     "stockQuantity": 25,
-    "isArchived": false
+    "isArchived": false,
+    "slug": "chicken-flaky-tuscan-croissant"
   },
   {
     "id": "item-28",
@@ -614,7 +641,8 @@
     ],
     "isAvailable": true,
     "stockQuantity": 25,
-    "isArchived": false
+    "isArchived": false,
+    "slug": "chicken-flaky-spinach-croissant"
   },
   {
     "id": "item-29",
@@ -636,7 +664,8 @@
     ],
     "isAvailable": true,
     "stockQuantity": 25,
-    "isArchived": false
+    "isArchived": false,
+    "slug": "butter-croissant"
   },
   {
     "id": "item-30",
@@ -658,7 +687,8 @@
     ],
     "isAvailable": true,
     "stockQuantity": 25,
-    "isArchived": false
+    "isArchived": false,
+    "slug": "cheese-croissant"
   },
   {
     "id": "item-31",
@@ -680,7 +710,8 @@
     ],
     "isAvailable": true,
     "stockQuantity": 25,
-    "isArchived": false
+    "isArchived": false,
+    "slug": "chocolate-croissant-pain-au-chocolat"
   },
   {
     "id": "item-32",
@@ -702,7 +733,8 @@
     ],
     "isAvailable": true,
     "stockQuantity": 25,
-    "isArchived": false
+    "isArchived": false,
+    "slug": "almond-chocolate-croissant"
   },
   {
     "id": "item-33",
@@ -724,7 +756,8 @@
     ],
     "isAvailable": true,
     "stockQuantity": 25,
-    "isArchived": false
+    "isArchived": false,
+    "slug": "nutella-croissant"
   },
   {
     "id": "item-34",
@@ -746,7 +779,8 @@
     ],
     "isAvailable": true,
     "stockQuantity": 25,
-    "isArchived": false
+    "isArchived": false,
+    "slug": "coffee-croissant"
   },
   {
     "id": "item-35",
@@ -768,7 +802,8 @@
     ],
     "isAvailable": true,
     "stockQuantity": 25,
-    "isArchived": false
+    "isArchived": false,
+    "slug": "veg-mexican-toast"
   },
   {
     "id": "item-36",
@@ -790,7 +825,8 @@
     ],
     "isAvailable": true,
     "stockQuantity": 25,
-    "isArchived": false
+    "isArchived": false,
+    "slug": "chicken-mexican-toast"
   },
   {
     "id": "item-37",
@@ -812,7 +848,8 @@
     ],
     "isAvailable": true,
     "stockQuantity": 25,
-    "isArchived": false
+    "isArchived": false,
+    "slug": "veg-calzone"
   },
   {
     "id": "item-38",
@@ -834,7 +871,8 @@
     ],
     "isAvailable": true,
     "stockQuantity": 25,
-    "isArchived": false
+    "isArchived": false,
+    "slug": "chicken-calzone"
   },
   {
     "id": "item-39",
@@ -856,7 +894,8 @@
     ],
     "isAvailable": true,
     "stockQuantity": 25,
-    "isArchived": false
+    "isArchived": false,
+    "slug": "veg-cheezy-roll"
   },
   {
     "id": "item-40",
@@ -878,7 +917,8 @@
     ],
     "isAvailable": true,
     "stockQuantity": 25,
-    "isArchived": false
+    "isArchived": false,
+    "slug": "chicken-cheezy-roll"
   },
   {
     "id": "item-41",
@@ -900,7 +940,8 @@
     ],
     "isAvailable": true,
     "stockQuantity": 25,
-    "isArchived": false
+    "isArchived": false,
+    "slug": "veg-spicy-baked-roll"
   },
   {
     "id": "item-42",
@@ -922,7 +963,8 @@
     ],
     "isAvailable": true,
     "stockQuantity": 25,
-    "isArchived": false
+    "isArchived": false,
+    "slug": "chicken-spicy-baked-roll"
   },
   {
     "id": "item-43",
@@ -944,7 +986,8 @@
     ],
     "isAvailable": true,
     "stockQuantity": 25,
-    "isArchived": false
+    "isArchived": false,
+    "slug": "veg-supreme-bun"
   },
   {
     "id": "item-44",
@@ -966,7 +1009,8 @@
     ],
     "isAvailable": true,
     "stockQuantity": 25,
-    "isArchived": false
+    "isArchived": false,
+    "slug": "special-khari"
   },
   {
     "id": "item-45",
@@ -988,7 +1032,8 @@
     ],
     "isAvailable": true,
     "stockQuantity": 25,
-    "isArchived": false
+    "isArchived": false,
+    "slug": "jeera-khari"
   },
   {
     "id": "item-46",
@@ -1010,7 +1055,8 @@
     ],
     "isAvailable": true,
     "stockQuantity": 25,
-    "isArchived": false
+    "isArchived": false,
+    "slug": "whole-wheat-khari"
   },
   {
     "id": "item-47",
@@ -1032,7 +1078,8 @@
     ],
     "isAvailable": true,
     "stockQuantity": 25,
-    "isArchived": false
+    "isArchived": false,
+    "slug": "cheese-spirals"
   },
   {
     "id": "item-48",
@@ -1054,7 +1101,8 @@
     ],
     "isAvailable": true,
     "stockQuantity": 25,
-    "isArchived": false
+    "isArchived": false,
+    "slug": "rusk-sweet-toast"
   },
   {
     "id": "item-49",
@@ -1076,7 +1124,8 @@
     ],
     "isAvailable": true,
     "stockQuantity": 25,
-    "isArchived": false
+    "isArchived": false,
+    "slug": "whole-wheat-toast"
   },
   {
     "id": "item-50",
@@ -1098,7 +1147,8 @@
     ],
     "isAvailable": true,
     "stockQuantity": 25,
-    "isArchived": false
+    "isArchived": false,
+    "slug": "whole-wheat-cookies-eggless"
   },
   {
     "id": "item-51",
@@ -1120,7 +1170,8 @@
     ],
     "isAvailable": true,
     "stockQuantity": 25,
-    "isArchived": false
+    "isArchived": false,
+    "slug": "multigrain-cookies-eggless"
   },
   {
     "id": "item-52",
@@ -1143,7 +1194,8 @@
     "isAvailable": true,
     "stockQuantity": 25,
     "isArchived": false,
-    "isGlutenFree": true
+    "isGlutenFree": true,
+    "slug": "millet-cookies-eggless"
   },
   {
     "id": "item-53",
@@ -1166,7 +1218,8 @@
     "isAvailable": true,
     "stockQuantity": 25,
     "isArchived": false,
-    "isGlutenFree": true
+    "isGlutenFree": true,
+    "slug": "ragi-joy-cookies-eggless"
   },
   {
     "id": "item-54",
@@ -1188,7 +1241,8 @@
     ],
     "isAvailable": true,
     "stockQuantity": 25,
-    "isArchived": false
+    "isArchived": false,
+    "slug": "bread-sticks-eggless"
   },
   {
     "id": "item-55",
@@ -1210,7 +1264,8 @@
     ],
     "isAvailable": true,
     "stockQuantity": 25,
-    "isArchived": false
+    "isArchived": false,
+    "slug": "jeera-butter-eggless"
   },
   {
     "id": "item-56",
@@ -1232,7 +1287,8 @@
     ],
     "isAvailable": true,
     "stockQuantity": 25,
-    "isArchived": false
+    "isArchived": false,
+    "slug": "ginger-cookies-eggless"
   },
   {
     "id": "item-57",
@@ -1254,7 +1310,8 @@
     ],
     "isAvailable": true,
     "stockQuantity": 25,
-    "isArchived": false
+    "isArchived": false,
+    "slug": "mix-fruit-cookies-eggless"
   },
   {
     "id": "item-58",
@@ -1276,7 +1333,8 @@
     ],
     "isAvailable": true,
     "stockQuantity": 25,
-    "isArchived": false
+    "isArchived": false,
+    "slug": "coconut-macaroon-eggless"
   },
   {
     "id": "item-59",
@@ -1298,7 +1356,8 @@
     ],
     "isAvailable": true,
     "stockQuantity": 25,
-    "isArchived": false
+    "isArchived": false,
+    "slug": "almond-cookies-eggless"
   },
   {
     "id": "item-60",
@@ -1320,7 +1379,8 @@
     ],
     "isAvailable": true,
     "stockQuantity": 25,
-    "isArchived": false
+    "isArchived": false,
+    "slug": "cashew-cookies-eggless"
   },
   {
     "id": "item-61",
@@ -1342,7 +1402,8 @@
     ],
     "isAvailable": true,
     "stockQuantity": 25,
-    "isArchived": false
+    "isArchived": false,
+    "slug": "osmania-cookies-eggless"
   },
   {
     "id": "item-62",
@@ -1364,7 +1425,8 @@
     ],
     "isAvailable": true,
     "stockQuantity": 25,
-    "isArchived": false
+    "isArchived": false,
+    "slug": "kashmiri-roth-eggless"
   },
   {
     "id": "item-63",
@@ -1386,7 +1448,8 @@
     ],
     "isAvailable": true,
     "stockQuantity": 25,
-    "isArchived": false
+    "isArchived": false,
+    "slug": "butter-cookies-eggless"
   },
   {
     "id": "item-64",
@@ -1408,7 +1471,8 @@
     ],
     "isAvailable": true,
     "stockQuantity": 25,
-    "isArchived": false
+    "isArchived": false,
+    "slug": "chocolate-chip-cookies-eggless"
   },
   {
     "id": "item-65",
@@ -1430,7 +1494,8 @@
     ],
     "isAvailable": true,
     "stockQuantity": 25,
-    "isArchived": false
+    "isArchived": false,
+    "slug": "brownie-per-pc"
   },
   {
     "id": "item-66",
@@ -1452,7 +1517,8 @@
     ],
     "isAvailable": true,
     "stockQuantity": 25,
-    "isArchived": false
+    "isArchived": false,
+    "slug": "banana-walnut-cake"
   },
   {
     "id": "item-67",
@@ -1474,7 +1540,8 @@
     ],
     "isAvailable": true,
     "stockQuantity": 25,
-    "isArchived": false
+    "isArchived": false,
+    "slug": "mawa-cake-signature"
   },
   {
     "id": "item-68",
@@ -1496,7 +1563,8 @@
     ],
     "isAvailable": true,
     "stockQuantity": 25,
-    "isArchived": false
+    "isArchived": false,
+    "slug": "mix-fruit-cake"
   },
   {
     "id": "item-69",
@@ -1518,7 +1586,8 @@
     ],
     "isAvailable": true,
     "stockQuantity": 25,
-    "isArchived": false
+    "isArchived": false,
+    "slug": "almond-cake"
   },
   {
     "id": "item-70",
@@ -1540,7 +1609,8 @@
     ],
     "isAvailable": true,
     "stockQuantity": 25,
-    "isArchived": false
+    "isArchived": false,
+    "slug": "double-chocolate-cake-loaf"
   },
   {
     "id": "item-71",
@@ -1562,7 +1632,8 @@
     ],
     "isAvailable": true,
     "stockQuantity": 25,
-    "isArchived": false
+    "isArchived": false,
+    "slug": "chocolate-walnut-cake-loaf"
   },
   {
     "id": "item-72",
@@ -1584,7 +1655,8 @@
     ],
     "isAvailable": true,
     "stockQuantity": 25,
-    "isArchived": false
+    "isArchived": false,
+    "slug": "brownie-round"
   },
   {
     "id": "item-73",
@@ -1606,7 +1678,8 @@
     ],
     "isAvailable": true,
     "stockQuantity": 25,
-    "isArchived": false
+    "isArchived": false,
+    "slug": "carrot-cake-300g"
   },
   {
     "id": "item-74",
@@ -1628,7 +1701,8 @@
     ],
     "isAvailable": true,
     "stockQuantity": 25,
-    "isArchived": false
+    "isArchived": false,
+    "slug": "mawa-cake-eggless"
   },
   {
     "id": "item-75",
@@ -1650,7 +1724,8 @@
     ],
     "isAvailable": true,
     "stockQuantity": 25,
-    "isArchived": false
+    "isArchived": false,
+    "slug": "chocolate-toffee-caramel-tea-cake"
   },
   {
     "id": "item-76",
@@ -1672,7 +1747,8 @@
     ],
     "isAvailable": true,
     "stockQuantity": 25,
-    "isArchived": false
+    "isArchived": false,
+    "slug": "chocolate-overloaded-cake"
   },
   {
     "id": "item-77",
@@ -1694,7 +1770,8 @@
     ],
     "isAvailable": true,
     "stockQuantity": 25,
-    "isArchived": false
+    "isArchived": false,
+    "slug": "dark-forest-cake-tea-cake"
   },
   {
     "id": "item-78",
@@ -1716,7 +1793,8 @@
     ],
     "isAvailable": true,
     "stockQuantity": 25,
-    "isArchived": false
+    "isArchived": false,
+    "slug": "chocolate-walnut-muffin"
   },
   {
     "id": "item-79",
@@ -1738,7 +1816,8 @@
     ],
     "isAvailable": true,
     "stockQuantity": 25,
-    "isArchived": false
+    "isArchived": false,
+    "slug": "blueberry-muffin"
   },
   {
     "id": "item-80",
@@ -1760,7 +1839,8 @@
     ],
     "isAvailable": true,
     "stockQuantity": 25,
-    "isArchived": false
+    "isArchived": false,
+    "slug": "chocolate-nutella-muffin"
   },
   {
     "id": "item-81",
@@ -1782,7 +1862,8 @@
     ],
     "isAvailable": true,
     "stockQuantity": 25,
-    "isArchived": false
+    "isArchived": false,
+    "slug": "chicken-masala-patty"
   },
   {
     "id": "item-82",
@@ -1804,7 +1885,8 @@
     ],
     "isAvailable": true,
     "stockQuantity": 25,
-    "isArchived": false
+    "isArchived": false,
+    "slug": "chicken-parsi-pattice"
   },
   {
     "id": "item-83",
@@ -1826,7 +1908,8 @@
     ],
     "isAvailable": true,
     "stockQuantity": 25,
-    "isArchived": false
+    "isArchived": false,
+    "slug": "chicken-cheezy-roll-2-pcs"
   },
   {
     "id": "item-84",
@@ -1848,7 +1931,8 @@
     ],
     "isAvailable": true,
     "stockQuantity": 25,
-    "isArchived": false
+    "isArchived": false,
+    "slug": "chocolate-delight-pastry-small"
   },
   {
     "id": "item-85",
@@ -1870,7 +1954,8 @@
     ],
     "isAvailable": true,
     "stockQuantity": 25,
-    "isArchived": false
+    "isArchived": false,
+    "slug": "chocolate-chip-delight-pastry-small"
   },
   {
     "id": "item-86",
@@ -1892,7 +1977,8 @@
     ],
     "isAvailable": true,
     "stockQuantity": 25,
-    "isArchived": false
+    "isArchived": false,
+    "slug": "exotic-black-forest-gateau-pastry-small"
   },
   {
     "id": "item-87",
@@ -1914,7 +2000,8 @@
     ],
     "isAvailable": true,
     "stockQuantity": 25,
-    "isArchived": false
+    "isArchived": false,
+    "slug": "vanilla-white-chocolate-pastry-small"
   },
   {
     "id": "item-88",
@@ -1936,7 +2023,8 @@
     ],
     "isAvailable": true,
     "stockQuantity": 25,
-    "isArchived": false
+    "isArchived": false,
+    "slug": "chocolate-truffle-pastry-small"
   },
   {
     "id": "item-89",
@@ -1958,7 +2046,8 @@
     ],
     "isAvailable": true,
     "stockQuantity": 25,
-    "isArchived": false
+    "isArchived": false,
+    "slug": "chocolate-oreo-delight-pastry-small"
   },
   {
     "id": "item-90",
@@ -1980,7 +2069,8 @@
     ],
     "isAvailable": true,
     "stockQuantity": 25,
-    "isArchived": false
+    "isArchived": false,
+    "slug": "dutch-truffle-gateau-pastry-small"
   },
   {
     "id": "item-91",
@@ -2002,7 +2092,8 @@
     ],
     "isAvailable": true,
     "stockQuantity": 25,
-    "isArchived": false
+    "isArchived": false,
+    "slug": "irish-chocolate-pastry-small"
   },
   {
     "id": "item-92",
@@ -2024,7 +2115,8 @@
     ],
     "isAvailable": true,
     "stockQuantity": 25,
-    "isArchived": false
+    "isArchived": false,
+    "slug": "chocolate-toffee-caramel-pastry-small"
   },
   {
     "id": "item-93",
@@ -2046,7 +2138,8 @@
     ],
     "isAvailable": true,
     "stockQuantity": 25,
-    "isArchived": false
+    "isArchived": false,
+    "slug": "mud-mec-rocks-pastry-small"
   },
   {
     "id": "item-94",
@@ -2068,7 +2161,8 @@
     ],
     "isAvailable": true,
     "stockQuantity": 25,
-    "isArchived": false
+    "isArchived": false,
+    "slug": "pineapple-delight-pastry-small"
   },
   {
     "id": "item-95",
@@ -2090,7 +2184,8 @@
     ],
     "isAvailable": true,
     "stockQuantity": 25,
-    "isArchived": false
+    "isArchived": false,
+    "slug": "mix-fruit-gateau-pastry-small"
   },
   {
     "id": "item-96",
@@ -2112,7 +2207,8 @@
     ],
     "isAvailable": true,
     "stockQuantity": 25,
-    "isArchived": false
+    "isArchived": false,
+    "slug": "blueberry-gateau-pastry-small"
   },
   {
     "id": "item-97",
@@ -2134,7 +2230,8 @@
     ],
     "isAvailable": true,
     "stockQuantity": 25,
-    "isArchived": false
+    "isArchived": false,
+    "slug": "honey-almond-gateau-pastry-small"
   },
   {
     "id": "item-98",
@@ -2156,7 +2253,8 @@
     ],
     "isAvailable": true,
     "stockQuantity": 25,
-    "isArchived": false
+    "isArchived": false,
+    "slug": "nougat-gateau-pastry-small"
   },
   {
     "id": "item-99",
@@ -2178,7 +2276,8 @@
     ],
     "isAvailable": true,
     "stockQuantity": 25,
-    "isArchived": false
+    "isArchived": false,
+    "slug": "red-velvet-pastry-small"
   },
   {
     "id": "item-100",
@@ -2200,7 +2299,8 @@
     ],
     "isAvailable": true,
     "stockQuantity": 25,
-    "isArchived": false
+    "isArchived": false,
+    "slug": "chocolate-delight-pastry-large"
   },
   {
     "id": "item-101",
@@ -2222,7 +2322,8 @@
     ],
     "isAvailable": true,
     "stockQuantity": 25,
-    "isArchived": false
+    "isArchived": false,
+    "slug": "chocolate-chip-delight-pastry-large"
   },
   {
     "id": "item-102",
@@ -2244,7 +2345,8 @@
     ],
     "isAvailable": true,
     "stockQuantity": 25,
-    "isArchived": false
+    "isArchived": false,
+    "slug": "exotic-black-forest-gateau-pastry-large"
   },
   {
     "id": "item-103",
@@ -2266,7 +2368,8 @@
     ],
     "isAvailable": true,
     "stockQuantity": 25,
-    "isArchived": false
+    "isArchived": false,
+    "slug": "vanilla-white-chocolate-pastry-large"
   },
   {
     "id": "item-104",
@@ -2288,7 +2391,8 @@
     ],
     "isAvailable": true,
     "stockQuantity": 25,
-    "isArchived": false
+    "isArchived": false,
+    "slug": "dutch-truffle-gateau-pastry-large"
   },
   {
     "id": "item-105",
@@ -2310,7 +2414,8 @@
     ],
     "isAvailable": true,
     "stockQuantity": 25,
-    "isArchived": false
+    "isArchived": false,
+    "slug": "chocolate-truffle-pastry-large"
   },
   {
     "id": "item-106",
@@ -2332,7 +2437,8 @@
     ],
     "isAvailable": true,
     "stockQuantity": 25,
-    "isArchived": false
+    "isArchived": false,
+    "slug": "pineapple-delight-pastry-large"
   },
   {
     "id": "item-107",
@@ -2354,7 +2460,8 @@
     ],
     "isAvailable": true,
     "stockQuantity": 25,
-    "isArchived": false
+    "isArchived": false,
+    "slug": "mix-fruit-gateau-pastry-large"
   },
   {
     "id": "item-108",
@@ -2376,7 +2483,8 @@
     ],
     "isAvailable": true,
     "stockQuantity": 25,
-    "isArchived": false
+    "isArchived": false,
+    "slug": "blueberry-gateau-pastry-large"
   },
   {
     "id": "item-109",
@@ -2398,7 +2506,8 @@
     ],
     "isAvailable": true,
     "stockQuantity": 25,
-    "isArchived": false
+    "isArchived": false,
+    "slug": "honey-almond-gateau-pastry-large"
   },
   {
     "id": "item-110",
@@ -2420,7 +2529,8 @@
     ],
     "isAvailable": true,
     "stockQuantity": 25,
-    "isArchived": false
+    "isArchived": false,
+    "slug": "nougat-gateau-pastry-large"
   },
   {
     "id": "item-111",
@@ -2442,7 +2552,8 @@
     ],
     "isAvailable": true,
     "stockQuantity": 25,
-    "isArchived": false
+    "isArchived": false,
+    "slug": "tiramisu-pastry-large"
   },
   {
     "id": "item-112",
@@ -2464,7 +2575,8 @@
     ],
     "isAvailable": true,
     "stockQuantity": 25,
-    "isArchived": false
+    "isArchived": false,
+    "slug": "coffee-mocca-pastry-large"
   },
   {
     "id": "item-113",
@@ -2486,7 +2598,8 @@
     ],
     "isAvailable": true,
     "stockQuantity": 25,
-    "isArchived": false
+    "isArchived": false,
+    "slug": "exotic-red-velvet-pastry-large"
   },
   {
     "id": "item-114",
@@ -2508,7 +2621,8 @@
     ],
     "isAvailable": true,
     "stockQuantity": 25,
-    "isArchived": false
+    "isArchived": false,
+    "slug": "chocolate-sin-cake-pastry"
   },
   {
     "id": "item-115",
@@ -2530,7 +2644,8 @@
     ],
     "isAvailable": true,
     "stockQuantity": 25,
-    "isArchived": false
+    "isArchived": false,
+    "slug": "chocolate-sin-hazeltine-pastry"
   },
   {
     "id": "item-116",
@@ -2552,7 +2667,8 @@
     ],
     "isAvailable": true,
     "stockQuantity": 25,
-    "isArchived": false
+    "isArchived": false,
+    "slug": "chocolate-sin-toffee-caramel-pastry"
   },
   {
     "id": "item-117",
@@ -2574,7 +2690,8 @@
     ],
     "isAvailable": true,
     "stockQuantity": 25,
-    "isArchived": false
+    "isArchived": false,
+    "slug": "nutella-sin-pastry"
   },
   {
     "id": "item-118",
@@ -2596,7 +2713,8 @@
     ],
     "isAvailable": true,
     "stockQuantity": 25,
-    "isArchived": false
+    "isArchived": false,
+    "slug": "biscoff-cheese-pastry"
   },
   {
     "id": "item-119",
@@ -2618,7 +2736,8 @@
     ],
     "isAvailable": true,
     "stockQuantity": 25,
-    "isArchived": false
+    "isArchived": false,
+    "slug": "blueberry-cheese-pastry"
   },
   {
     "id": "item-120",
@@ -2640,7 +2759,8 @@
     ],
     "isAvailable": true,
     "stockQuantity": 25,
-    "isArchived": false
+    "isArchived": false,
+    "slug": "hazeltine-cheese-pastry"
   },
   {
     "id": "item-121",
@@ -2662,7 +2782,8 @@
     ],
     "isAvailable": true,
     "stockQuantity": 25,
-    "isArchived": false
+    "isArchived": false,
+    "slug": "chocolate-bomb"
   },
   {
     "id": "item-122",
@@ -2684,7 +2805,8 @@
     ],
     "isAvailable": true,
     "stockQuantity": 25,
-    "isArchived": false
+    "isArchived": false,
+    "slug": "choco-bees"
   },
   {
     "id": "item-123",
@@ -2706,7 +2828,8 @@
     ],
     "isAvailable": true,
     "stockQuantity": 25,
-    "isArchived": false
+    "isArchived": false,
+    "slug": "chocolate-mousse-petite"
   },
   {
     "id": "item-124",
@@ -2728,7 +2851,8 @@
     ],
     "isAvailable": true,
     "stockQuantity": 25,
-    "isArchived": false
+    "isArchived": false,
+    "slug": "cinnamon-doughnut"
   },
   {
     "id": "item-125",
@@ -2750,7 +2874,8 @@
     ],
     "isAvailable": true,
     "stockQuantity": 25,
-    "isArchived": false
+    "isArchived": false,
+    "slug": "double-chocolate-doughnut"
   },
   {
     "id": "item-126",
@@ -2772,7 +2897,8 @@
     ],
     "isAvailable": true,
     "stockQuantity": 25,
-    "isArchived": false
+    "isArchived": false,
+    "slug": "dolce-doughnut"
   },
   {
     "id": "item-127",
@@ -2794,7 +2920,8 @@
     ],
     "isAvailable": true,
     "stockQuantity": 25,
-    "isArchived": false
+    "isArchived": false,
+    "slug": "kitkat-doughnut"
   },
   {
     "id": "item-128",
@@ -2816,7 +2943,8 @@
     ],
     "isAvailable": true,
     "stockQuantity": 25,
-    "isArchived": false
+    "isArchived": false,
+    "slug": "colored-chocolate-doughnut"
   },
   {
     "id": "item-129",
@@ -2838,7 +2966,8 @@
     ],
     "isAvailable": true,
     "stockQuantity": 25,
-    "isArchived": false
+    "isArchived": false,
+    "slug": "silk-bomb-doughnut"
   },
   {
     "id": "item-130",
@@ -2860,7 +2989,8 @@
     ],
     "isAvailable": true,
     "stockQuantity": 25,
-    "isArchived": false
+    "isArchived": false,
+    "slug": "iced-sprinkle-doughnut"
   },
   {
     "id": "item-131",
@@ -2882,7 +3012,8 @@
     ],
     "isAvailable": true,
     "stockQuantity": 25,
-    "isArchived": false
+    "isArchived": false,
+    "slug": "nutella-doughnut"
   },
   {
     "id": "item-132",
@@ -2904,7 +3035,8 @@
     ],
     "isAvailable": true,
     "stockQuantity": 25,
-    "isArchived": false
+    "isArchived": false,
+    "slug": "strawberry-mousse-cup"
   },
   {
     "id": "item-133",
@@ -2926,7 +3058,8 @@
     ],
     "isAvailable": true,
     "stockQuantity": 25,
-    "isArchived": false
+    "isArchived": false,
+    "slug": "blackberry-mousse-cup"
   },
   {
     "id": "item-134",
@@ -2948,7 +3081,8 @@
     ],
     "isAvailable": true,
     "stockQuantity": 25,
-    "isArchived": false
+    "isArchived": false,
+    "slug": "chocolate-mousse-premium-cup"
   },
   {
     "id": "item-135",
@@ -2970,7 +3104,8 @@
     ],
     "isAvailable": true,
     "stockQuantity": 25,
-    "isArchived": false
+    "isArchived": false,
+    "slug": "chocolate-delight-cake-1-2-kg"
   },
   {
     "id": "item-136",
@@ -2992,7 +3127,8 @@
     ],
     "isAvailable": true,
     "stockQuantity": 25,
-    "isArchived": false
+    "isArchived": false,
+    "slug": "chocolate-delight-cake-1-kg"
   },
   {
     "id": "item-137",
@@ -3014,7 +3150,8 @@
     ],
     "isAvailable": true,
     "stockQuantity": 25,
-    "isArchived": false
+    "isArchived": false,
+    "slug": "chocolate-chip-delight-cake-1-2-kg"
   },
   {
     "id": "item-138",
@@ -3036,7 +3173,8 @@
     ],
     "isAvailable": true,
     "stockQuantity": 25,
-    "isArchived": false
+    "isArchived": false,
+    "slug": "chocolate-chip-delight-cake-1-kg"
   },
   {
     "id": "item-139",
@@ -3058,7 +3196,8 @@
     ],
     "isAvailable": true,
     "stockQuantity": 25,
-    "isArchived": false
+    "isArchived": false,
+    "slug": "exotic-black-forest-gateau-1-2-kg"
   },
   {
     "id": "item-140",
@@ -3080,7 +3219,8 @@
     ],
     "isAvailable": true,
     "stockQuantity": 25,
-    "isArchived": false
+    "isArchived": false,
+    "slug": "exotic-black-forest-gateau-1-kg"
   },
   {
     "id": "item-141",
@@ -3102,7 +3242,8 @@
     ],
     "isAvailable": true,
     "stockQuantity": 25,
-    "isArchived": false
+    "isArchived": false,
+    "slug": "dutch-truffle-gateau-1-2-kg"
   },
   {
     "id": "item-142",
@@ -3124,7 +3265,8 @@
     ],
     "isAvailable": true,
     "stockQuantity": 25,
-    "isArchived": false
+    "isArchived": false,
+    "slug": "dutch-truffle-gateau-1-kg"
   },
   {
     "id": "item-143",
@@ -3146,7 +3288,8 @@
     ],
     "isAvailable": true,
     "stockQuantity": 25,
-    "isArchived": false
+    "isArchived": false,
+    "slug": "chocolate-truffle-cake-1-2-kg"
   },
   {
     "id": "item-144",
@@ -3168,7 +3311,8 @@
     ],
     "isAvailable": true,
     "stockQuantity": 25,
-    "isArchived": false
+    "isArchived": false,
+    "slug": "chocolate-truffle-cake-1-kg"
   },
   {
     "id": "item-145",
@@ -3190,7 +3334,8 @@
     ],
     "isAvailable": true,
     "stockQuantity": 25,
-    "isArchived": false
+    "isArchived": false,
+    "slug": "vanilla-white-chocolate-cake-1-2-kg"
   },
   {
     "id": "item-146",
@@ -3212,7 +3357,8 @@
     ],
     "isAvailable": true,
     "stockQuantity": 25,
-    "isArchived": false
+    "isArchived": false,
+    "slug": "vanilla-white-chocolate-cake-1-kg"
   },
   {
     "id": "item-147",
@@ -3234,7 +3380,8 @@
     ],
     "isAvailable": true,
     "stockQuantity": 25,
-    "isArchived": false
+    "isArchived": false,
+    "slug": "chocolate-oreo-delight-cake-1-2-kg"
   },
   {
     "id": "item-148",
@@ -3256,7 +3403,8 @@
     ],
     "isAvailable": true,
     "stockQuantity": 25,
-    "isArchived": false
+    "isArchived": false,
+    "slug": "chocolate-cookie-delight-cake-1-kg"
   },
   {
     "id": "item-149",
@@ -3278,7 +3426,8 @@
     ],
     "isAvailable": true,
     "stockQuantity": 25,
-    "isArchived": false
+    "isArchived": false,
+    "slug": "black-forest-truffle-cake-1-2-kg"
   },
   {
     "id": "item-150",
@@ -3300,7 +3449,8 @@
     ],
     "isAvailable": true,
     "stockQuantity": 25,
-    "isArchived": false
+    "isArchived": false,
+    "slug": "black-forest-truffle-cake-1-kg"
   },
   {
     "id": "item-151",
@@ -3322,7 +3472,8 @@
     ],
     "isAvailable": true,
     "stockQuantity": 25,
-    "isArchived": false
+    "isArchived": false,
+    "slug": "chocolate-truffle-nougat-cake-1-2-kg"
   },
   {
     "id": "item-152",
@@ -3344,7 +3495,8 @@
     ],
     "isAvailable": true,
     "stockQuantity": 25,
-    "isArchived": false
+    "isArchived": false,
+    "slug": "chocolate-truffle-nougat-cake-1-kg"
   },
   {
     "id": "item-153",
@@ -3366,7 +3518,8 @@
     ],
     "isAvailable": true,
     "stockQuantity": 25,
-    "isArchived": false
+    "isArchived": false,
+    "slug": "irish-chocolate-cake-1-2-kg"
   },
   {
     "id": "item-154",
@@ -3388,7 +3541,8 @@
     ],
     "isAvailable": true,
     "stockQuantity": 25,
-    "isArchived": false
+    "isArchived": false,
+    "slug": "irish-chocolate-cake-1-kg"
   },
   {
     "id": "item-155",
@@ -3410,7 +3564,8 @@
     ],
     "isAvailable": true,
     "stockQuantity": 25,
-    "isArchived": false
+    "isArchived": false,
+    "slug": "chocolate-delight-rose-cake-1-2-kg"
   },
   {
     "id": "item-156",
@@ -3432,7 +3587,8 @@
     ],
     "isAvailable": true,
     "stockQuantity": 25,
-    "isArchived": false
+    "isArchived": false,
+    "slug": "chocolate-delight-rose-cake-1-kg"
   },
   {
     "id": "item-157",
@@ -3454,7 +3610,8 @@
     ],
     "isAvailable": true,
     "stockQuantity": 25,
-    "isArchived": false
+    "isArchived": false,
+    "slug": "white-forest-cake-1-2-kg"
   },
   {
     "id": "item-158",
@@ -3476,7 +3633,8 @@
     ],
     "isAvailable": true,
     "stockQuantity": 25,
-    "isArchived": false
+    "isArchived": false,
+    "slug": "white-forest-cake-1-kg"
   },
   {
     "id": "item-159",
@@ -3498,7 +3656,8 @@
     ],
     "isAvailable": true,
     "stockQuantity": 25,
-    "isArchived": false
+    "isArchived": false,
+    "slug": "red-velvet-chocolate-cake-1-2-kg"
   },
   {
     "id": "item-160",
@@ -3520,7 +3679,8 @@
     ],
     "isAvailable": true,
     "stockQuantity": 25,
-    "isArchived": false
+    "isArchived": false,
+    "slug": "mocha-velvet-cloud-cake-1-2-kg"
   },
   {
     "id": "item-161",
@@ -3542,7 +3702,8 @@
     ],
     "isAvailable": true,
     "stockQuantity": 25,
-    "isArchived": false
+    "isArchived": false,
+    "slug": "mocha-gateau-1-2-kg"
   },
   {
     "id": "item-162",
@@ -3564,7 +3725,8 @@
     ],
     "isAvailable": true,
     "stockQuantity": 25,
-    "isArchived": false
+    "isArchived": false,
+    "slug": "black-forest-old-school-1-2-kg"
   },
   {
     "id": "item-163",
@@ -3586,7 +3748,8 @@
     ],
     "isAvailable": true,
     "stockQuantity": 25,
-    "isArchived": false
+    "isArchived": false,
+    "slug": "chocolate-toffee-caramel-cake-1-2-kg"
   },
   {
     "id": "item-164",
@@ -3608,7 +3771,8 @@
     ],
     "isAvailable": true,
     "stockQuantity": 25,
-    "isArchived": false
+    "isArchived": false,
+    "slug": "chocolate-toffee-caramel-cake-1-kg"
   },
   {
     "id": "item-165",
@@ -3630,7 +3794,8 @@
     ],
     "isAvailable": true,
     "stockQuantity": 25,
-    "isArchived": false
+    "isArchived": false,
+    "slug": "chocolate-hazeltine-cake-1-2-kg"
   },
   {
     "id": "item-166",
@@ -3652,7 +3817,8 @@
     ],
     "isAvailable": true,
     "stockQuantity": 25,
-    "isArchived": false
+    "isArchived": false,
+    "slug": "chocolate-hazeltine-cake-1-kg"
   },
   {
     "id": "item-167",
@@ -3674,7 +3840,8 @@
     ],
     "isAvailable": true,
     "stockQuantity": 25,
-    "isArchived": false
+    "isArchived": false,
+    "slug": "mud-chocolate-cake-1-2-kg"
   },
   {
     "id": "item-168",
@@ -3696,7 +3863,8 @@
     ],
     "isAvailable": true,
     "stockQuantity": 25,
-    "isArchived": false
+    "isArchived": false,
+    "slug": "mud-chocolate-cake-1-kg"
   },
   {
     "id": "item-169",
@@ -3718,7 +3886,8 @@
     ],
     "isAvailable": true,
     "stockQuantity": 25,
-    "isArchived": false
+    "isArchived": false,
+    "slug": "mud-mec-rocks-cake-1-2-kg"
   },
   {
     "id": "item-170",
@@ -3740,7 +3909,8 @@
     ],
     "isAvailable": true,
     "stockQuantity": 25,
-    "isArchived": false
+    "isArchived": false,
+    "slug": "mud-mec-rocks-cake-1-kg"
   },
   {
     "id": "item-171",
@@ -3762,7 +3932,8 @@
     ],
     "isAvailable": true,
     "stockQuantity": 25,
-    "isArchived": false
+    "isArchived": false,
+    "slug": "chocolate-walnut-crunchy-cake-1-2-kg"
   },
   {
     "id": "item-172",
@@ -3784,7 +3955,8 @@
     ],
     "isAvailable": true,
     "stockQuantity": 25,
-    "isArchived": false
+    "isArchived": false,
+    "slug": "chocolate-walnut-crunchy-cake-1-kg"
   },
   {
     "id": "item-173",
@@ -3806,7 +3978,8 @@
     ],
     "isAvailable": true,
     "stockQuantity": 25,
-    "isArchived": false
+    "isArchived": false,
+    "slug": "cold-cheesecake-1-2-kg"
   },
   {
     "id": "item-174",
@@ -3828,7 +4001,8 @@
     ],
     "isAvailable": true,
     "stockQuantity": 25,
-    "isArchived": false
+    "isArchived": false,
+    "slug": "cold-cheesecake-1-kg"
   },
   {
     "id": "item-175",
@@ -3850,7 +4024,8 @@
     ],
     "isAvailable": true,
     "stockQuantity": 25,
-    "isArchived": false
+    "isArchived": false,
+    "slug": "baked-cheesecake-1-2-kg"
   },
   {
     "id": "item-176",
@@ -3872,7 +4047,8 @@
     ],
     "isAvailable": true,
     "stockQuantity": 25,
-    "isArchived": false
+    "isArchived": false,
+    "slug": "pineapple-delight-regular-1-2-kg"
   },
   {
     "id": "item-177",
@@ -3894,7 +4070,8 @@
     ],
     "isAvailable": true,
     "stockQuantity": 25,
-    "isArchived": false
+    "isArchived": false,
+    "slug": "pineapple-delight-regular-1-kg"
   },
   {
     "id": "item-178",
@@ -3916,7 +4093,8 @@
     ],
     "isAvailable": true,
     "stockQuantity": 25,
-    "isArchived": false
+    "isArchived": false,
+    "slug": "pineapple-delight-loaded-1-2-kg"
   },
   {
     "id": "item-179",
@@ -3938,7 +4116,8 @@
     ],
     "isAvailable": true,
     "stockQuantity": 25,
-    "isArchived": false
+    "isArchived": false,
+    "slug": "pineapple-delight-loaded-1-kg"
   },
   {
     "id": "item-180",
@@ -3960,7 +4139,8 @@
     ],
     "isAvailable": true,
     "stockQuantity": 25,
-    "isArchived": false
+    "isArchived": false,
+    "slug": "fresh-strawberry-cake-1-2-kg"
   },
   {
     "id": "item-181",
@@ -3982,7 +4162,8 @@
     ],
     "isAvailable": true,
     "stockQuantity": 25,
-    "isArchived": false
+    "isArchived": false,
+    "slug": "fresh-strawberry-cake-1-kg"
   },
   {
     "id": "item-182",
@@ -4004,7 +4185,8 @@
     ],
     "isAvailable": true,
     "stockQuantity": 25,
-    "isArchived": false
+    "isArchived": false,
+    "slug": "mix-fruit-gateau-1-2-kg"
   },
   {
     "id": "item-183",
@@ -4026,7 +4208,8 @@
     ],
     "isAvailable": true,
     "stockQuantity": 25,
-    "isArchived": false
+    "isArchived": false,
+    "slug": "mix-fruit-gateau-1-kg"
   },
   {
     "id": "item-184",
@@ -4048,7 +4231,8 @@
     ],
     "isAvailable": true,
     "stockQuantity": 25,
-    "isArchived": false
+    "isArchived": false,
+    "slug": "blueberry-gateau-1-2-kg"
   },
   {
     "id": "item-185",
@@ -4070,7 +4254,8 @@
     ],
     "isAvailable": true,
     "stockQuantity": 25,
-    "isArchived": false
+    "isArchived": false,
+    "slug": "blueberry-gateau-1-kg"
   },
   {
     "id": "item-186",
@@ -4092,7 +4277,8 @@
     ],
     "isAvailable": true,
     "stockQuantity": 25,
-    "isArchived": false
+    "isArchived": false,
+    "slug": "mix-fruit-white-chocolate-gateau-1-2-kg"
   },
   {
     "id": "item-187",
@@ -4114,7 +4300,8 @@
     ],
     "isAvailable": true,
     "stockQuantity": 25,
-    "isArchived": false
+    "isArchived": false,
+    "slug": "mix-fruit-chocolate-gateau-1-kg"
   },
   {
     "id": "item-188",
@@ -4136,7 +4323,8 @@
     ],
     "isAvailable": true,
     "stockQuantity": 25,
-    "isArchived": false
+    "isArchived": false,
+    "slug": "honey-almond-gateau-1-2-kg"
   },
   {
     "id": "item-189",
@@ -4158,7 +4346,8 @@
     ],
     "isAvailable": true,
     "stockQuantity": 25,
-    "isArchived": false
+    "isArchived": false,
+    "slug": "honey-almond-gateau-1-kg"
   },
   {
     "id": "item-190",
@@ -4180,7 +4369,8 @@
     ],
     "isAvailable": true,
     "stockQuantity": 25,
-    "isArchived": false
+    "isArchived": false,
+    "slug": "nougat-gateau-1-2-kg"
   },
   {
     "id": "item-191",
@@ -4202,7 +4392,8 @@
     ],
     "isAvailable": true,
     "stockQuantity": 25,
-    "isArchived": false
+    "isArchived": false,
+    "slug": "nougat-gateau-1-kg"
   },
   {
     "id": "item-192",
@@ -4224,7 +4415,8 @@
     ],
     "isAvailable": true,
     "stockQuantity": 25,
-    "isArchived": false
+    "isArchived": false,
+    "slug": "rasmalai-cake-1-2-kg"
   },
   {
     "id": "item-193",
@@ -4246,7 +4438,8 @@
     ],
     "isAvailable": true,
     "stockQuantity": 25,
-    "isArchived": false
+    "isArchived": false,
+    "slug": "rasmalai-regular-cake-1-kg"
   },
   {
     "id": "item-194",
@@ -4268,7 +4461,8 @@
     ],
     "isAvailable": true,
     "stockQuantity": 25,
-    "isArchived": false
+    "isArchived": false,
+    "slug": "chocolate-sin-cake-1-2-kg"
   },
   {
     "id": "item-195",
@@ -4290,7 +4484,8 @@
     ],
     "isAvailable": true,
     "stockQuantity": 25,
-    "isArchived": false
+    "isArchived": false,
+    "slug": "chocolate-sin-cake-1-kg"
   },
   {
     "id": "item-196",
@@ -4312,7 +4507,8 @@
     ],
     "isAvailable": true,
     "stockQuantity": 25,
-    "isArchived": false
+    "isArchived": false,
+    "slug": "hazeltine-sin-cake-1-2-kg"
   },
   {
     "id": "item-197",
@@ -4334,7 +4530,8 @@
     ],
     "isAvailable": true,
     "stockQuantity": 25,
-    "isArchived": false
+    "isArchived": false,
+    "slug": "chocolate-sin-hazeltine-cake-1-kg"
   },
   {
     "id": "item-198",
@@ -4356,7 +4553,8 @@
     ],
     "isAvailable": true,
     "stockQuantity": 25,
-    "isArchived": false
+    "isArchived": false,
+    "slug": "nutella-sin-cake-1-2-kg"
   },
   {
     "id": "item-199",
@@ -4378,7 +4576,8 @@
     ],
     "isAvailable": true,
     "stockQuantity": 25,
-    "isArchived": false
+    "isArchived": false,
+    "slug": "nutella-sin-cake-1-kg"
   },
   {
     "id": "item-200",
@@ -4400,7 +4599,8 @@
     ],
     "isAvailable": true,
     "stockQuantity": 25,
-    "isArchived": false
+    "isArchived": false,
+    "slug": "chocolate-toffee-caramel-sin-cake-1-2-kg"
   },
   {
     "id": "item-201",
@@ -4422,7 +4622,8 @@
     ],
     "isAvailable": true,
     "stockQuantity": 25,
-    "isArchived": false
+    "isArchived": false,
+    "slug": "chocolate-sin-toffee-caramel-cake-1-kg"
   },
   {
     "id": "item-202",
@@ -4444,7 +4645,8 @@
     ],
     "isAvailable": true,
     "stockQuantity": 25,
-    "isArchived": false
+    "isArchived": false,
+    "slug": "mango-sin-cake-1-2-kg"
   },
   {
     "id": "item-203",
@@ -4466,7 +4668,8 @@
     ],
     "isAvailable": true,
     "stockQuantity": 25,
-    "isArchived": false
+    "isArchived": false,
+    "slug": "mango-sin-cake-1-kg"
   },
   {
     "id": "item-204",
@@ -4488,7 +4691,8 @@
     ],
     "isAvailable": true,
     "stockQuantity": 25,
-    "isArchived": false
+    "isArchived": false,
+    "slug": "american-bites-cake-1-2-kg"
   },
   {
     "id": "item-205",
@@ -4510,7 +4714,8 @@
     ],
     "isAvailable": true,
     "stockQuantity": 25,
-    "isArchived": false
+    "isArchived": false,
+    "slug": "american-bites-cake-1-kg"
   },
   {
     "id": "item-206",
@@ -4532,7 +4737,8 @@
     ],
     "isAvailable": true,
     "stockQuantity": 25,
-    "isArchived": false
+    "isArchived": false,
+    "slug": "exotic-red-velvet-cake-1-2-kg"
   },
   {
     "id": "item-207",
@@ -4554,7 +4760,8 @@
     ],
     "isAvailable": true,
     "stockQuantity": 25,
-    "isArchived": false
+    "isArchived": false,
+    "slug": "exotic-red-velvet-cake-1-kg"
   },
   {
     "id": "item-208",
@@ -4576,7 +4783,8 @@
     ],
     "isAvailable": true,
     "stockQuantity": 25,
-    "isArchived": false
+    "isArchived": false,
+    "slug": "tiramisu-cake-1-2-kg"
   },
   {
     "id": "item-209",
@@ -4598,7 +4806,8 @@
     ],
     "isAvailable": true,
     "stockQuantity": 25,
-    "isArchived": false
+    "isArchived": false,
+    "slug": "tiramisu-cake-1-kg"
   },
   {
     "id": "item-210",
@@ -4620,7 +4829,8 @@
     ],
     "isAvailable": true,
     "stockQuantity": 25,
-    "isArchived": false
+    "isArchived": false,
+    "slug": "berry-bomb-cake-1-2-kg"
   },
   {
     "id": "item-211",
@@ -4642,7 +4852,8 @@
     ],
     "isAvailable": true,
     "stockQuantity": 25,
-    "isArchived": false
+    "isArchived": false,
+    "slug": "berry-bomb-cake-1-kg"
   },
   {
     "id": "item-212",
@@ -4664,7 +4875,8 @@
     ],
     "isAvailable": true,
     "stockQuantity": 25,
-    "isArchived": false
+    "isArchived": false,
+    "slug": "berry-berry-cake-1-2-kg"
   },
   {
     "id": "item-213",
@@ -4686,6 +4898,7 @@
     ],
     "isAvailable": true,
     "stockQuantity": 25,
-    "isArchived": false
+    "isArchived": false,
+    "slug": "berry-berry-cake-1-kg"
   }
 ]

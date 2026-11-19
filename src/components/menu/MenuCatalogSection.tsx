@@ -1,10 +1,11 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { MenuItem } from '@/types';
 import { MenuItemCard } from './MenuItemCard';
-import { Package, Sparkles } from 'lucide-react';
+import { Package, Sparkles, Copy, Check } from 'lucide-react';
 import { DietarySymbol, GlutenFreeSymbol } from '@/components/ui/DietarySymbol';
+import { slugify } from '@/lib/utils/slugify';
 
 interface MenuCatalogSectionProps {
   items: MenuItem[];
@@ -23,10 +24,72 @@ export function MenuCatalogSection({
 }: MenuCatalogSectionProps) {
   const [selectedCategory, setSelectedCategory] = useState<string>('All');
   const [dietaryFilter, setDietaryFilter] = useState<DietaryFilterType>('ALL');
+  const [copiedCategory, setCopiedCategory] = useState(false);
 
   const categories = useMemo(() => {
     return ['All', ...Array.from(new Set(items.map((i) => i.category)))];
   }, [items]);
+
+  // Sync category in URL query params without reloading the page
+  const updateCategoryInUrl = (cat: string) => {
+    if (typeof window === 'undefined') return;
+    try {
+      const url = new URL(window.location.href);
+      if (cat && cat !== 'All') {
+        url.searchParams.set('category', cat);
+      } else {
+        url.searchParams.delete('category');
+      }
+      window.history.replaceState(null, '', url.pathname + (url.search ? url.search : '') + url.hash);
+    } catch {}
+  };
+
+  const handleSelectCategory = (cat: string) => {
+    setSelectedCategory(cat);
+    updateCategoryInUrl(cat);
+  };
+
+  const handleCopyCategoryLink = () => {
+    if (typeof window !== 'undefined') {
+      const url = new URL(window.location.href);
+      if (selectedCategory && selectedCategory !== 'All') {
+        url.searchParams.set('category', selectedCategory);
+      }
+      navigator.clipboard.writeText(url.toString());
+      setCopiedCategory(true);
+      setTimeout(() => setCopiedCategory(false), 2000);
+    }
+  };
+
+  // On mount, read ?category= from URL query params
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    try {
+      const params = new URLSearchParams(window.location.search);
+      const catParam = params.get('category');
+      if (catParam) {
+        const normalizedTarget = catParam.toLowerCase().trim();
+        const matched = categories.find(
+          (c) =>
+            c.toLowerCase() === normalizedTarget ||
+            slugify(c) === slugify(normalizedTarget)
+        );
+        if (matched) {
+          setSelectedCategory(matched);
+
+          // Track Meta Pixel ViewContent for category landing
+          if ((window as any).fbq) {
+            try {
+              (window as any).fbq('track', 'ViewContent', {
+                content_name: matched,
+                content_category: matched,
+              });
+            } catch {}
+          }
+        }
+      }
+    } catch {}
+  }, [categories]);
 
   const filteredItems = useMemo(() => {
     return items.filter((item) => {
@@ -130,36 +193,59 @@ export function MenuCatalogSection({
         </div>
       </div>
 
-      {/* Category Pills Navigation */}
-      <div className="flex items-center gap-1.5 overflow-x-auto pb-1 max-w-full">
-        {categories.map((cat) => {
-          const count = cat === 'All'
-            ? items.length
-            : items.filter((i) => i.category === cat).length;
+      {/* Category Pills Navigation & Ads Copy Link */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+        <div className="flex items-center gap-1.5 overflow-x-auto pb-1 max-w-full">
+          {categories.map((cat) => {
+            const count = cat === 'All'
+              ? items.length
+              : items.filter((i) => i.category === cat).length;
 
-          return (
-            <button
-              key={cat}
-              onClick={() => setSelectedCategory(cat)}
-              className={`px-3.5 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition cursor-pointer flex items-center gap-1.5 ${
-                selectedCategory === cat
-                  ? 'bg-[#1C1917] text-white shadow-xs'
-                  : 'bg-stone-100 hover:bg-stone-200 text-stone-700'
-              }`}
-            >
-              <span>{cat}</span>
-              <span
-                className={`text-[10px] px-1.5 py-0.2 rounded-full ${
+            return (
+              <button
+                key={cat}
+                onClick={() => handleSelectCategory(cat)}
+                className={`px-3.5 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition cursor-pointer flex items-center gap-1.5 ${
                   selectedCategory === cat
-                    ? 'bg-white/20 text-white'
-                    : 'bg-stone-200/80 text-stone-600'
+                    ? 'bg-[#1C1917] text-white shadow-xs'
+                    : 'bg-stone-100 hover:bg-stone-200 text-stone-700'
                 }`}
               >
-                {count}
-              </span>
-            </button>
-          );
-        })}
+                <span>{cat}</span>
+                <span
+                  className={`text-[10px] px-1.5 py-0.2 rounded-full ${
+                    selectedCategory === cat
+                      ? 'bg-white/20 text-white'
+                      : 'bg-stone-200/80 text-stone-600'
+                  }`}
+                >
+                  {count}
+                </span>
+              </button>
+            );
+          })}
+        </div>
+
+        {selectedCategory !== 'All' && (
+          <button
+            type="button"
+            onClick={handleCopyCategoryLink}
+            className="self-start sm:self-auto shrink-0 inline-flex items-center gap-1.5 text-[11px] font-medium text-stone-600 hover:text-stone-900 bg-stone-100 hover:bg-stone-200 border border-stone-200/80 px-2.5 py-1 rounded-full transition cursor-pointer shadow-2xs"
+            title="Copy link to this category for Meta Ads"
+          >
+            {copiedCategory ? (
+              <>
+                <Check className="w-3 h-3 text-emerald-600" />
+                <span className="text-emerald-700 font-semibold">Link Copied!</span>
+              </>
+            ) : (
+              <>
+                <Copy className="w-3 h-3 text-stone-500" />
+                <span>Copy Link for Ads</span>
+              </>
+            )}
+          </button>
+        )}
       </div>
 
       {/* Products Grid */}
@@ -175,7 +261,7 @@ export function MenuCatalogSection({
           <button
             type="button"
             onClick={() => {
-              setSelectedCategory('All');
+              handleSelectCategory('All');
               setDietaryFilter('ALL');
             }}
             className="px-4 py-2 bg-stone-900 text-white rounded-full text-xs font-bold hover:bg-stone-800 transition cursor-pointer"

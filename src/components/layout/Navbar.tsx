@@ -130,13 +130,25 @@ export function Navbar({ currentOutletSlug, currentCampaignSlug }: NavbarProps) 
   const handleCategoryClick = (categoryName: string) => {
     setIsDrawerOpen(false);
     if (typeof window !== 'undefined') {
+      try {
+        const url = new URL(window.location.href);
+        if (categoryName && categoryName !== 'All') {
+          url.searchParams.set('category', categoryName);
+        } else {
+          url.searchParams.delete('category');
+        }
+        window.history.replaceState(null, '', url.pathname + (url.search ? url.search : '') + url.hash);
+      } catch {}
+
       window.dispatchEvent(
         new CustomEvent('pnr-select-category', { detail: { category: categoryName } })
       );
-      if (window.location.pathname === '/') {
-        document.getElementById('bakery-catalog')?.scrollIntoView({ behavior: 'smooth' });
+
+      const catalogEl = document.getElementById('bakery-catalog');
+      if (catalogEl) {
+        catalogEl.scrollIntoView({ behavior: 'smooth' });
       } else {
-        router.push('/#bakery-catalog');
+        router.push(`/?category=${encodeURIComponent(categoryName)}#bakery-catalog`);
       }
     }
   };

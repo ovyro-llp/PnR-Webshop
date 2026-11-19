@@ -172,6 +172,7 @@ export type MenuCategory = string;
 export interface MenuItem {
   id: string;
   name: string;
+  slug?: string;
   description: string;
   category: MenuCategory;
   subCategory?: string;
