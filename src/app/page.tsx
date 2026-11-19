@@ -124,8 +124,6 @@ export default function HomePage() {
     return ['All', ...Array.from(new Set(items.map((i) => i.category)))];
   }, [items]);
 
-  const [copiedCategory, setCopiedCategory] = useState(false);
-
   // Sync category in URL query params without reloading the page
   const updateCategoryInUrl = (cat: string) => {
     if (typeof window === 'undefined') return;
@@ -146,17 +144,6 @@ export default function HomePage() {
     if (scroll) {
       document.getElementById('bakery-catalog')?.scrollIntoView({ behavior: 'smooth' });
     }
-  };
-
-  const handleCopyCategoryLink = () => {
-    if (typeof window === 'undefined') return;
-    const url = new URL(window.location.href);
-    if (selectedCategory && selectedCategory !== 'All') {
-      url.searchParams.set('category', selectedCategory);
-    }
-    navigator.clipboard.writeText(url.toString());
-    setCopiedCategory(true);
-    setTimeout(() => setCopiedCategory(false), 2000);
   };
 
   // On page load, read ?category= from URL query params and auto-select & smooth scroll
@@ -528,26 +515,6 @@ export default function HomePage() {
                   <span className="text-[11px] font-mono text-stone-500 bg-stone-100 px-2 py-0.5 rounded-md border border-stone-200">
                     {filteredItems.length} {filteredItems.length === 1 ? 'item' : 'items'}
                   </span>
-                  {selectedCategory !== 'All' && (
-                    <button
-                      type="button"
-                      onClick={handleCopyCategoryLink}
-                      className="inline-flex items-center gap-1.5 text-[11px] font-medium text-stone-600 hover:text-stone-900 bg-stone-100 hover:bg-stone-200/90 border border-stone-200/80 px-2.5 py-1 rounded-full transition cursor-pointer active:scale-95 shadow-2xs"
-                      title="Copy link to this category for Meta Ads"
-                    >
-                      {copiedCategory ? (
-                        <>
-                          <Check className="w-3 h-3 text-emerald-600" />
-                          <span className="text-emerald-700 font-semibold">Link Copied!</span>
-                        </>
-                      ) : (
-                        <>
-                          <Copy className="w-3 h-3 text-stone-500" />
-                          <span>Copy Link for Ads</span>
-                        </>
-                      )}
-                    </button>
-                  )}
                 </div>
 
                 {searchQuery && (

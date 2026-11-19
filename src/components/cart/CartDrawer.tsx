@@ -1095,7 +1095,7 @@ export function CartDrawer({ outletSlug, campaignSlug }: CartDrawerProps) {
                       )}
                       <span>
                         {outletStatus.isPausedByAdmin
-                          ? 'Kitchen Orders Temporarily Paused'
+                          ? 'Orders Temporarily Unavailable'
                           : 'Store Closed for Ordering (10 AM – 10 PM)'}
                       </span>
                     </div>
@@ -1112,7 +1112,7 @@ export function CartDrawer({ outletSlug, campaignSlug }: CartDrawerProps) {
                     <Clock className="w-4 h-4" />
                     <span>
                       {outletStatus.isPausedByAdmin
-                        ? 'Orders Currently Paused'
+                        ? 'Currently Unavailable'
                         : `Closed • Opens ${outletStatus.timing.nextOpenTimeText}`}
                     </span>
                   </button>

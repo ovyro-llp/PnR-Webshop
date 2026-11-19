@@ -108,33 +108,6 @@ export function LocationPromptModal() {
     return best;
   }, [stagedCoords, allOutlets, nearestOutlet]);
 
-  const physicalClosestOutlet = useMemo(() => {
-    if (!stagedCoords) return null;
-    let best = allOutlets[0];
-    let minD = Infinity;
-    for (const o of allOutlets) {
-      if (o.coordinates) {
-        const d = calculateDistanceKm(
-          stagedCoords.lat,
-          stagedCoords.lng,
-          o.coordinates.lat,
-          o.coordinates.lng
-        );
-        if (d < minD) {
-          minD = d;
-          best = o;
-        }
-      }
-    }
-    return best;
-  }, [stagedCoords, allOutlets]);
-
-  const isFailover = Boolean(
-    physicalClosestOutlet &&
-    physicalClosestOutlet.slug !== closestOutlet.slug &&
-    physicalClosestOutlet.isOpen === false
-  );
-
   const closestDistanceKm = useMemo(() => {
     if (!stagedCoords || !closestOutlet.coordinates) return null;
     return calculateDistanceKm(
@@ -344,21 +317,6 @@ export function LocationPromptModal() {
               />
             </div>
 
-            {/* Smart Failover Alert */}
-            {isFailover && physicalClosestOutlet && (
-              <div className="p-3 rounded-2xl bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200 text-amber-950 text-xs flex items-start gap-2 shadow-xs">
-                <Store className="w-4 h-4 text-amber-700 shrink-0 mt-0.5" />
-                <div className="flex-1">
-                  <p className="font-bold text-[11px] text-amber-900">
-                    Smart Kitchen Failover Active
-                  </p>
-                  <p className="text-[11px] text-amber-800 leading-relaxed mt-0.5">
-                    Our {physicalClosestOutlet.name.replace("Puffs 'n' Rolls - ", '')} branch is currently taking a baking pause. We automatically connected you to our active <strong className="text-stone-900">{closestOutlet.name.replace("Puffs 'n' Rolls - ", '')}</strong> kitchen so your order can be delivered hot &amp; fresh!
-                  </p>
-                </div>
-              </div>
-            )}
-
             {/* 2. Auto-filled Address Fields (Editable by customer) */}
             <div className="bg-white rounded-2xl border border-stone-200 p-3.5 space-y-3 shadow-xs">
               <div className="flex flex-wrap items-center justify-between gap-1.5">
@@ -493,7 +451,7 @@ export function LocationPromptModal() {
               ) : (
                 <>
                   <Navigation className="w-4 h-4 text-amber-400 fill-amber-400" />
-                  <span>Use Device Current GPS</span>
+                  <span>Use Current Location</span>
                 </>
               )}
             </button>

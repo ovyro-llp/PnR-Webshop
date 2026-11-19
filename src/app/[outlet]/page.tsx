@@ -148,9 +148,9 @@ export default async function OutletPage({
               <div className="flex items-center gap-2.5 text-center sm:text-left">
                 <span className="w-2.5 h-2.5 rounded-full bg-rose-500 shrink-0 animate-pulse" />
                 <p className="text-xs sm:text-sm text-amber-950 font-medium">
-                  <strong>{outlet.name}</strong> kitchen is currently pausing online orders.
+                  <strong>{outlet.name}</strong> is currently unavailable for online delivery.
                   {alternativeOutlet && (
-                    <span className="text-stone-700"> Our nearby <strong>{alternativeOutlet.name}</strong> kitchen is open &amp; ready to deliver fresh!</span>
+                    <span className="text-stone-700"> You can order fresh bakes from our nearby <strong>{alternativeOutlet.name}</strong> kitchen!</span>
                   )}
                 </p>
               </div>

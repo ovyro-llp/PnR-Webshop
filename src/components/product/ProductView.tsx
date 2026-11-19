@@ -15,7 +15,7 @@ import {
   Sparkles,
   MapPin,
   Check,
-  Copy,
+  Share2,
   ChevronRight,
   ArrowLeft,
   ShieldCheck,
@@ -67,11 +67,25 @@ export function ProductView({ product, relatedProducts }: ProductViewProps) {
     }
   }, [product]);
 
-  const handleCopyLink = () => {
+  const handleShare = async () => {
     if (typeof window !== 'undefined') {
-      navigator.clipboard.writeText(window.location.href);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
+      if (navigator.share) {
+        try {
+          await navigator.share({
+            title: product.name,
+            text: `Check out ${product.name} from Puffs 'n' Rolls Nashik!`,
+            url: window.location.href,
+          });
+          return;
+        } catch {
+          // If native share was canceled or unavailable, fallback to clipboard
+        }
+      }
+      try {
+        await navigator.clipboard.writeText(window.location.href);
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+      } catch {}
     }
   };
 
@@ -118,12 +132,12 @@ export function ProductView({ product, relatedProducts }: ProductViewProps) {
           </span>
         </nav>
 
-        {/* 1-Click Copy Link Button for Ads & Social */}
+        {/* Customer Share Product Button */}
         <button
           type="button"
-          onClick={handleCopyLink}
+          onClick={handleShare}
           className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white hover:bg-stone-50 border border-stone-200/90 text-stone-700 text-xs font-medium transition shadow-2xs cursor-pointer active:scale-95"
-          title="Copy direct product URL for Meta Ads or WhatsApp"
+          title="Share this product"
         >
           {copied ? (
             <>
@@ -132,8 +146,8 @@ export function ProductView({ product, relatedProducts }: ProductViewProps) {
             </>
           ) : (
             <>
-              <Copy className="w-3.5 h-3.5 text-stone-500" />
-              <span>Copy Product Link for Ads</span>
+              <Share2 className="w-3.5 h-3.5 text-stone-500" />
+              <span>Share</span>
             </>
           )}
         </button>

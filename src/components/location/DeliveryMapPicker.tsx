@@ -48,11 +48,6 @@ export function DeliveryMapPicker({
   const [currentCoords, setCurrentCoords] = useState<{ lat: number; lng: number }>(defaultCenter);
   const [closestOutlet, setClosestOutlet] = useState<Outlet>(OUTLETS[0]);
   const [distance, setDistance] = useState<number>(0);
-  const [failoverInfo, setFailoverInfo] = useState<{
-    isFailover: boolean;
-    physicalNearest?: Outlet;
-    failoverMessage?: string;
-  } | null>(null);
   const [isLocating, setIsLocating] = useState(false);
   const [isGeocoding, setIsGeocoding] = useState(false);
   const [detectedAddress, setDetectedAddress] = useState<string>('');
@@ -104,16 +99,6 @@ export function DeliveryMapPicker({
             setClosestOutlet(resolvedOutlet);
             if (typeof data.distanceKm === 'number') {
               setDistance(data.distanceKm);
-            }
-
-            if (data.isFailover) {
-              setFailoverInfo({
-                isFailover: true,
-                physicalNearest: data.physicalNearestOutlet,
-                failoverMessage: data.failoverMessage,
-              });
-            } else {
-              setFailoverInfo(null);
             }
 
             const payload: LocationSelectedData = {
@@ -572,7 +557,7 @@ export function DeliveryMapPicker({
         <div className="flex-1 min-w-0">
           <div className="flex items-center justify-between">
             <span className="text-[10px] font-bold uppercase tracking-wider text-amber-900">
-              Auto-Detected Pin Address
+              Delivery Location
             </span>
             {isGeocoding && (
               <span className="inline-flex items-center gap-1 text-[10px] text-amber-700 font-semibold">
@@ -590,14 +575,6 @@ export function DeliveryMapPicker({
             <span>•</span>
             <span className="font-mono">{distance} km away</span>
           </div>
-          {failoverInfo?.isFailover && (
-            <div className="mt-1.5 p-2 rounded-lg bg-amber-50 border border-amber-200 text-[11px] text-amber-900 flex items-start gap-1.5 leading-tight">
-              <span className="font-bold shrink-0">⚡ Smart Route:</span>
-              <span>
-                {failoverInfo.physicalNearest?.name.replace("Puffs 'n' Rolls - ", '')} is currently pausing orders. We connected you to our active {closestOutlet.name.replace("Puffs 'n' Rolls - ", '')} kitchen!
-              </span>
-            </div>
-          )}
         </div>
       </div>
 

@@ -124,7 +124,7 @@ export function isB2COutletAcceptingOrders(
     return {
       isAccepting: false,
       isPausedByAdmin: true,
-      reason: `Orders are temporarily paused for ${outlet?.name || 'this outlet'} by the kitchen. Please check back shortly.`,
+      reason: 'Online orders are temporarily unavailable for this kitchen. Please check back shortly.',
       timing,
     };
   }

@@ -50,17 +50,11 @@ function findNearestOutlet(lat: number, lng: number, candidateOutlets: Outlet[])
     }
   }
 
-  const isFailover = physicalNearest.slug !== nearest.slug && physicalNearest.isOpen === false;
-
   return {
     nearest,
     distanceKm: minKm,
     physicalNearest,
     physicalDistanceKm: physicalMinKm,
-    isFailover,
-    failoverMessage: isFailover
-      ? `${physicalNearest.name} kitchen is currently pausing orders. We connected you to our ${nearest.name} kitchen to fulfill your fresh order!`
-      : undefined,
   };
 }
 
@@ -106,7 +100,7 @@ export async function GET(request: NextRequest) {
     }
 
     const liveOutlets = (await orderStore.getOutletsAsync()) || orderStore.getOutlets() || OUTLETS;
-    const { nearest, distanceKm, physicalNearest, physicalDistanceKm, isFailover, failoverMessage } =
+    const { nearest, distanceKm, physicalNearest, physicalDistanceKm } =
       findNearestOutlet(lat, lng, liveOutlets);
 
     const googleApiKey = process.env.GOOGLE_MAPS_API_KEY || process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
@@ -158,8 +152,6 @@ export async function GET(request: NextRequest) {
               distanceKm,
               physicalNearestOutlet: physicalNearest,
               physicalDistanceKm,
-              isFailover,
-              failoverMessage,
               source: 'google',
             });
           }
@@ -211,8 +203,6 @@ export async function GET(request: NextRequest) {
           distanceKm,
           physicalNearestOutlet: physicalNearest,
           physicalDistanceKm,
-          isFailover,
-          failoverMessage,
           source: 'nominatim',
         });
       }
@@ -234,8 +224,6 @@ export async function GET(request: NextRequest) {
       distanceKm,
       physicalNearestOutlet: physicalNearest,
       physicalDistanceKm,
-      isFailover,
-      failoverMessage,
       source: 'offline_fallback',
     });
   } catch (error) {

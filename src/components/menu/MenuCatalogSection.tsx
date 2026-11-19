@@ -24,7 +24,6 @@ export function MenuCatalogSection({
 }: MenuCatalogSectionProps) {
   const [selectedCategory, setSelectedCategory] = useState<string>('All');
   const [dietaryFilter, setDietaryFilter] = useState<DietaryFilterType>('ALL');
-  const [copiedCategory, setCopiedCategory] = useState(false);
 
   const categories = useMemo(() => {
     return ['All', ...Array.from(new Set(items.map((i) => i.category)))];
@@ -47,18 +46,6 @@ export function MenuCatalogSection({
   const handleSelectCategory = (cat: string) => {
     setSelectedCategory(cat);
     updateCategoryInUrl(cat);
-  };
-
-  const handleCopyCategoryLink = () => {
-    if (typeof window !== 'undefined') {
-      const url = new URL(window.location.href);
-      if (selectedCategory && selectedCategory !== 'All') {
-        url.searchParams.set('category', selectedCategory);
-      }
-      navigator.clipboard.writeText(url.toString());
-      setCopiedCategory(true);
-      setTimeout(() => setCopiedCategory(false), 2000);
-    }
   };
 
   // On mount, read ?category= from URL query params
@@ -193,59 +180,36 @@ export function MenuCatalogSection({
         </div>
       </div>
 
-      {/* Category Pills Navigation & Ads Copy Link */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-        <div className="flex items-center gap-1.5 overflow-x-auto pb-1 max-w-full">
-          {categories.map((cat) => {
-            const count = cat === 'All'
-              ? items.length
-              : items.filter((i) => i.category === cat).length;
+      {/* Category Pills Navigation */}
+      <div className="flex items-center gap-1.5 overflow-x-auto pb-1 max-w-full">
+        {categories.map((cat) => {
+          const count = cat === 'All'
+            ? items.length
+            : items.filter((i) => i.category === cat).length;
 
-            return (
-              <button
-                key={cat}
-                onClick={() => handleSelectCategory(cat)}
-                className={`px-3.5 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition cursor-pointer flex items-center gap-1.5 ${
+          return (
+            <button
+              key={cat}
+              onClick={() => handleSelectCategory(cat)}
+              className={`px-3.5 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition cursor-pointer flex items-center gap-1.5 ${
+                selectedCategory === cat
+                  ? 'bg-[#1C1917] text-white shadow-xs'
+                  : 'bg-stone-100 hover:bg-stone-200 text-stone-700'
+              }`}
+            >
+              <span>{cat}</span>
+              <span
+                className={`text-[10px] px-1.5 py-0.2 rounded-full ${
                   selectedCategory === cat
-                    ? 'bg-[#1C1917] text-white shadow-xs'
-                    : 'bg-stone-100 hover:bg-stone-200 text-stone-700'
+                    ? 'bg-white/20 text-white'
+                    : 'bg-stone-200/80 text-stone-600'
                 }`}
               >
-                <span>{cat}</span>
-                <span
-                  className={`text-[10px] px-1.5 py-0.2 rounded-full ${
-                    selectedCategory === cat
-                      ? 'bg-white/20 text-white'
-                      : 'bg-stone-200/80 text-stone-600'
-                  }`}
-                >
-                  {count}
-                </span>
-              </button>
-            );
-          })}
-        </div>
-
-        {selectedCategory !== 'All' && (
-          <button
-            type="button"
-            onClick={handleCopyCategoryLink}
-            className="self-start sm:self-auto shrink-0 inline-flex items-center gap-1.5 text-[11px] font-medium text-stone-600 hover:text-stone-900 bg-stone-100 hover:bg-stone-200 border border-stone-200/80 px-2.5 py-1 rounded-full transition cursor-pointer shadow-2xs"
-            title="Copy link to this category for Meta Ads"
-          >
-            {copiedCategory ? (
-              <>
-                <Check className="w-3 h-3 text-emerald-600" />
-                <span className="text-emerald-700 font-semibold">Link Copied!</span>
-              </>
-            ) : (
-              <>
-                <Copy className="w-3 h-3 text-stone-500" />
-                <span>Copy Link for Ads</span>
-              </>
-            )}
-          </button>
-        )}
+                {count}
+              </span>
+            </button>
+          );
+        })}
       </div>
 
       {/* Products Grid */}
