@@ -226,7 +226,7 @@ export function LocationPromptModal() {
         }
       }}
     >
-      <div className="bg-[#FAF8F5] border border-stone-200 rounded-3xl max-w-lg w-full p-5 sm:p-7 relative shadow-2xl space-y-4 max-h-[94vh] overflow-y-auto overscroll-contain">
+      <div className="bg-[#FAF8F5] border border-stone-200 rounded-3xl max-w-lg w-full p-4 sm:p-7 relative shadow-2xl space-y-4 max-h-[94vh] overflow-y-auto overscroll-contain">
         {/* Close Button - ONLY visible if customer already has a saved delivery address */}
         {hasExistingCoordinates && (
           <button
@@ -278,30 +278,34 @@ export function LocationPromptModal() {
         )}
 
         {/* Mode Switcher */}
-        <div className="flex bg-stone-200/80 p-1 rounded-xl text-xs font-semibold">
+        <div className="flex bg-stone-200/80 p-1 rounded-xl text-xs font-semibold w-full">
           <button
             type="button"
             onClick={() => setActiveTab('MAP')}
-            className={`flex-1 py-1.5 px-2 rounded-lg flex items-center justify-center gap-1.5 transition cursor-pointer text-center ${
+            className={`flex-1 min-w-0 py-1.5 px-1.5 sm:px-2 rounded-lg flex items-center justify-center gap-1 sm:gap-1.5 transition cursor-pointer text-center ${
               activeTab === 'MAP'
                 ? 'bg-white text-stone-900 shadow-xs'
                 : 'text-stone-600 hover:text-stone-900'
             }`}
           >
             <Map className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
-            <span className="truncate">Map Pin (Recommended)</span>
+            <span className="truncate">
+              Map Pin <span className="hidden sm:inline">(Recommended)</span>
+            </span>
           </button>
           <button
             type="button"
             onClick={() => setActiveTab('LIST')}
-            className={`flex-1 py-1.5 px-2 rounded-lg flex items-center justify-center gap-1.5 transition cursor-pointer text-center ${
+            className={`flex-1 min-w-0 py-1.5 px-1.5 sm:px-2 rounded-lg flex items-center justify-center gap-1 sm:gap-1.5 transition cursor-pointer text-center ${
               activeTab === 'LIST'
                 ? 'bg-white text-stone-900 shadow-xs'
                 : 'text-stone-600 hover:text-stone-900'
             }`}
           >
             <Store className="w-3.5 h-3.5 text-amber-700 shrink-0" />
-            <span className="truncate">Choose Bakery Outlet</span>
+            <span className="truncate">
+              <span className="hidden sm:inline">Choose </span>Bakery Outlet
+            </span>
           </button>
         </div>
 
