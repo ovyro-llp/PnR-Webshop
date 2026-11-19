@@ -52,6 +52,8 @@ export default function AdminOutletsPage() {
     openingHours: '',
     minOrderAmount: '',
     deliveryTimeEstimate: '',
+    defaultMetaPixelId: '',
+    defaultGoogleAdsId: '',
   });
 
   // Mangwale Per-Outlet Configuration Fields
@@ -108,6 +110,8 @@ export default function AdminOutletsPage() {
       openingHours: '',
       minOrderAmount: '',
       deliveryTimeEstimate: '',
+      defaultMetaPixelId: '',
+      defaultGoogleAdsId: '',
     });
     setMangwaleData({
       apiKey: '',
@@ -139,6 +143,8 @@ export default function AdminOutletsPage() {
       openingHours: outlet.openingHours,
       minOrderAmount: String(outlet.minOrderAmount),
       deliveryTimeEstimate: outlet.deliveryTimeEstimate,
+      defaultMetaPixelId: outlet.defaultMetaPixelId || '',
+      defaultGoogleAdsId: outlet.defaultGoogleAdsId || '',
     });
 
     const existingConfig: MangwaleOutletConfig = outlet.mangwaleConfig || {
@@ -721,6 +727,48 @@ export default function AdminOutletsPage() {
                     }
                     className="w-full bg-stone-50 border border-stone-200 rounded-xl px-2.5 py-2 text-stone-900 focus:outline-none"
                   />
+                </div>
+              </div>
+
+              {/* Outlet-Specific Tracking Pixels (Optional Override) */}
+              <div className="mt-5 pt-4 border-t border-stone-200 space-y-3">
+                <div>
+                  <h4 className="font-semibold text-stone-900 text-xs">
+                    Outlet Tracking Pixels (Optional)
+                  </h4>
+                  <p className="text-[10px] text-stone-500">
+                    Leave blank to inherit the Global Meta Pixel ID configured in Marketing Settings.
+                  </p>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="text-[11px] font-semibold text-stone-700 block mb-1">
+                      Custom Meta Pixel ID
+                    </label>
+                    <input
+                      type="text"
+                      value={formData.defaultMetaPixelId}
+                      onChange={(e) =>
+                        setFormData({ ...formData, defaultMetaPixelId: e.target.value.trim() })
+                      }
+                      placeholder="Inherits Global Pixel"
+                      className="w-full bg-stone-50 border border-stone-200 rounded-xl px-2.5 py-2 text-stone-900 font-mono text-xs focus:outline-none"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-[11px] font-semibold text-stone-700 block mb-1">
+                      Custom Google Ads ID
+                    </label>
+                    <input
+                      type="text"
+                      value={formData.defaultGoogleAdsId}
+                      onChange={(e) =>
+                        setFormData({ ...formData, defaultGoogleAdsId: e.target.value.trim() })
+                      }
+                      placeholder="Inherits Global Google Ads"
+                      className="w-full bg-stone-50 border border-stone-200 rounded-xl px-2.5 py-2 text-stone-900 font-mono text-xs focus:outline-none"
+                    />
+                  </div>
                 </div>
               </div>
 

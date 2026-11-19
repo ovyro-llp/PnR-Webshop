@@ -830,6 +830,7 @@ export const orderStore = {
         ...outlets[idx],
         ...tracking,
       };
+      orderRepository.saveOutlet(outlets[idx]).catch(() => {});
       return outlets[idx];
     }
     return undefined;
