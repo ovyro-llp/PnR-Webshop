@@ -210,29 +210,29 @@ export function Navbar({ currentOutletSlug, currentCampaignSlug }: NavbarProps) 
           <span>Baking Excellence Since 2001 • Handcrafted in Nashik</span>
         </div>
 
-        <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 h-14 sm:h-16 flex items-center justify-between gap-2 sm:gap-4 w-full">
+        <div className="max-w-7xl mx-auto px-2 sm:px-6 lg:px-8 h-14 sm:h-16 flex items-center justify-between gap-1.5 sm:gap-4 w-full">
           {/* Left: Mobile-Only Hamburger Toggle & Brand Logo */}
-          <div className="flex items-center gap-2 sm:gap-3 shrink-0">
+          <div className="flex items-center gap-1.5 sm:gap-3 shrink-0 min-w-0">
             {/* Mobile Hamburger Toggle for Product Navigation */}
             <button
               onClick={() => setIsDrawerOpen(true)}
-              className="md:hidden p-2 -ml-1 rounded-xl text-stone-900 hover:bg-stone-100 transition active:scale-95 flex items-center gap-1.5 cursor-pointer bg-stone-100/80 border border-stone-200/80 shadow-2xs"
+              className="md:hidden p-1.5 xs:p-2 -ml-0.5 rounded-xl text-stone-900 hover:bg-stone-100 transition active:scale-95 flex items-center gap-1 cursor-pointer bg-stone-100/80 border border-stone-200/80 shadow-2xs shrink-0"
               aria-label="Open Products Navigation Menu"
               title="Browse Bakery Menu"
             >
               <Menu className="w-4 h-4 stroke-[2.2]" />
-              <span className="text-[11px] font-bold text-stone-800 pr-0.5">Menu</span>
+              <span className="text-[11px] font-bold text-stone-800 hidden xs:inline pr-0.5">Menu</span>
             </button>
 
             {/* Brand Logo */}
             <Link href="/" className="flex items-center shrink-0">
-              <div className="relative h-8 w-24 sm:h-11 sm:w-36 transition-transform active:scale-95">
+              <div className="relative h-7 w-20 sm:h-11 sm:w-36 transition-transform active:scale-95">
                 <Image
                   src="https://puffsnrolls.com/wp-content/uploads/2025/12/banner-logo.png"
                   alt="Puffs 'n' Rolls"
                   fill
                   priority
-                  sizes="(max-width: 640px) 96px, 144px"
+                  sizes="(max-width: 640px) 80px, 144px"
                   className="object-contain object-left"
                 />
               </div>
@@ -285,15 +285,15 @@ export function Navbar({ currentOutletSlug, currentCampaignSlug }: NavbarProps) 
           </nav>
 
           {/* Right: Location & Profile Cluster + Cart Action */}
-          <div className="flex items-center gap-1.5 sm:gap-2.5 shrink-0">
+          <div className="flex items-center gap-1 sm:gap-2.5 shrink-0 min-w-0">
             {/* Location & Location Selection Button (Located exclusively at top-right of profile section) */}
             <button
               type="button"
               onClick={openLocationModal}
-              className="flex items-center bg-white border border-stone-200/90 hover:border-stone-400 rounded-full px-2.5 sm:px-3 py-1.5 text-xs text-stone-700 transition shadow-2xs cursor-pointer group max-w-[120px] sm:max-w-[180px] active:scale-95"
+              className="flex items-center bg-white border border-stone-200/90 hover:border-stone-400 rounded-full px-2 sm:px-3 py-1 sm:py-1.5 text-xs text-stone-700 transition shadow-2xs cursor-pointer group max-w-[95px] xs:max-w-[120px] sm:max-w-[180px] active:scale-95 shrink"
               title="Your delivery location & outlet. Click to update location."
             >
-              <MapPin className="w-3.5 h-3.5 text-amber-700 mr-1 shrink-0 group-hover:scale-110 transition-transform" />
+              <MapPin className="w-3.5 h-3.5 text-amber-700 mr-0.5 sm:mr-1 shrink-0 group-hover:scale-110 transition-transform" />
               <div className="truncate text-left min-w-0">
                 <span className="font-bold text-[10px] sm:text-xs text-stone-900 block truncate leading-tight">
                   {deliveryArea || (deliveryAddress ? deliveryAddress.split(',')[0] : effectiveOutlet.area)}
@@ -302,7 +302,7 @@ export function Navbar({ currentOutletSlug, currentCampaignSlug }: NavbarProps) 
                   {effectiveOutlet.name.replace("Puffs 'n' Rolls - ", '')}
                 </span>
               </div>
-              <ChevronDown className="w-3 h-3 text-stone-400 ml-1 shrink-0" />
+              <ChevronDown className="w-3 h-3 text-stone-400 ml-0.5 sm:ml-1 shrink-0" />
             </button>
 
             {/* Profile / Account Trigger */}
@@ -310,7 +310,7 @@ export function Navbar({ currentOutletSlug, currentCampaignSlug }: NavbarProps) 
               <Link
                 href="/account"
                 aria-label="My Account"
-                className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-full text-stone-800 hover:text-stone-950 text-xs font-semibold transition border border-stone-200 bg-white hover:bg-stone-50 shadow-2xs"
+                className="flex items-center justify-center p-1.5 sm:px-3 sm:py-1.5 rounded-full text-stone-800 hover:text-stone-950 text-xs font-semibold transition border border-stone-200 bg-white hover:bg-stone-50 shadow-2xs shrink-0"
               >
                 <div className="w-4 h-4 rounded-full bg-[#1C1917] text-white flex items-center justify-center text-[9px] font-bold">
                   {user.name.charAt(0)}
@@ -321,7 +321,7 @@ export function Navbar({ currentOutletSlug, currentCampaignSlug }: NavbarProps) 
               <button
                 onClick={openCustomerLogin}
                 aria-label="Customer Sign In"
-                className="flex items-center gap-1 px-2.5 sm:px-3 py-1.5 rounded-full text-stone-800 hover:text-stone-950 text-xs font-semibold transition cursor-pointer border border-stone-200 bg-white hover:bg-stone-50 shadow-2xs active:scale-95"
+                className="flex items-center justify-center p-1.5 sm:px-3 sm:py-1.5 rounded-full text-stone-800 hover:text-stone-950 text-xs font-semibold transition cursor-pointer border border-stone-200 bg-white hover:bg-stone-50 shadow-2xs active:scale-95 shrink-0"
               >
                 <User className="w-3.5 h-3.5 text-amber-700" />
                 <span className="hidden sm:inline">Sign In</span>
@@ -331,7 +331,7 @@ export function Navbar({ currentOutletSlug, currentCampaignSlug }: NavbarProps) 
             {/* Bag / Cart Trigger */}
             <button
               onClick={() => setIsCartOpen(true)}
-              className="relative p-2 sm:px-4 sm:py-2 rounded-full bg-[#1C1917] hover:bg-stone-800 active:scale-95 text-white font-medium text-xs flex items-center gap-1.5 transition shadow-xs cursor-pointer"
+              className="relative p-1.5 sm:px-4 sm:py-2 rounded-full bg-[#1C1917] hover:bg-stone-800 active:scale-95 text-white font-medium text-xs flex items-center gap-1 sm:gap-1.5 transition shadow-xs cursor-pointer shrink-0"
               aria-label="View Shopping Bag"
             >
               <ShoppingBag className="w-4 h-4 sm:w-3.5 sm:h-3.5 text-stone-300" />
