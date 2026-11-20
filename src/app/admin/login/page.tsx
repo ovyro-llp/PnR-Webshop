@@ -32,7 +32,7 @@ export default function AdminLoginPage() {
 
 
   return (
-    <div className="min-h-screen flex flex-col justify-center items-center bg-[#FAF8F5] text-stone-900 p-4 font-sans">
+    <div data-clarity-mask="true" className="min-h-screen flex flex-col justify-center items-center bg-[#FAF8F5] text-stone-900 p-4 font-sans">
       <div className="max-w-md w-full bg-white border border-stone-200/90 rounded-3xl p-8 sm:p-10 shadow-[0_4px_20px_rgba(0,0,0,0.03)] space-y-6">
         {/* Header */}
         <div className="text-center space-y-3">

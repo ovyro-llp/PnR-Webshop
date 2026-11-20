@@ -96,12 +96,14 @@ export function TrackingProvider({
 
   // Capture Meta ad click ID (`fbclid` -> `_fbc`) immediately on landing
   useEffect(() => {
+    if (typeof window !== 'undefined' && window.location.pathname.startsWith('/admin')) return;
     captureMetaAttributionParams();
   }, []);
 
   // Track single PageView on route or parameter changes (deduplicated)
   useEffect(() => {
     if (!activePixelId) return;
+    if (typeof window !== 'undefined' && window.location.pathname.startsWith('/admin')) return;
 
     captureMetaAttributionParams();
     ensureMetaPixelInitialized(activePixelId);

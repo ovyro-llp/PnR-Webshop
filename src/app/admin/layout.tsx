@@ -156,13 +156,28 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     setIsMobileSidebarOpen(false);
   }, [pathname]);
 
+  // Stop Microsoft Clarity tracking and revoke session recording consent on all /admin/* pages
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const win = window as unknown as { clarity?: (...args: unknown[]) => void };
+        if (typeof win.clarity === 'function') {
+          win.clarity('stop');
+          win.clarity('consent', false);
+        }
+      } catch (err) {
+        console.warn('[AdminLayout] Failed to halt Clarity:', err);
+      }
+    }
+  }, [pathname]);
+
   if (pathname === '/admin/login') {
-    return <>{children}</>;
+    return <div data-clarity-mask="true">{children}</div>;
   }
 
   if (isChecking) {
     return (
-      <div className="min-h-screen bg-[#FAF8F5] text-stone-900 flex items-center justify-center">
+      <div data-clarity-mask="true" className="min-h-screen bg-[#FAF8F5] text-stone-900 flex items-center justify-center">
         <div className="flex items-center gap-2.5 text-xs font-mono text-stone-500">
           <span className="w-3.5 h-3.5 border-2 border-stone-800 border-t-transparent rounded-full animate-spin" />
           <span>Authenticating Operations Session...</span>
@@ -177,7 +192,10 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     ) || navItems[0] || allNavItems[0];
 
   return (
-    <div className="min-h-screen bg-[#FAF8F5] text-stone-900 flex flex-col md:flex-row font-sans selection:bg-stone-200">
+    <div
+      data-clarity-mask="true"
+      className="min-h-screen bg-[#FAF8F5] text-stone-900 flex flex-col md:flex-row font-sans selection:bg-stone-200"
+    >
       {/* =========================================================================
           DESKTOP PERSISTENT SIDEBAR (Hidden on mobile, visible on md: and up)
          ========================================================================= */}

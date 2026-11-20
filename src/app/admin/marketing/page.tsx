@@ -480,6 +480,9 @@ export default function MarketingViewPage() {
                   placeholder="<!-- Paste your custom tracking script here -->"
                   className="w-full bg-stone-50 border border-stone-200 rounded-xl p-3 text-xs font-mono text-stone-800 focus:outline-none focus:border-stone-500"
                 />
+                <p className="text-[11px] text-stone-500 mt-1">
+                  🔒 All <code>/admin/*</code> pages are automatically excluded from Clarity tracking and heatmaps for operational data privacy.
+                </p>
               </div>
             </div>
           </div>

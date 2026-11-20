@@ -32,6 +32,23 @@ function parseHtmlAttributes(attrString: string): Record<string, string> {
 }
 
 /**
+ * Guards analytics / tracking scripts (like Microsoft Clarity) from executing on /admin/* routes
+ */
+function guardScriptForAdminRoutes(code: string): string {
+  if (!code || typeof code !== 'string') return code;
+  const isClarityOrTracking =
+    code.includes('clarity') ||
+    code.includes('clarity.ms') ||
+    code.includes('hotjar') ||
+    code.includes('google-analytics');
+
+  if (isClarityOrTracking) {
+    return `if (typeof window !== 'undefined' && !window.location.pathname.startsWith('/admin')) { ${code} }`;
+  }
+  return code;
+}
+
+/**
  * Safely extracts <meta> and <script> tags from admin-configured customHeaderScript
  * so they can be rendered as valid HTML (<meta> in <head> and next/script for scripts)
  * without injecting an invalid <div> inside <head> (which breaks Clarity DOM snapshots).
@@ -72,7 +89,7 @@ export function parseCustomHeaderScripts(rawHtml: string | undefined | null): Pa
       scripts.push({
         id: attrs.id || `pnr-custom-header-script-${scriptIdx++}`,
         src: src || undefined,
-        inlineCode: inlineCode || undefined,
+        inlineCode: inlineCode ? guardScriptForAdminRoutes(inlineCode) : undefined,
         async: 'async' in attrs,
         defer: 'defer' in attrs,
       });
@@ -83,7 +100,7 @@ export function parseCustomHeaderScripts(rawHtml: string | undefined | null): Pa
   if (scripts.length === 0 && metaTags.length === 0 && !trimmed.startsWith('<')) {
     scripts.push({
       id: 'pnr-custom-header-script-raw',
-      inlineCode: trimmed,
+      inlineCode: guardScriptForAdminRoutes(trimmed),
     });
   }
 

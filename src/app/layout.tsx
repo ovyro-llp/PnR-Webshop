@@ -1,5 +1,4 @@
 import type { Metadata, Viewport } from 'next';
-import Script from 'next/script';
 import { Geist, Geist_Mono, Playfair_Display } from 'next/font/google';
 import './globals.css';
 import { AuthProvider } from '@/context/AuthContext';
@@ -10,6 +9,7 @@ import { CustomerLoginModal } from '@/components/auth/CustomerLoginModal';
 import { LocationPromptModal } from '@/components/location/LocationPromptModal';
 import { orderStore } from '@/lib/store/order-store';
 import { parseCustomHeaderScripts } from '@/lib/marketing/parse-header-scripts';
+import { CustomHeaderScripts } from '@/components/marketing/CustomHeaderScripts';
 
 const geistSans = Geist({
   variable: '--font-geist-sans',
@@ -71,23 +71,7 @@ export default async function RootLayout({
         ))}
       </head>
       <body className="min-h-full flex flex-col bg-[#FDFCFB] text-stone-900 font-sans selection:bg-stone-200 overflow-x-hidden w-full">
-        {parsedHeader.scripts.map((scr) =>
-          scr.src ? (
-            <Script
-              key={scr.id}
-              id={scr.id}
-              src={scr.src}
-              strategy="afterInteractive"
-            />
-          ) : scr.inlineCode ? (
-            <Script
-              key={scr.id}
-              id={scr.id}
-              strategy="afterInteractive"
-              dangerouslySetInnerHTML={{ __html: scr.inlineCode }}
-            />
-          ) : null
-        )}
+        <CustomHeaderScripts scripts={parsedHeader.scripts} />
         <AuthProvider>
           <LocationProvider>
             <TrackingProvider
