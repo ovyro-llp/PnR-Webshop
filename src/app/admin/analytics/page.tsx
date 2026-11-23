@@ -14,6 +14,7 @@ import {
   Clock,
   Sparkles,
   ArrowUpRight,
+  ArrowDownRight,
   Truck,
   RefreshCw,
   UserX,
@@ -23,6 +24,8 @@ import {
   Phone,
   HelpCircle,
   ExternalLink,
+  Eye,
+  Users,
 } from 'lucide-react';
 
 export default function AnalyticsDashboardPage() {
@@ -61,6 +64,43 @@ export default function AnalyticsDashboardPage() {
       items: Array<{ name: string; quantity: number; total: number }>;
       total: number;
       whatsappUrl: string | null;
+    }>;
+    outletIntelligence?: Array<{
+      slug: string;
+      name: string;
+      pageViews: number;
+      uniqueVisitors: number;
+      cartBuilders: number;
+      ordersPlaced: number;
+      revenue: number;
+      conversionRate: number;
+    }>;
+    activeAndAbandonedCarts?: Array<{
+      id: string;
+      sessionId: string;
+      visitorId?: string;
+      outletSlug: string;
+      outletName: string;
+      customerName: string;
+      customerPhone: string;
+      cleanPhone: string;
+      customerAddress: string;
+      funnelStage: string;
+      status: string;
+      itemCount: number;
+      total: number;
+      items: Array<{ id: string; name: string; price: number; quantity: number; total: number; image?: string }>;
+      updatedAt: string;
+      whatsappUrl: string | null;
+      utmSource?: string;
+      utmMedium?: string;
+      utmCampaign?: string;
+    }>;
+    productDropoffAnalysis?: Array<{
+      name: string;
+      addedToCart: number;
+      purchased: number;
+      dropoffRate: number;
     }>;
     hourlyDistribution?: {
       time: string;
@@ -142,6 +182,9 @@ export default function AnalyticsDashboardPage() {
 
   const abandonedCheckouts = analyticsData.abandonedCheckouts || [];
   const outletList = analyticsData.outlets || [];
+  const outletIntelligence = analyticsData.outletIntelligence || [];
+  const activeAndAbandonedCarts = analyticsData.activeAndAbandonedCarts || [];
+  const productDropoffAnalysis = analyticsData.productDropoffAnalysis || [];
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
@@ -242,6 +285,96 @@ export default function AnalyticsDashboardPage() {
       </div>
 
       {/* =========================================================================
+          OUTLET EYEBALLS & STOREFRONT TRAFFIC INTELLIGENCE
+         ========================================================================= */}
+      <div className="bg-white rounded-3xl border border-stone-200/90 p-6 space-y-5 shadow-[0_2px_8px_rgba(0,0,0,0.02)]">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-stone-100 pb-4">
+          <div>
+            <h2 className="text-base font-serif font-bold text-stone-900 flex items-center gap-2">
+              <Eye className="w-4 h-4 text-amber-700" />
+              <span>Outlet Eyeballs &amp; Storefront Traffic Intelligence</span>
+            </h2>
+            <p className="text-xs text-stone-500 mt-0.5">
+              Live footfall, unique store visitors, active cart builders, and checkout conversions per bakery outlet
+            </p>
+          </div>
+          <span className="px-3 py-1 rounded-full text-[11px] font-semibold bg-stone-100 text-stone-800 border border-stone-200 self-start sm:self-auto">
+            {outletIntelligence.reduce((acc, o) => acc + o.pageViews, 0)} Total Store Views
+          </span>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          {outletIntelligence.map((item) => (
+            <div
+              key={item.slug}
+              className="p-5 rounded-2xl border border-stone-200/90 bg-[#FAF8F5]/60 hover:bg-[#FAF8F5] transition space-y-4"
+            >
+              <div className="flex items-start justify-between">
+                <div>
+                  <h3 className="text-sm font-serif font-bold text-stone-900">
+                    {item.name.replace("Puffs 'n' Rolls - ", '')}
+                  </h3>
+                  <span className="text-[10px] text-stone-400 font-mono">
+                    /{item.slug}
+                  </span>
+                </div>
+                <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-900">
+                  {item.conversionRate}% Conv
+                </span>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3 pt-2 border-t border-stone-200/60">
+                <div className="space-y-0.5">
+                  <span className="text-[10px] text-stone-400 flex items-center gap-1">
+                    <Eye className="w-3 h-3 text-stone-400" />
+                    <span>Store Eyeballs</span>
+                  </span>
+                  <span className="text-lg font-serif font-bold text-stone-900 font-mono block">
+                    {item.pageViews}
+                  </span>
+                </div>
+
+                <div className="space-y-0.5">
+                  <span className="text-[10px] text-stone-400 flex items-center gap-1">
+                    <Users className="w-3 h-3 text-stone-400" />
+                    <span>Unique Visitors</span>
+                  </span>
+                  <span className="text-lg font-serif font-bold text-stone-900 font-mono block">
+                    {item.uniqueVisitors}
+                  </span>
+                </div>
+
+                <div className="space-y-0.5">
+                  <span className="text-[10px] text-stone-400 flex items-center gap-1">
+                    <ShoppingBag className="w-3 h-3 text-amber-700" />
+                    <span>Cart Builders</span>
+                  </span>
+                  <span className="text-lg font-serif font-bold text-amber-950 font-mono block">
+                    {item.cartBuilders}
+                  </span>
+                </div>
+
+                <div className="space-y-0.5">
+                  <span className="text-[10px] text-stone-400 flex items-center gap-1">
+                    <CheckCircle2 className="w-3 h-3 text-emerald-600" />
+                    <span>Paid Orders</span>
+                  </span>
+                  <span className="text-lg font-serif font-bold text-emerald-950 font-mono block">
+                    {item.ordersPlaced}
+                  </span>
+                </div>
+              </div>
+
+              <div className="pt-2 border-t border-stone-200/60 flex items-center justify-between text-xs">
+                <span className="text-[10px] text-stone-400 font-medium">Captured GMV</span>
+                <span className="font-mono font-bold text-stone-900">₹{item.revenue.toLocaleString()}</span>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* =========================================================================
           CHECKOUT CONVERSION FUNNEL & CART ABANDONMENT INTELLIGENCE
          ========================================================================= */}
       <div className="bg-white rounded-3xl border border-stone-200/90 p-6 space-y-6 shadow-[0_2px_8px_rgba(0,0,0,0.02)]">
@@ -308,26 +441,26 @@ export default function AnalyticsDashboardPage() {
           </div>
         </div>
 
-        {/* Abandoned Cart Recovery Section */}
+        {/* Real-time Cart Sessions & Abandonment Recovery Section */}
         <div className="space-y-3 pt-2">
           <div className="flex items-center justify-between">
             <h3 className="text-xs font-serif font-bold text-stone-900 uppercase tracking-wider flex items-center gap-1.5">
               <UserX className="w-3.5 h-3.5 text-stone-500" />
-              <span>Incomplete Checkout Recovery ({abandonedCheckouts.length})</span>
+              <span>Real-Time Cart Drop-offs &amp; Recovery ({activeAndAbandonedCarts.length > 0 ? activeAndAbandonedCarts.length : abandonedCheckouts.length})</span>
             </h3>
             <span className="text-[11px] text-stone-400">
-              Direct customer reach-out via WhatsApp
+              Shoppers with items currently in basket or abandoned before payment
             </span>
           </div>
 
-          {abandonedCheckouts.length === 0 ? (
+          {(activeAndAbandonedCarts.length === 0 && abandonedCheckouts.length === 0) ? (
             <div className="p-6 bg-stone-50/60 rounded-2xl border border-stone-200/60 text-center space-y-1.5">
               <CheckCircle2 className="w-6 h-6 text-emerald-600 mx-auto" />
               <p className="text-xs font-serif font-semibold text-stone-800">
-                Zero Abandoned Checkouts Recorded
+                Zero Abandoned Baskets Recorded
               </p>
               <p className="text-[11px] text-stone-400 max-w-md mx-auto">
-                All customers who initiated a checkout session completed their payment successfully. Any future uncompleted or cancelled payment attempts will appear here for 1-click WhatsApp recovery.
+                All customers who initiated a shopping session completed their orders. Any active or uncompleted baskets will stream here live with products and 1-click WhatsApp recovery.
               </p>
             </div>
           ) : (
@@ -335,81 +468,195 @@ export default function AnalyticsDashboardPage() {
               <table className="w-full text-left text-xs divide-y divide-stone-200">
                 <thead className="bg-[#FAF8F5] text-[10px] font-bold text-stone-500 uppercase tracking-wider">
                   <tr>
-                    <th className="px-4 py-3">Order # &amp; Time</th>
-                    <th className="px-4 py-3">Customer</th>
+                    <th className="px-4 py-3">Shopper / Session</th>
+                    <th className="px-4 py-3">Customer Contact</th>
                     <th className="px-4 py-3">Outlet</th>
-                    <th className="px-4 py-3">Items in Cart</th>
-                    <th className="px-4 py-3 text-right">Value</th>
-                    <th className="px-4 py-3 text-center">Status</th>
+                    <th className="px-4 py-3">Active Items in Cart</th>
+                    <th className="px-4 py-3 text-right">Cart Total</th>
+                    <th className="px-4 py-3 text-center">Drop-off Stage</th>
                     <th className="px-4 py-3 text-center">Recovery Action</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-stone-100 bg-white">
-                  {abandonedCheckouts.map((item) => (
-                    <tr key={item.id} className="hover:bg-stone-50/60 transition">
-                      <td className="px-4 py-3.5 font-mono text-[11px] text-stone-900">
-                        <div className="font-bold">{item.orderNumber}</div>
-                        <div className="text-[10px] text-stone-400 font-sans mt-0.5">
-                          {new Date(item.createdAt).toLocaleString([], {
-                            month: 'short',
-                            day: 'numeric',
-                            hour: '2-digit',
-                            minute: '2-digit',
-                          })}
-                        </div>
-                      </td>
-                      <td className="px-4 py-3.5">
-                        <div className="font-semibold text-stone-900">{item.customerName}</div>
-                        <div className="text-[11px] font-mono text-stone-500 mt-0.5">
-                          {item.customerPhone}
-                        </div>
-                      </td>
-                      <td className="px-4 py-3.5 text-stone-600 font-medium capitalize">
-                        {item.outletSlug.replace(/-/g, ' ')}
-                      </td>
-                      <td className="px-4 py-3.5 text-stone-600 max-w-xs">
-                        <div className="space-y-0.5 line-clamp-2">
-                          {item.items.map((it, idx) => (
-                            <span key={idx} className="inline-block mr-1.5 text-[11px]">
-                              {it.quantity}x {it.name}
-                              {idx < item.items.length - 1 ? ',' : ''}
-                            </span>
-                          ))}
-                        </div>
-                      </td>
-                      <td className="px-4 py-3.5 text-right font-mono font-bold text-stone-900">
-                        ₹{item.total}
-                      </td>
-                      <td className="px-4 py-3.5 text-center">
-                        <span className="px-2.5 py-1 rounded-full text-[10px] font-semibold bg-amber-50 text-amber-900 border border-amber-200">
-                          Awaiting Payment
-                        </span>
-                      </td>
-                      <td className="px-4 py-3.5 text-center">
-                        {item.whatsappUrl ? (
-                          <a
-                            href={item.whatsappUrl}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-emerald-600 hover:bg-emerald-700 text-white text-[11px] font-bold shadow-2xs transition cursor-pointer"
-                            title="Send pre-filled cart recovery message on WhatsApp"
+                  {(activeAndAbandonedCarts.length > 0 ? activeAndAbandonedCarts : abandonedCheckouts).map((item: any) => {
+                    const stage = item.funnelStage || 'AWAITING_PAYMENT';
+                    const timeStr = item.updatedAt || item.createdAt;
+                    return (
+                      <tr key={item.id || item.sessionId} className="hover:bg-stone-50/60 transition">
+                        <td className="px-4 py-3.5 font-mono text-[11px] text-stone-900">
+                          <div className="font-bold">{item.customerName || 'Shopper in Store'}</div>
+                          <div className="text-[10px] text-stone-400 font-sans mt-0.5">
+                            {timeStr
+                              ? new Date(timeStr).toLocaleString([], {
+                                  month: 'short',
+                                  day: 'numeric',
+                                  hour: '2-digit',
+                                  minute: '2-digit',
+                                })
+                              : 'Recently active'}
+                          </div>
+                        </td>
+                        <td className="px-4 py-3.5">
+                          <div className="font-semibold text-stone-900">
+                            {item.cleanPhone ? `+91 ${item.cleanPhone}` : item.customerPhone || 'Anonymous'}
+                          </div>
+                          {item.customerAddress && (
+                            <div className="text-[10px] text-stone-400 truncate max-w-[180px] mt-0.5">
+                              {item.customerAddress}
+                            </div>
+                          )}
+                        </td>
+                        <td className="px-4 py-3.5 text-stone-600 font-medium capitalize">
+                          {(item.outletSlug || 'gangapur-road').replace(/-/g, ' ')}
+                        </td>
+                        <td className="px-4 py-3.5 text-stone-600 max-w-xs">
+                          <div className="space-y-1">
+                            {(item.items || []).map((it: any, idx: number) => (
+                              <span
+                                key={idx}
+                                className="inline-flex items-center gap-1 bg-stone-100 text-stone-800 px-2 py-0.5 rounded text-[10px] font-medium mr-1 mb-1"
+                              >
+                                <span className="font-bold text-amber-900">{it.quantity}x</span>
+                                <span className="truncate max-w-[140px]">{it.name}</span>
+                                <span className="text-stone-400 font-mono">₹{it.price * it.quantity}</span>
+                              </span>
+                            ))}
+                          </div>
+                        </td>
+                        <td className="px-4 py-3.5 text-right font-mono font-bold text-stone-900">
+                          ₹{item.total}
+                        </td>
+                        <td className="px-4 py-3.5 text-center">
+                          <span
+                            className={`px-2.5 py-1 rounded-full text-[10px] font-semibold border ${
+                              stage === 'PAYMENT_ATTEMPTED'
+                                ? 'bg-rose-50 text-rose-800 border-rose-200'
+                                : stage === 'CHECKOUT_STARTED'
+                                ? 'bg-amber-50 text-amber-800 border-amber-200'
+                                : stage === 'CART_VIEWED'
+                                ? 'bg-purple-50 text-purple-800 border-purple-200'
+                                : 'bg-blue-50 text-blue-800 border-blue-200'
+                            }`}
                           >
-                            <MessageCircle className="w-3.5 h-3.5" />
-                            <span>WhatsApp Follow-Up</span>
-                          </a>
-                        ) : (
-                          <span className="text-[10px] text-stone-400 italic">
-                            No phone provided
+                            {stage === 'PAYMENT_ATTEMPTED'
+                              ? 'Payment Attempted'
+                              : stage === 'CHECKOUT_STARTED'
+                              ? 'Checkout Started'
+                              : stage === 'CART_VIEWED'
+                              ? 'Bag Opened'
+                              : stage === 'ADDED_TO_CART'
+                              ? 'Item in Basket'
+                              : 'Awaiting Payment'}
                           </span>
-                        )}
-                      </td>
-                    </tr>
-                  ))}
+                        </td>
+                        <td className="px-4 py-3.5 text-center">
+                          {item.whatsappUrl ? (
+                            <a
+                              href={item.whatsappUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-emerald-600 hover:bg-emerald-700 text-white text-[11px] font-bold shadow-2xs transition cursor-pointer"
+                              title="Send pre-filled cart recovery message on WhatsApp"
+                            >
+                              <MessageCircle className="w-3.5 h-3.5" />
+                              <span>WhatsApp Follow-Up</span>
+                            </a>
+                          ) : (
+                            <span className="text-[10px] text-stone-400 italic">
+                              Browsing anonymously
+                            </span>
+                          )}
+                        </td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             </div>
           )}
         </div>
+      </div>
+
+      {/* =========================================================================
+          PRODUCT CART INTEREST & DROP-OFF ANALYSIS
+         ========================================================================= */}
+      <div className="bg-white rounded-3xl border border-stone-200/90 p-6 space-y-5 shadow-[0_2px_8px_rgba(0,0,0,0.02)]">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-stone-100 pb-4">
+          <div>
+            <h2 className="text-base font-serif font-bold text-stone-900 flex items-center gap-2">
+              <ShoppingBag className="w-4 h-4 text-amber-700" />
+              <span>Product Cart Interest &amp; Drop-off Analysis</span>
+            </h2>
+            <p className="text-xs text-stone-500 mt-0.5">
+              Exact items shoppers added to their cart vs actually purchased, highlighting high drop-off bakery products
+            </p>
+          </div>
+          <span className="px-3 py-1 rounded-full text-[11px] font-semibold bg-stone-100 text-stone-800 border border-stone-200 self-start sm:self-auto">
+            {productDropoffAnalysis.length} Tracked Bakery Items
+          </span>
+        </div>
+
+        {productDropoffAnalysis.length === 0 ? (
+          <div className="p-6 bg-stone-50/60 rounded-2xl border border-stone-200/60 text-center space-y-1.5">
+            <ShoppingBag className="w-6 h-6 text-stone-400 mx-auto" />
+            <p className="text-xs font-serif font-semibold text-stone-800">No Product Drop-off Data Yet</p>
+            <p className="text-[11px] text-stone-400 max-w-md mx-auto">
+              As customers browse and add bakery cakes, pastries, and puffs to their shopping cart, product drop-off metrics will appear here automatically.
+            </p>
+          </div>
+        ) : (
+          <div className="overflow-x-auto rounded-2xl border border-stone-200">
+            <table className="w-full text-left text-xs divide-y divide-stone-200">
+              <thead className="bg-[#FAF8F5] text-[10px] font-bold text-stone-500 uppercase tracking-wider">
+                <tr>
+                  <th className="px-4 py-3">Product Name</th>
+                  <th className="px-4 py-3 text-center">Times Added to Cart</th>
+                  <th className="px-4 py-3 text-center">Confirmed Purchases</th>
+                  <th className="px-4 py-3 text-center">Drop-off Rate</th>
+                  <th className="px-4 py-3 text-right">Performance Insight</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-stone-100 bg-white">
+                {productDropoffAnalysis.map((item, idx) => (
+                  <tr key={idx} className="hover:bg-stone-50/60 transition">
+                    <td className="px-4 py-3.5 font-medium text-stone-900 flex items-center gap-2">
+                      <span className="w-2 h-2 rounded-full bg-amber-600" />
+                      <span className="font-semibold">{item.name}</span>
+                    </td>
+                    <td className="px-4 py-3.5 text-center font-mono font-bold text-stone-800">
+                      {item.addedToCart}
+                    </td>
+                    <td className="px-4 py-3.5 text-center font-mono font-bold text-emerald-800">
+                      {item.purchased}
+                    </td>
+                    <td className="px-4 py-3.5 text-center">
+                      <span
+                        className={`px-2.5 py-1 rounded-full text-[10px] font-bold font-mono ${
+                          item.dropoffRate > 60
+                            ? 'bg-rose-50 text-rose-800 border border-rose-200'
+                            : item.dropoffRate > 30
+                            ? 'bg-amber-50 text-amber-800 border border-amber-200'
+                            : 'bg-emerald-50 text-emerald-800 border border-emerald-200'
+                        }`}
+                      >
+                        {item.dropoffRate}% Drop-off
+                      </span>
+                    </td>
+                    <td className="px-4 py-3.5 text-right">
+                      {item.purchased > 0 && item.dropoffRate < 35 ? (
+                        <span className="text-[11px] text-emerald-700 font-medium">★ Best Seller</span>
+                      ) : item.addedToCart > 0 && item.purchased === 0 ? (
+                        <span className="text-[11px] text-amber-700 font-medium">High Interest • Needs Push</span>
+                      ) : (
+                        <span className="text-[11px] text-stone-500 font-medium">Balanced Conversion</span>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
 
       {/* Per-Outlet Comparative Performance */}

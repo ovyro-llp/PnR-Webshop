@@ -379,6 +379,23 @@ export function LocationProvider({ children }: { children: React.ReactNode }) {
         localStorage.setItem(STORAGE_KEY_OUTLET, found.slug);
       } catch {}
 
+      if (typeof window !== 'undefined') {
+        const sessionId = sessionStorage.getItem('pnr_sid') || '';
+        const visitorId = localStorage.getItem('pnr_vid') || '';
+        fetch('/api/marketing/events', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            eventName: 'OutletSelected',
+            eventId: `outlet_${found.slug}_${sessionId || 'sess'}_${Date.now()}`,
+            outletSlug: found.slug,
+            visitorId,
+            sessionId,
+            metadata: { outletName: found.name },
+          }),
+        }).catch(() => {});
+      }
+
       if (deliveryCoordinates && found.coordinates) {
         const dist = calculateDistanceKm(
           deliveryCoordinates.lat,

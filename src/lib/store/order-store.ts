@@ -13,6 +13,9 @@ import {
   Category,
   SubCategory,
   CustomerAccount,
+  CartSessionRecord,
+  CartSessionItem,
+  FunnelStage,
 } from '@/types';
 import { OUTLETS, CAMPAIGNS, MENU_ITEMS, INITIAL_ORDERS } from '@/lib/data/mock-data';
 import { dispatchToMangwale } from '@/lib/logistics/mangwale';
@@ -123,6 +126,11 @@ export interface MarketingEventRecord {
   };
   capiStatus?: string;
   capiResponse?: Record<string, unknown>;
+  visitorId?: string;
+  sessionId?: string;
+  customerName?: string;
+  customerPhone?: string;
+  metadata?: Record<string, unknown>;
   createdAt?: string;
 }
 
@@ -150,6 +158,8 @@ declare global {
   var __PNR_CUSTOMERS__: CustomerAccount[] | undefined;
   // eslint-disable-next-line no-var
   var __PNR_MARKETING_EVENTS__: MarketingEventRecord[] | undefined;
+  // eslint-disable-next-line no-var
+  var __PNR_CART_SESSIONS__: CartSessionRecord[] | undefined;
 }
 
 if (!globalThis.__PNR_CUSTOMERS__) {
@@ -891,6 +901,114 @@ export const orderStore = {
       ? list.filter((e) => e.eventName.toLowerCase() === eventName.toLowerCase())
       : list;
     return filtered.slice(0, limit);
+  },
+
+  getMarketingEventsAsync: async (limit = 100, eventName?: string): Promise<MarketingEventRecord[]> => {
+    try {
+      const dbEvents = await orderRepository.getMarketingEvents(limit, eventName);
+      if (dbEvents && dbEvents.length > 0) {
+        return dbEvents;
+      }
+    } catch (e: any) {
+      console.warn('[orderStore.getMarketingEventsAsync warning]:', e?.message);
+    }
+    return orderStore.getMarketingEvents(limit, eventName);
+  },
+
+  // Real-Time Cart Sessions & Abandonment Engine
+  upsertCartSession: async (
+    data: Omit<CartSessionRecord, 'id' | 'createdAt' | 'updatedAt'>
+  ): Promise<CartSessionRecord> => {
+    if (!globalThis.__PNR_CART_SESSIONS__) {
+      globalThis.__PNR_CART_SESSIONS__ = [];
+    }
+    const now = new Date().toISOString();
+    const existingIdx = globalThis.__PNR_CART_SESSIONS__.findIndex(
+      (s) => s.sessionId === data.sessionId
+    );
+    let sessionRecord: CartSessionRecord;
+    if (existingIdx >= 0) {
+      const existing = globalThis.__PNR_CART_SESSIONS__[existingIdx];
+      const hasNewItems = data.items && data.items.length > 0;
+      const resolvedItems = hasNewItems ? data.items : existing.items;
+      const resolvedTotal = hasNewItems ? data.total : existing.total;
+      const resolvedCount = hasNewItems ? data.itemCount : existing.itemCount;
+
+      sessionRecord = {
+        ...existing,
+        ...data,
+        items: resolvedItems,
+        total: resolvedTotal,
+        itemCount: resolvedCount,
+        status: resolvedItems.length > 0 ? 'ACTIVE' : (data.status || existing.status),
+        customerName: data.customerName || existing.customerName,
+        customerPhone: data.customerPhone || existing.customerPhone,
+        customerAddress: data.customerAddress || existing.customerAddress,
+        updatedAt: now,
+      };
+      globalThis.__PNR_CART_SESSIONS__[existingIdx] = sessionRecord;
+    } else {
+      sessionRecord = {
+        id: `cart_${data.sessionId}_${Date.now()}`,
+        ...data,
+        createdAt: now,
+        updatedAt: now,
+      };
+      globalThis.__PNR_CART_SESSIONS__.unshift(sessionRecord);
+      if (globalThis.__PNR_CART_SESSIONS__.length > 500) {
+        globalThis.__PNR_CART_SESSIONS__.pop();
+      }
+    }
+
+    try {
+      await orderRepository.upsertCartSession(sessionRecord);
+    } catch (e: any) {
+      console.warn('[orderStore.upsertCartSession DB warning]:', e?.message);
+    }
+    return sessionRecord;
+  },
+
+  getCartSessions: async (options?: {
+    outletSlug?: string;
+    status?: string;
+    limit?: number;
+  }): Promise<CartSessionRecord[]> => {
+    try {
+      const dbSessions = await orderRepository.getCartSessions(options);
+      if (dbSessions && dbSessions.length > 0) {
+        return dbSessions;
+      }
+    } catch (e: any) {
+      console.warn('[orderStore.getCartSessions DB warning]:', e?.message);
+    }
+
+    let list = globalThis.__PNR_CART_SESSIONS__ || [];
+    if (options?.outletSlug) {
+      list = list.filter((s) => s.outletSlug === options.outletSlug);
+    }
+    if (options?.status) {
+      list = list.filter((s) => s.status === options.status);
+    }
+    const limit = options?.limit || 100;
+    return list.slice(0, limit);
+  },
+
+  markCartSessionCompleted: async (sessionId: string, orderId: string): Promise<boolean> => {
+    if (globalThis.__PNR_CART_SESSIONS__) {
+      const target = globalThis.__PNR_CART_SESSIONS__.find((s) => s.sessionId === sessionId);
+      if (target) {
+        target.status = 'COMPLETED';
+        target.funnelStage = 'PAID_ORDER';
+        target.orderId = orderId;
+        target.updatedAt = new Date().toISOString();
+      }
+    }
+    try {
+      return await orderRepository.markCartSessionCompleted(sessionId, orderId);
+    } catch (e: any) {
+      console.warn('[orderStore.markCartSessionCompleted DB warning]:', e?.message);
+      return false;
+    }
   },
 
   // Payment Gateway (Razorpay) Configuration & Status

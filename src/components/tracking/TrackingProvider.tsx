@@ -8,6 +8,8 @@ import {
   captureMetaAttributionParams,
   updateMetaPixelAdvancedMatching,
 } from '@/lib/tracking/pixel-tracker';
+import { getOrCreateVisitorId, getOrCreateSessionId, captureUtmAttribution } from '@/lib/tracking/visitor-session';
+import { CartSessionItem, FunnelStage } from '@/types';
 
 interface TrackingItem {
   id: string;
@@ -22,6 +24,8 @@ interface TrackingContextType {
   googleAdsId?: string;
   outletSlug?: string;
   campaignSlug?: string;
+  visitorId?: string;
+  sessionId?: string;
   setPageContext: (ctx: {
     outletSlug?: string;
     campaignSlug?: string;
@@ -29,18 +33,31 @@ interface TrackingContextType {
     googleAdsId?: string;
   }) => void;
   trackCustomEvent: (eventName: string, data?: Record<string, unknown>) => void;
+  trackOutletView: (outletSlug: string) => void;
   trackAddToCart: (item: TrackingItem) => void;
   trackInitiateCheckout: (value: number, itemCount: number, items?: TrackingItem[]) => void;
   trackPurchase: (orderId: string, value: number, items: unknown[]) => void;
-  identifyCustomer: (user: { phone?: string; email?: string; name?: string; pincode?: string }) => void;
+  trackCartSessionUpdate: (params: {
+    outletSlug?: string;
+    items: CartSessionItem[];
+    total: number;
+    itemCount: number;
+    funnelStage?: FunnelStage;
+    customerName?: string;
+    customerPhone?: string;
+    customerAddress?: string;
+  }) => void;
+  identifyCustomer: (user: { phone?: string; email?: string; name?: string; pincode?: string; address?: string }) => void;
 }
 
 const TrackingContext = createContext<TrackingContextType>({
   setPageContext: () => {},
   trackCustomEvent: () => {},
+  trackOutletView: () => {},
   trackAddToCart: () => {},
   trackInitiateCheckout: () => {},
   trackPurchase: () => {},
+  trackCartSessionUpdate: () => {},
   identifyCustomer: () => {},
 });
 
@@ -100,21 +117,31 @@ export function TrackingProvider({
     captureMetaAttributionParams();
   }, []);
 
-  // Track single PageView on route or parameter changes (deduplicated)
+  // Track single PageView on route or parameter changes (Always logs first-party + Pixel if configured)
   useEffect(() => {
-    if (!activePixelId) return;
-    if (typeof window !== 'undefined' && window.location.pathname.startsWith('/admin')) return;
+    if (typeof window === 'undefined' || window.location.pathname.startsWith('/admin')) return;
 
     captureMetaAttributionParams();
-    ensureMetaPixelInitialized(activePixelId);
+    if (activePixelId) {
+      ensureMetaPixelInitialized(activePixelId);
+    }
+    const sessionId = getOrCreateSessionId();
+    const visitorId = getOrCreateVisitorId();
+    const utm = captureUtmAttribution();
+    const uniquePvEventId = `pv_${sessionId}_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
+
     fireClientPixel(
       'PageView',
       {
         outlet: outletSlug,
         campaign: campaignSlug,
+        path: window.location.pathname,
+        visitorId,
+        sessionId,
+        ...utm,
       },
       activePixelId,
-      `pv_${outletSlug || 'home'}_${campaignSlug || 'main'}`
+      uniquePvEventId
     );
   }, [activePixelId, outletSlug, campaignSlug]);
 
@@ -250,11 +277,94 @@ export function TrackingProvider({
     [outletSlug, campaignSlug, activePixelId]
   );
 
-  const identifyCustomer = useCallback(
-    (user: { phone?: string; email?: string; name?: string; pincode?: string }) => {
-      updateMetaPixelAdvancedMatching(activePixelId, user);
+  const trackOutletView = useCallback(
+    (targetOutletSlug: string) => {
+      if (typeof window === 'undefined' || window.location.pathname.startsWith('/admin')) return;
+      const visitorId = getOrCreateVisitorId();
+      const sessionId = getOrCreateSessionId();
+      const utm = captureUtmAttribution();
+      const eventId = `outlet_${targetOutletSlug}_${sessionId}_${Date.now()}`;
+
+      fireClientPixel(
+        'OutletSelected',
+        {
+          outlet: targetOutletSlug,
+          outletSlug: targetOutletSlug,
+          visitorId,
+          sessionId,
+          ...utm,
+        },
+        activePixelId,
+        eventId
+      );
     },
     [activePixelId]
+  );
+
+  const trackCartSessionUpdate = useCallback(
+    (params: {
+      outletSlug?: string;
+      items: CartSessionItem[];
+      total: number;
+      itemCount: number;
+      funnelStage?: FunnelStage;
+      customerName?: string;
+      customerPhone?: string;
+      customerAddress?: string;
+    }) => {
+      if (typeof window === 'undefined' || window.location.pathname.startsWith('/admin')) return;
+      const visitorId = getOrCreateVisitorId();
+      const sessionId = getOrCreateSessionId();
+      const utm = captureUtmAttribution();
+
+      fetch('/api/analytics/cart-session', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          visitorId,
+          sessionId,
+          outletSlug: params.outletSlug || outletSlug || 'gangapur-road',
+          items: params.items,
+          total: params.total,
+          itemCount: params.itemCount,
+          funnelStage: params.funnelStage || 'ADDED_TO_CART',
+          customerName: params.customerName,
+          customerPhone: params.customerPhone,
+          customerAddress: params.customerAddress,
+          utmSource: utm.utmSource,
+          utmMedium: utm.utmMedium,
+          utmCampaign: utm.utmCampaign,
+        }),
+      }).catch(() => {});
+    },
+    [outletSlug]
+  );
+
+  const identifyCustomer = useCallback(
+    (user: { phone?: string; email?: string; name?: string; pincode?: string; address?: string }) => {
+      if (typeof window === 'undefined') return;
+      const visitorId = getOrCreateVisitorId();
+      const sessionId = getOrCreateSessionId();
+
+      if (activePixelId) {
+        updateMetaPixelAdvancedMatching(activePixelId, user);
+      }
+
+      fetch('/api/analytics/cart-session', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          visitorId,
+          sessionId,
+          outletSlug: outletSlug || 'gangapur-road',
+          customerName: user.name,
+          customerPhone: user.phone,
+          customerAddress: user.address,
+          funnelStage: 'CHECKOUT_STARTED',
+        }),
+      }).catch(() => {});
+    },
+    [activePixelId, outletSlug]
   );
 
   const contextValue = useMemo(
@@ -263,11 +373,15 @@ export function TrackingProvider({
       googleAdsId: activeGoogleAdsId,
       outletSlug,
       campaignSlug,
+      visitorId: typeof window !== 'undefined' ? getOrCreateVisitorId() : undefined,
+      sessionId: typeof window !== 'undefined' ? getOrCreateSessionId() : undefined,
       setPageContext,
       trackCustomEvent,
+      trackOutletView,
       trackAddToCart,
       trackInitiateCheckout,
       trackPurchase,
+      trackCartSessionUpdate,
       identifyCustomer,
     }),
     [
@@ -277,9 +391,11 @@ export function TrackingProvider({
       campaignSlug,
       setPageContext,
       trackCustomEvent,
+      trackOutletView,
       trackAddToCart,
       trackInitiateCheckout,
       trackPurchase,
+      trackCartSessionUpdate,
       identifyCustomer,
     ]
   );

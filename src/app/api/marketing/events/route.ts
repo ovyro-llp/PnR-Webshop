@@ -40,6 +40,11 @@ export async function POST(req: NextRequest) {
       currency = 'INR',
       userData,
       customData,
+      visitorId,
+      sessionId,
+      customerName: bodyCustomerName,
+      customerPhone: bodyCustomerPhone,
+      metadata,
     } = body;
 
     if (!eventName || !eventId) {
@@ -61,7 +66,9 @@ export async function POST(req: NextRequest) {
       '';
 
     // Hash user data for privacy & match quality
-    const hashedPhone = userData?.phone ? hashPhoneForMeta(userData.phone) : undefined;
+    const rawPhone = bodyCustomerPhone || userData?.phone;
+    const rawName = bodyCustomerName || userData?.name;
+    const hashedPhone = rawPhone ? hashPhoneForMeta(rawPhone) : undefined;
     const hashedEmail = userData?.email ? hashForMeta(userData.email) : undefined;
 
     const eventRecord: MarketingEventRecord = {
@@ -73,6 +80,11 @@ export async function POST(req: NextRequest) {
       campaignSlug: campaignSlug || undefined,
       value: typeof value === 'number' ? value : 0,
       currency: currency || 'INR',
+      visitorId: visitorId ? String(visitorId) : undefined,
+      sessionId: sessionId ? String(sessionId) : undefined,
+      customerName: rawName ? String(rawName).trim() : undefined,
+      customerPhone: rawPhone ? String(rawPhone).replace(/\D/g, '').slice(-10) : undefined,
+      metadata: metadata || customData || {},
       userHash: {
         phoneHashed: Boolean(hashedPhone),
         emailHashed: Boolean(hashedEmail),

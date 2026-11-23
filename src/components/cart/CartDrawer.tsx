@@ -205,6 +205,48 @@ export function CartDrawer({ outletSlug, campaignSlug }: CartDrawerProps) {
     }
   }, [activeCoords?.lat, activeCoords?.lng, effectiveOutletSlug, setDeliveryFee, setDeliveryQuote]);
 
+  // 1. First-party cart opened tracking & customer identity sync
+  useEffect(() => {
+    tracking.trackCustomEvent('CartDrawerOpened', {
+      outlet: effectiveOutletSlug,
+      itemCount,
+      total,
+    });
+    const cartSessionItems = items.map((i) => ({
+      id: i.item.id,
+      name: i.item.name,
+      price: i.item.price,
+      quantity: i.quantity,
+      total: i.item.price * i.quantity,
+      image: i.item.image,
+      variant: i.item.category,
+    }));
+    tracking.trackCartSessionUpdate({
+      outletSlug: effectiveOutletSlug,
+      items: cartSessionItems,
+      total,
+      itemCount,
+      funnelStage: 'CART_VIEWED',
+      customerName: customer.name || undefined,
+      customerPhone: customer.phone || undefined,
+      customerAddress: customer.address || undefined,
+    });
+  }, [effectiveOutletSlug, itemCount, total]);
+
+  // 2. Continuous customer stitching on phone entry
+  useEffect(() => {
+    const rawPhone = customer.phone || authPhone;
+    const cleanPhone = (rawPhone || '').replace(/\D/g, '');
+    const cleanName = (customer.name || authName || '').trim();
+    if (cleanPhone.length === 10) {
+      tracking.identifyCustomer({
+        phone: cleanPhone,
+        name: cleanName || undefined,
+        address: customer.address || undefined,
+      });
+    }
+  }, [customer.phone, authPhone, customer.name, authName, customer.address, tracking]);
+
   if (!isCartOpen) return null;
 
   const loadRazorpayScript = () => {
@@ -477,6 +519,28 @@ export function CartDrawer({ outletSlug, campaignSlug }: CartDrawerProps) {
           confirm_close: true,
           ondismiss: () => {
             setIsSubmitting(false);
+            tracking.trackCustomEvent('PaymentCancelled', {
+              outlet: effectiveOutletSlug,
+              total,
+              itemCount,
+            });
+            tracking.trackCartSessionUpdate({
+              outletSlug: effectiveOutletSlug,
+              items: items.map((i) => ({
+                id: i.item.id,
+                name: i.item.name,
+                price: i.item.price,
+                quantity: i.quantity,
+                total: i.item.price * i.quantity,
+                image: i.item.image,
+              })),
+              total,
+              itemCount,
+              funnelStage: 'PAYMENT_ATTEMPTED',
+              customerName: activeCustomer.name,
+              customerPhone: activeCustomer.phone,
+              customerAddress: activeCustomer.address,
+            });
           },
         },
         retry: {

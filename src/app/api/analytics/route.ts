@@ -51,7 +51,68 @@ export async function GET(req: NextRequest) {
     const dropoffRate = totalAttempts > 0 ? Math.round((abandonedCount / totalAttempts) * 100) : 0;
     const abandonedRevenue = abandonedOrders.reduce((sum, o) => sum + o.total, 0);
 
-    // 5. Abandoned checkouts recovery list
+    // 5. Fetch cart sessions & marketing events for deep storefront intelligence
+    let cartSessions: any[] = [];
+    try {
+      cartSessions = await orderStore.getCartSessions({
+        outletSlug: isScoped ? outletSlug : undefined,
+        limit: 200,
+      });
+    } catch {
+      cartSessions = [];
+    }
+
+    let marketingEvents: any[] = [];
+    try {
+      marketingEvents = await orderStore.getMarketingEventsAsync(1000);
+    } catch {
+      marketingEvents = [];
+    }
+
+    // 6. Outlet Intelligence: Eyeballs, Views & Funnel per branch
+    const outletsList = orderStore.getOutlets();
+    const outletIntelligence = outletsList.map((outlet) => {
+      const outletOrders = confirmedOrders.filter((o) => o.outletSlug === outlet.slug);
+      const outletEvents = marketingEvents.filter(
+        (e) => (e.outletSlug === outlet.slug || (!e.outletSlug && outlet.slug === 'gangapur-road'))
+      );
+      const outletCarts = cartSessions.filter((c) => c.outletSlug === outlet.slug);
+
+      const pageViews = outletEvents.filter(
+        (e) => e.eventName === 'PageView' || e.eventName === 'OutletSelected' || e.eventName === 'ViewContent'
+      ).length;
+
+      const uniqueVisitorsSet = new Set<string>();
+      outletEvents.forEach((e) => {
+        if (e.visitorId) uniqueVisitorsSet.add(e.visitorId);
+      });
+      outletCarts.forEach((c) => {
+        if (c.visitorId) uniqueVisitorsSet.add(c.visitorId);
+      });
+
+      const uniqueVisitors = Math.max(uniqueVisitorsSet.size, pageViews > 0 ? 1 : 0);
+      const cartBuilders = outletCarts.filter((c) => c.items && c.items.length > 0).length;
+      const ordersPlaced = outletOrders.length;
+      const revenue = outletOrders.reduce((sum, o) => sum + o.total, 0);
+      const conversionRate = uniqueVisitors > 0
+        ? Math.round((ordersPlaced / uniqueVisitors) * 100)
+        : cartBuilders > 0
+        ? Math.round((ordersPlaced / cartBuilders) * 100)
+        : 0;
+
+      return {
+        slug: outlet.slug,
+        name: outlet.name,
+        pageViews,
+        uniqueVisitors,
+        cartBuilders,
+        ordersPlaced,
+        revenue,
+        conversionRate,
+      };
+    });
+
+    // 7. Abandoned checkouts recovery list & Active Cart Sessions
     const abandonedCheckouts = abandonedOrders.slice(0, 50).map((o) => {
       const cleanPhone = (o.customer?.phone || '').replace(/\D/g, '').slice(-10);
       const customerName = o.customer?.name || 'Valued Customer';
@@ -79,6 +140,77 @@ export async function GET(req: NextRequest) {
         whatsappUrl,
       };
     });
+
+    // 8. Enriched Cart Sessions (Real-time basket & drop-off analysis)
+    const activeAndAbandonedCarts = cartSessions
+      .filter((s: any) => s.items && s.items.length > 0 && s.status !== 'COMPLETED')
+      .slice(0, 50)
+      .map((s: any) => {
+        const cleanPhone = (s.customerPhone || '').replace(/\D/g, '').slice(-10);
+        const customerName = s.customerName || (cleanPhone ? `Customer (${cleanPhone.slice(-4)})` : 'Shopper in Store');
+        const itemsList = (s.items || []).map((it: any) => `${it.quantity}x ${it.name}`).join(', ');
+        const outletName = s.outletSlug ? s.outletSlug.replace(/-/g, ' ').toUpperCase() : 'Nashik';
+
+        const msg = encodeURIComponent(
+          `Hello ${customerName}! 👋 We noticed your bag has ${itemsList || 'delicious bakes'} (₹${s.total}) at Puffs 'n' Rolls (${outletName}). Would you like fresh doorstep delivery today? Reply here to confirm!`
+        );
+        const whatsappUrl =
+          cleanPhone.length === 10 ? `https://wa.me/91${cleanPhone}?text=${msg}` : null;
+
+        return {
+          id: s.id,
+          sessionId: s.sessionId,
+          visitorId: s.visitorId,
+          outletSlug: s.outletSlug,
+          outletName,
+          customerName,
+          customerPhone: cleanPhone ? `+91 ${cleanPhone}` : 'Browsing anonymously',
+          cleanPhone,
+          customerAddress: s.customerAddress || '',
+          funnelStage: s.funnelStage || 'ADDED_TO_CART',
+          status: s.status,
+          itemCount: s.itemCount,
+          total: s.total,
+          items: s.items || [],
+          updatedAt: s.updatedAt,
+          whatsappUrl,
+          utmSource: s.utmSource,
+          utmMedium: s.utmMedium,
+          utmCampaign: s.utmCampaign,
+        };
+      });
+
+    // 9. Product Cart Interest vs Purchase Comparison
+    const productMetrics = new Map<string, { name: string; addedToCart: number; purchased: number }>();
+    cartSessions.forEach((s: any) => {
+      (s.items || []).forEach((it: any) => {
+        const entry = productMetrics.get(it.name) || { name: it.name, addedToCart: 0, purchased: 0 };
+        entry.addedToCart += Number(it.quantity) || 1;
+        productMetrics.set(it.name, entry);
+      });
+    });
+    confirmedOrders.forEach((o) => {
+      (o.items || []).forEach((it) => {
+        const entry = productMetrics.get(it.name) || { name: it.name, addedToCart: 0, purchased: 0 };
+        entry.purchased += Number(it.quantity) || 1;
+        productMetrics.set(it.name, entry);
+      });
+    });
+
+    const productDropoffAnalysis = Array.from(productMetrics.values())
+      .map((p) => {
+        const dropoffRate = p.addedToCart > 0
+          ? Math.max(0, Math.round(((p.addedToCart - p.purchased) / p.addedToCart) * 100))
+          : 0;
+        return {
+          name: p.name,
+          addedToCart: p.addedToCart,
+          purchased: p.purchased,
+          dropoffRate,
+        };
+      })
+      .sort((a, b) => b.addedToCart - a.addedToCart)
+      .slice(0, 15);
 
     // 6. Real hourly distribution calculated strictly from confirmed orders
     const timeSlots = [
@@ -153,6 +285,9 @@ export async function GET(req: NextRequest) {
         abandonedRevenue,
       },
       abandonedCheckouts,
+      activeAndAbandonedCarts,
+      outletIntelligence,
+      productDropoffAnalysis,
       hourlyDistribution,
       fleetMetrics: {
         avgPrepMinutes,

@@ -405,6 +405,58 @@ export interface TrackingEventPayload {
     clientIp?: string;
     clientUserAgent?: string;
   };
+  customData?: Record<string, unknown>;
+  visitorId?: string;
+  sessionId?: string;
+}
+
+export interface CartSessionItem {
+  id: string;
+  name: string;
+  price: number;
+  quantity: number;
+  total?: number;
+  image?: string;
+  category?: string;
+  variant?: string;
+}
+
+export type FunnelStage =
+  | 'VISITOR'
+  | 'PAGE_VIEW'
+  | 'OUTLET_SELECTED'
+  | 'PRODUCT_VIEWED'
+  | 'ADDED_TO_CART'
+  | 'CART_UPDATED'
+  | 'CART_VIEWED'
+  | 'DRAWER_OPENED'
+  | 'CHECKOUT_CONTACT_ENTERED'
+  | 'CHECKOUT_STARTED'
+  | 'PAYMENT_ATTEMPTED'
+  | 'PAYMENT_CANCELLED'
+  | 'PAID_ORDER'
+  | 'COMPLETED';
+
+export interface CartSessionRecord {
+  id?: string;
+  visitorId?: string;
+  sessionId: string;
+  outletSlug: string;
+  customerName?: string;
+  customerPhone?: string;
+  customerAddress?: string;
+  orderId?: string;
+  items: CartSessionItem[];
+  total: number;
+  itemCount: number;
+  funnelStage: FunnelStage;
+  status: 'ACTIVE' | 'COMPLETED' | 'ABANDONED';
+  utmSource?: string;
+  utmMedium?: string;
+  utmCampaign?: string;
+  metadata?: Record<string, unknown>;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export interface CampaignAnalytics {

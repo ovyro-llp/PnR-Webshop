@@ -170,6 +170,29 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   const deliveryFee = 0;
   const total = Math.max(0, subtotal - discount);
 
+  // Synchronize active basket with first-party cart session tracking
+  useEffect(() => {
+    if (typeof window === 'undefined' || window.location.pathname.startsWith('/admin')) return;
+
+    const cartSessionItems = items.map((i) => ({
+      id: i.item.id,
+      name: i.item.name,
+      price: i.item.price,
+      quantity: i.quantity,
+      total: i.item.price * i.quantity,
+      image: i.item.image,
+      variant: i.item.category,
+    }));
+
+    tracking.trackCartSessionUpdate({
+      outletSlug: cartOutletSlug || undefined,
+      items: cartSessionItems,
+      total,
+      itemCount,
+      funnelStage: items.length > 0 ? 'ADDED_TO_CART' : 'VISITOR',
+    });
+  }, [items, cartOutletSlug, total, itemCount, tracking]);
+
   const submitOrder = async (
     outletSlug: string,
     campaignSlug: string | undefined,

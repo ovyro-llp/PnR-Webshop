@@ -1,5 +1,6 @@
 import { TrackingEventPayload, MetaAttributionContext } from '@/types';
 import { extractMetaPixelId } from '@/lib/tracking/pixel-utils';
+import { getOrCreateVisitorId, getOrCreateSessionId } from '@/lib/tracking/visitor-session';
 
 // In-Memory registry for current session
 const inMemoryTrackedEvents = new Set<string>();
@@ -324,6 +325,11 @@ export function fireClientPixel(
   // Asynchronously record event to backend marketing ledger
   try {
     const finalEventId = eventId || `evt_${Date.now()}_${Math.random().toString(36).substring(7)}`;
+    const visitorId = getOrCreateVisitorId();
+    const sessionId = getOrCreateSessionId();
+    const rawCustomerName = (cleanData.customerName || cleanData.name) as string | undefined;
+    const rawCustomerPhone = (cleanData.customerPhone || cleanData.phone) as string | undefined;
+
     fetch('/api/marketing/events', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -336,6 +342,11 @@ export function fireClientPixel(
         campaignSlug: cleanData.campaign as string,
         value: typeof cleanData.value === 'number' ? cleanData.value : 0,
         currency: (cleanData.currency as string) || 'INR',
+        visitorId,
+        sessionId,
+        customerName: rawCustomerName,
+        customerPhone: rawCustomerPhone,
+        metadata: cleanData,
         customData: cleanData,
       }),
     }).catch(() => {});

@@ -113,7 +113,7 @@ CREATE TABLE IF NOT EXISTS public.order_items (
 CREATE INDEX IF NOT EXISTS idx_order_items_order_id ON public.order_items(order_id);
 CREATE INDEX IF NOT EXISTS idx_order_items_item_id ON public.order_items(item_id);
 
--- 5. Marketing Events Table (Meta CAPI)
+-- 5. Marketing Events Table (Meta CAPI & Analytics Ledger)
 CREATE TABLE IF NOT EXISTS public.marketing_events (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     order_id VARCHAR(100),
@@ -127,11 +127,44 @@ CREATE TABLE IF NOT EXISTS public.marketing_events (
     user_hash JSONB,
     capi_status VARCHAR(50) DEFAULT 'PENDING',
     capi_response JSONB,
+    visitor_id VARCHAR(100),
+    session_id VARCHAR(100),
+    customer_name VARCHAR(255),
+    customer_phone VARCHAR(50),
+    metadata JSONB,
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
 CREATE INDEX IF NOT EXISTS idx_marketing_events_event_id ON public.marketing_events(event_id);
 CREATE INDEX IF NOT EXISTS idx_marketing_events_order_id ON public.marketing_events(order_id);
+CREATE INDEX IF NOT EXISTS idx_marketing_events_visitor_id ON public.marketing_events(visitor_id);
+CREATE INDEX IF NOT EXISTS idx_marketing_events_outlet_slug ON public.marketing_events(outlet_slug);
+CREATE INDEX IF NOT EXISTS idx_marketing_events_created_at ON public.marketing_events(created_at);
+
+-- 5b. Cart Sessions Table (Active Baskets & Cart Abandonment Recovery)
+CREATE TABLE IF NOT EXISTS public.cart_sessions (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    visitor_id VARCHAR(100) NOT NULL,
+    session_id VARCHAR(100) NOT NULL,
+    outlet_slug VARCHAR(100) NOT NULL,
+    customer_name VARCHAR(255),
+    customer_phone VARCHAR(50),
+    items JSONB NOT NULL DEFAULT '[]'::jsonb,
+    total NUMERIC(10, 2) NOT NULL DEFAULT 0.00,
+    item_count INTEGER NOT NULL DEFAULT 0,
+    funnel_stage VARCHAR(50) NOT NULL DEFAULT 'CART_UPDATED',
+    status VARCHAR(50) NOT NULL DEFAULT 'ACTIVE',
+    utm_source VARCHAR(100),
+    utm_medium VARCHAR(100),
+    utm_campaign VARCHAR(100),
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_cart_sessions_visitor_id ON public.cart_sessions(visitor_id);
+CREATE INDEX IF NOT EXISTS idx_cart_sessions_outlet_slug ON public.cart_sessions(outlet_slug);
+CREATE INDEX IF NOT EXISTS idx_cart_sessions_status ON public.cart_sessions(status);
+CREATE INDEX IF NOT EXISTS idx_cart_sessions_updated_at ON public.cart_sessions(updated_at);
 
 -- 6. Customers Table
 CREATE TABLE IF NOT EXISTS public.customers (
@@ -330,6 +363,14 @@ export async function ensureCoreTables(): Promise<boolean> {
 
             IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'customers') THEN
               ALTER TABLE public.customers ADD COLUMN IF NOT EXISTS password VARCHAR(255) DEFAULT 'pnr@customer123';
+            END IF;
+
+            IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'marketing_events') THEN
+              ALTER TABLE public.marketing_events ADD COLUMN IF NOT EXISTS visitor_id VARCHAR(100);
+              ALTER TABLE public.marketing_events ADD COLUMN IF NOT EXISTS session_id VARCHAR(100);
+              ALTER TABLE public.marketing_events ADD COLUMN IF NOT EXISTS customer_name VARCHAR(255);
+              ALTER TABLE public.marketing_events ADD COLUMN IF NOT EXISTS customer_phone VARCHAR(50);
+              ALTER TABLE public.marketing_events ADD COLUMN IF NOT EXISTS metadata JSONB;
             END IF;
 
             IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'deliveries') THEN

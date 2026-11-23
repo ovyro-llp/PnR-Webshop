@@ -1,6 +1,15 @@
 import { getDbPool } from '@/lib/db';
 import { ensureCoreTables } from '@/lib/db/init-schema';
-import { Order, MangwaleLogisticsInfo, Outlet, OutletStockItem, MenuItem, Employee, CustomerAccount } from '@/types';
+import {
+  Order,
+  MangwaleLogisticsInfo,
+  Outlet,
+  OutletStockItem,
+  MenuItem,
+  Employee,
+  CustomerAccount,
+  CartSessionRecord,
+} from '@/types';
 import { getMangwaleTrackingUrl } from '@/lib/logistics/mangwale';
 
 function rowToOrder(row: any, deliveryRow?: any): Order {
@@ -666,13 +675,13 @@ export const orderRepository = {
   },
 
   /**
-   * Log Meta CAPI & Marketing event into the marketing ledger
+   * Log Meta CAPI & Marketing / Analytics event into the marketing ledger
    */
   recordMarketingEvent: async (event: {
     orderId?: string;
     eventName: string;
     eventId: string;
-    pixelId: string;
+    pixelId?: string;
     outletSlug?: string;
     campaignSlug?: string;
     value?: number;
@@ -680,6 +689,11 @@ export const orderRepository = {
     userHash?: any;
     capiStatus?: string;
     capiResponse?: any;
+    visitorId?: string;
+    sessionId?: string;
+    customerName?: string;
+    customerPhone?: string;
+    metadata?: any;
   }): Promise<boolean> => {
     if (!process.env.DATABASE_URL?.trim()) {
       return true;
@@ -701,17 +715,21 @@ export const orderRepository = {
         `INSERT INTO public.marketing_events (
           order_id, event_name, event_id, pixel_id,
           outlet_slug, campaign_slug, value, currency,
-          user_hash, capi_status, capi_response, created_at
+          user_hash, capi_status, capi_response,
+          visitor_id, session_id, customer_name, customer_phone, metadata,
+          created_at
         ) VALUES (
           $1, $2, $3, $4,
           $5, $6, $7, $8,
-          $9, $10, $11, NOW()
+          $9, $10, $11,
+          $12, $13, $14, $15, $16,
+          NOW()
         );`,
         [
           event.orderId || null,
           event.eventName,
           event.eventId,
-          event.pixelId,
+          event.pixelId || '',
           event.outletSlug || null,
           event.campaignSlug || null,
           event.value || 0,
@@ -719,6 +737,11 @@ export const orderRepository = {
           event.userHash ? JSON.stringify(event.userHash) : null,
           event.capiStatus || 'PENDING',
           event.capiResponse ? JSON.stringify(event.capiResponse) : null,
+          event.visitorId || null,
+          event.sessionId || null,
+          event.customerName || null,
+          event.customerPhone || null,
+          event.metadata ? JSON.stringify(event.metadata) : null,
         ]
       );
       return true;
@@ -729,7 +752,7 @@ export const orderRepository = {
   },
 
   /**
-   * Retrieve logged marketing events from PostgreSQL
+   * Retrieve logged marketing / analytics events from PostgreSQL
    */
   getMarketingEvents: async (limit = 100, eventName?: string): Promise<any[]> => {
     if (!process.env.DATABASE_URL?.trim()) return [];
@@ -754,11 +777,194 @@ export const orderRepository = {
         userHash: r.user_hash,
         capiStatus: r.capi_status,
         capiResponse: r.capi_response,
+        visitorId: r.visitor_id,
+        sessionId: r.session_id,
+        customerName: r.customer_name,
+        customerPhone: r.customer_phone,
+        metadata: r.metadata,
         createdAt: r.created_at,
       }));
     } catch (err: any) {
       console.warn('[orderRepository.getMarketingEvents DB Warning]:', err.message);
       return [];
+    }
+  },
+
+  /**
+   * Upsert active / abandoned cart session in PostgreSQL
+   */
+  upsertCartSession: async (session: CartSessionRecord): Promise<boolean> => {
+    if (!process.env.DATABASE_URL?.trim()) return true;
+    await ensureCoreTables();
+    const pool = getDbPool();
+
+    try {
+      const existing = await pool.query(
+        `SELECT id, customer_name, customer_phone, items, total, item_count FROM public.cart_sessions 
+         WHERE (session_id = $1 OR (visitor_id = $2 AND $2 != '')) AND status != 'COMPLETED' 
+         ORDER BY updated_at DESC LIMIT 1;`,
+        [session.sessionId, session.visitorId || '']
+      );
+
+      const customerName = session.customerName || (existing.rows[0]?.customer_name || null);
+      const customerPhone = session.customerPhone || (existing.rows[0]?.customer_phone || null);
+
+      if (existing.rows.length > 0) {
+        const row = existing.rows[0];
+        const existingItems = typeof row.items === 'string' ? JSON.parse(row.items) : row.items || [];
+        const hasNewItems = session.items && session.items.length > 0;
+        const resolvedItems = hasNewItems ? session.items : existingItems;
+        const resolvedTotal = hasNewItems ? (session.total || 0) : Number(row.total || 0);
+        const resolvedCount = hasNewItems ? (session.itemCount || session.items.length) : Number(row.item_count || 0);
+
+        await pool.query(
+          `UPDATE public.cart_sessions SET
+            outlet_slug = $1,
+            customer_name = $2,
+            customer_phone = $3,
+            items = $4,
+            total = $5,
+            item_count = $6,
+            funnel_stage = $7,
+            status = $8,
+            utm_source = COALESCE($9, utm_source),
+            utm_medium = COALESCE($10, utm_medium),
+            utm_campaign = COALESCE($11, utm_campaign),
+            updated_at = NOW()
+          WHERE id = $12;`,
+          [
+            session.outletSlug,
+            customerName,
+            customerPhone,
+            JSON.stringify(resolvedItems || []),
+            resolvedTotal,
+            resolvedCount,
+            session.funnelStage || 'CART_UPDATED',
+            resolvedItems.length > 0 ? 'ACTIVE' : (session.status || 'ACTIVE'),
+            session.utmSource || null,
+            session.utmMedium || null,
+            session.utmCampaign || null,
+            row.id,
+          ]
+        );
+      } else {
+        await pool.query(
+          `INSERT INTO public.cart_sessions (
+            visitor_id, session_id, outlet_slug,
+            customer_name, customer_phone, items,
+            total, item_count, funnel_stage, status,
+            utm_source, utm_medium, utm_campaign,
+            created_at, updated_at
+          ) VALUES (
+            $1, $2, $3,
+            $4, $5, $6,
+            $7, $8, $9, $10,
+            $11, $12, $13,
+            NOW(), NOW()
+          );`,
+          [
+            session.visitorId,
+            session.sessionId,
+            session.outletSlug,
+            customerName,
+            customerPhone,
+            JSON.stringify(session.items || []),
+            session.total || 0,
+            session.itemCount || (session.items || []).length,
+            session.funnelStage || 'CART_UPDATED',
+            session.status || 'ACTIVE',
+            session.utmSource || null,
+            session.utmMedium || null,
+            session.utmCampaign || null,
+          ]
+        );
+      }
+      return true;
+    } catch (err: any) {
+      console.warn('[orderRepository.upsertCartSession DB Warning]:', err.message);
+      return false;
+    }
+  },
+
+  /**
+   * Retrieve active / abandoned cart sessions from PostgreSQL
+   */
+  getCartSessions: async (
+    optionsOrOutletSlug?: { outletSlug?: string; status?: string; limit?: number } | string,
+    statusArg?: string,
+    limitArg = 100
+  ): Promise<CartSessionRecord[]> => {
+    if (!process.env.DATABASE_URL?.trim()) return [];
+    await ensureCoreTables();
+    const pool = getDbPool();
+
+    const outletSlug = typeof optionsOrOutletSlug === 'object' ? optionsOrOutletSlug?.outletSlug : optionsOrOutletSlug;
+    const status = typeof optionsOrOutletSlug === 'object' ? optionsOrOutletSlug?.status : statusArg;
+    const limit = typeof optionsOrOutletSlug === 'object' ? optionsOrOutletSlug?.limit || 100 : limitArg;
+
+    try {
+      const conditions: string[] = [];
+      const params: any[] = [];
+
+      if (outletSlug && outletSlug !== 'all') {
+        params.push(outletSlug);
+        conditions.push(`outlet_slug = $${params.length}`);
+      }
+      if (status) {
+        params.push(status);
+        conditions.push(`status = $${params.length}`);
+      }
+
+      const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
+      params.push(limit);
+      const query = `SELECT * FROM public.cart_sessions ${whereClause} ORDER BY updated_at DESC LIMIT $${params.length};`;
+
+      const res = await pool.query(query, params);
+      return res.rows.map((r: any) => ({
+        id: r.id,
+        visitorId: r.visitor_id,
+        sessionId: r.session_id,
+        outletSlug: r.outlet_slug,
+        customerName: r.customer_name || undefined,
+        customerPhone: r.customer_phone || undefined,
+        items: typeof r.items === 'string' ? JSON.parse(r.items) : r.items || [],
+        total: Number(r.total || 0),
+        itemCount: Number(r.item_count || 0),
+        funnelStage: r.funnel_stage,
+        status: r.status,
+        utmSource: r.utm_source || undefined,
+        utmMedium: r.utm_medium || undefined,
+        utmCampaign: r.utm_campaign || undefined,
+        createdAt: r.created_at,
+        updatedAt: r.updated_at,
+      }));
+    } catch (err: any) {
+      console.warn('[orderRepository.getCartSessions DB Warning]:', err.message);
+      return [];
+    }
+  },
+
+  /**
+   * Mark a cart session as completed upon successful payment
+   */
+  markCartSessionCompleted: async (sessionIdOrVisitorId: string, orderId?: string): Promise<boolean> => {
+    if (!process.env.DATABASE_URL?.trim()) return true;
+    await ensureCoreTables();
+    const pool = getDbPool();
+
+    try {
+      await pool.query(
+        `UPDATE public.cart_sessions SET
+          status = 'COMPLETED',
+          funnel_stage = 'PAID_ORDER',
+          updated_at = NOW()
+        WHERE (session_id = $1 OR visitor_id = $1) AND status != 'COMPLETED';`,
+        [sessionIdOrVisitorId]
+      );
+      return true;
+    } catch (err: any) {
+      console.warn('[orderRepository.markCartSessionCompleted DB Warning]:', err.message);
+      return false;
     }
   },
 
