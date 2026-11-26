@@ -214,21 +214,9 @@ export function LocationProvider({ children }: { children: React.ReactNode }) {
         }
         if (storedDist) setDistanceKm(parseFloat(storedDist));
       } else {
-        // MANDATORY GATE: No valid doorstep coordinates found
+        // No coordinates stored yet — customer can browse storewide freely.
+        // Location will be prompted at checkout when proceeding to pay.
         setHasSetLocation(false);
-        if (typeof window !== 'undefined') {
-          const path = window.location.pathname;
-          const isExcluded =
-            path.startsWith('/admin') ||
-            path.startsWith('/login') ||
-            path.startsWith('/b2b') ||
-            path.startsWith('/privacy') ||
-            path.startsWith('/terms');
-          if (!isExcluded) {
-            // Immediately open location modal (0ms) so customer cannot browse or order without coordinates
-            setIsLocationModalOpen(true);
-          }
-        }
       }
     } catch (e) {
       console.warn('Failed to load location preference', e);
@@ -413,11 +401,8 @@ export function LocationProvider({ children }: { children: React.ReactNode }) {
 
   const openLocationModal = useCallback(() => setIsLocationModalOpen(true), []);
   const closeLocationModal = useCallback(() => {
-    // Only allow dismissing if customer already has confirmed delivery coordinates
-    if (deliveryCoordinates && typeof deliveryCoordinates.lat === 'number') {
-      setIsLocationModalOpen(false);
-    }
-  }, [deliveryCoordinates]);
+    setIsLocationModalOpen(false);
+  }, []);
 
   return (
     <LocationContext.Provider

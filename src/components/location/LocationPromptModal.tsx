@@ -132,6 +132,18 @@ export function LocationPromptModal() {
     }
   }, [isLocationModalOpen]);
 
+  // Close on Escape key
+  useEffect(() => {
+    if (!isLocationModalOpen) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        closeLocationModal();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isLocationModalOpen, closeLocationModal]);
+
   if (!isLocationModalOpen) return null;
 
   // Called continuously as user drags the pin, taps on map, or searches:
@@ -220,24 +232,21 @@ export function LocationPromptModal() {
     <div
       className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/60 backdrop-blur-xs animate-in fade-in duration-200 overscroll-contain"
       onClick={(e) => {
-        // Only allow dismissing on backdrop click if customer already has saved coordinates
-        if (e.target === e.currentTarget && hasExistingCoordinates) {
+        if (e.target === e.currentTarget) {
           closeLocationModal();
         }
       }}
     >
       <div className="bg-[#FAF8F5] border border-stone-200 rounded-3xl max-w-lg w-full p-4 sm:p-7 relative shadow-2xl space-y-4 max-h-[94vh] overflow-y-auto overscroll-contain">
-        {/* Close Button - ONLY visible if customer already has a saved delivery address */}
-        {hasExistingCoordinates && (
-          <button
-            onClick={closeLocationModal}
-            className="absolute top-4 right-4 text-stone-400 hover:text-stone-800 p-1.5 rounded-full hover:bg-stone-200/50 transition cursor-pointer"
-            aria-label="Close"
-            title="Close"
-          >
-            <X className="w-5 h-5" />
-          </button>
-        )}
+        {/* Close Button - Always visible and accessible */}
+        <button
+          onClick={closeLocationModal}
+          className="absolute top-4 right-4 text-stone-400 hover:text-stone-800 p-1.5 rounded-full hover:bg-stone-200/50 transition cursor-pointer"
+          aria-label="Close"
+          title="Close"
+        >
+          <X className="w-5 h-5" />
+        </button>
 
         {/* Brand Header */}
         <div className="text-center space-y-1">

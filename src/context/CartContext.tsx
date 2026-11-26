@@ -94,19 +94,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       return;
     }
 
-    if (outletSlug) {
-      // Cross-outlet protection: if user has items from another outlet, switch kitchen
-      if (cartOutletSlug && cartOutletSlug !== outletSlug && items.length > 0) {
-        setItems([{ item, quantity }]);
-        setCartOutletSlug(outletSlug);
-        tracking.trackAddToCart({
-          id: item.id,
-          name: item.name,
-          price: item.price,
-          quantity,
-        });
-        return;
-      }
+    if (outletSlug && !cartOutletSlug) {
       setCartOutletSlug(outletSlug);
     }
 

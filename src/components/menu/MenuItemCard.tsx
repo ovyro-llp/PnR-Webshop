@@ -170,6 +170,8 @@ export function MenuItemCard({ item, outletSlug }: MenuItemCardProps) {
           ) : (
             <button
               onClick={() => addItem(item, 1, outletSlug)}
+              data-testid="add-to-cart-btn"
+              aria-label={`Add ${item.name} to bag`}
               className="px-4 py-1.5 bg-[#1C1917] hover:bg-stone-800 text-white rounded-full text-xs font-medium tracking-wide transition flex items-center gap-1 shadow-xs cursor-pointer active:scale-95"
             >
               <Plus className="w-3 h-3" />

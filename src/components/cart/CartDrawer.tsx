@@ -270,17 +270,17 @@ export function CartDrawer({ outletSlug, campaignSlug }: CartDrawerProps) {
     if (e) e.preventDefault();
     setSubmitError('');
 
-    // 0. Hard Operating Hours & Outlet Acceptance Gate (10:00 AM - 10:00 PM IST)
-    if (!outletStatus.isAccepting) {
-      setSubmitError(outletStatus.reason || 'Orders are accepted only between 10:00 AM and 10:00 PM.');
-      return;
-    }
-
-    // 0.1 MANDATORY HARD GATE: Customer MUST pinpoint location on map first!
+    // 0. MANDATORY HARD GATE: Customer MUST pinpoint location on map first so we route to nearest bakery
     const effectiveCoords = customer.coordinates || deliveryCoordinates;
     if (!effectiveCoords || typeof effectiveCoords.lat !== 'number' || typeof effectiveCoords.lng !== 'number') {
       setIsMapModalOpen(true);
-      setSubmitError('📍 Please pinpoint your delivery location on the map first to proceed to checkout.');
+      setSubmitError('📍 Please pinpoint your delivery location on the map to calculate delivery & find your nearest bakery.');
+      return;
+    }
+
+    // 0.1 Hard Operating Hours & Outlet Acceptance Gate (10:00 AM - 10:00 PM IST)
+    if (!outletStatus.isAccepting) {
+      setSubmitError(outletStatus.reason || 'Orders are accepted only between 10:00 AM and 10:00 PM.');
       return;
     }
 
@@ -1290,6 +1290,10 @@ export function CartDrawer({ outletSlug, campaignSlug }: CartDrawerProps) {
                 setDeliveryCoordinates({ lat: data.lat, lng: data.lng });
                 setDeliveryAddress(data.street || data.formattedAddress);
                 if (data.area) setDeliveryArea(data.area);
+                if (data.nearestOutlet) {
+                  switchOutlet(data.nearestOutlet.slug);
+                  setCartOutletSlug(data.nearestOutlet.slug);
+                }
 
                 // Immediate calculation with official rate card
                 const dist = data.distanceKm || 2.5;

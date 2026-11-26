@@ -101,6 +101,7 @@ export function Navbar({ currentOutletSlug, currentCampaignSlug }: NavbarProps) 
     openLocationModal,
     deliveryAddress,
     deliveryArea,
+    hasSetLocation,
   } = useLocation();
 
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
@@ -290,16 +291,22 @@ export function Navbar({ currentOutletSlug, currentCampaignSlug }: NavbarProps) 
             <button
               type="button"
               onClick={openLocationModal}
+              data-testid="navbar-location-btn"
+              aria-label="Delivery location selector"
               className="flex items-center bg-white border border-stone-200/90 hover:border-stone-400 rounded-full px-2 sm:px-3 py-1 sm:py-1.5 text-xs text-stone-700 transition shadow-2xs cursor-pointer group max-w-[95px] xs:max-w-[120px] sm:max-w-[180px] active:scale-95 shrink"
-              title="Your delivery location & outlet. Click to update location."
+              title={hasSetLocation ? "Your delivery location & outlet. Click to update." : "Select your delivery location & nearest bakery"}
             >
               <MapPin className="w-3.5 h-3.5 text-amber-700 mr-0.5 sm:mr-1 shrink-0 group-hover:scale-110 transition-transform" />
               <div className="truncate text-left min-w-0">
                 <span className="font-bold text-[10px] sm:text-xs text-stone-900 block truncate leading-tight">
-                  {deliveryArea || (deliveryAddress ? deliveryAddress.split(',')[0] : effectiveOutlet.area)}
+                  {hasSetLocation
+                    ? deliveryArea || (deliveryAddress ? deliveryAddress.split(',')[0] : effectiveOutlet.area)
+                    : 'Nashik'}
                 </span>
                 <span className="text-[9px] text-stone-400 font-mono hidden sm:block truncate leading-none">
-                  {effectiveOutlet.name.replace("Puffs 'n' Rolls - ", '')}
+                  {hasSetLocation
+                    ? effectiveOutlet.name.replace("Puffs 'n' Rolls - ", '')
+                    : 'Select area'}
                 </span>
               </div>
               <ChevronDown className="w-3 h-3 text-stone-400 ml-0.5 sm:ml-1 shrink-0" />

@@ -48,21 +48,120 @@ const getCategoryIcon = (category: string) => {
   return <Sparkles className="w-4 h-4" />;
 };
 
-export default function HomePage() {
-  const { nearestOutlet, distanceKm, openLocationModal, deliveryAddress } = useLocation();
-  const [items, setItems] = useState<MenuItem[]>(() =>
-    MENU_ITEMS.filter((i) => i.availableOutlets.includes(nearestOutlet.slug))
+// Smart Category Matcher for Ad URLs (e.g. ?category=cakes, ?category=pastries, etc.)
+const resolveCategoryFromParam = (param: string, availableCategories: string[]): string | null => {
+  if (!param) return null;
+  const raw = param.trim();
+  const lower = raw.toLowerCase();
+  const slug = slugify(raw);
+
+  // Exact match or slug match
+  const exact = availableCategories.find(
+    (c) => c.toLowerCase() === lower || slugify(c) === slug
   );
-  const [selectedCategory, setSelectedCategory] = useState<string>('All');
+  if (exact) return exact;
+
+  // Common ad URL aliases
+  if (lower === 'cakes' || lower === 'cake' || lower === 'celebration-cakes' || slug.includes('celebration-cake')) {
+    const celebration = availableCategories.find((c) => c.toLowerCase().includes('celebration'));
+    if (celebration) return celebration;
+    const found = availableCategories.find((c) => c.toLowerCase().includes('cake'));
+    if (found) return found;
+  }
+  if (lower === 'tea-cakes' || lower === 'tea-time' || lower === 'brownies' || lower === 'mawa') {
+    const teaCakes = availableCategories.find((c) => c.toLowerCase().includes('tea') || c.toLowerCase().includes('brownie'));
+    if (teaCakes) return teaCakes;
+  }
+  if (
+    lower === 'pastries' ||
+    lower === 'pastry' ||
+    lower === 'desserts' ||
+    slug.includes('pastr') ||
+    slug.includes('dessert')
+  ) {
+    const found = availableCategories.find(
+      (c) => c.toLowerCase().includes('pastr') || c.toLowerCase().includes('dessert')
+    );
+    if (found) return found;
+  }
+  if (
+    lower === 'puffs' ||
+    lower === 'puff' ||
+    lower === 'rolls' ||
+    lower === 'roll' ||
+    lower === 'savories' ||
+    lower === 'savouries' ||
+    slug.includes('puff') ||
+    slug.includes('roll') ||
+    slug.includes('savor')
+  ) {
+    const found = availableCategories.find(
+      (c) => c.toLowerCase().includes('puff') || c.toLowerCase().includes('roll')
+    );
+    if (found) return found;
+  }
+  if (
+    lower === 'cookies' ||
+    lower === 'cookie' ||
+    lower === 'biscuits' ||
+    slug.includes('cookie') ||
+    slug.includes('biscuit')
+  ) {
+    const found = availableCategories.find(
+      (c) => c.toLowerCase().includes('cookie') || c.toLowerCase().includes('biscuit')
+    );
+    if (found) return found;
+  }
+  if (
+    lower === 'breads' ||
+    lower === 'bread' ||
+    lower === 'tea-cakes' ||
+    slug.includes('bread') ||
+    slug.includes('tea-cake')
+  ) {
+    const found = availableCategories.find(
+      (c) => c.toLowerCase().includes('bread') || c.toLowerCase().includes('tea cake')
+    );
+    if (found) return found;
+  }
+  if (lower === 'hampers' || lower === 'combos' || slug.includes('hamper') || slug.includes('combo')) {
+    const found = availableCategories.find(
+      (c) => c.toLowerCase().includes('hamper') || c.toLowerCase().includes('combo')
+    );
+    if (found) return found;
+  }
+
+  // General substring match
+  const partial = availableCategories.find(
+    (c) => c.toLowerCase().includes(lower) || lower.includes(c.toLowerCase())
+  );
+  return partial || null;
+};
+
+export default function HomePage() {
+  const { nearestOutlet, distanceKm, openLocationModal, deliveryAddress, hasSetLocation } = useLocation();
+  const [items, setItems] = useState<MenuItem[]>(() => MENU_ITEMS);
+  const [selectedCategory, setSelectedCategory] = useState<string>(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const catParam = new URLSearchParams(window.location.search).get('category');
+        if (catParam) {
+          const initialCats = ['All', ...Array.from(new Set(MENU_ITEMS.map((i) => i.category)))];
+          return resolveCategoryFromParam(catParam, initialCats) || 'All';
+        }
+      } catch {}
+    }
+    return 'All';
+  });
   const [dietaryFilter, setDietaryFilter] = useState<DietaryFilterType>('ALL');
   const [searchQuery, setSearchQuery] = useState('');
   const [loading, setLoading] = useState(false);
 
-  // Fetch updated catalog for this specific nearest outlet
+  // Fetch updated catalog for storewide master products
   useEffect(() => {
     let active = true;
     setLoading(true);
-    fetch(`/api/products?outlet=${nearestOutlet.slug}`)
+    fetch('/api/products')
       .then((res) => res.json())
       .then((data) => {
         if (active && data.success && Array.isArray(data.products)) {
@@ -71,9 +170,7 @@ export default function HomePage() {
       })
       .catch(() => {
         if (active) {
-          setItems(
-            MENU_ITEMS.filter((i) => i.availableOutlets.includes(nearestOutlet.slug))
-          );
+          setItems(MENU_ITEMS);
         }
       })
       .finally(() => {
@@ -83,7 +180,7 @@ export default function HomePage() {
     return () => {
       active = false;
     };
-  }, [nearestOutlet.slug]);
+  }, []);
 
   // Listen to drawer product navigation & category selection events
   useEffect(() => {
@@ -153,12 +250,7 @@ export default function HomePage() {
       const params = new URLSearchParams(window.location.search);
       const catParam = params.get('category');
       if (catParam) {
-        const normalizedTarget = catParam.toLowerCase().trim();
-        const matched = categories.find(
-          (c) =>
-            c.toLowerCase() === normalizedTarget ||
-            slugify(c) === slugify(normalizedTarget)
-        );
+        const matched = resolveCategoryFromParam(catParam, categories);
         if (matched) {
           setSelectedCategory(matched);
           setTimeout(() => {
@@ -226,10 +318,16 @@ export default function HomePage() {
           <div className="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-3">
             <div className="flex items-center gap-2 min-w-0">
               <span className="w-2.5 h-2.5 rounded-full bg-emerald-600 animate-pulse shrink-0" />
-              <p className="text-xs text-stone-800 truncate">
-                Dispatched fresh from <strong className="font-semibold text-stone-900">{nearestOutlet.name}</strong> ({nearestOutlet.area})
-              </p>
-              {distanceKm && (
+              {hasSetLocation && deliveryAddress ? (
+                <p className="text-xs text-stone-800 truncate">
+                  Dispatched fresh from <strong className="font-semibold text-stone-900">{nearestOutlet.name}</strong> ({nearestOutlet.area})
+                </p>
+              ) : (
+                <p className="text-xs text-stone-800 truncate">
+                  Freshly baked artisanal bakes delivered across Nashik • <strong className="font-semibold text-stone-900">Express Doorstep Delivery</strong>
+                </p>
+              )}
+              {hasSetLocation && distanceKm && (
                 <span className="text-[10px] font-mono text-stone-600 bg-stone-100 px-2 py-0.5 rounded-full border border-stone-200 shrink-0">
                   {distanceKm} km
                 </span>
@@ -243,7 +341,7 @@ export default function HomePage() {
                 className="text-xs font-bold text-amber-800 hover:text-amber-950 underline underline-offset-2 flex items-center gap-1 cursor-pointer shrink-0"
               >
                 <Navigation className="w-3.5 h-3.5 text-amber-700" />
-                <span>Choose Outlet / Location</span>
+                <span>{hasSetLocation ? 'Change Outlet / Location' : 'Choose Outlet / Location'}</span>
               </button>
             </div>
           </div>
