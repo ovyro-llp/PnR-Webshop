@@ -7,7 +7,7 @@ import { useLocation } from '@/context/LocationContext';
 import { Phone, MapPin, ShieldCheck, Clock, Navigation } from 'lucide-react';
 
 export function Footer() {
-  const { nearestOutlet, openLocationModal, distanceKm } = useLocation();
+  const { nearestOutlet, openLocationModal, distanceKm, hasSetLocation } = useLocation();
 
   return (
     <footer className="bg-[#1C1917] text-stone-400 py-12 sm:py-16 text-xs w-full border-t border-stone-800">
@@ -33,40 +33,69 @@ export function Footer() {
             </div>
           </div>
 
-          {/* Customer's Nearest Bakery Kitchen (Exclusive - No other outlets visible) */}
+          {/* Customer's Nearest Bakery Kitchen */}
           <div className="space-y-3">
             <h4 className="font-semibold text-white uppercase tracking-wider text-[11px] flex items-center gap-1.5">
               <MapPin className="w-3.5 h-3.5 text-amber-400" />
-              <span>Your Nearest Bakery</span>
+              <span>{hasSetLocation ? 'Your Nearest Bakery' : 'Bakery Kitchens'}</span>
             </h4>
             <div className="space-y-2 text-stone-400">
-              <div>
-                <p className="font-medium text-stone-200 text-sm">
-                  {nearestOutlet.name.replace("Puffs 'n' Rolls - ", '')}
-                </p>
-                <p className="text-[11px] text-stone-500 mt-0.5">
-                  {nearestOutlet.address}
-                </p>
-                {distanceKm && (
-                  <p className="text-[10px] text-amber-400 font-mono mt-0.5">
-                    {distanceKm} km from your location
-                  </p>
-                )}
-              </div>
-              <div className="pt-1 flex items-center gap-1 text-[11px] text-stone-400">
-                <Clock className="w-3.5 h-3.5 text-stone-500" />
-                <span>{nearestOutlet.openingHours}</span>
-              </div>
-              <div className="pt-1">
-                <button
-                  type="button"
-                  onClick={openLocationModal}
-                  className="text-[11px] text-amber-400 hover:text-amber-300 underline flex items-center gap-1 cursor-pointer"
-                >
-                  <Navigation className="w-3 h-3" />
-                  <span>Update My Delivery Location</span>
-                </button>
-              </div>
+              {hasSetLocation ? (
+                <>
+                  <div>
+                    <p className="font-medium text-stone-200 text-sm">
+                      {nearestOutlet.name.replace("Puffs 'n' Rolls - ", '')}
+                    </p>
+                    <p className="text-[11px] text-stone-500 mt-0.5">
+                      {nearestOutlet.address}
+                    </p>
+                    {distanceKm && (
+                      <p className="text-[10px] text-amber-400 font-mono mt-0.5">
+                        {distanceKm} km from your location
+                      </p>
+                    )}
+                  </div>
+                  <div className="pt-1 flex items-center gap-1 text-[11px] text-stone-400">
+                    <Clock className="w-3.5 h-3.5 text-stone-500" />
+                    <span>{nearestOutlet.openingHours}</span>
+                  </div>
+                  <div className="pt-1">
+                    <button
+                      type="button"
+                      onClick={openLocationModal}
+                      className="text-[11px] text-amber-400 hover:text-amber-300 underline flex items-center gap-1 cursor-pointer"
+                    >
+                      <Navigation className="w-3 h-3" />
+                      <span>Update My Delivery Location</span>
+                    </button>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div>
+                    <p className="font-medium text-stone-200 text-sm">
+                      Serving All Over Nashik
+                    </p>
+                    <p className="text-[11px] text-stone-500 mt-0.5">
+                      Cycle Circle • ND Patel Road • Gangapur Road
+                    </p>
+                  </div>
+                  <div className="pt-1 flex items-center gap-1 text-[11px] text-stone-400">
+                    <Clock className="w-3.5 h-3.5 text-stone-500" />
+                    <span>10:00 AM - 10:00 PM Daily</span>
+                  </div>
+                  <div className="pt-1">
+                    <button
+                      type="button"
+                      onClick={openLocationModal}
+                      className="text-[11px] text-amber-400 hover:text-amber-300 underline flex items-center gap-1 cursor-pointer"
+                    >
+                      <Navigation className="w-3 h-3" />
+                      <span>Select Delivery Location</span>
+                    </button>
+                  </div>
+                </>
+              )}
             </div>
           </div>
 
@@ -77,7 +106,7 @@ export function Footer() {
             </h4>
             <ul className="space-y-2">
               <li>
-                <Link href={`/${nearestOutlet.slug}`} className="hover:text-white transition">
+                <Link href={hasSetLocation ? `/${nearestOutlet.slug}` : '/#bakery-catalog'} className="hover:text-white transition">
                   Browse Fresh Menu
                 </Link>
               </li>
@@ -114,8 +143,11 @@ export function Footer() {
         <div className="pt-8 border-t border-stone-800 flex flex-col sm:flex-row items-center justify-between gap-4 text-[11px] text-stone-500">
           <p>© {new Date().getFullYear()} Puffs &apos;n&apos; Rolls Bakery. All rights reserved.</p>
           <div className="flex items-center gap-4">
-            <a href={`tel:${nearestOutlet.phone}`} className="hover:text-stone-300 font-mono">
-              Direct Kitchen: {nearestOutlet.phone}
+            <a
+              href={`tel:${hasSetLocation ? nearestOutlet.phone : '+919423639911'}`}
+              className="hover:text-stone-300 font-mono"
+            >
+              {hasSetLocation ? `Direct Kitchen: ${nearestOutlet.phone}` : 'Order Helpline: +91 94236 39911'}
             </a>
           </div>
         </div>

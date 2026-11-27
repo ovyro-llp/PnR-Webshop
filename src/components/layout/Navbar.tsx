@@ -98,6 +98,7 @@ export function Navbar({ currentOutletSlug, currentCampaignSlug }: NavbarProps) 
   const { user, isCustomer, openCustomerLogin } = useAuth();
   const {
     nearestOutlet,
+    allOutlets,
     openLocationModal,
     deliveryAddress,
     deliveryArea,
@@ -123,10 +124,11 @@ export function Navbar({ currentOutletSlug, currentCampaignSlug }: NavbarProps) 
   }, [isDrawerOpen]);
 
   // Authoritative outlet for this customer
-  const effectiveOutlet =
-    nearestOutlet ||
-    (currentOutletSlug && OUTLETS.find((o) => o.slug === currentOutletSlug)) ||
-    OUTLETS[0];
+  const matchedOutlet = currentOutletSlug
+    ? (allOutlets && allOutlets.find((o) => o.slug === currentOutletSlug)) ||
+      OUTLETS.find((o) => o.slug === currentOutletSlug)
+    : null;
+  const effectiveOutlet = matchedOutlet || (hasSetLocation ? nearestOutlet : OUTLETS[0]);
 
   const handleCategoryClick = (categoryName: string) => {
     setIsDrawerOpen(false);

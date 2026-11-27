@@ -509,16 +509,18 @@ export default function HomePage() {
               <div className="p-3 bg-amber-50/80 rounded-2xl border border-amber-200/80 space-y-1 text-xs">
                 <span className="text-[10px] uppercase font-bold text-amber-900 block flex items-center gap-1.5">
                   <Phone className="w-3 h-3 text-amber-800" />
-                  <span>Direct Kitchen Hotline</span>
+                  <span>{hasSetLocation ? 'Direct Kitchen Hotline' : 'Bakery Order Hotline'}</span>
                 </span>
                 <a
-                  href={`tel:${nearestOutlet.phone}`}
+                  href={`tel:${hasSetLocation ? nearestOutlet.phone : '+919423639911'}`}
                   className="font-mono text-xs font-bold text-stone-900 hover:text-amber-900 flex items-center gap-1"
                 >
-                  <span>{nearestOutlet.phone}</span>
+                  <span>{hasSetLocation ? nearestOutlet.phone : '+91 94236 39911'}</span>
                 </a>
                 <p className="text-[10px] text-stone-500">
-                  {nearestOutlet.name.replace("Puffs 'n' Rolls - ", '')} • {nearestOutlet.openingHours}
+                  {hasSetLocation
+                    ? `${nearestOutlet.name.replace("Puffs 'n' Rolls - ", '')} • ${nearestOutlet.openingHours}`
+                    : "Puffs 'n' Rolls Nashik • 10:00 AM - 10:00 PM"}
                 </p>
               </div>
             </aside>

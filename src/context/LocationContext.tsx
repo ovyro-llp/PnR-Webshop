@@ -234,10 +234,10 @@ export function LocationProvider({ children }: { children: React.ReactNode }) {
         } catch {}
       }
 
-      if (storedSlug) {
+      if (storedSlug && parsedCoords) {
         const matchingOutlet = live.find((o) => o.slug === storedSlug);
         // If stored outlet was paused by kitchen, auto-failover to closest open outlet!
-        if (matchingOutlet && matchingOutlet.isOpen === false && parsedCoords) {
+        if (matchingOutlet && matchingOutlet.isOpen === false) {
           findNearestOutletFromCoords(parsedCoords.lat, parsedCoords.lng, live);
         } else if (matchingOutlet) {
           setNearestOutlet(matchingOutlet);
